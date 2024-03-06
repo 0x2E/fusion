@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/0x2e/fusion/conf"
+	"github.com/0x2e/fusion/frontend"
 	"github.com/0x2e/fusion/pkg/errorx"
 	"github.com/0x2e/fusion/repo"
 	"github.com/0x2e/fusion/server"
@@ -55,15 +56,10 @@ func Run() {
 			return nil
 		},
 	}))
-	r.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
-	r.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		Root:   "./frontend",
-		Index:  "index.html",
-		HTML5:  true,
-		Browse: false,
-	}))
 	r.Use(session.Middleware(sessions.NewCookieStore([]byte("fusion"))))
 	r.Pre(middleware.RemoveTrailingSlash())
+
+	r.StaticFS("/*", frontend.Content)
 
 	loginAPI := Session{}
 	r.POST("/api/sessions", loginAPI.Create)
