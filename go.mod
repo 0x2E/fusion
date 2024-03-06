@@ -7,13 +7,13 @@ require (
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.19.0
-	github.com/golang/mock v1.6.0
 	github.com/gorilla/sessions v1.2.2
 	github.com/labstack/echo-contrib v0.15.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/mmcdole/gofeed v1.2.1
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
+	go.uber.org/mock v0.4.0
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.7
 	gorm.io/plugin/soft_delete v1.2.1
