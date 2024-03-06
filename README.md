@@ -23,23 +23,17 @@ Or you can build docker image from scratch:
 docker build -t rook1e404/fusion .
 ```
 
-### 2. Pre-build
+### 2. Pre-build binary
 
-Download an release, then run:
+Download an release, edit `.env`, then run:
 
 ```shell
-./fusion-server
+./fusion
 ```
 
 ### 3. Build from source
 
-1. Prepare dependencies
-
-```shell
-go mod tidy
-cd frontend && npm i
-```
-
+1. Prepare dependencies: Go 1.22, Node 21 with NPM
 2. Build
 
 ```shell
@@ -54,7 +48,7 @@ cd build
 # edit .env
 
 # run
-./fusion-server
+./fusion
 ```
 
 ## ToDo

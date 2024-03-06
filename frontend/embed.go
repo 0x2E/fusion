@@ -5,6 +5,9 @@ import (
 	"io/fs"
 )
 
+// This embed only used in production. Only APIs are used in development,
+// so no error
+
 //go:embed all:build
 var build embed.FS
 

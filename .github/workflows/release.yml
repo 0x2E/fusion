@@ -23,10 +23,11 @@ jobs:
         with:
           node-version: 21
       - name: Build
-        run: ./scripts.sh build
-      - name: Release
-        uses: softprops/action-gh-release@v1
+        run: |
+          ./scripts.sh build
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
         with:
-          draft: true
-          files: |
-            build/*
+          distribution: goreleaser
+          version: latest
+          args: release --clean
