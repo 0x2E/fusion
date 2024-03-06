@@ -12,12 +12,21 @@ build() {
 	cd $root || exit 1
 }
 
+gen() {
+	go generate ./...
+}
+
+test_go() {
+	gen
+	go test ./...
+}
+
 case $1 in
 "test")
-	go test ./...
+	test_go
 	;;
 "gen")
-	go generate ./...
+	gen
 	;;
 "build")
 	build
