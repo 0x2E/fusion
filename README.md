@@ -9,9 +9,56 @@ Fusion is an RSS aggregator and reader with:
 
 ## Installation
 
+### 1. Docker
+
+```shell
+docker run -it -d -p 8080:8080 -v $(pwd)/fusion:/data \
+      -e PASSWORD="123456" \
+      rook1e404/fusion
+```
+
+Or you can build docker image from scratch:
+
+```shell
+docker build -t rook1e404/fusion .
+```
+
+### 2. Pre-build
+
+Download an release, then run:
+
+```shell
+./fusion-server
+```
+
+### 3. Build from source
+
+1. Prepare dependencies
+
+```shell
+go mod tidy
+cd frontend && npm i
+```
+
+2. Build
+
+```shell
+./scripts.sh build
+```
+
+3. Deploy
+
+```shell
+cd build
+
+# edit .env
+
+# run
+./fusion-server
+```
+
 ## ToDo
 
-- Docker
 - Bookmark
 - PWA
 

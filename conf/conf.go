@@ -7,18 +7,13 @@ import (
 )
 
 var Conf struct {
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	Password string `mapstructure:"password"`
+	Host     string `mapstructure:"HOST"`
+	Port     int    `mapstructure:"PORT"`
+	Password string `mapstructure:"PASSWORD"`
 	DB       string
 }
 
 func Load() {
-	// default conf
-	Conf.Host = "0.0.0.0"
-	Conf.Port = 8080
-	Conf.DB = "data.db"
-
 	viper.SetConfigFile(".env")
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
