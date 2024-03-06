@@ -4,7 +4,7 @@ build() {
 	root=$(pwd)
 	rm -r ./build
 	echo "building frontend"
-	cd ./frontend && npm i && npm run build && cp -R ./build/ $root/build/frontend || exit 1
+	cd ./frontend && npm i && npm run build || exit 1
 	cd $root || exit 1
 	echo "building backend"
 	cp .env build/
@@ -16,7 +16,9 @@ gen() {
 }
 
 test_go() {
-	gen
+	gen || exit 1
+	# make some files for embed
+	mkdir -p ./frontend/build && touch ./frontend/build/index.html || exit 1
 	go test ./...
 }
 
