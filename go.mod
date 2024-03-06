@@ -7,6 +7,7 @@ require (
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.19.0
+	github.com/golang/mock v1.6.0
 	github.com/gorilla/sessions v1.2.2
 	github.com/labstack/echo-contrib v0.15.0
 	github.com/labstack/echo/v4 v4.11.4
