@@ -1,0 +1,5 @@
+.DS_*
+*.db
+*.paw
+tmp/
+build/
