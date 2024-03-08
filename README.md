@@ -1,5 +1,7 @@
 # Fusion
 
+![preview](./assets/screenshot.png)
+
 Fusion is an RSS aggregator and reader with:
 
 - Lightweight, high performance, easy to deploy
