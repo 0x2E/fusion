@@ -13,15 +13,16 @@ import (
 
 // TODO: refactor all loggers
 func main() {
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	if conf.Debug {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
 
 	conf.Load()
 	repo.Init()
 
 	go pull.NewPuller(repo.NewFeed(repo.DB), repo.NewItem(repo.DB)).Run()
 
-	// TODO: pprof
 	api.Run()
 }

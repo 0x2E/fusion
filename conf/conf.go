@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const Debug = false
+
 var Conf struct {
 	Host     string `mapstructure:"HOST"`
 	Port     int    `mapstructure:"PORT"`
