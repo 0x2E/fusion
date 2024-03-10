@@ -8,9 +8,16 @@
 
 	function joinURL(s: string | null) {
 		if (!s) return '';
-		const res = new URL(s, data.link).href;
-		console.log(s + ' -> ' + res);
-		return res;
+		try {
+			// some rss's entry link is relative,
+			// we cannot determine the base url
+			const res = new URL(s, data.link).href;
+			console.log(s + ' -> ' + res);
+			return res;
+		} catch (e) {
+			console.log(e);
+		}
+		return s;
 	}
 
 	const elements: { tag: string; attrs: string[] }[] = [
