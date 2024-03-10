@@ -16,17 +16,27 @@
 	export let groups: groupFeeds[];
 	export let open: boolean;
 
+	function emptyForm(): Feed {
+		return {
+			id: 0,
+			name: '',
+			link: '',
+			failure: '',
+			updated_at: new Date(),
+			group: { id: groups[0].id, name: groups[0].name }
+		};
+	}
+
 	let openCandidate = false;
 	let loading = false;
-	let formData: Feed = {
-		id: 0,
-		name: '',
-		link: '',
-		failure: '',
-		updated_at: new Date(),
-		group: { id: groups[0].id, name: groups[0].name }
-	};
+	let formData = emptyForm();
 	let linkCandidate: { title: string; link: string }[] = [];
+
+	$: {
+		if (!open) {
+			formData = emptyForm();
+		}
+	}
 
 	async function handleAdd() {
 		loading = true;
