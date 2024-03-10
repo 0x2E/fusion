@@ -58,8 +58,12 @@ func Run() {
 	}))
 	r.Use(session.Middleware(sessions.NewCookieStore([]byte("fusion"))))
 	r.Pre(middleware.RemoveTrailingSlash())
-
-	r.StaticFS("/*", frontend.Content)
+	r.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		HTML5:      true,
+		Index:      "index.html",
+		Filesystem: http.FS(frontend.Content),
+		Browse:     false,
+	}))
 
 	loginAPI := Session{}
 	r.POST("/api/sessions", loginAPI.Create)
