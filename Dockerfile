@@ -13,7 +13,7 @@ RUN go build -o fusion ./cmd/server/*
 
 # deploy
 FROM debian:12
-RUN apt-get update && apt-get install -y sqlite3
+RUN apt-get update && apt-get install -y sqlite3 ca-certificates
 WORKDIR /fusion
 COPY .env ./
 COPY --from=be /src/fusion ./
