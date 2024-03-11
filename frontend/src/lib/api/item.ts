@@ -7,6 +7,7 @@ type listOptions = {
 	keyword?: string;
 	feed_id?: number;
 	unread?: boolean;
+	bookmark?: boolean;
 };
 
 export async function listItems(options?: listOptions) {
@@ -21,10 +22,14 @@ export async function getItem(id: number) {
 	return api.get('items/' + id).json<Item>();
 }
 
-export async function updateItem(id: number, unread: boolean) {
+export async function updateItem(
+	id: number,
+	data: {
+		unread?: boolean;
+		bookmark?: boolean;
+	}
+) {
 	return api.patch('items/' + id, {
-		json: {
-			unread: unread
-		}
+		json: data
 	});
 }

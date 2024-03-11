@@ -32,6 +32,9 @@ func Run() {
 	if conf.Debug {
 		r.Debug = true
 		r.Use(middleware.BodyDump(func(c echo.Context, reqBody, resBody []byte) {
+			if len(resBody) > 500 {
+				resBody = append(resBody[:500], []byte("...")...)
+			}
 			r.Logger.Debugf("req: %s\nresp: %s\n", reqBody, resBody)
 		}))
 	}

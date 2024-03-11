@@ -26,9 +26,10 @@ func NewItem(repo ItemRepo) *Item {
 
 func (i Item) List(req *ReqItemList) (*RespItemList, error) {
 	filter := repo.ItemFilter{
-		Keyword: req.Keyword,
-		FeedID:  req.FeedID,
-		Unread:  req.Unread,
+		Keyword:  req.Keyword,
+		FeedID:   req.FeedID,
+		Unread:   req.Unread,
+		Bookmark: req.Bookmark,
 	}
 	data, total, err := i.repo.List(filter, req.Offset, req.Count)
 	if err != nil {
@@ -38,12 +39,13 @@ func (i Item) List(req *ReqItemList) (*RespItemList, error) {
 	items := make([]*ItemForm, 0, len(data))
 	for _, v := range data {
 		items = append(items, &ItemForm{
-			ID:      v.ID,
-			GUID:    v.GUID,
-			Title:   v.Title,
-			Link:    v.Link,
-			PubDate: v.PubDate,
-			Unread:  v.Unread,
+			ID:       v.ID,
+			GUID:     v.GUID,
+			Title:    v.Title,
+			Link:     v.Link,
+			PubDate:  v.PubDate,
+			Unread:   v.Unread,
+			Bookmark: v.Bookmark,
 			Feed: ItemFeed{
 				ID:   v.Feed.ID,
 				Name: v.Feed.Name,
@@ -63,13 +65,14 @@ func (i Item) Get(req *ReqItemGet) (*RespItemGet, error) {
 	}
 
 	return &RespItemGet{
-		ID:      data.ID,
-		GUID:    data.GUID,
-		Title:   data.Title,
-		Link:    data.Link,
-		Content: data.Content,
-		PubDate: data.PubDate,
-		Unread:  data.Unread,
+		ID:       data.ID,
+		GUID:     data.GUID,
+		Title:    data.Title,
+		Link:     data.Link,
+		Content:  data.Content,
+		PubDate:  data.PubDate,
+		Unread:   data.Unread,
+		Bookmark: data.Bookmark,
 		Feed: ItemFeed{
 			ID:   data.Feed.ID,
 			Name: data.Feed.Name,
@@ -79,7 +82,8 @@ func (i Item) Get(req *ReqItemGet) (*RespItemGet, error) {
 
 func (i Item) Update(req *ReqItemUpdate) error {
 	return i.repo.Update(req.ID, &model.Item{
-		Unread: req.Unread,
+		Unread:   req.Unread,
+		Bookmark: req.Bookmark,
 	})
 }
 

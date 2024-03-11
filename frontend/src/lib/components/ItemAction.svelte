@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { CheckIcon, ExternalLinkIcon, UndoIcon } from 'lucide-svelte';
+	import {
+		BookmarkIcon,
+		BookmarkXIcon,
+		CheckIcon,
+		ExternalLinkIcon,
+		UndoIcon
+	} from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
 	import type { Icon } from 'lucide-svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip';
@@ -12,47 +18,53 @@
 		id: number;
 		link: string;
 		unread: boolean;
+		bookmark: boolean;
 	};
 
 	function getActions(
-		unread: boolean
+		unread: boolean,
+		bookmark: boolean
 	): { icon: ComponentType<Icon>; tooltip: string; handler: (e: Event) => void }[] {
-		const list = [
-			// { icon: BookmarkIcon, tooltip: 'Save to Bookmark', handler: handleSaveToBookmark },
-			{ icon: ExternalLinkIcon, tooltip: 'Visit Original Link', handler: handleExternalLink }
-		];
+		const visitOriginalAction = {
+			icon: ExternalLinkIcon,
+			tooltip: 'Visit Original Link',
+			handler: handleExternalLink
+		};
 		const unreadAction = unread
-			? { icon: CheckIcon, tooltip: 'Mark as Read', handler: handleMarkAsRead }
-			: { icon: UndoIcon, tooltip: 'Mark as Unread', handler: handleMarkAsUnread };
-		list.unshift(unreadAction);
-		return list;
-	}
-	$: actions = getActions(data.unread);
+			? { icon: CheckIcon, tooltip: 'Mark as Read', handler: handleToggleUnread }
+			: { icon: UndoIcon, tooltip: 'Mark as Unread', handler: handleToggleUnread };
+		const bookmarkAction = bookmark
+			? { icon: BookmarkXIcon, tooltip: 'Cancel Bookmark', handler: handleToggleBookmark }
+			: { icon: BookmarkIcon, tooltip: 'Add to Bookmark', handler: handleToggleBookmark };
 
-	async function handleMarkAsRead(e: Event) {
+		return [unreadAction, bookmarkAction, visitOriginalAction];
+	}
+	$: actions = getActions(data.unread, data.bookmark);
+
+	async function handleToggleUnread(e: Event) {
 		e.preventDefault();
 		try {
-			await updateItem(data.id, false);
+			await updateItem(data.id, { unread: !data.unread });
+			invalidateAll();
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
-		invalidateAll();
-	}
-
-	async function handleMarkAsUnread(e: Event) {
-		e.preventDefault();
-		try {
-			await updateItem(data.id, true);
-		} catch (e) {
-			toast.error((e as Error).message);
-		}
-		invalidateAll();
 	}
 
 	function handleExternalLink(e: Event) {
 		e.preventDefault();
-		handleMarkAsRead(e);
+		handleToggleUnread(e);
 		window.open(data.link, '_target');
+	}
+
+	async function handleToggleBookmark(e: Event) {
+		e.preventDefault();
+		try {
+			await updateItem(data.id, { bookmark: !data.bookmark });
+			invalidateAll();
+		} catch (e) {
+			toast.error((e as Error).message);
+		}
 	}
 </script>
 

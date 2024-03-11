@@ -18,9 +18,10 @@ type Item struct {
 }
 
 type ItemFilter struct {
-	Keyword *string
-	FeedID  *uint
-	Unread  *bool
+	Keyword  *string
+	FeedID   *uint
+	Unread   *bool
+	Bookmark *bool
 }
 
 func (i Item) List(filter ItemFilter, offset, count *int) ([]*model.Item, int, error) {
@@ -35,7 +36,10 @@ func (i Item) List(filter ItemFilter, offset, count *int) ([]*model.Item, int, e
 		db = db.Where("feed_id = ?", *filter.FeedID)
 	}
 	if filter.Unread != nil {
-		db = db.Where("unread = true")
+		db = db.Where("unread = ?", *filter.Unread)
+	}
+	if filter.Bookmark != nil {
+		db = db.Where("bookmark = ?", *filter.Bookmark)
 	}
 	err := db.Count(&total).Error
 	if err != nil {

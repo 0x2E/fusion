@@ -60,7 +60,9 @@
 					</div>
 
 					<div class="w-full hidden group-hover:inline-flex justify-end">
-						<ItemAction data={{ id: item.id, link: item.link, unread: item.unread }} />
+						<ItemAction
+							data={{ id: item.id, link: item.link, unread: item.unread, bookmark: item.bookmark }}
+						/>
 					</div>
 				</div>
 			</Button>

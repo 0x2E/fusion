@@ -55,7 +55,6 @@ cd build
 
 ## ToDo
 
-- Bookmark
 - PWA
 
 ## Credits
