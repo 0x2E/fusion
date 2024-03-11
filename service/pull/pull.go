@@ -34,27 +34,28 @@ func NewPuller(feedRepo FeedRepo, itemRepo ItemRepo) *Puller {
 	}
 }
 
+const interval = 30
+
 func (p *Puller) Run() {
-	const interval = 30
-	ctx, cancel := context.WithTimeout(context.Background(), (interval-3)*time.Minute)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ticker := time.NewTicker(interval * time.Minute)
 	defer ticker.Stop()
 
 	for {
+		p.PullAll(ctx)
+
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
 		}
-
-		p.PullAll(ctx)
 	}
 }
 
 func (p *Puller) PullAll(ctx context.Context) error {
 	log.Println("start pull-all")
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, (interval-3)*time.Minute)
 	defer cancel()
 	feeds, err := p.feedRepo.All()
 	if err != nil {
