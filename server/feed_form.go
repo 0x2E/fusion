@@ -7,6 +7,7 @@ type FeedForm struct {
 	Name      *string   `json:"name"`
 	Link      *string   `json:"link"`
 	Failure   *string   `json:"failure"`
+	Suspended *bool     `json:"suspended"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Group     GroupForm `json:"group"`
 }
@@ -43,10 +44,11 @@ type ReqFeedCreate struct {
 }
 
 type ReqFeedUpdate struct {
-	ID      uint    `param:"id" validate:"required"`
-	Name    *string `json:"name"`
-	Link    *string `json:"link"`
-	GroupID *uint   `json:"group_id"`
+	ID        uint    `param:"id" validate:"required"`
+	Name      *string `json:"name"`
+	Link      *string `json:"link"`
+	Suspended *bool   `json:"suspended"`
+	GroupID   *uint   `json:"group_id"`
 }
 
 type ReqFeedDelete struct {

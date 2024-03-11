@@ -7,7 +7,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { AlertCircleIcon, Loader2Icon } from 'lucide-svelte';
 	import * as Alert from '$lib/components/ui/alert';
-	import { deleteFeed, refreshFeeds, updateFeed } from '$lib/api/feed';
+	import { deleteFeed, refreshFeeds, updateFeed, type FeedUpdateForm } from '$lib/api/feed';
 	import type { Feed } from '$lib/api/model';
 	import type { groupFeeds } from './+page';
 	import { invalidateAll } from '$app/navigation';
@@ -18,12 +18,12 @@
 	export let groups: groupFeeds[];
 	export let show = false;
 	export let selectedFeed: Feed;
-	let formData: Feed;
+	let formData: FeedUpdateForm;
 	let refreshing = false;
 
 	$: {
 		if (show) {
-			formData = Object.assign({}, selectedFeed);
+			formData = {};
 		}
 	}
 
@@ -55,18 +55,28 @@
 	}
 
 	async function handleUpdate() {
-		if (!formData) return;
-		toast.promise(updateFeed(formData), {
+		toast.promise(updateFeed(selectedFeed.id, formData), {
 			loading: 'Updating',
 			success: () => {
 				invalidateAll();
-				return formData.name + ' has been updated';
+				return 'Update successfully';
 			},
 			error: (e) => {
 				invalidateAll();
 				return (e as Error).message;
 			}
 		});
+	}
+
+	async function handleToggleSuspended() {
+		const data: FeedUpdateForm = { suspended: !selectedFeed.suspended };
+		try {
+			await updateFeed(selectedFeed.id, data);
+			toast.success('Update successfully');
+			invalidateAll();
+		} catch (e) {
+			toast.error((e as Error).message);
+		}
 	}
 </script>
 
@@ -94,7 +104,7 @@
 							id="name"
 							type="text"
 							class="w-full"
-							value={formData.name}
+							value={selectedFeed.name}
 							on:input={(e) => {
 								// two-way bind not works, so do this. https://stackoverflow.com/questions/60825553/svelte-input-binding-breaks-when-a-reactive-value-is-a-reference-type
 								if (e.target instanceof HTMLInputElement) {
@@ -110,7 +120,7 @@
 							id="link"
 							type="text"
 							class="w-full"
-							value={formData.link}
+							value={selectedFeed.link}
 							on:input={(e) => {
 								if (e.target instanceof HTMLInputElement) {
 									formData.link = e.target.value;
@@ -126,10 +136,10 @@
 							items={groups.map((v) => {
 								return { value: v.id, label: v.name };
 							})}
-							onSelectedChange={(v) => v && (formData.group.id = v.value)}
+							onSelectedChange={(v) => v && (formData.group_id = v.value)}
 						>
 							<Select.Trigger>
-								<Select.Value placeholder={formData.group.name} />
+								<Select.Value placeholder={selectedFeed.group.name} />
 							</Select.Trigger>
 							<Select.Content>
 								{#each groups as g}
@@ -142,15 +152,49 @@
 				</form>
 			{/if}
 
-			<Separator class="my-10" />
+			<Separator class="my-6" />
+			<Button
+				variant="secondary"
+				on:click={handleRefresh}
+				disabled={refreshing || selectedFeed.suspended}
+			>
+				{#if refreshing}
+					<Loader2Icon class="mr-2 h-4 w-4 animate-spin" />
+				{:else}
+					Refresh
+				{/if}
+			</Button>
+
+			<Separator class="my-6" />
 			<div class="flex flex-col w-full gap-4">
-				<Button variant="secondary" on:click={handleRefresh} disabled={refreshing}>
-					{#if refreshing}
-						<Loader2Icon class="mr-2 h-4 w-4 animate-spin" />
-					{:else}
-						Refresh
-					{/if}
-				</Button>
+				<AlertDialog.Root>
+					<AlertDialog.Trigger asChild let:builder>
+						<Button builders={[builder]} variant="secondary">
+							{#if selectedFeed.suspended}
+								Resume
+							{:else}
+								Suspend
+							{/if}
+						</Button>
+					</AlertDialog.Trigger>
+					<AlertDialog.Content>
+						<AlertDialog.Header>
+							<AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+							<AlertDialog.Description>
+								{#if selectedFeed.suspended}
+									This will resume the refreshing of <b>{selectedFeed.name}</b>.
+								{:else}
+									This will suspend the refreshing of <b>{selectedFeed.name}</b> untill you resume it.
+								{/if}
+							</AlertDialog.Description>
+						</AlertDialog.Header>
+						<AlertDialog.Footer>
+							<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+							<AlertDialog.Action on:click={handleToggleSuspended}>Continue</AlertDialog.Action>
+						</AlertDialog.Footer>
+					</AlertDialog.Content>
+				</AlertDialog.Root>
+
 				<AlertDialog.Root>
 					<AlertDialog.Trigger asChild let:builder>
 						<Button builders={[builder]} variant="destructive">Delete</Button>

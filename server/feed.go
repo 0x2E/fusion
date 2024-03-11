@@ -54,6 +54,7 @@ func (f Feed) All() (*RespFeedAll, error) {
 			Name:      v.Name,
 			Link:      v.Link,
 			Failure:   v.Failure,
+			Suspended: v.Suspended,
 			UpdatedAt: v.UpdatedAt,
 			Group:     GroupForm{ID: v.GroupID, Name: v.Group.Name},
 		})
@@ -70,11 +71,12 @@ func (f Feed) Get(req *ReqFeedGet) (*RespFeedGet, error) {
 	}
 
 	return &RespFeedGet{
-		ID:      data.ID,
-		Name:    data.Name,
-		Link:    data.Link,
-		Failure: data.Failure,
-		Group:   GroupForm{ID: data.GroupID, Name: data.Group.Name},
+		ID:        data.ID,
+		Name:      data.Name,
+		Link:      data.Link,
+		Failure:   data.Failure,
+		Suspended: data.Suspended,
+		Group:     GroupForm{ID: data.GroupID, Name: data.Group.Name},
 	}, nil
 }
 
@@ -154,8 +156,9 @@ func (f Feed) CheckValidity(req *ReqFeedCheckValidity) (*RespFeedCheckValidity, 
 
 func (f Feed) Update(req *ReqFeedUpdate) error {
 	data := &model.Feed{
-		Name: req.Name,
-		Link: req.Link,
+		Name:      req.Name,
+		Link:      req.Link,
+		Suspended: req.Suspended,
 	}
 	if req.GroupID != nil {
 		data.GroupID = *req.GroupID

@@ -72,8 +72,8 @@ func (p *Puller) PullAll(ctx context.Context) error {
 	defer close(routinePool)
 	wg := sync.WaitGroup{}
 	for _, f := range feeds {
-		if f.Failure == nil || *f.Failure != "" {
-			// skip failed and unresolved feeds
+		if f.IsSuspended() || f.IsFailed() {
+			log.Printf("skip %d\n", f.ID)
 			continue
 		}
 

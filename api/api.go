@@ -28,6 +28,14 @@ func Run() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	r := echo.New()
+
+	if conf.Debug {
+		r.Debug = true
+		r.Use(middleware.BodyDump(func(c echo.Context, reqBody, resBody []byte) {
+			r.Logger.Debugf("req: %s\nresp: %s\n", reqBody, resBody)
+		}))
+	}
+
 	r.HideBanner = true
 	r.HTTPErrorHandler = errorHandler
 	r.Validator = newCustomValidator()

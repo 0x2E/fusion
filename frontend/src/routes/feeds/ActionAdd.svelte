@@ -23,6 +23,7 @@
 			link: '',
 			failure: '',
 			updated_at: new Date(),
+			suspended: false,
 			group: { id: groups[0].id, name: groups[0].name }
 		};
 	}

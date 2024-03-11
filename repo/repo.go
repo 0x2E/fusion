@@ -56,4 +56,8 @@ func Init() {
 		FirstOrCreate(&model.Group{ID: 1, Name: &defaultGroup}).Error; err != nil {
 		panic(err)
 	}
+
+	if conf.Debug {
+		DB = DB.Debug()
+	}
 }

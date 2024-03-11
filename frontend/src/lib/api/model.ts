@@ -9,6 +9,7 @@ export type Feed = {
 	link: string;
 	failure: string;
 	updated_at: Date;
+	suspended: boolean;
 	group: Group;
 };
 

@@ -31,9 +31,16 @@ export async function createFeed(data: {
 	});
 }
 
-export async function updateFeed(data: Feed) {
-	return await api.patch('feeds/' + data.id, {
-		json: { name: data.name, link: data.link, group_id: data.group.id }
+export type FeedUpdateForm = {
+	name?: string;
+	link?: string;
+	suspended?: boolean;
+	group_id?: number;
+};
+
+export async function updateFeed(id: number, data: FeedUpdateForm) {
+	return await api.patch('feeds/' + id, {
+		json: data
 	});
 }
 
