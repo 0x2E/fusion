@@ -57,7 +57,7 @@
 <p class="text-sm text-muted-foreground">
 	{data.feed.name} / {moment(data.pub_date).format('lll')}
 </p>
-<ItemAction data={{ id: data.id, link: data.link, unread: data.unread, bookmark: data.bookmark }} />
+<ItemAction bind:data />
 <article class="mt-6 prose dark:prose-invert prose-lg max-w-full">
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 	{@html data.content}

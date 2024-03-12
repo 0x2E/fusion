@@ -12,14 +12,9 @@
 	import Button from './ui/button/button.svelte';
 	import { updateItem } from '$lib/api/item';
 	import { toast } from 'svelte-sonner';
-	import { invalidateAll } from '$app/navigation';
+	import type { Item } from '$lib/api/model';
 
-	export let data: {
-		id: number;
-		link: string;
-		unread: boolean;
-		bookmark: boolean;
-	};
+	export let data: Item;
 
 	function getActions(
 		unread: boolean,
@@ -41,11 +36,22 @@
 	}
 	$: actions = getActions(data.unread, data.bookmark);
 
+	// TODO: use invalidateAll after refactoring ItemAction's parents with page load
 	async function handleToggleUnread(e: Event) {
 		e.preventDefault();
 		try {
 			await updateItem(data.id, { unread: !data.unread });
-			invalidateAll();
+			data.unread = !data.unread;
+		} catch (e) {
+			toast.error((e as Error).message);
+		}
+	}
+
+	async function handleToggleBookmark(e: Event) {
+		e.preventDefault();
+		try {
+			await updateItem(data.id, { bookmark: !data.bookmark });
+			data.bookmark = !data.bookmark;
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
@@ -55,16 +61,6 @@
 		e.preventDefault();
 		handleToggleUnread(e);
 		window.open(data.link, '_target');
-	}
-
-	async function handleToggleBookmark(e: Event) {
-		e.preventDefault();
-		try {
-			await updateItem(data.id, { bookmark: !data.bookmark });
-			invalidateAll();
-		} catch (e) {
-			toast.error((e as Error).message);
-		}
 	}
 </script>
 

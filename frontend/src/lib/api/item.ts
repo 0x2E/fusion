@@ -1,7 +1,7 @@
 import { api } from './api';
 import type { Item } from './model';
 
-type listOptions = {
+export type ListFilter = {
 	count?: number;
 	offset?: number;
 	keyword?: string;
@@ -10,7 +10,11 @@ type listOptions = {
 	bookmark?: boolean;
 };
 
-export async function listItems(options?: listOptions) {
+export async function listItems(options?: ListFilter) {
+	if (options) {
+		// trip undefinded fields: https://github.com/sindresorhus/ky/issues/293
+		options = JSON.parse(JSON.stringify(options));
+	}
 	return api
 		.get('items', {
 			searchParams: options
