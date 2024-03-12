@@ -10,9 +10,9 @@
 	import type { Icon } from 'lucide-svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import Button from './ui/button/button.svelte';
-	import { updateItem } from '$lib/api/item';
 	import { toast } from 'svelte-sonner';
 	import type { Item } from '$lib/api/model';
+	import { updateBookmark, updateUnread } from '$lib/api/item';
 
 	export let data: Item;
 
@@ -40,7 +40,7 @@
 	async function handleToggleUnread(e: Event) {
 		e.preventDefault();
 		try {
-			await updateItem(data.id, { unread: !data.unread });
+			await updateUnread([data.id], !data.unread);
 			data.unread = !data.unread;
 		} catch (e) {
 			toast.error((e as Error).message);
@@ -50,7 +50,7 @@
 	async function handleToggleBookmark(e: Event) {
 		e.preventDefault();
 		try {
-			await updateItem(data.id, { bookmark: !data.bookmark });
+			await updateBookmark(data.id, !data.bookmark);
 			data.bookmark = !data.bookmark;
 		} catch (e) {
 			toast.error((e as Error).message);

@@ -113,7 +113,8 @@ func Run() {
 	itemAPIHandler := newItemAPI(server.NewItem(repo.NewItem(repo.DB)))
 	items.GET("", itemAPIHandler.List)
 	items.GET("/:id", itemAPIHandler.Get)
-	items.PATCH("/:id", itemAPIHandler.Update)
+	items.PATCH("/:id/bookmark", itemAPIHandler.UpdateBookmark)
+	items.PATCH("/-/unread", itemAPIHandler.UpdateUnread)
 	items.DELETE("/:id", itemAPIHandler.Delete)
 
 	r.Logger.Fatal(r.Start(fmt.Sprintf("%s:%d", conf.Conf.Host, conf.Conf.Port)))

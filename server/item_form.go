@@ -38,12 +38,16 @@ type ReqItemGet struct {
 
 type RespItemGet ItemForm
 
-type ReqItemUpdate struct {
-	ID       uint  `param:"id" validate:"required"`
-	Unread   *bool `json:"unread"`
-	Bookmark *bool `json:"bookmark"`
-}
-
 type ReqItemDelete struct {
 	ID uint `param:"id" validate:"required"`
+}
+
+type ReqItemUpdateUnread struct {
+	IDs    []uint `json:"ids" validate:"required"`
+	Unread *bool  `json:"unread" validate:"required"`
+}
+
+type ReqItemUpdateBookmark struct {
+	ID       uint  `param:"id" validate:"required"`
+	Bookmark *bool `json:"bookmark" validate:"required"`
 }

@@ -78,7 +78,7 @@ func (i Item) DeleteByFeed(feedID uint) error {
 	return i.db.Where("feed_id = ?", feedID).Delete(&model.Item{}).Error
 }
 
-func (i Item) IdentityExist(feedID uint, guid, link, title string) (bool, error) {
+func (i Item) IdentityExist(feedID uint, guid, link, title string) (bool, error) { // TODO: optimize
 	err := i.db.Model(&model.Item{}).
 		Where("feed_id = ? AND (guid = ? OR link = ? OR title = ?)", feedID, guid, link, title).
 		First(&model.Item{}).Error
@@ -88,4 +88,12 @@ func (i Item) IdentityExist(feedID uint, guid, link, title string) (bool, error)
 		}
 	}
 	return true, err
+}
+
+func (i Item) UpdateUnread(ids []uint, unread *bool) error {
+	return i.db.Model(&model.Item{}).Where("id IN ?", ids).Update("unread", unread).Error
+}
+
+func (i Item) UpdateBookmark(id uint, bookmark *bool) error {
+	return i.db.Model(&model.Item{}).Where("id = ?", id).Update("bookmark", bookmark).Error
 }

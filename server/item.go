@@ -10,8 +10,9 @@ import (
 type ItemRepo interface {
 	List(filter repo.ItemFilter, offset, count *int) ([]*model.Item, int, error)
 	Get(id uint) (*model.Item, error)
-	Update(id uint, item *model.Item) error
 	Delete(id uint) error
+	UpdateUnread(ids []uint, unread *bool) error
+	UpdateBookmark(id uint, bookmark *bool) error
 }
 
 type Item struct {
@@ -82,13 +83,14 @@ func (i Item) Get(req *ReqItemGet) (*RespItemGet, error) {
 	}, nil
 }
 
-func (i Item) Update(req *ReqItemUpdate) error {
-	return i.repo.Update(req.ID, &model.Item{
-		Unread:   req.Unread,
-		Bookmark: req.Bookmark,
-	})
-}
-
 func (i Item) Delete(req *ReqItemDelete) error {
 	return i.repo.Delete(req.ID)
+}
+
+func (i Item) UpdateUnread(req *ReqItemUpdateUnread) error {
+	return i.repo.UpdateUnread(req.IDs, req.Unread)
+}
+
+func (i Item) UpdateBookmark(req *ReqItemUpdateBookmark) error {
+	return i.repo.UpdateBookmark(req.ID, req.Bookmark)
 }

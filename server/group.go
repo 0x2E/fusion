@@ -65,7 +65,7 @@ func (g Group) Update(req *ReqGroupUpdate) error {
 	err := g.groupRepo.Update(req.ID, &model.Group{
 		Name: req.Name,
 	})
-	if errors.Is(err, gorm.ErrDuplicatedKey) {
+	if errors.Is(err, gorm.ErrDuplicatedKey) { // TODO: errDup should throw 400 http code
 		err = errors.New("name is not allowed to be the same as other groups")
 	}
 	return err

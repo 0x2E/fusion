@@ -26,14 +26,19 @@ export async function getItem(id: number) {
 	return api.get('items/' + id).json<Item>();
 }
 
-export async function updateItem(
-	id: number,
-	data: {
-		unread?: boolean;
-		bookmark?: boolean;
-	}
-) {
-	return api.patch('items/' + id, {
-		json: data
+export async function updateUnread(ids: number[], unread: boolean) {
+	return api.patch('items/-/unread', {
+		json: {
+			ids: ids,
+			unread: unread
+		}
+	});
+}
+
+export async function updateBookmark(id: number, bookmark: boolean) {
+	return api.patch('items/' + id + '/bookmark', {
+		json: {
+			bookmark: bookmark
+		}
 	});
 }
