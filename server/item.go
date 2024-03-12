@@ -39,13 +39,14 @@ func (i Item) List(req *ReqItemList) (*RespItemList, error) {
 	items := make([]*ItemForm, 0, len(data))
 	for _, v := range data {
 		items = append(items, &ItemForm{
-			ID:       v.ID,
-			GUID:     v.GUID,
-			Title:    v.Title,
-			Link:     v.Link,
-			PubDate:  v.PubDate,
-			Unread:   v.Unread,
-			Bookmark: v.Bookmark,
+			ID:        v.ID,
+			GUID:      v.GUID,
+			Title:     v.Title,
+			Link:      v.Link,
+			Unread:    v.Unread,
+			Bookmark:  v.Bookmark,
+			PubDate:   v.PubDate,
+			UpdatedAt: &v.UpdatedAt,
 			Feed: ItemFeed{
 				ID:   v.Feed.ID,
 				Name: v.Feed.Name,
@@ -65,14 +66,15 @@ func (i Item) Get(req *ReqItemGet) (*RespItemGet, error) {
 	}
 
 	return &RespItemGet{
-		ID:       data.ID,
-		GUID:     data.GUID,
-		Title:    data.Title,
-		Link:     data.Link,
-		Content:  data.Content,
-		PubDate:  data.PubDate,
-		Unread:   data.Unread,
-		Bookmark: data.Bookmark,
+		ID:        data.ID,
+		GUID:      data.GUID,
+		Title:     data.Title,
+		Link:      data.Link,
+		Content:   data.Content,
+		Unread:    data.Unread,
+		Bookmark:  data.Bookmark,
+		PubDate:   data.PubDate,
+		UpdatedAt: &data.UpdatedAt,
 		Feed: ItemFeed{
 			ID:   data.Feed.ID,
 			Name: data.Feed.Name,

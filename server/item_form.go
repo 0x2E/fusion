@@ -7,15 +7,16 @@ type ItemFeed struct {
 	Name *string `json:"name"`
 }
 type ItemForm struct {
-	ID       uint       `json:"id"`
-	Title    *string    `json:"title"`
-	Link     *string    `json:"link"`
-	GUID     *string    `json:"guid"`
-	Content  *string    `json:"content"`
-	PubDate  *time.Time `json:"pub_date"`
-	Unread   *bool      `json:"unread"`
-	Bookmark *bool      `json:"bookmark"`
-	Feed     ItemFeed   `json:"feed"`
+	ID        uint       `json:"id"`
+	Title     *string    `json:"title"`
+	Link      *string    `json:"link"`
+	GUID      *string    `json:"guid"`
+	Content   *string    `json:"content"`
+	Unread    *bool      `json:"unread"`
+	Bookmark  *bool      `json:"bookmark"`
+	PubDate   *time.Time `json:"pub_date"`
+	UpdatedAt *time.Time `json:"updated_at"`
+	Feed      ItemFeed   `json:"feed"`
 }
 
 type ReqItemList struct {

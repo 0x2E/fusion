@@ -18,8 +18,9 @@ export type Item = {
 	title: string;
 	link: string;
 	content: string;
-	pub_date: Date;
 	unread: boolean;
 	bookmark: boolean;
+	pub_date: Date;
+	updated_at: Date;
 	feed: { id: number; name: string };
 };

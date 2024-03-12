@@ -33,7 +33,9 @@
 	async function fetchItems(filter: ListFilter) {
 		try {
 			const resp = await listItems(filter);
-			data = resp.items;
+			data = resp.items.sort(
+				(a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+			);
 			total = resp.total;
 		} catch (e) {
 			toast.error((e as Error).message);
