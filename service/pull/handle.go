@@ -26,22 +26,35 @@ func (p *Puller) do(ctx context.Context, f *model.Feed) error {
 	if fetched == nil {
 		return nil
 	}
-	newItemsCount := 0
 	isLatestBuild := f.LastBuild != nil && fetched.UpdatedParsed != nil &&
 		fetched.UpdatedParsed.Equal(*f.LastBuild)
 	if len(fetched.Items) != 0 && !isLatestBuild {
-		newItems, err := filterOutNewItems(f.ID, fetched, p.itemRepo)
-		if err != nil {
+		data := make([]*model.Item, 0, len(fetched.Items))
+		for _, i := range fetched.Items {
+			unread := true
+			content := i.Content
+			if content == "" {
+				content = i.Description
+			}
+			guid := i.GUID
+			if guid == "" {
+				guid = i.Link
+			}
+			data = append(data, &model.Item{
+				Title:   &i.Title,
+				GUID:    &guid,
+				Link:    &i.Link,
+				Content: &content,
+				PubDate: i.PublishedParsed,
+				Unread:  &unread,
+				FeedID:  f.ID,
+			})
+		}
+		if err := p.itemRepo.Creates(data); err != nil {
 			return err
 		}
-		newItemsCount = len(newItems)
-		if len(newItems) != 0 {
-			if err := p.itemRepo.Creates(newItems); err != nil {
-				return err
-			}
-		}
 	}
-	log.Printf("fetched: %d, new: %d\n", len(fetched.Items), newItemsCount)
+	log.Printf("fetched: %d\n", len(fetched.Items))
 	return p.feedRepo.Update(f.ID, &model.Feed{
 		LastBuild: fetched.PublishedParsed,
 		Failure:   &failure,
@@ -71,34 +84,4 @@ func Fetch(ctx context.Context, link string) (*gofeed.Feed, error) {
 	}
 
 	return gofeed.NewParser().ParseString(string(data))
-}
-
-func filterOutNewItems(feedID uint, fetched *gofeed.Feed, r ItemRepo) ([]*model.Item, error) {
-	newItems := make([]*model.Item, 0)
-	for _, fetchedItem := range fetched.Items {
-		exist, err := r.IdentityExist(feedID, fetchedItem.GUID, fetched.Link, fetched.Title)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		if exist {
-			continue
-		}
-		unread := true
-		content := fetchedItem.Content
-		if content == "" {
-			content = fetchedItem.Description
-		}
-		newItems = append(newItems, &model.Item{
-			Title:   &fetchedItem.Title,
-			GUID:    &fetchedItem.GUID,
-			Link:    &fetchedItem.Link,
-			Content: &content,
-			PubDate: fetchedItem.PublishedParsed,
-			Unread:  &unread,
-			FeedID:  feedID,
-		})
-	}
-
-	return newItems, nil
 }

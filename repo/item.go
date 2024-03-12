@@ -1,11 +1,10 @@
 package repo
 
 import (
-	"errors"
-
 	"github.com/0x2e/fusion/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func NewItem(db *gorm.DB) *Item {
@@ -64,7 +63,9 @@ func (i Item) Get(id uint) (*model.Item, error) {
 }
 
 func (i Item) Creates(items []*model.Item) error {
-	return i.db.Create(items).Error
+	return i.db.Clauses(clause.OnConflict{
+		DoNothing: true,
+	}).Create(items).Error
 }
 
 func (i Item) Update(id uint, item *model.Item) error {
@@ -77,18 +78,6 @@ func (i Item) Delete(id uint) error {
 
 func (i Item) DeleteByFeed(feedID uint) error {
 	return i.db.Where("feed_id = ?", feedID).Delete(&model.Item{}).Error
-}
-
-func (i Item) IdentityExist(feedID uint, guid, link, title string) (bool, error) { // TODO: optimize
-	err := i.db.Model(&model.Item{}).
-		Where("feed_id = ? AND (guid = ? OR link = ? OR title = ?)", feedID, guid, link, title).
-		First(&model.Item{}).Error
-	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return false, nil
-		}
-	}
-	return true, err
 }
 
 func (i Item) UpdateUnread(ids []uint, unread *bool) error {

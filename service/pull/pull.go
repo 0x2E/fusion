@@ -19,7 +19,6 @@ type FeedRepo interface {
 
 type ItemRepo interface {
 	Creates(items []*model.Item) error
-	IdentityExist(feedID uint, guid, link, title string) (bool, error)
 }
 
 type Puller struct {
