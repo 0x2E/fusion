@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/pkg/errorx"
+	"github.com/0x2e/fusion/repo"
 )
 
 type FeedRepo interface {
@@ -59,7 +59,7 @@ func (p *Puller) PullAll(ctx context.Context) error {
 	defer cancel()
 	feeds, err := p.feedRepo.All()
 	if err != nil {
-		if !errors.Is(err, errorx.ErrNotFound) {
+		if !errors.Is(err, repo.ErrNotFound) {
 			log.Println(err)
 		}
 		return err

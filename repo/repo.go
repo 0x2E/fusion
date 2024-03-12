@@ -5,7 +5,6 @@ import (
 
 	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/pkg/errorx"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -29,23 +28,37 @@ func Init() {
 
 	if err := DB.Callback().Query().After("*").Register("convert_error", func(db *gorm.DB) {
 		if errors.Is(db.Error, gorm.ErrRecordNotFound) {
-			db.Error = errorx.ErrNotFound
+			db.Error = ErrNotFound
 		}
 	}); err != nil {
 		panic(err)
 	}
 
-	if err := DB.Callback().Update().After("*").Register("check_rowsaffected", func(db *gorm.DB) {
-		if db.Error == nil && db.RowsAffected == 0 {
-			db.Error = errorx.ErrNotFound
+	if err := DB.Callback().Create().After("*").Register("convert_error", func(db *gorm.DB) {
+		if errors.Is(db.Error, gorm.ErrDuplicatedKey) {
+			db.Error = ErrDuplicatedKey
 		}
 	}); err != nil {
 		panic(err)
 	}
 
-	if err := DB.Callback().Delete().After("*").Register("check_rowsaffected", func(db *gorm.DB) {
+	if err := DB.Callback().Update().After("*").Register("convert_error", func(db *gorm.DB) {
 		if db.Error == nil && db.RowsAffected == 0 {
-			db.Error = errorx.ErrNotFound
+			db.Error = ErrNotFound
+		}
+		if errors.Is(db.Error, gorm.ErrDuplicatedKey) {
+			db.Error = ErrDuplicatedKey
+		}
+	}); err != nil {
+		panic(err)
+	}
+
+	if err := DB.Callback().Delete().After("*").Register("convert_error", func(db *gorm.DB) {
+		if db.Error == nil && db.RowsAffected == 0 {
+			db.Error = ErrNotFound
+		}
+		if errors.Is(db.Error, gorm.ErrDuplicatedKey) {
+			db.Error = ErrDuplicatedKey
 		}
 	}); err != nil {
 		panic(err)

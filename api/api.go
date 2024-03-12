@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/frontend"
-	"github.com/0x2e/fusion/pkg/errorx"
 	"github.com/0x2e/fusion/repo"
 	"github.com/0x2e/fusion/server"
 
@@ -121,8 +121,12 @@ func Run() {
 }
 
 func errorHandler(err error, c echo.Context) {
-	if err == errorx.ErrNotFound {
-		err = echo.NewHTTPError(http.StatusNotFound, "Resource does not exists")
+	if errors.Is(err, repo.ErrNotFound) {
+		err = echo.NewHTTPError(http.StatusNotFound, "Resource not exists")
+	} else {
+		if bizerr, ok := err.(server.BizError); ok {
+			err = echo.NewHTTPError(int(bizerr.HTTPCode), bizerr.FEMessage)
+		}
 	}
 
 	c.Echo().DefaultHTTPErrorHandler(err, c)

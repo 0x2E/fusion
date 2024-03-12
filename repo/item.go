@@ -1,8 +1,9 @@
 package repo
 
 import (
+	"errors"
+
 	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/pkg/errorx"
 
 	"gorm.io/gorm"
 )
@@ -83,7 +84,7 @@ func (i Item) IdentityExist(feedID uint, guid, link, title string) (bool, error)
 		Where("feed_id = ? AND (guid = ? OR link = ? OR title = ?)", feedID, guid, link, title).
 		First(&model.Item{}).Error
 	if err != nil {
-		if err == errorx.ErrNotFound {
+		if errors.Is(err, ErrNotFound) {
 			return false, nil
 		}
 	}

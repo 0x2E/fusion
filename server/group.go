@@ -2,10 +2,10 @@ package server
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/0x2e/fusion/model"
-
-	"gorm.io/gorm"
+	"github.com/0x2e/fusion/repo"
 )
 
 //go:generate mockgen -destination=group_mock.go -source=group.go -package=server
@@ -55,8 +55,8 @@ func (g Group) Create(req *ReqGroupCreate) error {
 		Name: req.Name,
 	}
 	err := g.groupRepo.Create(newGroup)
-	if errors.Is(err, gorm.ErrDuplicatedKey) {
-		err = errors.New("name is not allowed to be the same as other groups")
+	if errors.Is(err, repo.ErrDuplicatedKey) {
+		err = NewBizError(err, http.StatusBadRequest, "name is not allowed to be the same as other groups")
 	}
 	return err
 }
@@ -65,8 +65,8 @@ func (g Group) Update(req *ReqGroupUpdate) error {
 	err := g.groupRepo.Update(req.ID, &model.Group{
 		Name: req.Name,
 	})
-	if errors.Is(err, gorm.ErrDuplicatedKey) { // TODO: errDup should throw 400 http code
-		err = errors.New("name is not allowed to be the same as other groups")
+	if errors.Is(err, repo.ErrDuplicatedKey) {
+		err = NewBizError(err, http.StatusBadRequest, "name is not allowed to be the same as other groups")
 	}
 	return err
 }

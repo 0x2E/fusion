@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/url"
 	"sync"
 	"time"
@@ -11,8 +12,6 @@ import (
 	"github.com/0x2e/fusion/repo"
 	"github.com/0x2e/fusion/service/pull"
 	"github.com/0x2e/fusion/service/sniff"
-
-	"gorm.io/gorm"
 )
 
 //go:generate mockgen -destination=feed_mock.go -source=feed.go -package=server
@@ -94,8 +93,8 @@ func (f Feed) Create(req *ReqFeedCreate) error {
 	}
 
 	if err := f.feedRepo.Create(feeds); err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			err = errors.New("link is not allowed to be the same as other feeds")
+		if errors.Is(err, repo.ErrDuplicatedKey) {
+			err = NewBizError(err, http.StatusBadRequest, "link is not allowed to be the same as other feeds")
 		}
 		return err
 	}
@@ -164,8 +163,8 @@ func (f Feed) Update(req *ReqFeedUpdate) error {
 		data.GroupID = *req.GroupID
 	}
 	err := f.feedRepo.Update(req.ID, data)
-	if errors.Is(err, gorm.ErrDuplicatedKey) {
-		err = errors.New("link is not allowed to be the same as other feeds")
+	if errors.Is(err, repo.ErrDuplicatedKey) {
+		err = NewBizError(err, http.StatusBadRequest, "link is not allowed to be the same as other feeds")
 	}
 	return err
 }
