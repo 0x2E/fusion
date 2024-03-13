@@ -24,7 +24,7 @@ type ItemFilter struct {
 	Bookmark *bool
 }
 
-func (i Item) List(filter ItemFilter, offset, count *int) ([]*model.Item, int, error) {
+func (i Item) List(filter ItemFilter, page, pageSize int) ([]*model.Item, int, error) {
 	var total int64
 	var res []*model.Item
 	db := i.db.Model(&model.Item{})
@@ -46,13 +46,8 @@ func (i Item) List(filter ItemFilter, offset, count *int) ([]*model.Item, int, e
 		return nil, 0, err
 	}
 
-	if offset != nil {
-		db = db.Offset(*offset)
-	}
-	if count != nil {
-		db = db.Limit(*count)
-	}
-	err = db.Order("items.created_at desc").Joins("Feed").Find(&res).Error
+	err = db.Order("items.created_at desc").Joins("Feed").
+		Offset((page - 1) * pageSize).Limit(pageSize).Find(&res).Error
 	return res, int(total), err
 }
 

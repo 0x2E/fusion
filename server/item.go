@@ -8,7 +8,7 @@ import (
 //go:generate mockgen -destination=item_mock.go -source=item.go -package=server
 
 type ItemRepo interface {
-	List(filter repo.ItemFilter, offset, count *int) ([]*model.Item, int, error)
+	List(filter repo.ItemFilter, page, pageSize int) ([]*model.Item, int, error)
 	Get(id uint) (*model.Item, error)
 	Delete(id uint) error
 	UpdateUnread(ids []uint, unread *bool) error
@@ -32,7 +32,13 @@ func (i Item) List(req *ReqItemList) (*RespItemList, error) {
 		Unread:   req.Unread,
 		Bookmark: req.Bookmark,
 	}
-	data, total, err := i.repo.List(filter, req.Offset, req.Count)
+	if req.Page == 0 {
+		req.Page = 1
+	}
+	if req.PageSize == 0 {
+		req.PageSize = 10
+	}
+	data, total, err := i.repo.List(filter, req.Page, req.PageSize)
 	if err != nil {
 		return nil, err
 	}

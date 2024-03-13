@@ -53,12 +53,8 @@ cd build
 ./fusion
 ```
 
-## ToDo
-
-- PWA
-
 ## Credits
 
 - Frontend is built with: [Sveltekit](https://github.com/sveltejs/kit), [shadcn-svelte](https://github.com/huntabyte/shadcn-svelte)
-- Backend is built with: [Echo framework](https://github.com/labstack/echo), [GORM](https://github.com/go-gorm/gorm)
+- Backend is built with: [Echo](https://github.com/labstack/echo), [GORM](https://github.com/go-gorm/gorm)
 - Parsing feed with [gofeed](https://github.com/mmcdole/gofeed)

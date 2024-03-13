@@ -6,85 +6,84 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import * as Pagination from '$lib/components/ui/pagination';
 	import type { Feed, Item } from '$lib/api/model';
-	import { listItems, type ListFilter, updateUnread } from '$lib/api/item';
+	import { type ListFilter, updateUnread, parseURLtoFilter } from '$lib/api/item';
 	import { toast } from 'svelte-sonner';
-	import { allFeeds as fetchAllFeeds } from '$lib/api/feed';
-	import type { ComponentType } from 'svelte';
+	import { type ComponentType } from 'svelte';
 	import { CheckCheckIcon, type Icon } from 'lucide-svelte';
+	import { page } from '$app/stores';
+	import { goto, invalidateAll } from '$app/navigation';
 
-	export let filter: ListFilter = { offset: 0, count: 10 };
+	export let data: { feeds: Feed[]; items: { total: number; data: Item[] } };
+	data.items.data = data.items.data.sort(
+		(a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+	);
+	const filter = parseURLtoFilter($page.url.searchParams);
 
-	if (filter.offset === undefined) filter.offset = 0;
-	if (filter.count === undefined) filter.count = 10;
-
-	fetchAllFeeds()
-		.then((v) => {
-			allFeeds = v;
+	type feedOption = { label: string; value: number };
+	const defaultSelectedFeed: feedOption = { value: -1, label: 'All Feeds' };
+	const allFeeds: feedOption[] = data.feeds
+		.map((f) => {
+			return { value: f.id, label: f.name };
 		})
-		.catch((e) => {
-			toast.error('Failed to fetch feeds data: ' + e);
-		});
+		.concat(defaultSelectedFeed)
+		.sort((a, b) => a.value - b.value);
+	let selectedFeed = allFeeds.find((v) => v.value === filter.feed_id) || defaultSelectedFeed;
 
-	let data: Item[] = [];
-	let allFeeds: Feed[] = [];
-	let currentPage = 1;
-	let total = 0;
+	let currentPage = filter.page;
 
-	$: filter.offset = (currentPage - 1) * (filter?.count || 10);
-	$: fetchItems(filter);
+	$: updateSelectedFeed(selectedFeed);
+	function updateSelectedFeed(f: feedOption) {
+		console.log(f);
+		filter.feed_id = f.value !== -1 ? f.value : undefined;
+		filter.page = 1;
+		setURLSearchParams(filter);
+	}
 
-	async function fetchItems(filter: ListFilter) {
-		try {
-			const resp = await listItems(filter);
-			data = resp.items.sort(
-				(a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-			);
-			total = resp.total;
-		} catch (e) {
-			toast.error((e as Error).message);
+	$: updatePage(currentPage);
+	function updatePage(p: number) {
+		filter.page = p;
+		setURLSearchParams(filter);
+	}
+
+	function setURLSearchParams(f: ListFilter) {
+		const p = new URLSearchParams($page.url.searchParams);
+		for (let key in f) {
+			p.delete(key);
+			if (f[key] !== undefined) {
+				p.set(key, String(f[key]));
+			}
 		}
+		goto('?' + p.toString());
 	}
 
 	async function handleMarkAllAsRead() {
 		try {
-			const ids = data.map((v) => v.id);
+			const ids = data.items.data.map((v) => v.id);
 			await updateUnread(ids, false);
 			toast.success('Update successfully');
-			data.forEach((v) => (v.unread = false));
-			data = data;
+			invalidateAll();
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
 	}
 	const actions: { icon: ComponentType<Icon>; tooltip: string; handler: () => void }[] = [
-		{ icon: CheckCheckIcon, tooltip: 'Mark All As Read', handler: handleMarkAllAsRead }
+		{ icon: CheckCheckIcon, tooltip: 'Mark as Read', handler: handleMarkAllAsRead }
 	];
 </script>
 
 <div class="flex justify-between items-center w-full">
-	<Select.Root
-		items={allFeeds.map((v) => {
-			return { value: v.id.toString(), label: v.name };
-		})}
-		onSelectedChange={(v) => {
-			if (!v) return;
-			const feedID = parseInt(v.value);
-			filter.feed_id = feedID > 0 ? feedID : undefined;
-			filter.offset = 0;
-		}}
-	>
+	<Select.Root items={allFeeds} bind:selected={selectedFeed}>
 		<Select.Trigger class="w-[180px]">
 			<Select.Value placeholder="Filter by Feed" />
 		</Select.Trigger>
 		<Select.Content class="max-h-40 overflow-scroll">
-			<Select.Item value="all">All Feeds</Select.Item>
 			{#each allFeeds as feed}
-				<Select.Item value={feed.id}>{feed.name}</Select.Item>
+				<Select.Item value={feed.value}>{feed.label}</Select.Item>
 			{/each}
 		</Select.Content>
 	</Select.Root>
 
-	{#if data.length > 0}
+	{#if data.items.data.length > 0}
 		<div>
 			{#each actions as action}
 				<Tooltip.Root>
@@ -103,7 +102,7 @@
 </div>
 
 <ul class="mt-4">
-	{#each data as item}
+	{#each data.items.data as item}
 		<li class="group rounded-md">
 			<Button
 				href={'/items?id=' + item.id}
@@ -132,10 +131,10 @@
 	{/each}
 </ul>
 
-{#if total > (filter?.count || 10)}
+{#if data.items.total > filter.page_size}
 	<Pagination.Root
-		count={total}
-		perPage={filter.count}
+		count={data.items.total}
+		perPage={filter.page_size}
 		bind:page={currentPage}
 		let:pages
 		let:currentPage

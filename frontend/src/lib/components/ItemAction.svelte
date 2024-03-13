@@ -13,6 +13,7 @@
 	import { toast } from 'svelte-sonner';
 	import type { Item } from '$lib/api/model';
 	import { updateBookmark, updateUnread } from '$lib/api/item';
+	import { invalidateAll } from '$app/navigation';
 
 	export let data: Item;
 
@@ -36,12 +37,11 @@
 	}
 	$: actions = getActions(data.unread, data.bookmark);
 
-	// TODO: use invalidateAll after refactoring ItemAction's parents with page load
 	async function handleToggleUnread(e: Event) {
 		e.preventDefault();
 		try {
 			await updateUnread([data.id], !data.unread);
-			data.unread = !data.unread;
+			invalidateAll();
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
@@ -51,7 +51,7 @@
 		e.preventDefault();
 		try {
 			await updateBookmark(data.id, !data.bookmark);
-			data.bookmark = !data.bookmark;
+			invalidateAll();
 		} catch (e) {
 			toast.error((e as Error).message);
 		}

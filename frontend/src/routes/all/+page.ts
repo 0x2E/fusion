@@ -4,7 +4,7 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ url }) => {
 	const filter = parseURLtoFilter(url.searchParams);
-	filter.unread = true;
+	filter.unread = undefined;
 	filter.bookmark = undefined;
 	const feeds = await allFeeds();
 	const items = await listItems(filter);
