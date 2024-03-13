@@ -30,6 +30,7 @@
 	let selectedFeed = allFeeds.find((v) => v.value === filter.feed_id) || defaultSelectedFeed;
 
 	let currentPage = filter.page;
+	let pageSize = filter.page_size;
 
 	$: updateSelectedFeed(selectedFeed);
 	function updateSelectedFeed(f: feedOption) {
@@ -42,6 +43,17 @@
 	$: updatePage(currentPage);
 	function updatePage(p: number) {
 		filter.page = p;
+		setURLSearchParams(filter);
+	}
+
+	$: updatePageSize(pageSize);
+	function updatePageSize(size: number) {
+		if (size < 10 || size > 500) {
+			toast.warning('Page size is unreasonable');
+			return;
+		}
+		filter.page_size = size;
+		filter.page = 1;
 		setURLSearchParams(filter);
 	}
 
@@ -76,9 +88,9 @@
 		<Select.Trigger class="w-[180px]">
 			<Select.Value placeholder="Filter by Feed" />
 		</Select.Trigger>
-		<Select.Content class="max-h-40 overflow-scroll">
+		<Select.Content class="max-h-[200px] overflow-y-scroll">
 			{#each allFeeds as feed}
-				<Select.Item value={feed.value}>{feed.label}</Select.Item>
+				<Select.Item value={feed.value} class="truncate">{feed.label}</Select.Item>
 			{/each}
 		</Select.Content>
 	</Select.Root>
@@ -131,14 +143,14 @@
 	{/each}
 </ul>
 
-{#if data.items.total > filter.page_size}
+<div class="flex flex-row sm:flex-row items-center justify-center mt-8 gap-2">
 	<Pagination.Root
 		count={data.items.total}
 		perPage={filter.page_size}
 		bind:page={currentPage}
 		let:pages
 		let:currentPage
-		class="mt-8"
+		class="w-auto mx-0"
 	>
 		<Pagination.Content class="flex-wrap">
 			<Pagination.Item>
@@ -162,4 +174,20 @@
 			</Pagination.Item>
 		</Pagination.Content>
 	</Pagination.Root>
-{/if}
+
+	<Select.Root
+		items={[{ value: 10, label: '10' }]}
+		onSelectedChange={(v) => {
+			v && (pageSize = v.value);
+		}}
+	>
+		<Select.Trigger class="w-[110px]">
+			<Select.Value placeholder="Page Size" />
+		</Select.Trigger>
+		<Select.Content>
+			{#each [10, 25, 50, 100, 200, 500] as size}
+				<Select.Item value={size}>{size}</Select.Item>
+			{/each}
+		</Select.Content>
+	</Select.Root>
+</div>
