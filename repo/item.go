@@ -63,9 +63,10 @@ func (i Item) Get(id uint) (*model.Item, error) {
 }
 
 func (i Item) Creates(items []*model.Item) error {
+	// limit batchSize to fix 'too many SQL variable' error
 	return i.db.Clauses(clause.OnConflict{
 		DoNothing: true,
-	}).Create(items).Error
+	}).CreateInBatches(items, 5).Error
 }
 
 func (i Item) Update(id uint, item *model.Item) error {
