@@ -76,7 +76,7 @@ func (g Group) Delete(req *ReqGroupDelete) error {
 		return errors.New("cannot delete the default group")
 	}
 	// FIX: transaction
-	if err := g.feedRepo.UpdateGroupID(req.ID, 1); err != nil {
+	if err := g.feedRepo.UpdateGroupID(req.ID, 1); err != nil && !errors.Is(err, repo.ErrNotFound) {
 		return err
 	}
 	return g.groupRepo.Delete(req.ID)
