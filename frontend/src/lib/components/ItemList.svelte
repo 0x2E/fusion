@@ -1,5 +1,4 @@
 <script lang="ts">
-	import moment from 'moment';
 	import { Button } from './ui/button';
 	import ItemAction from './ItemAction.svelte';
 	import * as Select from '$lib/components/ui/select';
@@ -14,9 +13,6 @@
 	import { goto, invalidateAll } from '$app/navigation';
 
 	export let data: { feeds: Feed[]; items: { total: number; data: Item[] } };
-	data.items.data = data.items.data.sort(
-		(a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-	);
 	const filter = parseURLtoFilter($page.url.searchParams);
 
 	type feedOption = { label: string; value: number };
@@ -78,6 +74,19 @@
 			toast.error((e as Error).message);
 		}
 	}
+
+	function fromNow(d: Date) {
+		d = new Date(d);
+		const now = new Date();
+		const hours = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60));
+		const days = Math.floor(hours / 24);
+		const years = Math.floor(days / 365);
+		if (years > 0) return years + 'y';
+		if (days > 0) return days + 'd';
+		if (hours > 0) return hours + 'h';
+		return 'now';
+	}
+
 	const actions: { icon: ComponentType<Icon>; tooltip: string; handler: () => void }[] = [
 		{ icon: CheckCheckIcon, tooltip: 'Mark as Read', handler: handleMarkAllAsRead }
 	];
@@ -85,6 +94,8 @@
 
 <div class="flex justify-between items-center w-full">
 	<Select.Root items={allFeeds} bind:selected={selectedFeed}>
+		<!-- FIX: auto width -->
+		<!-- TODO: show relevant feeds only (api) -->
 		<Select.Trigger class="w-[180px]">
 			<Select.Value placeholder="Filter by Feed" />
 		</Select.Trigger>
@@ -118,18 +129,20 @@
 		<li class="group rounded-md">
 			<Button
 				href={'/items?id=' + item.id}
-				class="flex justify-between items-center gap-8 py-6"
+				class="flex justify-between items-center gap-2 py-6"
 				variant="ghost"
 			>
-				<div class="w-3/4 truncate text-lg font-medium">
+				<h2 class="truncate text-lg font-medium">
 					{item.title}
-				</div>
-				<div class="flex justify-between items-center w-1/4">
-					<div class="flex w-full justify-between text-sm text-muted-foreground group-hover:hidden">
-						<div class="truncate">{item.feed.name}</div>
-						<div class="truncate">
-							{moment(item.pub_date).fromNow(true)}
-						</div>
+				</h2>
+				<div class="flex justify-between items-center">
+					<div
+						class="flex justify-end w-full gap-2 text-sm text-muted-foreground group-hover:hidden"
+					>
+						<span class="w-14 truncate">{item.feed.name}</span>
+						<span class="w-10 truncate">
+							{fromNow(item.pub_date)}
+						</span>
 					</div>
 
 					<div class="w-full hidden group-hover:inline-flex justify-end">

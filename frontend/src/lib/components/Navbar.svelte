@@ -28,11 +28,12 @@
 		}
 		links = links;
 	}
+	// TODO: responsive navbar
 </script>
 
 <nav class="block w-full sm:mt-3 mb-6">
 	<div
-		class="flex justify-around items-center w-full sm:max-w-[600px] mx-auto px-6 py-4 sm:rounded-2xl shadow-md sm:border bg-background"
+		class="flex justify-around items-center w-full sm:max-w-[500px] mx-auto px-6 py-4 sm:rounded-2xl shadow-md sm:border bg-background"
 	>
 		<div class="flex items-center">
 			<img src="/favicon.png" alt="logo" class="w-10" />
@@ -43,8 +44,10 @@
 				<Button
 					variant="ghost"
 					href={l.url}
-					class={l.highlight ? 'bg-accent text-accent-foreground' : ''}>{l.label}</Button
+					class={l.highlight ? 'bg-accent text-accent-foreground' : ''}
 				>
+					{l.label}
+				</Button>
 			{/each}
 		</div>
 		<ThemeToggler />

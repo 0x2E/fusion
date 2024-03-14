@@ -53,12 +53,16 @@
 	<title>{data.title}</title>
 </svelte:head>
 
-<h1 class="text-3xl font-bold mb-4">{data.title}</h1>
-<p class="text-sm text-muted-foreground">
-	{data.feed.name} / {moment(data.pub_date).format('lll')}
-</p>
-<ItemAction bind:data />
-<article class="mt-6 prose dark:prose-invert prose-lg max-w-full">
-	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-	{@html data.content}
-</article>
+<div class="max-w-prose mx-auto">
+	<h1 class="text-3xl font-bold mb-4">{data.title}</h1>
+	<p class="text-sm text-muted-foreground">
+		{data.feed.name} / {moment(data.pub_date).format('lll')}
+	</p>
+	<ItemAction bind:data />
+
+	<!-- FIX: pre overflow: https://github.com/tailwindlabs/tailwindcss-typography/issues/96 -->
+	<article class="mt-6 mx-auto prose dark:prose-invert prose-lg">
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+		{@html data.content}
+	</article>
+</div>
