@@ -22,11 +22,11 @@
 	<title>Login</title>
 </svelte:head>
 
-<form on:submit={handleSubmit} class="max-w-[600px] mx-auto">
+<form on:submit={handleSubmit} class="max-w-[400px] mx-auto">
 	<h1 class="text-2xl font-bold text-center mt-10 mb-4">Login</h1>
-	<div class="space-y-2">
+	<div>
 		<Label for="password">Password</Label>
-		<Input name="password" bind:value={password} />
-		<Button type="submit" class="w-full">Login</Button>
+		<Input name="password" type="password" autocomplete="current-password" bind:value={password} />
+		<Button type="submit" class="w-full mt-4">Login</Button>
 	</div>
 </form>
