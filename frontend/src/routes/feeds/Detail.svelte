@@ -37,6 +37,7 @@
 				return selectedFeed.name + ' has been refreshed';
 			},
 			error: (error) => {
+				invalidateAll();
 				refreshing = false;
 				return 'Failed to refresh: ' + error;
 			}
@@ -75,13 +76,14 @@
 			toast.success('Update successfully');
 			invalidateAll();
 		} catch (e) {
+			invalidateAll();
 			toast.error((e as Error).message);
 		}
 	}
 </script>
 
 <Sheet.Root bind:open={show}>
-	<Sheet.Content class="w-full md:w-auto">
+	<Sheet.Content class="w-full md:min-w-[500px] md:w-auto">
 		<Sheet.Header>
 			<Sheet.Title>{selectedFeed.name}</Sheet.Title>
 			<Sheet.Description>
@@ -166,7 +168,7 @@
 			</Button>
 
 			<Separator class="my-6" />
-			<div class="flex flex-col w-full gap-4">
+			<div class="flex flex-col w-full gap-2">
 				<AlertDialog.Root>
 					<AlertDialog.Trigger asChild let:builder>
 						<Button builders={[builder]} variant="secondary">

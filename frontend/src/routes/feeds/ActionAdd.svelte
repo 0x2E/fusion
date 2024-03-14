@@ -84,7 +84,7 @@
 </script>
 
 <Sheet.Root bind:open>
-	<Sheet.Content class="w-full md:w-auto">
+	<Sheet.Content class="w-full md:min-w-[500px] md:w-auto">
 		<Sheet.Header>
 			<Sheet.Title>Add feed</Sheet.Title>
 			<Sheet.Description>

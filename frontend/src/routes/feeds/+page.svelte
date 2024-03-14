@@ -6,7 +6,7 @@
 	import PageHead from '$lib/components/PageHead.svelte';
 	import Detail from './Detail.svelte';
 	import Actions from './Actions.svelte';
-	import { AlertCircleIcon } from 'lucide-svelte';
+	import { AlertCircleIcon, CirclePauseIcon } from 'lucide-svelte';
 
 	export let data: PageData;
 
@@ -53,12 +53,19 @@
 				}) as f}
 					<li>
 						<Button
-							class="flex w-full justify-between items-center h-12 py-2 px-4 "
-							variant={!f.failure ? 'ghost' : 'destructive'}
+							class="flex items-center w-full h-12 py-2 px-4 text-start gap-2"
+							variant="ghost"
 							on:click={() => handleShowDetail(f)}
 						>
-							<span class="w-1/2 truncate font-medium">{f.name} </span>
-							<span class="w-1/2 text-sm truncate">{f.link}</span>
+							<span class="w-[18px]">
+								{#if f.suspended}
+									<CirclePauseIcon class="w-[18px]" />
+								{:else if f.failure}
+									<AlertCircleIcon class="w-[18px] fill-destructive text-destructive-foreground" />
+								{/if}
+							</span>
+							<span class="inline-block w-1/2 truncate">{f.name.repeat(5)}</span>
+							<span class="inline-block w-1/2 truncate">{f.link}</span>
 						</Button>
 					</li>
 				{/each}
