@@ -11,18 +11,10 @@
 	import { CheckCheckIcon, type Icon } from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import { goto, invalidateAll } from '$app/navigation';
+	import FeedsSelect from './FeedsSelect.svelte';
 
 	export let data: { feeds: Feed[]; items: { total: number; data: Item[] } };
 	let filter = parseURLtoFilter($page.url.searchParams);
-
-	type feedOption = { label: string; value: number };
-	const defaultSelectedFeed: feedOption = { value: -1, label: 'All Feeds' };
-	let allFeeds = data.feeds
-		.map((f) => {
-			return { value: f.id, label: f.name };
-		})
-		.concat(defaultSelectedFeed)
-		.sort((a, b) => a.value - b.value);
 
 	// NOTE: Svelte treats object as dirty, it may cause poorly reactive updates
 	// when using it in two-way binding.
@@ -33,11 +25,11 @@
 
 	let oldFilter = Object.assign({}, filter);
 
-	let selectedFeed = allFeeds.find((v) => v.value === filter?.feed_id) || defaultSelectedFeed;
+	let selectedFeed = filter?.feed_id ?? -1;
 	$: updateSelectedFeed(selectedFeed);
-	function updateSelectedFeed(f: feedOption) {
-		if (f.value == filter.feed_id) return;
-		filter.feed_id = f.value !== -1 ? f.value : undefined;
+	function updateSelectedFeed(id: number) {
+		if (id == filter.feed_id) return;
+		filter.feed_id = id !== -1 ? id : undefined;
 		filter.page = 1;
 		console.log(filter);
 	}
@@ -100,18 +92,7 @@
 </script>
 
 <div class="flex justify-between items-center w-full">
-	<Select.Root items={allFeeds} bind:selected={selectedFeed}>
-		<!-- FIX: auto width -->
-		<!-- TODO: show relevant feeds only (api) -->
-		<Select.Trigger class="w-[180px]">
-			<Select.Value placeholder="Filter by Feed" />
-		</Select.Trigger>
-		<Select.Content class="max-h-[200px] overflow-y-scroll">
-			{#each allFeeds as feed}
-				<Select.Item value={feed.value} class="truncate">{feed.label}</Select.Item>
-			{/each}
-		</Select.Content>
-	</Select.Root>
+	<FeedsSelect data={data.feeds} bind:selected={selectedFeed} />
 
 	{#if data.items.data.length > 0}
 		<div>

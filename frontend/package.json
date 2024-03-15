@@ -39,6 +39,7 @@
 		"@types/dompurify": "^3.0.5",
 		"bits-ui": "^0.19.7",
 		"clsx": "^2.1.0",
+		"cmdk-sv": "^0.0.15",
 		"dompurify": "^3.0.9",
 		"ky": "^1.2.2",
 		"lucide-svelte": "^0.357.0",
