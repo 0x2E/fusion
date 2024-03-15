@@ -111,7 +111,7 @@
 			{#each actions as action}
 				<Tooltip.Root>
 					<Tooltip.Trigger asChild let:builder>
-						<Button builders={[builder]} variant="ghost" on:click={action.handler} size="icon">
+						<Button builders={[builder]} on:click={action.handler} variant="outline" size="icon">
 							<svelte:component this={action.icon} size="20" />
 						</Button>
 					</Tooltip.Trigger>

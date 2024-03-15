@@ -40,17 +40,14 @@
 		{/each}
 	</Tabs.List>
 	{#each data.groups as g}
+        {@const gf = [
+          ...g.feeds.filter(v=> v.failure && !v.suspended),
+          ...g.feeds.filter(v=> !v.failure && !v.suspended),
+          ...g.feeds.filter(v=> v.suspended),
+        ]}
 		<Tabs.Content value={g.id.toString()}>
 			<ul>
-				{#each g.feeds.sort((a, b) => {
-					if (a.failure && !b.failure) {
-						return -1;
-					} else if (!a.failure && b.failure) {
-						return 1;
-					} else {
-						return a.id - b.id;
-					}
-				}) as f}
+				{#each gf as f}
 					<li>
 						<Button
 							class="flex items-center w-full h-12 py-2 px-4 text-start gap-2"

@@ -3,7 +3,7 @@ import type { Group } from './model';
 
 export async function allGroups() {
 	const resp = await api.get('groups').json<{ groups: Group[] }>();
-	return resp.groups;
+	return resp.groups.sort((a, b) => a.id - b.id);
 }
 
 export async function createGroup(name: string) {
