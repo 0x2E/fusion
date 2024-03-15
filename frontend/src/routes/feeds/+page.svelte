@@ -40,11 +40,11 @@
 		{/each}
 	</Tabs.List>
 	{#each data.groups as g}
-        {@const gf = [
-          ...g.feeds.filter(v=> v.failure && !v.suspended),
-          ...g.feeds.filter(v=> !v.failure && !v.suspended),
-          ...g.feeds.filter(v=> v.suspended),
-        ]}
+		{@const gf = [
+			...g.feeds.filter((v) => v.failure && !v.suspended),
+			...g.feeds.filter((v) => !v.failure && !v.suspended),
+			...g.feeds.filter((v) => v.suspended)
+		]}
 		<Tabs.Content value={g.id.toString()}>
 			<ul>
 				{#each gf as f}
@@ -61,7 +61,7 @@
 									<AlertCircleIcon class="w-[18px] fill-destructive text-destructive-foreground" />
 								{/if}
 							</span>
-							<span class="inline-block w-1/2 truncate">{f.name.repeat(5)}</span>
+							<span class="inline-block w-1/2 truncate">{f.name}</span>
 							<span class="inline-block w-1/2 truncate">{f.link}</span>
 						</Button>
 					</li>
