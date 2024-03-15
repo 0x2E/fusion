@@ -74,11 +74,10 @@
 		try {
 			await updateFeed(selectedFeed.id, data);
 			toast.success('Update successfully');
-			invalidateAll();
 		} catch (e) {
-			invalidateAll();
 			toast.error((e as Error).message);
 		}
+		invalidateAll();
 	}
 </script>
 

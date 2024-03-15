@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { Feed } from '$lib/api/model';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import PageHead from '$lib/components/PageHead.svelte';
@@ -11,12 +10,18 @@
 	export let data: PageData;
 
 	let showDetail = false;
-	let currentGroup = 1;
-	let selectedFeed: Feed;
+	let selectedGroup = 1;
+	let selectedFeedID: number;
 
-	function handleShowDetail(f: Feed) {
+	// ensure selectedFeed is reactive so that we can keep the info in detail
+	// up-to-date
+	$: selectedFeed = data.groups
+		.find((v) => v.id === selectedGroup)
+		?.feeds.find((v) => v.id === selectedFeedID);
+
+	function handleShowDetail(id: number) {
 		showDetail = true;
-		selectedFeed = f;
+		selectedFeedID = id;
 	}
 </script>
 
@@ -28,7 +33,10 @@
 	<Actions groups={data.groups} />
 </PageHead>
 
-<Tabs.Root value={currentGroup.toString()}>
+<Tabs.Root
+	value={selectedGroup.toString()}
+	onValueChange={(v) => v && (selectedGroup = parseInt(v))}
+>
 	<Tabs.List>
 		{#each data.groups.sort((a, b) => a.id - b.id) as g}
 			<Tabs.Trigger value={g.id.toString()}>
@@ -52,7 +60,7 @@
 						<Button
 							class="flex items-center w-full h-12 py-2 px-4 text-start gap-2"
 							variant="ghost"
-							on:click={() => handleShowDetail(f)}
+							on:click={() => handleShowDetail(f.id)}
 						>
 							<span class="w-[18px]">
 								{#if f.suspended}
