@@ -41,7 +41,9 @@
 			aria-expanded={open}
 			class="w-[200px] justify-between {className}"
 		>
-			{feeds.find((f) => f.value === String(selected))?.label ?? 'Select a feed...'}
+			<span class="truncate">
+				{feeds.find((f) => f.value === String(selected))?.label ?? 'Select a feed...'}
+			</span>
 			<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 		</Button>
 	</Popover.Trigger>
@@ -55,12 +57,12 @@
 				} else {
 					name = data.find((v) => v.id === parseInt(value))?.name ?? '';
 				}
-				return name.includes(search) ? 1 : 0;
+				return name.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
 			}}
 		>
 			<Command.Input placeholder="Search feed..." />
-			<Command.Empty>No feed found.</Command.Empty>
-			<Command.Group>
+			<Command.List class="h-[300px] overflow-y-scroll">
+				<Command.Empty>No feed found.</Command.Empty>
 				{#each feeds as f}
 					<Command.Item
 						value={String(f.value)}
@@ -69,11 +71,18 @@
 							closeAndFocusTrigger(ids.trigger);
 						}}
 					>
-						<Check class={cn('mr-2 h-4 w-4', String(selected) !== f.value && 'text-transparent')} />
-						{f.label}
+						<Check
+							class={cn(
+								'mr-2 h-4 w-4 flex-shrink-0',
+								String(selected) !== f.value && 'text-transparent'
+							)}
+						/>
+						<span class="truncate">
+							{f.label}
+						</span>
 					</Command.Item>
 				{/each}
-			</Command.Group>
+			</Command.List>
 		</Command.Root>
 	</Popover.Content>
 </Popover.Root>
