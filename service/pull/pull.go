@@ -42,7 +42,7 @@ func (p *Puller) Run() {
 	defer ticker.Stop()
 
 	for {
-		p.PullAll(ctx)
+		p.PullAll(ctx, false)
 
 		select {
 		case <-ctx.Done():
@@ -52,7 +52,7 @@ func (p *Puller) Run() {
 	}
 }
 
-func (p *Puller) PullAll(ctx context.Context) error {
+func (p *Puller) PullAll(ctx context.Context, includeFailed bool) error {
 	log.Println("start pull-all")
 	ctx, cancel := context.WithTimeout(ctx, (interval-3)*time.Minute)
 	defer cancel()
@@ -71,7 +71,7 @@ func (p *Puller) PullAll(ctx context.Context) error {
 	defer close(routinePool)
 	wg := sync.WaitGroup{}
 	for _, f := range feeds {
-		if f.IsSuspended() || f.IsFailed() {
+		if f.IsSuspended() || (f.IsFailed() && !includeFailed) {
 			log.Printf("skip %d\n", f.ID)
 			continue
 		}

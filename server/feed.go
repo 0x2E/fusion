@@ -122,7 +122,7 @@ func (f Feed) Create(req *ReqFeedCreate) error {
 }
 
 func (f Feed) CheckValidity(req *ReqFeedCheckValidity) (*RespFeedCheckValidity, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	validLinks := make([]ValidityItem, 0)
@@ -183,7 +183,7 @@ func (f Feed) Refresh(req *ReqFeedRefresh) error {
 		return pull.PullOne(*req.ID)
 	}
 	if req.All != nil && *req.All {
-		go pull.PullAll(context.Background())
+		go pull.PullAll(context.Background(), true)
 	}
 	return nil
 }

@@ -33,7 +33,6 @@ func NewSafeClient() *http.Client {
 	}
 
 	safeDialer := &net.Dialer{
-		Timeout: 3 * time.Second,
 		Control: socketControl,
 	}
 	safeTransport := &http.Transport{
@@ -43,6 +42,6 @@ func NewSafeClient() *http.Client {
 	}
 	return &http.Client{
 		Transport: safeTransport,
-		Timeout:   5 * time.Second,
+		Timeout:   10 * time.Second,
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/pkg/httpx"
@@ -54,7 +53,7 @@ func (p *Puller) do(ctx context.Context, f *model.Feed) error {
 			return err
 		}
 	}
-	log.Printf("fetched: %d\n", len(fetched.Items))
+	log.Printf("fetched: %d items\n", len(fetched.Items))
 	return p.feedRepo.Update(f.ID, &model.Feed{
 		LastBuild: fetched.PublishedParsed,
 		Failure:   &failure,
@@ -62,8 +61,6 @@ func (p *Puller) do(ctx context.Context, f *model.Feed) error {
 }
 
 func Fetch(ctx context.Context, link string) (*gofeed.Feed, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, link, nil)
 	if err != nil {
 		return nil, err

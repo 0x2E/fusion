@@ -20,7 +20,7 @@
 		<AlertDialog.Header>
 			<AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
 			<AlertDialog.Description>
-				This action will refresh <b>ALL</b> feeds. It may take some time.
+				This action will refresh <b>ALL(except suspended)</b> feeds. It may take some time.
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
