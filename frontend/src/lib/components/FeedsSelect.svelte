@@ -9,7 +9,7 @@
 	import { Button } from './ui/button';
 
 	export let data: Feed[];
-	export let selected: number;
+	export let selected: number | undefined;
 	export let className = '';
 	let open = false;
 

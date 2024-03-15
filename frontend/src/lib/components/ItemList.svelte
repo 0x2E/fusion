@@ -26,10 +26,10 @@
 
 	let oldFilter = Object.assign({}, filter);
 
-	let selectedFeed = filter?.feed_id ?? -1;
+	let selectedFeed = filter?.feed_id;
 	$: updateSelectedFeed(selectedFeed);
-	function updateSelectedFeed(id: number) {
-		if (id == filter.feed_id) return;
+	function updateSelectedFeed(id: number | undefined) {
+		if (id === filter.feed_id) return;
 		filter.feed_id = id !== -1 ? id : undefined;
 		filter.page = 1;
 		console.log(filter);
@@ -51,7 +51,7 @@
 		}
 		if (!updated) return;
 
-		oldFilter = Object.assign({}, filter);
+		if (oldFilter.keyword !== filter.keyword) filter.page = 1;
 
 		const p = new URLSearchParams($page.url.searchParams);
 		for (key in f) {
@@ -60,6 +60,9 @@
 				p.set(key, String(f[key]));
 			}
 		}
+
+		oldFilter = Object.assign({}, filter);
+
 		console.log(p.toString());
 		goto('?' + p.toString());
 	}
@@ -81,7 +84,7 @@
 			const context = this;
 
 			const later = () => {
-				func.apply(context, event);
+				func.apply(context, [event]);
 			};
 
 			clearTimeout(timeout);
@@ -119,6 +122,7 @@
 			type="text"
 			placeholder="Search in title and content..."
 			class="w-full md:w-[400px]"
+			value={filter.keyword}
 			on:input={handleSearchInput}
 		/>
 	</div>
@@ -156,7 +160,7 @@
 				class="flex justify-between items-center gap-2 py-6"
 				variant="ghost"
 			>
-				<h2 class="w-full truncate text-lg font-medium">
+				<h2 class="truncate text-lg font-medium">
 					{item.title}
 				</h2>
 				<div class="flex justify-between items-center w-1/3 md:w-1/4">
