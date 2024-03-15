@@ -96,18 +96,20 @@
 		if (e.target instanceof HTMLInputElement) {
 			filter.keyword = e.target.value;
 		}
-	}, 1000);
+	}, 500);
 
 	function fromNow(d: Date) {
 		d = new Date(d);
 		const now = new Date();
 		const hours = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60));
 		const days = Math.floor(hours / 24);
+		const months = Math.floor(days / 30);
 		const years = Math.floor(days / 365);
 		if (years > 0) return years + 'y';
+		if (months > 0) return months + 'm';
 		if (days > 0) return days + 'd';
 		if (hours > 0) return hours + 'h';
-		return 'now';
+		return '?';
 	}
 
 	const actions: { icon: ComponentType<Icon>; tooltip: string; handler: () => void }[] = [
@@ -163,12 +165,12 @@
 				<h2 class="truncate text-lg font-medium">
 					{item.title}
 				</h2>
-				<div class="flex justify-between items-center w-1/3 md:w-1/4">
+				<div class="flex justify-between items-center flex-shrink-0 w-1/3 md:w-1/4">
 					<div
 						class="flex justify-end w-full gap-2 text-sm text-muted-foreground group-hover:hidden"
 					>
 						<span class="w-full truncate">{item.feed.name}</span>
-						<span class="w-10 truncate">
+						<span class="w-[5ch] truncate">
 							{fromNow(item.pub_date)}
 						</span>
 					</div>
@@ -185,7 +187,7 @@
 </ul>
 
 {#if data.items.total > 1}
-	<div class="flex flex-row sm:flex-row items-center justify-center mt-8 gap-2">
+	<div class="flex flex-col sm:flex-row items-center justify-center mt-8 gap-2">
 		<Pagination.Root
 			count={data.items.total}
 			bind:perPage={filter.page_size}
