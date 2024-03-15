@@ -30,23 +30,21 @@
 		{ tag: 'object', attrs: ['data'] }
 	];
 
-	$: {
-		const dom = new DOMParser().parseFromString(data.content, 'text/html');
-		for (const el of elements) {
-			dom.querySelectorAll(el.tag).forEach((v) => {
-				for (const attr of el.attrs) {
-					v.setAttribute(attr, joinURL(v.getAttribute(attr)));
-				}
-			});
-		}
-		const replaced = new XMLSerializer().serializeToString(dom);
-		// data.content = data.content.replace(/src="(.*?)"/g, (_, match) => {
-		// 	const res = new URL(match, data.link).href;
-		// 	return `src="${res}"`;
-		// });
-
-		data.content = DOMPurify.sanitize(replaced);
+	const dom = new DOMParser().parseFromString(data.content, 'text/html');
+	for (const el of elements) {
+		dom.querySelectorAll(el.tag).forEach((v) => {
+			for (const attr of el.attrs) {
+				v.setAttribute(attr, joinURL(v.getAttribute(attr)));
+			}
+		});
 	}
+	const replaced = new XMLSerializer().serializeToString(dom);
+	// data.content = data.content.replace(/src="(.*?)"/g, (_, match) => {
+	// 	const res = new URL(match, data.link).href;
+	// 	return `src="${res}"`;
+	// });
+
+	data.content = DOMPurify.sanitize(replaced);
 </script>
 
 <svelte:head>
