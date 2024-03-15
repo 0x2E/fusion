@@ -139,14 +139,14 @@
 				class="flex justify-between items-center gap-2 py-6"
 				variant="ghost"
 			>
-				<h2 class="truncate text-lg font-medium">
+				<h2 class="w-full truncate text-lg font-medium">
 					{item.title}
 				</h2>
-				<div class="flex justify-between items-center">
+				<div class="flex justify-between items-center w-1/3 md:w-1/4">
 					<div
 						class="flex justify-end w-full gap-2 text-sm text-muted-foreground group-hover:hidden"
 					>
-						<span class="w-14 truncate">{item.feed.name}</span>
+						<span class="w-full truncate">{item.feed.name}</span>
 						<span class="w-10 truncate">
 							{fromNow(item.pub_date)}
 						</span>
