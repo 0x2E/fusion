@@ -56,7 +56,9 @@
 <div class="max-w-prose mx-auto">
 	<h1 class="text-3xl font-bold mb-4">{data.title}</h1>
 	<p class="text-sm text-muted-foreground">
-		{data.feed.name} / {moment(data.pub_date).format('lll')}
+		<a href={'/all?feed_id=' + data.feed.id} class="hover:underline">{data.feed.name}</a> / {moment(
+			data.pub_date
+		).format('lll')}
 	</p>
 	<ItemAction bind:data />
 

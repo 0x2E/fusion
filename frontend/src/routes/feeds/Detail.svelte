@@ -155,17 +155,20 @@
 			{/if}
 
 			<Separator class="my-6" />
-			<Button
-				variant="secondary"
-				on:click={handleRefresh}
-				disabled={refreshing || selectedFeed.suspended}
-			>
-				{#if refreshing}
-					<Loader2Icon class="mr-2 h-4 w-4 animate-spin" />
-				{:else}
-					Refresh
-				{/if}
-			</Button>
+			<div class="flex flex-col w-full gap-2">
+				<Button variant="outline" href={'/all?feed_id=' + selectedFeed.id}>View items</Button>
+				<Button
+					variant="secondary"
+					on:click={handleRefresh}
+					disabled={refreshing || selectedFeed.suspended}
+				>
+					{#if refreshing}
+						<Loader2Icon class="mr-2 h-4 w-4 animate-spin" />
+					{:else}
+						Refresh
+					{/if}
+				</Button>
+			</div>
 
 			<Separator class="my-6" />
 			<div class="flex flex-col w-full gap-2">
