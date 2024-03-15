@@ -47,10 +47,6 @@
 	data.content = DOMPurify.sanitize(replaced);
 </script>
 
-<svelte:head>
-	<title>{data.title}</title>
-</svelte:head>
-
 <div class="max-w-prose mx-auto">
 	<h1 class="text-3xl font-bold mb-4">{data.title}</h1>
 	<p class="text-sm text-muted-foreground">

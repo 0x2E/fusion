@@ -4,10 +4,12 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { ModeWatcher } from 'mode-watcher';
 	import Footer from '$lib/components/Footer.svelte';
+	import { page } from '$app/stores';
+
 </script>
 
 <svelte:head>
-	<title>Fusion</title>
+	<title>{$page.data.title ?? "Fusion"}</title>
 </svelte:head>
 
 <ModeWatcher defaultMode="system" />
