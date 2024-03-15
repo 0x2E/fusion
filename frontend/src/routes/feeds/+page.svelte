@@ -32,7 +32,7 @@
 	<Tabs.List>
 		{#each data.groups.sort((a, b) => a.id - b.id) as g}
 			<Tabs.Trigger value={g.id.toString()}>
-				{#if g.feeds.find((f) => f.failure) !== undefined}
+				{#if g.feeds.find((f) => f.failure && !f.suspended) !== undefined}
 					<AlertCircleIcon size="15" class="fill-destructive text-destructive-foreground mr-1" />
 				{/if}
 				{g.name}
