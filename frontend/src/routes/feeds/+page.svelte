@@ -17,7 +17,7 @@
 	// up-to-date
 	$: selectedFeed = data.groups
 		.find((v) => v.id === selectedGroup)
-		?.feeds.find((v) => v.id === selectedFeedID);
+		?.feeds.find((v) => v.id === selectedFeedID) ?? data.groups[0].feeds[0];
 
 	function handleShowDetail(id: number) {
 		showDetail = true;
