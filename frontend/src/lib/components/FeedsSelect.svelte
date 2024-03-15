@@ -10,6 +10,7 @@
 
 	export let data: Feed[];
 	export let selected: number;
+	export let className = '';
 	let open = false;
 
 	let optionAll = { value: '-1', label: 'All' };
@@ -38,7 +39,7 @@
 			variant="outline"
 			role="combobox"
 			aria-expanded={open}
-			class="w-[200px] justify-between"
+			class="w-[200px] justify-between {className}"
 		>
 			{feeds.find((f) => f.value === String(selected))?.label ?? 'Select a feed...'}
 			<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />

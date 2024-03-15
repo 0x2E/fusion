@@ -12,6 +12,7 @@
 	import { page } from '$app/stores';
 	import { goto, invalidateAll } from '$app/navigation';
 	import FeedsSelect from './FeedsSelect.svelte';
+	import { Input } from './ui/input';
 
 	export let data: { feeds: Feed[]; items: { total: number; data: Item[] } };
 	let filter = parseURLtoFilter($page.url.searchParams);
@@ -73,6 +74,26 @@
 			toast.error((e as Error).message);
 		}
 	}
+	function debounce(func: Function, wait: number): EventListener {
+		let timeout: ReturnType<typeof setTimeout>;
+
+		return function (this: HTMLElement, event: Event) {
+			const context = this;
+
+			const later = () => {
+				func.apply(context, event);
+			};
+
+			clearTimeout(timeout);
+			timeout = setTimeout(later, wait);
+		};
+	}
+
+	const handleSearchInput = debounce(function (e: Event) {
+		if (e.target instanceof HTMLInputElement) {
+			filter.keyword = e.target.value;
+		}
+	}, 1000);
 
 	function fromNow(d: Date) {
 		d = new Date(d);
@@ -91,16 +112,31 @@
 	];
 </script>
 
-<div class="flex justify-between items-center w-full">
-	<FeedsSelect data={data.feeds} bind:selected={selectedFeed} />
+<div class="flex flex-col md:flex-row md:justify-between md:items-center w-full gap-2">
+	<div class="flex flex-col md:flex-row gap-2">
+		<FeedsSelect data={data.feeds} bind:selected={selectedFeed} className="w-full md:w-[200px]" />
+		<Input
+			type="text"
+			placeholder="Search in title and content..."
+			class="w-full md:w-[400px]"
+			on:input={handleSearchInput}
+		/>
+	</div>
 
 	{#if data.items.data.length > 0}
 		<div>
 			{#each actions as action}
 				<Tooltip.Root>
 					<Tooltip.Trigger asChild let:builder>
-						<Button builders={[builder]} on:click={action.handler} variant="outline" size="icon">
+						<Button
+							builders={[builder]}
+							on:click={action.handler}
+							variant="outline"
+							size="icon"
+							class="w-full md:w-[40px]"
+						>
 							<svelte:component this={action.icon} size="20" />
+							<span class="ml-1 md:hidden">{action.tooltip}</span>
 						</Button>
 					</Tooltip.Trigger>
 					<Tooltip.Content>
