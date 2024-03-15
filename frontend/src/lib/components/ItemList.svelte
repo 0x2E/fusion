@@ -13,54 +13,61 @@
 	import { goto, invalidateAll } from '$app/navigation';
 
 	export let data: { feeds: Feed[]; items: { total: number; data: Item[] } };
-	const filter = parseURLtoFilter($page.url.searchParams);
+	let filter = parseURLtoFilter($page.url.searchParams);
 
 	type feedOption = { label: string; value: number };
 	const defaultSelectedFeed: feedOption = { value: -1, label: 'All Feeds' };
-	const allFeeds: feedOption[] = data.feeds
+	let allFeeds = data.feeds
 		.map((f) => {
 			return { value: f.id, label: f.name };
 		})
 		.concat(defaultSelectedFeed)
 		.sort((a, b) => a.value - b.value);
-	let selectedFeed = allFeeds.find((v) => v.value === filter.feed_id) || defaultSelectedFeed;
 
-	let currentPage = filter.page;
-	let pageSize = filter.page_size;
+	// NOTE: Svelte treats object as dirty, it may cause poorly reactive updates
+	// when using it in two-way binding.
+	// Therefore, we create an oldFilter as a control. Update url search params
+	// only when the filter is NOT EQUAL to oldFilter.
+	// TODO: this should be refactored after Svelte 5.0:
+	// https://github.com/sveltejs/svelte/issues/4265#issuecomment-1812428837
 
+	let oldFilter = Object.assign({}, filter);
+
+	let selectedFeed = allFeeds.find((v) => v.value === filter?.feed_id) || defaultSelectedFeed;
 	$: updateSelectedFeed(selectedFeed);
 	function updateSelectedFeed(f: feedOption) {
-		console.log(f);
+		if (f.value == filter.feed_id) return;
 		filter.feed_id = f.value !== -1 ? f.value : undefined;
 		filter.page = 1;
-		setURLSearchParams(filter);
+		console.log(filter);
 	}
 
-	$: updatePage(currentPage);
-	function updatePage(p: number) {
-		filter.page = p;
-		setURLSearchParams(filter);
-	}
-
-	$: updatePageSize(pageSize);
-	function updatePageSize(size: number) {
-		if (size < 10 || size > 500) {
-			toast.warning('Page size is unreasonable');
-			return;
-		}
-		filter.page_size = size;
-		filter.page = 1;
-		setURLSearchParams(filter);
-	}
-
+	$: setURLSearchParams(filter);
 	function setURLSearchParams(f: ListFilter) {
+		console.log(
+			`filter reactive updates:\nnew: ${JSON.stringify(f)}\nold: ${JSON.stringify(oldFilter)}`
+		);
+
+		let key: keyof ListFilter;
+		let updated = false;
+		for (key in f) {
+			if (f[key] != oldFilter[key]) {
+				updated = true;
+				break;
+			}
+		}
+		if (!updated) return;
+
+		oldFilter = Object.assign({}, filter);
+
 		const p = new URLSearchParams($page.url.searchParams);
-		for (let key in f) {
+		for (key in f) {
 			p.delete(key);
 			if (f[key] !== undefined) {
 				p.set(key, String(f[key]));
 			}
 		}
+		console.log(p.toString());
 		goto('?' + p.toString());
 	}
 
@@ -159,8 +166,8 @@
 <div class="flex flex-row sm:flex-row items-center justify-center mt-8 gap-2">
 	<Pagination.Root
 		count={data.items.total}
-		perPage={filter.page_size}
-		bind:page={currentPage}
+		bind:perPage={filter.page_size}
+		bind:page={filter.page}
 		let:pages
 		let:currentPage
 		class="w-auto mx-0"
@@ -191,7 +198,7 @@
 	<Select.Root
 		items={[{ value: 10, label: '10' }]}
 		onSelectedChange={(v) => {
-			v && (pageSize = v.value);
+			v && (filter.page_size = v.value);
 		}}
 	>
 		<Select.Trigger class="w-[110px]">

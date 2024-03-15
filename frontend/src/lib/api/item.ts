@@ -38,7 +38,6 @@ export function parseURLtoFilter(params: URLSearchParams) {
 	if (unread) filter.unread = unread === 'true';
 	const bookmark = params.get('bookmark');
 	if (bookmark) filter.bookmark = bookmark === 'true';
-	console.log(JSON.stringify(filter));
 	return filter;
 }
 
