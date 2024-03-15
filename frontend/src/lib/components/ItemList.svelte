@@ -184,51 +184,53 @@
 	{/each}
 </ul>
 
-<div class="flex flex-row sm:flex-row items-center justify-center mt-8 gap-2">
-	<Pagination.Root
-		count={data.items.total}
-		bind:perPage={filter.page_size}
-		bind:page={filter.page}
-		let:pages
-		let:currentPage
-		class="w-auto mx-0"
-	>
-		<Pagination.Content class="flex-wrap">
-			<Pagination.Item>
-				<Pagination.PrevButton />
-			</Pagination.Item>
-			{#each pages as page (page.key)}
-				{#if page.type === 'ellipsis'}
-					<Pagination.Item>
-						<Pagination.Ellipsis />
-					</Pagination.Item>
-				{:else}
-					<Pagination.Item>
-						<Pagination.Link {page} isActive={currentPage == page.value}>
-							{page.value}
-						</Pagination.Link>
-					</Pagination.Item>
-				{/if}
-			{/each}
-			<Pagination.Item>
-				<Pagination.NextButton />
-			</Pagination.Item>
-		</Pagination.Content>
-	</Pagination.Root>
+{#if data.items.total > 1}
+	<div class="flex flex-row sm:flex-row items-center justify-center mt-8 gap-2">
+		<Pagination.Root
+			count={data.items.total}
+			bind:perPage={filter.page_size}
+			bind:page={filter.page}
+			let:pages
+			let:currentPage
+			class="w-auto mx-0"
+		>
+			<Pagination.Content class="flex-wrap">
+				<Pagination.Item>
+					<Pagination.PrevButton />
+				</Pagination.Item>
+				{#each pages as page (page.key)}
+					{#if page.type === 'ellipsis'}
+						<Pagination.Item>
+							<Pagination.Ellipsis />
+						</Pagination.Item>
+					{:else}
+						<Pagination.Item>
+							<Pagination.Link {page} isActive={currentPage == page.value}>
+								{page.value}
+							</Pagination.Link>
+						</Pagination.Item>
+					{/if}
+				{/each}
+				<Pagination.Item>
+					<Pagination.NextButton />
+				</Pagination.Item>
+			</Pagination.Content>
+		</Pagination.Root>
 
-	<Select.Root
-		items={[{ value: 10, label: '10' }]}
-		onSelectedChange={(v) => {
-			v && (filter.page_size = v.value);
-		}}
-	>
-		<Select.Trigger class="w-[110px]">
-			<Select.Value placeholder="Page Size" />
-		</Select.Trigger>
-		<Select.Content>
-			{#each [10, 25, 50, 100, 200, 500] as size}
-				<Select.Item value={size}>{size}</Select.Item>
-			{/each}
-		</Select.Content>
-	</Select.Root>
-</div>
+		<Select.Root
+			items={[{ value: 10, label: '10' }]}
+			onSelectedChange={(v) => {
+				v && (filter.page_size = v.value);
+			}}
+		>
+			<Select.Trigger class="w-[110px]">
+				<Select.Value placeholder="Page Size" />
+			</Select.Trigger>
+			<Select.Content>
+				{#each [10, 25, 50, 100, 200, 500] as size}
+					<Select.Item value={size}>{size}</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
+	</div>
+{/if}
