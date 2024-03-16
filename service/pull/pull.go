@@ -33,12 +33,12 @@ func NewPuller(feedRepo FeedRepo, itemRepo ItemRepo) *Puller {
 	}
 }
 
-const interval = 30
+var interval = 30 * time.Minute
 
 func (p *Puller) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	ticker := time.NewTicker(interval * time.Minute)
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
@@ -52,9 +52,9 @@ func (p *Puller) Run() {
 	}
 }
 
-func (p *Puller) PullAll(ctx context.Context, includeFailed bool) error {
+func (p *Puller) PullAll(ctx context.Context, force bool) error {
 	log.Println("start pull-all")
-	ctx, cancel := context.WithTimeout(ctx, (interval-3)*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, interval/2)
 	defer cancel()
 	feeds, err := p.feedRepo.All()
 	if err != nil {
@@ -71,11 +71,6 @@ func (p *Puller) PullAll(ctx context.Context, includeFailed bool) error {
 	defer close(routinePool)
 	wg := sync.WaitGroup{}
 	for _, f := range feeds {
-		if f.IsSuspended() || (f.IsFailed() && !includeFailed) {
-			log.Printf("skip %d\n", f.ID)
-			continue
-		}
-
 		routinePool <- struct{}{}
 		wg.Add(1)
 		go func(f *model.Feed) {
@@ -84,7 +79,7 @@ func (p *Puller) PullAll(ctx context.Context, includeFailed bool) error {
 				<-routinePool
 			}()
 
-			if err := p.do(ctx, f); err != nil {
+			if err := p.do(ctx, f, force); err != nil {
 				log.Println(err)
 			}
 		}(f)
@@ -102,5 +97,5 @@ func (p *Puller) PullOne(id uint) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	return p.do(ctx, f)
+	return p.do(ctx, f, true)
 }

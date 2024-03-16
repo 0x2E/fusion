@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/pkg/httpx"
@@ -13,7 +14,22 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-func (p *Puller) do(ctx context.Context, f *model.Feed) error {
+func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
+	if f.IsSuspended() {
+		log.Printf("skip feed %d: suspended\n", f.ID)
+		return nil
+	}
+	if !force {
+		if f.IsFailed() {
+			log.Printf("skip feed %d: failure exists\n", f.ID)
+			return nil
+		}
+		if time.Since(f.UpdatedAt) < interval {
+			log.Printf("skip feed %d: new enough\n", f.ID)
+			return nil
+		}
+	}
+
 	log.Printf("start pull %d", f.ID)
 	failure := ""
 	fetched, err := Fetch(ctx, *f.Link)
