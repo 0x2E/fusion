@@ -1,4 +1,5 @@
 <script lang="ts">
+	import moment from 'moment';
 	import type { PageData } from './$types';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tabs from '$lib/components/ui/tabs';
@@ -15,9 +16,9 @@
 
 	// ensure selectedFeed is reactive so that we can keep the info in detail
 	// up-to-date
-	$: selectedFeed = data.groups
-		.find((v) => v.id === selectedGroup)
-		?.feeds.find((v) => v.id === selectedFeedID) ?? data.groups[0].feeds[0];
+	$: selectedFeed =
+		data.groups.find((v) => v.id === selectedGroup)?.feeds.find((v) => v.id === selectedFeedID) ??
+		data.groups[0].feeds[0];
 
 	function handleShowDetail(id: number) {
 		showDetail = true;
@@ -70,7 +71,11 @@
 								{/if}
 							</span>
 							<span class="inline-block w-1/2 truncate">{f.name}</span>
-							<span class="inline-block w-1/2 truncate">{f.link}</span>
+							<span class="inline-block w-1/2 truncate text-muted-foreground"
+								>{f.failure
+									? 'Error: ' + f.failure
+									: 'Last refreshed at ' + moment(f.updated_at).format('lll')}</span
+							>
 						</Button>
 					</li>
 				{/each}
