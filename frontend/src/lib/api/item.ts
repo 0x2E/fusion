@@ -15,14 +15,11 @@ export async function listItems(options?: ListFilter) {
 		// trip undefinded fields: https://github.com/sindresorhus/ky/issues/293
 		options = JSON.parse(JSON.stringify(options));
 	}
-	const data = await api
+	return await api
 		.get('items', {
 			searchParams: options
 		})
 		.json<{ total: number; items: Item[] }>();
-
-	data.items.sort((a, b) => new Date(b.pub_date).getTime() - new Date(a.pub_date).getTime());
-	return data;
 }
 
 export function parseURLtoFilter(params: URLSearchParams) {

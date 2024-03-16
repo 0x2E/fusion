@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"time"
+
 	"github.com/0x2e/fusion/model"
 
 	"gorm.io/gorm"
@@ -46,7 +48,7 @@ func (i Item) List(filter ItemFilter, page, pageSize int) ([]*model.Item, int, e
 		return nil, 0, err
 	}
 
-	err = db.Joins("Feed").Order("items.pub_date desc").
+	err = db.Joins("Feed").Order("items.created_at desc, items.pub_date desc").
 		Offset((page - 1) * pageSize).Limit(pageSize).Find(&res).Error
 	return res, int(total), err
 }
@@ -59,6 +61,11 @@ func (i Item) Get(id uint) (*model.Item, error) {
 
 func (i Item) Creates(items []*model.Item) error {
 	// limit batchSize to fix 'too many SQL variable' error
+	now := time.Now()
+	for _, i := range items {
+		i.CreatedAt = now
+		i.UpdatedAt = now
+	}
 	return i.db.Clauses(clause.OnConflict{
 		DoNothing: true,
 	}).CreateInBatches(items, 5).Error

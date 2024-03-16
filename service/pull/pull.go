@@ -26,6 +26,8 @@ type Puller struct {
 	itemRepo ItemRepo
 }
 
+// TODO: cache favicon
+
 func NewPuller(feedRepo FeedRepo, itemRepo ItemRepo) *Puller {
 	return &Puller{
 		feedRepo: feedRepo,
