@@ -56,8 +56,9 @@
 	</p>
 	<ItemAction bind:data />
 
-	<!-- FIX: pre overflow: https://github.com/tailwindlabs/tailwindcss-typography/issues/96 -->
-	<article class="mt-6 mx-auto prose dark:prose-invert prose-lg">
+	<article
+		class="mt-6 prose dark:prose-invert prose-lg text-wrap prose-pre:whitespace-pre-wrap prose-pre:break-words"
+	>
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 		{@html data.content}
 	</article>
