@@ -59,7 +59,6 @@
 
 	function handleExternalLink(e: Event) {
 		e.preventDefault();
-		handleToggleUnread(e);
 		window.open(data.link, '_blank');
 	}
 </script>
