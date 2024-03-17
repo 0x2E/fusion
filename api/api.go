@@ -69,6 +69,15 @@ func Run() {
 	}))
 	r.Use(session.Middleware(sessions.NewCookieStore([]byte("fusion"))))
 	r.Pre(middleware.RemoveTrailingSlash())
+
+	r.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if strings.HasPrefix(c.Request().URL.Path, "/_app/") {
+				c.Response().Header().Set("Cache-Control", "public, max-age=2592000")
+			}
+			return next(c)
+		}
+	})
 	r.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		HTML5:      true,
 		Index:      "index.html",
