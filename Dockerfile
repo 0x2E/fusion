@@ -1,7 +1,7 @@
 # build frontend
 FROM node:21 as fe
 WORKDIR /src
-COPY ./frontend ./
+COPY .git frontend ./
 RUN npm i && npm run build
 
 # build backend
