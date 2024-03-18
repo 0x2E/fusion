@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
 
@@ -15,24 +14,24 @@ import (
 )
 
 func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
+	logger := pullLogger.With("feed_id", f.ID, "feed_name", f.Name)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	if f.IsSuspended() {
-		log.Printf("skip feed %d: suspended\n", f.ID)
+		logger.Infoln("skip: suspended")
 		return nil
 	}
 	if !force {
 		if f.IsFailed() {
-			log.Printf("skip feed %d: failure exists\n", f.ID)
+			logger.Infoln("skip: failure exists")
 			return nil
 		}
 		if time.Since(f.UpdatedAt) < interval {
-			log.Printf("skip feed %d: new enough\n", f.ID)
+			logger.Infoln("skip: new enough")
 			return nil
 		}
 	}
 
-	log.Printf("start pull %d", f.ID)
 	failure := ""
 	fetched, err := Fetch(ctx, *f.Link)
 	if err != nil {
@@ -71,7 +70,7 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 			return err
 		}
 	}
-	log.Printf("fetched: %d items\n", len(fetched.Items))
+	logger.Infof("fetched %d items", len(fetched.Items))
 	return p.feedRepo.Update(f.ID, &model.Feed{
 		LastBuild: fetched.PublishedParsed,
 		Failure:   &failure,

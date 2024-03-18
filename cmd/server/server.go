@@ -1,21 +1,22 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 
 	"github.com/0x2e/fusion/api"
 	"github.com/0x2e/fusion/conf"
+	"github.com/0x2e/fusion/pkg/logx"
 	"github.com/0x2e/fusion/repo"
 	"github.com/0x2e/fusion/service/pull"
 )
 
-// TODO: refactor all loggers
 func main() {
+	defer logx.Logger.Sync()
+
 	if conf.Debug {
 		go func() {
-			log.Println(http.ListenAndServe("localhost:6060", nil))
+			logx.Logger.Infoln(http.ListenAndServe("localhost:6060", nil))
 		}()
 	}
 

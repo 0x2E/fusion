@@ -1,17 +1,15 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/frontend"
+	"github.com/0x2e/fusion/pkg/logx"
 	"github.com/0x2e/fusion/repo"
 	"github.com/0x2e/fusion/server"
 
@@ -26,9 +24,8 @@ import (
 )
 
 func Run() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
 	r := echo.New()
+	apiLogger := logx.Logger.With("module", "api")
 
 	if conf.Debug {
 		r.Debug = true
@@ -36,7 +33,7 @@ func Run() {
 			if len(resBody) > 500 {
 				resBody = append(resBody[:500], []byte("...")...)
 			}
-			r.Logger.Debugf("req: %s\nresp: %s\n", reqBody, resBody)
+			apiLogger.Debugw("body dump", "req", reqBody, "resp", resBody)
 		}))
 	}
 
@@ -54,16 +51,9 @@ func Run() {
 				return nil
 			}
 			if v.Error == nil {
-				logger.LogAttrs(context.Background(), slog.LevelInfo, "REQUEST",
-					slog.String("uri", v.URI),
-					slog.Int("status", v.Status),
-				)
+				apiLogger.Infow("REQUEST", "uri", v.URI, "status", v.Status)
 			} else {
-				logger.LogAttrs(context.Background(), slog.LevelError, "REQUEST_ERROR",
-					slog.String("uri", v.URI),
-					slog.Int("status", v.Status),
-					slog.String("err", v.Error.Error()),
-				)
+				apiLogger.Errorw(v.Error.Error(), "uri", v.URI, "status", v.Status)
 			}
 			return nil
 		},
@@ -73,7 +63,6 @@ func Run() {
 	}))
 	r.Use(session.Middleware(sessions.NewCookieStore([]byte("fusion"))))
 	r.Pre(middleware.RemoveTrailingSlash())
-
 	r.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if strings.HasPrefix(c.Request().URL.Path, "/_app/") {
@@ -130,7 +119,7 @@ func Run() {
 	items.PATCH("/-/unread", itemAPIHandler.UpdateUnread)
 	items.DELETE("/:id", itemAPIHandler.Delete)
 
-	r.Logger.Fatal(r.Start(fmt.Sprintf("%s:%d", conf.Conf.Host, conf.Conf.Port)))
+	apiLogger.Fatalln(r.Start(fmt.Sprintf("%s:%d", conf.Conf.Host, conf.Conf.Port)))
 }
 
 func errorHandler(err error, c echo.Context) {

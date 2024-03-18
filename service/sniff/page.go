@@ -5,13 +5,15 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
+	"github.com/0x2e/fusion/pkg/logx"
 	"github.com/PuerkitoBio/goquery"
 )
 
 func tryPageSource(ctx context.Context, link string) ([]FeedLink, error) {
+	logger := logx.LoggerFromContext(ctx)
+
 	resp, err := request(ctx, link)
 	if err != nil {
 		return nil, err
@@ -28,7 +30,7 @@ func tryPageSource(ctx context.Context, link string) ([]FeedLink, error) {
 
 	feeds, err := parseHTMLContent(ctx, content)
 	if err != nil {
-		log.Printf("parse html content: %s\n", err)
+		logger.Errorw(err.Error(), "content type", "HTML")
 	}
 	if len(feeds) != 0 {
 		for i := range feeds {
@@ -40,7 +42,7 @@ func tryPageSource(ctx context.Context, link string) ([]FeedLink, error) {
 
 	feed, err := parseRSSContent(content)
 	if err != nil {
-		log.Printf("parse rss content: %s\n", err)
+		logger.Errorw(err.Error(), "content type", "RSS")
 	}
 	if !isEmptyFeedLink(feed) {
 		if feed.Link == "" {

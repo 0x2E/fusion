@@ -2,10 +2,13 @@ package sniff
 
 import (
 	"context"
-	"log"
 	"net/url"
 	"sync"
+
+	"github.com/0x2e/fusion/pkg/logx"
 )
+
+var sniffLogger = logx.Logger.With("module", "sniffer")
 
 type FeedLink struct {
 	Title string `json:"title"`
@@ -13,10 +16,14 @@ type FeedLink struct {
 }
 
 func Sniff(ctx context.Context, target *url.URL) ([]FeedLink, error) {
+	logger := sniffLogger.With("url", target.String())
+	ctx = logx.ContextWithLogger(ctx, logger)
+
 	// find in third-party service
-	fromService, err := tryService(ctx, target)
+	sLogger := logger.With("step", "third-party service")
+	fromService, err := tryService(logx.ContextWithLogger(ctx, sLogger), target)
 	if err != nil {
-		log.Printf("%s: %s\n", "parse service", err)
+		sLogger.Errorln(err)
 	}
 	if len(fromService) != 0 {
 		return fromService, nil
@@ -31,9 +38,13 @@ func Sniff(ctx context.Context, target *url.URL) ([]FeedLink, error) {
 		defer wg.Done()
 
 		// sniff in HTML
-		data, err := tryPageSource(ctx, target.String())
+		pLogger := logger.With("step", "page")
+		data, err := tryPageSource(
+			logx.ContextWithLogger(ctx, pLogger),
+			target.String(),
+		)
 		if err != nil {
-			log.Printf("%s: %s\n", "parse page", err)
+			pLogger.Errorln(err)
 		}
 
 		mu.Lock()
@@ -48,15 +59,19 @@ func Sniff(ctx context.Context, target *url.URL) ([]FeedLink, error) {
 		defer wg.Done()
 
 		// sniff well-knowns under this url
-		data, err := tryWellKnown(ctx, target.Scheme+"://"+target.Host+target.Path) // https://go.dev/play/p/dVt-47_XWjU
+		wLogger := logger.With("step", "well-knowns")
+		data, err := tryWellKnown(
+			logx.ContextWithLogger(ctx, wLogger),
+			target.Scheme+"://"+target.Host+target.Path,
+		) // https://go.dev/play/p/dVt-47_XWjU
 		if err != nil {
-			log.Printf("%s: %s\n", "parse wellknown", err)
+			wLogger.Errorln(err)
 		}
 		if len(data) == 0 {
 			// sniff well-knowns under url root
 			data, err = tryWellKnown(ctx, target.Scheme+"://"+target.Host)
 			if err != nil {
-				log.Printf("%s: %s\n", "parse wellknown under root", err)
+				wLogger.Errorln(err)
 			}
 		}
 
@@ -72,7 +87,7 @@ func Sniff(ctx context.Context, target *url.URL) ([]FeedLink, error) {
 	for _, f := range feedMap {
 		res = append(res, f)
 	}
-	return res, err
+	return res, nil
 }
 
 func isEmptyFeedLink(feed FeedLink) bool {

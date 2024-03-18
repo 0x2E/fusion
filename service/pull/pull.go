@@ -3,12 +3,17 @@ package pull
 import (
 	"context"
 	"errors"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/0x2e/fusion/model"
+	"github.com/0x2e/fusion/pkg/logx"
 	"github.com/0x2e/fusion/repo"
+)
+
+var (
+	interval   = 30 * time.Minute
+	pullLogger = logx.Logger.With("module", "puller")
 )
 
 type FeedRepo interface {
@@ -35,8 +40,6 @@ func NewPuller(feedRepo FeedRepo, itemRepo ItemRepo) *Puller {
 	}
 }
 
-var interval = 30 * time.Minute
-
 func (p *Puller) Run() {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -49,13 +52,14 @@ func (p *Puller) Run() {
 }
 
 func (p *Puller) PullAll(ctx context.Context, force bool) error {
-	log.Println("start pull-all")
+	logger := logx.LoggerFromContext(ctx)
 	ctx, cancel := context.WithTimeout(ctx, interval/2)
 	defer cancel()
+
 	feeds, err := p.feedRepo.All()
 	if err != nil {
-		if !errors.Is(err, repo.ErrNotFound) {
-			log.Println(err)
+		if errors.Is(err, repo.ErrNotFound) {
+			err = nil
 		}
 		return err
 	}
@@ -76,7 +80,7 @@ func (p *Puller) PullAll(ctx context.Context, force bool) error {
 			}()
 
 			if err := p.do(ctx, f, force); err != nil {
-				log.Println(err)
+				logger.Errorw(err.Error(), "feed_id", f.ID)
 			}
 		}(f)
 	}
@@ -87,7 +91,6 @@ func (p *Puller) PullAll(ctx context.Context, force bool) error {
 func (p *Puller) PullOne(ctx context.Context, id uint) error {
 	f, err := p.feedRepo.Get(id)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
