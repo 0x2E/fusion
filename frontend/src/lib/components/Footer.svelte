@@ -10,7 +10,7 @@
 			>.
 		</span>
 		<span>
-			Logo by <a href="https://icons8.com" target="_blank" class="underline">Icons8</a>
+			Icon by <a href="https://icons8.com/icon/FeQbTvGTsiN5/news" target="_blank" class="underline">Icons8</a>
 		</span>
 	</div>
 </footer>

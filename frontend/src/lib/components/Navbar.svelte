@@ -36,7 +36,7 @@
 		class="flex justify-around items-center w-full sm:max-w-[500px] mx-auto px-6 py-4 sm:rounded-2xl shadow-md sm:border bg-background"
 	>
 		<div class="flex items-center">
-			<img src="/favicon.png" alt="logo" class="w-10" />
+			<img src="/icon-96.png" alt="icon" class="w-10" />
 			<!-- <h2 class="font-bold text-xl">Fusion</h2> -->
 		</div>
 		<div>
