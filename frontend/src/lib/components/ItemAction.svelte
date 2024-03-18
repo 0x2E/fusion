@@ -73,6 +73,7 @@
 					on:click={action.handler}
 					class="hover:bg-gray-300 dark:hover:bg-gray-700"
 					size="icon"
+					aria-label={action.tooltip}
 				>
 					<svelte:component this={action.icon} size="18" />
 				</Button>
