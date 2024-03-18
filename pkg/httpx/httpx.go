@@ -42,6 +42,6 @@ func NewSafeClient() *http.Client {
 	}
 	return &http.Client{
 		Transport: safeTransport,
-		Timeout:   10 * time.Second,
+		Timeout:   1 * time.Minute, // fallback
 	}
 }

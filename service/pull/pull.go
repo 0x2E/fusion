@@ -38,19 +38,13 @@ func NewPuller(feedRepo FeedRepo, itemRepo ItemRepo) *Puller {
 var interval = 30 * time.Minute
 
 func (p *Puller) Run() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
-		p.PullAll(ctx, false)
+		p.PullAll(context.Background(), false)
 
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-		}
+		<-ticker.C
 	}
 }
 
@@ -90,14 +84,12 @@ func (p *Puller) PullAll(ctx context.Context, force bool) error {
 	return nil
 }
 
-func (p *Puller) PullOne(id uint) error {
+func (p *Puller) PullOne(ctx context.Context, id uint) error {
 	f, err := p.feedRepo.Get(id)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	return p.do(ctx, f, true)
 }

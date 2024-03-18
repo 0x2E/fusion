@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/frontend"
@@ -66,6 +67,9 @@ func Run() {
 			}
 			return nil
 		},
+	}))
+	r.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
+		Timeout: 30 * time.Second,
 	}))
 	r.Use(session.Middleware(sessions.NewCookieStore([]byte("fusion"))))
 	r.Pre(middleware.RemoveTrailingSlash())

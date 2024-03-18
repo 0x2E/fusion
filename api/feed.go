@@ -19,7 +19,7 @@ func newFeedAPI(srv *server.Feed) *feedAPI {
 }
 
 func (f feedAPI) All(c echo.Context) error {
-	resp, err := f.srv.All()
+	resp, err := f.srv.All(c.Request().Context())
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (f feedAPI) Get(c echo.Context) error {
 		return err
 	}
 
-	resp, err := f.srv.Get(&req)
+	resp, err := f.srv.Get(c.Request().Context(), &req)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (f feedAPI) Create(c echo.Context) error {
 		return err
 	}
 
-	if err := f.srv.Create(&req); err != nil {
+	if err := f.srv.Create(c.Request().Context(), &req); err != nil {
 		return err
 	}
 
@@ -60,7 +60,7 @@ func (f feedAPI) CheckValidity(c echo.Context) error {
 		return err
 	}
 
-	resp, err := f.srv.CheckValidity(&req)
+	resp, err := f.srv.CheckValidity(c.Request().Context(), &req)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (f feedAPI) Update(c echo.Context) error {
 		return err
 	}
 
-	err := f.srv.Update(&req)
+	err := f.srv.Update(c.Request().Context(), &req)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (f feedAPI) Delete(c echo.Context) error {
 		return err
 	}
 
-	if err := f.srv.Delete(&req); err != nil {
+	if err := f.srv.Delete(c.Request().Context(), &req); err != nil {
 		return err
 	}
 
@@ -101,7 +101,7 @@ func (f feedAPI) Refresh(c echo.Context) error {
 		return err
 	}
 
-	if err := f.srv.Refresh(&req); err != nil {
+	if err := f.srv.Refresh(c.Request().Context(), &req); err != nil {
 		return err
 	}
 

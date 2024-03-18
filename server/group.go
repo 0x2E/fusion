@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -32,7 +33,7 @@ func NewGroup(groupRepo GroupRepo, feedRepo FeedinGroupRepo) *Group {
 	}
 }
 
-func (g Group) All() (*RespGroupAll, error) {
+func (g Group) All(ctx context.Context) (*RespGroupAll, error) {
 	data, err := g.groupRepo.All()
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func (g Group) All() (*RespGroupAll, error) {
 	}, nil
 }
 
-func (g Group) Create(req *ReqGroupCreate) error {
+func (g Group) Create(ctx context.Context, req *ReqGroupCreate) error {
 	newGroup := &model.Group{
 		Name: req.Name,
 	}
@@ -61,7 +62,7 @@ func (g Group) Create(req *ReqGroupCreate) error {
 	return err
 }
 
-func (g Group) Update(req *ReqGroupUpdate) error {
+func (g Group) Update(ctx context.Context, req *ReqGroupUpdate) error {
 	err := g.groupRepo.Update(req.ID, &model.Group{
 		Name: req.Name,
 	})
@@ -71,7 +72,7 @@ func (g Group) Update(req *ReqGroupUpdate) error {
 	return err
 }
 
-func (g Group) Delete(req *ReqGroupDelete) error {
+func (g Group) Delete(ctx context.Context, req *ReqGroupDelete) error {
 	if req.ID == 1 {
 		return errors.New("cannot delete the default group")
 	}

@@ -19,7 +19,7 @@ func newGroupAPI(srv *server.Group) *groupAPI {
 }
 
 func (f groupAPI) All(c echo.Context) error {
-	resp, err := f.srv.All()
+	resp, err := f.srv.All(c.Request().Context())
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (f groupAPI) Create(c echo.Context) error {
 		return err
 	}
 
-	if err := f.srv.Create(&req); err != nil {
+	if err := f.srv.Create(c.Request().Context(), &req); err != nil {
 		return err
 	}
 
@@ -46,7 +46,7 @@ func (f groupAPI) Update(c echo.Context) error {
 		return err
 	}
 
-	err := f.srv.Update(&req)
+	err := f.srv.Update(c.Request().Context(), &req)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (f groupAPI) Delete(c echo.Context) error {
 		return err
 	}
 
-	if err := f.srv.Delete(&req); err != nil {
+	if err := f.srv.Delete(c.Request().Context(), &req); err != nil {
 		return err
 	}
 

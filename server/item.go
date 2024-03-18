@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/repo"
 )
@@ -25,7 +27,7 @@ func NewItem(repo ItemRepo) *Item {
 	}
 }
 
-func (i Item) List(req *ReqItemList) (*RespItemList, error) {
+func (i Item) List(ctx context.Context, req *ReqItemList) (*RespItemList, error) {
 	filter := repo.ItemFilter{
 		Keyword:  req.Keyword,
 		FeedID:   req.FeedID,
@@ -66,7 +68,7 @@ func (i Item) List(req *ReqItemList) (*RespItemList, error) {
 	}, nil
 }
 
-func (i Item) Get(req *ReqItemGet) (*RespItemGet, error) {
+func (i Item) Get(ctx context.Context, req *ReqItemGet) (*RespItemGet, error) {
 	data, err := i.repo.Get(req.ID)
 	if err != nil {
 		return nil, err
@@ -89,14 +91,14 @@ func (i Item) Get(req *ReqItemGet) (*RespItemGet, error) {
 	}, nil
 }
 
-func (i Item) Delete(req *ReqItemDelete) error {
+func (i Item) Delete(ctx context.Context, req *ReqItemDelete) error {
 	return i.repo.Delete(req.ID)
 }
 
-func (i Item) UpdateUnread(req *ReqItemUpdateUnread) error {
+func (i Item) UpdateUnread(ctx context.Context, req *ReqItemUpdateUnread) error {
 	return i.repo.UpdateUnread(req.IDs, req.Unread)
 }
 
-func (i Item) UpdateBookmark(req *ReqItemUpdateBookmark) error {
+func (i Item) UpdateBookmark(ctx context.Context, req *ReqItemUpdateBookmark) error {
 	return i.repo.UpdateBookmark(req.ID, req.Bookmark)
 }

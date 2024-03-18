@@ -24,7 +24,7 @@ func (i itemAPI) List(c echo.Context) error {
 		return err
 	}
 
-	resp, err := i.srv.List(&req)
+	resp, err := i.srv.List(c.Request().Context(), &req)
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (i itemAPI) Get(c echo.Context) error {
 		return err
 	}
 
-	resp, err := i.srv.Get(&req)
+	resp, err := i.srv.Get(c.Request().Context(), &req)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (i itemAPI) Delete(c echo.Context) error {
 		return err
 	}
 
-	if err := i.srv.Delete(&req); err != nil {
+	if err := i.srv.Delete(c.Request().Context(), &req); err != nil {
 		return err
 	}
 
@@ -65,7 +65,7 @@ func (i itemAPI) UpdateUnread(c echo.Context) error {
 		return err
 	}
 
-	if err := i.srv.UpdateUnread(&req); err != nil {
+	if err := i.srv.UpdateUnread(c.Request().Context(), &req); err != nil {
 		return err
 	}
 
@@ -78,7 +78,7 @@ func (i itemAPI) UpdateBookmark(c echo.Context) error {
 		return err
 	}
 
-	if err := i.srv.UpdateBookmark(&req); err != nil {
+	if err := i.srv.UpdateBookmark(c.Request().Context(), &req); err != nil {
 		return err
 	}
 

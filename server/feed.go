@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
-	"time"
 
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/repo"
@@ -40,7 +39,7 @@ func NewFeed(feedRepo FeedRepo, itemRepo ItemInFeedRepo) *Feed {
 	}
 }
 
-func (f Feed) All() (*RespFeedAll, error) {
+func (f Feed) All(ctx context.Context) (*RespFeedAll, error) {
 	data, err := f.feedRepo.All()
 	if err != nil {
 		return nil, err
@@ -63,7 +62,7 @@ func (f Feed) All() (*RespFeedAll, error) {
 	}, nil
 }
 
-func (f Feed) Get(req *ReqFeedGet) (*RespFeedGet, error) {
+func (f Feed) Get(ctx context.Context, req *ReqFeedGet) (*RespFeedGet, error) {
 	data, err := f.feedRepo.Get(req.ID)
 	if err != nil {
 		return nil, err
@@ -79,7 +78,7 @@ func (f Feed) Get(req *ReqFeedGet) (*RespFeedGet, error) {
 	}, nil
 }
 
-func (f Feed) Create(req *ReqFeedCreate) error {
+func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 	feeds := make([]*model.Feed, 0, len(req.Feeds))
 	for _, r := range req.Feeds {
 		feeds = append(feeds, &model.Feed{
@@ -109,7 +108,9 @@ func (f Feed) Create(req *ReqFeedCreate) error {
 				routinePool <- struct{}{}
 				wg.Add(1)
 				go func() {
-					puller.PullOne(feed.ID)
+					// NOTE: do not use the incoming ctx, as it will be Done() automatically
+					// by api timeout middleware
+					puller.PullOne(context.Background(), feed.ID)
 					<-routinePool
 					wg.Done()
 				}()
@@ -118,13 +119,10 @@ func (f Feed) Create(req *ReqFeedCreate) error {
 		}()
 		return nil
 	}
-	return puller.PullOne(feeds[0].ID)
+	return puller.PullOne(ctx, feeds[0].ID)
 }
 
-func (f Feed) CheckValidity(req *ReqFeedCheckValidity) (*RespFeedCheckValidity, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
+func (f Feed) CheckValidity(ctx context.Context, req *ReqFeedCheckValidity) (*RespFeedCheckValidity, error) {
 	validLinks := make([]ValidityItem, 0)
 	parsed, err := pull.Fetch(ctx, req.Link)
 	if err == nil && parsed != nil {
@@ -153,7 +151,7 @@ func (f Feed) CheckValidity(req *ReqFeedCheckValidity) (*RespFeedCheckValidity, 
 	}, nil
 }
 
-func (f Feed) Update(req *ReqFeedUpdate) error {
+func (f Feed) Update(ctx context.Context, req *ReqFeedUpdate) error {
 	data := &model.Feed{
 		Name:      req.Name,
 		Link:      req.Link,
@@ -169,7 +167,7 @@ func (f Feed) Update(req *ReqFeedUpdate) error {
 	return err
 }
 
-func (f Feed) Delete(req *ReqFeedDelete) error {
+func (f Feed) Delete(ctx context.Context, req *ReqFeedDelete) error {
 	// FIX: transaction
 	if err := f.itemRepo.DeleteByFeed(req.ID); err != nil {
 		return err
@@ -177,12 +175,14 @@ func (f Feed) Delete(req *ReqFeedDelete) error {
 	return f.feedRepo.Delete(req.ID)
 }
 
-func (f Feed) Refresh(req *ReqFeedRefresh) error {
+func (f Feed) Refresh(ctx context.Context, req *ReqFeedRefresh) error {
 	pull := pull.NewPuller(repo.NewFeed(repo.DB), repo.NewItem(repo.DB))
 	if req.ID != nil {
-		return pull.PullOne(*req.ID)
+		return pull.PullOne(ctx, *req.ID)
 	}
 	if req.All != nil && *req.All {
+		// NOTE: do not use the incoming ctx, as it will be Done() automatically
+		// by api timeout middleware
 		go pull.PullAll(context.Background(), true)
 	}
 	return nil

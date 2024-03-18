@@ -15,6 +15,8 @@ import (
 )
 
 func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 	if f.IsSuspended() {
 		log.Printf("skip feed %d: suspended\n", f.ID)
 		return nil
