@@ -6,8 +6,10 @@ Fusion is an RSS aggregator and reader with:
 
 - Lightweight, high performance, easy to deploy
 - Support RSS, Atom, JSON feeds
+- Group, Bookmark
 - Import/Export OPML
-- Feed groups
+- Light/Dark mode
+- PWA
 
 ## Installation
 
@@ -19,11 +21,8 @@ docker run -it -d -p 8080:8080 -v $(pwd)/fusion:/data \
       rook1e404/fusion
 ```
 
-Or you can build docker image from scratch:
-
-```shell
-docker build -t rook1e404/fusion .
-```
+<details>
+  <summary><b>Other methods</b></summary>
 
 ### 2. Pre-build binary
 
@@ -52,6 +51,8 @@ cd build
 # run
 ./fusion
 ```
+
+</details>
 
 ## Credits
 
