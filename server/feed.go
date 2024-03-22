@@ -169,7 +169,7 @@ func (f Feed) Update(ctx context.Context, req *ReqFeedUpdate) error {
 
 func (f Feed) Delete(ctx context.Context, req *ReqFeedDelete) error {
 	// FIX: transaction
-	if err := f.itemRepo.DeleteByFeed(req.ID); err != nil {
+	if err := f.itemRepo.DeleteByFeed(req.ID); err != nil && !errors.Is(err, repo.ErrNotFound) {
 		return err
 	}
 	return f.feedRepo.Delete(req.ID)
