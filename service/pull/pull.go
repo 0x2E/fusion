@@ -3,6 +3,7 @@ package pull
 import (
 	"context"
 	"errors"
+	"net"
 	"sync"
 	"time"
 
@@ -79,8 +80,17 @@ func (p *Puller) PullAll(ctx context.Context, force bool) error {
 				<-routinePool
 			}()
 
+			logger := logger.With("feed_id", f.ID)
 			if err := p.do(ctx, f, force); err != nil {
-				logger.Errorw(err.Error(), "feed_id", f.ID)
+				logger.Errorln(err)
+				if _, ok := err.(net.Error); ok {
+					for i := 1; i < 4; i++ {
+						logger.Infof("%dth retry", i)
+						if p.do(ctx, f, true) == nil {
+							break
+						}
+					}
+				}
 			}
 		}(f)
 	}

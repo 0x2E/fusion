@@ -19,6 +19,8 @@ func request(ctx context.Context, link string) (*http.Response, error) {
 		return nil, err
 	}
 
+	req.Close = true
+
 	ua := "fusion/1.0"
 	req.Header.Add("User-Agent", ua)
 

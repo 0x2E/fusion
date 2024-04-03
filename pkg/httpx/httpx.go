@@ -38,7 +38,7 @@ func NewSafeClient() *http.Client {
 	safeTransport := &http.Transport{
 		DialContext:       safeDialer.DialContext,
 		ForceAttemptHTTP2: true,
-		// DisableKeepAlives: true,
+		DisableKeepAlives: true,
 	}
 	return &http.Client{
 		Transport: safeTransport,
