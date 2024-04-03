@@ -70,9 +70,9 @@ func (mr *MockItemRepoMockRecorder) Get(id any) *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockItemRepo) List(filter repo.ItemFilter, offset, count *int) ([]*model.Item, int, error) {
+func (m *MockItemRepo) List(filter repo.ItemFilter, page, pageSize int) ([]*model.Item, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", filter, offset, count)
+	ret := m.ctrl.Call(m, "List", filter, page, pageSize)
 	ret0, _ := ret[0].([]*model.Item)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
@@ -80,21 +80,35 @@ func (m *MockItemRepo) List(filter repo.ItemFilter, offset, count *int) ([]*mode
 }
 
 // List indicates an expected call of List.
-func (mr *MockItemRepoMockRecorder) List(filter, offset, count any) *gomock.Call {
+func (mr *MockItemRepoMockRecorder) List(filter, page, pageSize any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockItemRepo)(nil).List), filter, offset, count)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockItemRepo)(nil).List), filter, page, pageSize)
 }
 
-// Update mocks base method.
-func (m *MockItemRepo) Update(id uint, item *model.Item) error {
+// UpdateBookmark mocks base method.
+func (m *MockItemRepo) UpdateBookmark(id uint, bookmark *bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", id, item)
+	ret := m.ctrl.Call(m, "UpdateBookmark", id, bookmark)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Update indicates an expected call of Update.
-func (mr *MockItemRepoMockRecorder) Update(id, item any) *gomock.Call {
+// UpdateBookmark indicates an expected call of UpdateBookmark.
+func (mr *MockItemRepoMockRecorder) UpdateBookmark(id, bookmark any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockItemRepo)(nil).Update), id, item)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBookmark", reflect.TypeOf((*MockItemRepo)(nil).UpdateBookmark), id, bookmark)
+}
+
+// UpdateUnread mocks base method.
+func (m *MockItemRepo) UpdateUnread(ids []uint, unread *bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUnread", ids, unread)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateUnread indicates an expected call of UpdateUnread.
+func (mr *MockItemRepoMockRecorder) UpdateUnread(ids, unread any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUnread", reflect.TypeOf((*MockItemRepo)(nil).UpdateUnread), ids, unread)
 }
