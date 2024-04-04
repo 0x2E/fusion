@@ -4,12 +4,13 @@
 
 Fusion is an RSS aggregator and reader with:
 
-- Lightweight, high performance, easy to deploy
-- Support RSS, Atom, JSON feeds
-- Group, Bookmark
-- Import/Export OPML
-- Light/Dark mode
-- PWA
+- Group, Bookmark, Search, Sniff feeds automatically, Import/Export OPML file
+- Support RSS, Atom, JSON types feed
+- Responsive, Light/Dark mode, PWA
+- Lightweight, Self-hosted friendly
+  - Build with Golang and SQLite, Deploy with a single binary
+  - Pre-build Docker image
+  - Run with about 70MB of memory
 
 ## Installation
 
