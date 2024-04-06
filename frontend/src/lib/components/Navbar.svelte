@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
+	import { MenuIcon, XIcon } from 'lucide-svelte';
 	import ThemeToggler from './ThemeToggler.svelte';
 	interface link {
 		label: string;
@@ -28,28 +29,57 @@
 		}
 		links = links;
 	}
-	// TODO: responsive navbar
+	let showMenu = false;
 </script>
 
 <nav class="block w-full sm:mt-3 mb-6">
-	<div
-		class="flex justify-around items-center w-full sm:max-w-[500px] mx-auto px-6 py-4 sm:rounded-2xl shadow-md sm:border bg-background"
-	>
-		<div class="flex items-center">
+	<div class="flex flex-col items-center w-full sm:max-w-[500px] sm:mx-auto bg-background">
+		<div
+			class="flex justify-between sm:justify-around w-full px-2 sm:px-6 py-2 sm:py-4 sm:rounded-2xl shadow-md sm:border"
+		>
 			<img src="/icon-96.png" alt="icon" class="w-10" />
-			<!-- <h2 class="font-bold text-xl">Fusion</h2> -->
+			<div class="hidden sm:block">
+				{#each links as l}
+					<Button
+						variant="ghost"
+						href={l.url}
+						class={l.highlight ? 'bg-accent text-accent-foreground' : ''}
+					>
+						{l.label}
+					</Button>
+				{/each}
+			</div>
+			<ThemeToggler className="hidden sm:flex" />
+			<Button
+				variant="ghost"
+				size="icon"
+				on:click={() => (showMenu = !showMenu)}
+				class="flex sm:hidden"
+			>
+				{#if showMenu}
+					<XIcon size="15" />
+				{:else}
+					<MenuIcon size="15" />
+				{/if}
+			</Button>
 		</div>
-		<div>
-			{#each links as l}
-				<Button
-					variant="ghost"
-					href={l.url}
-					class={l.highlight ? 'bg-accent text-accent-foreground' : ''}
-				>
-					{l.label}
-				</Button>
-			{/each}
+
+		<div class="relative w-full">
+			{#if showMenu}
+				<div class="flex flex-col w-full absolute top-0 bg-background shadow-md">
+					{#each links as l}
+						<Button
+							variant="ghost"
+							href={l.url}
+							on:click={() => (showMenu = false)}
+							class="w-full {l.highlight ? 'bg-accent text-accent-foreground' : ''}"
+						>
+							{l.label}
+						</Button>
+					{/each}
+					<ThemeToggler className="w-full" />
+				</div>
+			{/if}
 		</div>
-		<ThemeToggler />
 	</div>
 </nav>
