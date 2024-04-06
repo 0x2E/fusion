@@ -35,7 +35,7 @@
 <nav class="block w-full sm:mt-3 mb-6">
 	<div class="flex flex-col items-center w-full sm:max-w-[500px] sm:mx-auto bg-background">
 		<div
-			class="flex justify-between sm:justify-around w-full px-2 sm:px-6 py-2 sm:py-4 sm:rounded-2xl shadow-md sm:border"
+			class="flex justify-between sm:justify-around w-full px-4 sm:px-6 py-2 sm:py-4 sm:rounded-2xl shadow-md sm:border"
 		>
 			<img src="/icon-96.png" alt="icon" class="w-10" />
 			<div class="hidden sm:block">
@@ -51,20 +51,20 @@
 			</div>
 			<ThemeToggler className="hidden sm:flex" />
 			<Button
-				variant="ghost"
+				variant="outline"
 				size="icon"
 				on:click={() => (showMenu = !showMenu)}
 				class="flex sm:hidden"
 			>
 				{#if showMenu}
-					<XIcon size="15" />
+					<XIcon />
 				{:else}
-					<MenuIcon size="15" />
+					<MenuIcon />
 				{/if}
 			</Button>
 		</div>
 
-		<div class="relative w-full">
+		<div class="sm:hidden relative w-full z-[9999]">
 			{#if showMenu}
 				<div class="flex flex-col w-full absolute top-0 bg-background shadow-md">
 					{#each links as l}
