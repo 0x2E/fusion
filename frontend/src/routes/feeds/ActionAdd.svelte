@@ -44,6 +44,7 @@
 		toast.promise(checkValidity(formData.link), {
 			loading: 'Waiting for validating and sniffing ' + formData.link,
 			success: (resp) => {
+				loading = false;
 				// resp = [
 				// 	{ title: 'test1', link: 'https://test1/1.xml' },
 				// 	{ title: 'test2', link: 'https://test2/2.xml' }
@@ -79,7 +80,6 @@
 		}
 		invalidateAll();
 		open = false;
-		loading = false;
 	}
 </script>
 

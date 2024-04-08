@@ -13,6 +13,7 @@ export async function getFeed(id: number) {
 export async function checkValidity(link: string) {
 	const resp = await api
 		.post('feeds/validation', {
+			timeout: 20000,
 			json: { link: link }
 		})
 		.json<{ feed_links: { title: string; link: string }[] }>();
@@ -27,6 +28,7 @@ export async function createFeed(data: {
 		return { name: v.name, link: v.link };
 	});
 	return await api.post('feeds', {
+		timeout: 20000,
 		json: { feeds: feeds, group_id: data.group_id }
 	});
 }
@@ -50,6 +52,7 @@ export async function deleteFeed(id: number) {
 
 export async function refreshFeeds(options: { id?: number; all?: boolean }) {
 	return await api.post('feeds/refresh', {
+		timeout: 20000,
 		json: {
 			id: options.id,
 			all: options.all
