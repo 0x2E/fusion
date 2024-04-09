@@ -1,35 +1,11 @@
-# project_name: fusion
-dist: ./build
 builds:
-  - env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - "386"
-      - arm64
-    ignore:
-      - goos: darwin
-        goarch: "386"
-    binary: fusion
-    main: ./cmd/server
-
-archives:
-  - id: default
-    format: zip
-
-checksum:
-  algorithm: sha256
-  name_template: "checksums.txt"
-
-snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  - skip: true
 
 changelog:
   use: github
 
 release:
   draft: true
+  extra_files:
+    - glob: ./build/*.zip
+    - glob: ./build/checksums.txt
