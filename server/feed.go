@@ -53,6 +53,7 @@ func (f Feed) All(ctx context.Context) (*RespFeedAll, error) {
 			Link:      v.Link,
 			Failure:   v.Failure,
 			Suspended: v.Suspended,
+			ReqProxy:  v.ReqProxy,
 			UpdatedAt: v.UpdatedAt,
 			Group:     GroupForm{ID: v.GroupID, Name: v.Group.Name},
 		})
@@ -74,6 +75,8 @@ func (f Feed) Get(ctx context.Context, req *ReqFeedGet) (*RespFeedGet, error) {
 		Link:      data.Link,
 		Failure:   data.Failure,
 		Suspended: data.Suspended,
+		ReqProxy:  data.ReqProxy,
+		UpdatedAt: data.UpdatedAt,
 		Group:     GroupForm{ID: data.GroupID, Name: data.Group.Name},
 	}, nil
 }
@@ -123,8 +126,9 @@ func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 }
 
 func (f Feed) CheckValidity(ctx context.Context, req *ReqFeedCheckValidity) (*RespFeedCheckValidity, error) {
+	link := req.Link
 	validLinks := make([]ValidityItem, 0)
-	parsed, err := pull.Fetch(ctx, req.Link)
+	parsed, err := pull.FetchFeeds(ctx, &model.Feed{Link: &link})
 	if err == nil && parsed != nil {
 		validLinks = append(validLinks, ValidityItem{
 			Title: &parsed.Title,
@@ -156,6 +160,9 @@ func (f Feed) Update(ctx context.Context, req *ReqFeedUpdate) error {
 		Name:      req.Name,
 		Link:      req.Link,
 		Suspended: req.Suspended,
+		FeedRequestOptions: model.FeedRequestOptions{
+			ReqProxy: req.ReqProxy,
+		},
 	}
 	if req.GroupID != nil {
 		data.GroupID = *req.GroupID

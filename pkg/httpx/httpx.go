@@ -1,47 +1,23 @@
 package httpx
 
 import (
-	"fmt"
-	"net"
 	"net/http"
-	"syscall"
 	"time"
 )
 
-func NewSafeClient() *http.Client {
-	// avoid ssrf
-	// https://www.agwa.name/blog/post/preventing_server_side_request_forgery_in_golang
-	socketControl := func(network, address string, c syscall.RawConn) error {
-		if !(network == "tcp4" || network == "tcp6") {
-			return fmt.Errorf("banned network type: %s", network)
-		}
+type TransportOptionFunc func(transport *http.Transport)
 
-		host, _, err := net.SplitHostPort(address)
-		if err != nil {
-			return fmt.Errorf("failed to split host:port: %s", err)
-		}
+func NewClient(options ...TransportOptionFunc) *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DisableKeepAlives = true
+	transport.ForceAttemptHTTP2 = true
 
-		ipaddress := net.ParseIP(host)
-		if ipaddress == nil {
-			return fmt.Errorf("invalid ip: %s", host)
-		}
-		if ipaddress.IsLoopback() || ipaddress.IsPrivate() || ipaddress.IsUnspecified() {
-			return fmt.Errorf("banned ip range: %s", ipaddress)
-		}
-
-		return nil
+	for _, optionFunc := range options {
+		optionFunc(transport)
 	}
 
-	safeDialer := &net.Dialer{
-		Control: socketControl,
-	}
-	safeTransport := &http.Transport{
-		DialContext:       safeDialer.DialContext,
-		ForceAttemptHTTP2: true,
-		DisableKeepAlives: true,
-	}
 	return &http.Client{
-		Transport: safeTransport,
+		Transport: transport,
 		Timeout:   1 * time.Minute, // fallback
 	}
 }

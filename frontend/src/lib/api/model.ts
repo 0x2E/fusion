@@ -10,6 +10,7 @@ export type Feed = {
 	failure: string;
 	updated_at: Date;
 	suspended: boolean;
+	req_proxy: string;
 	group: Group;
 };
 

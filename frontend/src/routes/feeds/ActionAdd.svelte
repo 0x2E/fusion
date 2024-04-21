@@ -99,7 +99,7 @@
 						id="name"
 						type="text"
 						class="w-full"
-						on:input={(e) => {
+						on:change={(e) => {
 							if (e.target instanceof HTMLInputElement) {
 								formData.name = e.target.value;
 							}
@@ -114,7 +114,7 @@
 						id="link"
 						type="text"
 						class="w-full"
-						on:input={(e) => {
+						on:change={(e) => {
 							if (e.target instanceof HTMLInputElement) {
 								formData.link = e.target.value;
 							}

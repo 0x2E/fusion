@@ -56,6 +56,7 @@
 	}
 
 	async function handleUpdate() {
+		console.log(formData);
 		toast.promise(updateFeed(selectedFeed.id, formData), {
 			loading: 'Updating',
 			success: () => {
@@ -82,7 +83,7 @@
 </script>
 
 <Sheet.Root bind:open={show}>
-	<Sheet.Content class="w-full md:min-w-[500px] md:w-auto">
+	<Sheet.Content class="w-full md:min-w-[500px] md:w-auto overflow-scroll">
 		<Sheet.Header>
 			<Sheet.Title>{selectedFeed.name}</Sheet.Title>
 			<Sheet.Description>
@@ -98,7 +99,7 @@
 		</Sheet.Header>
 		<div class="flex flex-col w-full mt-4">
 			{#if selectedFeed !== undefined}
-				<form on:submit|preventDefault={handleUpdate} class="flex flex-col gap-1">
+				<form on:submit|preventDefault={handleUpdate} class="flex flex-col gap-2">
 					<div>
 						<Label for="name">Name</Label>
 						<Input
@@ -106,7 +107,7 @@
 							type="text"
 							class="w-full"
 							value={selectedFeed.name}
-							on:input={(e) => {
+							on:change={(e) => {
 								// two-way bind not works, so do this. https://stackoverflow.com/questions/60825553/svelte-input-binding-breaks-when-a-reactive-value-is-a-reference-type
 								if (e.target instanceof HTMLInputElement) {
 									formData.name = e.target.value;
@@ -122,13 +123,30 @@
 							type="text"
 							class="w-full"
 							value={selectedFeed.link}
-							on:input={(e) => {
+							on:change={(e) => {
 								if (e.target instanceof HTMLInputElement) {
 									formData.link = e.target.value;
 								}
 							}}
 							required
 						/>
+					</div>
+					<div>
+						<Label for="req_proxy" class="mt-2">Proxy</Label>
+						<Input
+							id="req_proxy"
+							type="text"
+							class="w-full"
+							value={selectedFeed.req_proxy}
+							on:change={(e) => {
+								if (e.target instanceof HTMLInputElement) {
+									formData.req_proxy = e.target.value;
+								}
+							}}
+						/>
+						<p class="text-sm text-muted-foreground">
+							Proxy for HTTP client. The types 'http', 'https', and 'socks5' are supported.
+						</p>
 					</div>
 					<div>
 						<Label for="group">Group</Label>

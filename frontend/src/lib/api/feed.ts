@@ -37,6 +37,7 @@ export type FeedUpdateForm = {
 	name?: string;
 	link?: string;
 	suspended?: boolean;
+	req_proxy?: string;
 	group_id?: number;
 };
 

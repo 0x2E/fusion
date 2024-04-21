@@ -54,17 +54,17 @@
 </script>
 
 <Sheet.Root bind:open>
-	<Sheet.Content class="w-full md:w-auto">
+	<Sheet.Content class="w-full md:w-auto overflow-scroll">
 		<Sheet.Header>
 			<Sheet.Title>Manage Groups</Sheet.Title>
 			<Sheet.Description>Group's name should be unique.</Sheet.Description>
 		</Sheet.Header>
-		<div class="space-y-1">
+		<div class="grid gap-2">
 			{#each groups as group}
 				<div class="flex gap-2">
 					<Input
 						value={group.name}
-						on:input={(e) => (editingGroup.name = e.target.value)}
+						on:change={(e) => (editingGroup.name = e.target.value)}
 						disabled={editingGroup.id !== group.id}
 						required
 					/>

@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/0x2e/fusion/pkg/httpx"
 )
 
 type serviceMatcher func(context.Context, *url.URL) ([]FeedLink, error)
@@ -164,7 +166,7 @@ func youtubeMatcher(ctx context.Context, link *url.URL) ([]FeedLink, error) {
 		return nil, nil
 	}
 
-	resp, err := request(ctx, link.String())
+	resp, err := httpx.FusionRequest(ctx, link.String(), nil)
 	if err != nil {
 		return nil, err
 	}

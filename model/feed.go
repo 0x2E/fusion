@@ -6,6 +6,12 @@ import (
 	"gorm.io/plugin/soft_delete"
 )
 
+type FeedRequestOptions struct {
+	ReqProxy *string `gorm:"req_proxy"`
+
+	// TODO: headers, cookie, etc.
+}
+
 type Feed struct {
 	ID        uint `gorm:"primarykey"`
 	CreatedAt time.Time
@@ -20,6 +26,8 @@ type Feed struct {
 	// should skip this feed
 	Failure   *string `gorm:"failure;default:''"`
 	Suspended *bool   `gorm:"suspended;default:false"`
+
+	FeedRequestOptions
 
 	GroupID uint
 	Group   Group

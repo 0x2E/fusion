@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/0x2e/fusion/pkg/httpx"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,7 +39,6 @@ func TestParseHTMLContentMatchLink(t *testing.T) {
 }
 
 func TestParseHTMLContentMatchA(t *testing.T) {
-	globalClient = httpx.NewSafeClient()
 	table := []testParseHTMLContentItem{
 		// match <a>
 		{content: []byte(`

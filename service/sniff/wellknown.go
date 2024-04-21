@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/url"
 
+	"github.com/0x2e/fusion/pkg/httpx"
 	"github.com/mmcdole/gofeed"
 )
 
@@ -43,7 +44,7 @@ func tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink, error) {
 }
 
 func parseRSSUrl(ctx context.Context, url string) (FeedLink, error) {
-	resp, err := request(ctx, url)
+	resp, err := httpx.FusionRequest(ctx, url, nil)
 	if err != nil {
 		return FeedLink{}, err
 	}
