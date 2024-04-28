@@ -42,6 +42,18 @@
 				}
 			});
 		}
+
+		// prevent table from overflowing
+		// https://github.com/tailwindlabs/tailwindcss-typography/issues/334#issuecomment-1942177668
+		dom.querySelectorAll('table').forEach((v) => {
+			if (v.parentNode) {
+				const parentDiv = document.createElement('div');
+				parentDiv.classList.add('overflow-x-auto');
+				v.parentNode.insertBefore(parentDiv, v);
+				parentDiv.appendChild(v);
+			}
+		});
+
 		const replaced = new XMLSerializer().serializeToString(dom);
 		// data.content = data.content.replace(/src="(.*?)"/g, (_, match) => {
 		// 	const res = new URL(match, data.link).href;
@@ -70,9 +82,7 @@
 		).format('lll')}
 	</p>
 
-	<article
-		class="mt-6 prose dark:prose-invert prose-lg text-wrap prose-pre:whitespace-pre-wrap prose-pre:break-words"
-	>
+	<article class="mt-6 prose dark:prose-invert prose-lg text-wrap break-words">
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 		{@html safeContent}
 	</article>
