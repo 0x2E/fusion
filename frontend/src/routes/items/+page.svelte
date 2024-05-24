@@ -65,11 +65,14 @@
 
 	let fixActionbar = true;
 	onMount(() => {
-		const observer = new IntersectionObserver((entries) => {
-			entries.forEach((entry) => {
-				fixActionbar = !entry.isIntersecting;
-			});
-		});
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					fixActionbar = !entry.isIntersecting;
+				});
+			},
+			{ threshold: 1 }
+		);
 		observer.observe(document.querySelector('#actionbar-anchor')!);
 	});
 </script>
@@ -90,6 +93,6 @@
 	<Separator class="my-4" />
 	<p class="text-muted-foreground text-center mb-4">End of Content</p>
 
-	<ItemActionFloating bind:data bind:fixed={fixActionbar} />
 	<div id="actionbar-anchor"></div>
+	<ItemActionFloating {data} fixed={fixActionbar} />
 </div>
