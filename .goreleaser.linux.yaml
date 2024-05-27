@@ -36,6 +36,10 @@ builds:
 archives:
   - id: default
     format: zip
+    files:
+      - "LICENSE*"
+      - "README*"
+      - .env
 
 checksum:
   algorithm: sha256
