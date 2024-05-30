@@ -8,9 +8,9 @@ Fusion is an RSS aggregator and reader with:
 - Support RSS, Atom, JSON types feed
 - Responsive, Light/Dark mode, PWA
 - Lightweight, Self-hosted friendly
-  - Build with Golang and SQLite, Deploy with a single binary
-  - Pre-build Docker image
-  - Run with about 70MB of memory
+  - Built with Golang and SQLite, Deploy with a single binary
+  - Pre-built Docker image
+  - Uses about 80MB of memory
 
 ## Installation
 
@@ -22,10 +22,7 @@ docker run -it -d -p 8080:8080 -v $(pwd)/fusion:/data \
       rook1e404/fusion
 ```
 
-<details>
-  <summary><b>Other methods</b></summary>
-
-### 2. Pre-build binary
+### 2. Pre-built binary
 
 Download an release, edit `.env`, then run:
 
@@ -53,10 +50,8 @@ cd build
 ./fusion
 ```
 
-</details>
-
 ## Credits
 
-- Frontend is built with: [Sveltekit](https://github.com/sveltejs/kit), [shadcn-svelte](https://github.com/huntabyte/shadcn-svelte)
-- Backend is built with: [Echo](https://github.com/labstack/echo), [GORM](https://github.com/go-gorm/gorm)
+- Front-end is built with: [Sveltekit](https://github.com/sveltejs/kit), [shadcn-svelte](https://github.com/huntabyte/shadcn-svelte)
+- Back-end is built with: [Echo](https://github.com/labstack/echo), [GORM](https://github.com/go-gorm/gorm)
 - Parsing feed with [gofeed](https://github.com/mmcdole/gofeed)
