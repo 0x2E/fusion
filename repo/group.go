@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"errors"
+
 	"github.com/0x2e/fusion/model"
 
 	"gorm.io/gorm"
@@ -16,26 +18,32 @@ type Group struct {
 	db *gorm.DB
 }
 
-func (f Group) All() ([]*model.Group, error) {
+func (g Group) All() ([]*model.Group, error) {
 	var res []*model.Group
-	err := f.db.Find(&res).Error
+	err := g.db.Find(&res).Error
 	return res, err
 }
 
-func (f Group) Get(id uint) (*model.Group, error) {
+func (g Group) Get(id uint) (*model.Group, error) {
 	var res model.Group
-	err := f.db.First(&res, id).Error
+	err := g.db.First(&res, id).Error
 	return &res, err
 }
 
-func (f Group) Create(group *model.Group) error {
-	return f.db.Create(group).Error
+func (g Group) Create(group *model.Group) error {
+	return g.db.Create(group).Error
 }
 
-func (f Group) Update(id uint, group *model.Group) error {
-	return f.db.Model(&model.Group{}).Where("id = ?", id).Updates(group).Error
+func (g Group) Update(id uint, group *model.Group) error {
+	return g.db.Model(&model.Group{}).Where("id = ?", id).Updates(group).Error
 }
 
-func (f Group) Delete(id uint) error {
-	return f.db.Delete(&model.Group{}, id).Error
+func (g Group) Delete(id uint) error {
+	return g.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.Feed{}).Where("group_id = ?", id).Update("group_id", 1).Error; err != nil && !errors.Is(err, ErrNotFound) {
+			return err
+		}
+
+		return tx.Delete(&model.Group{}, id).Error
+	})
 }

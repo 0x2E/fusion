@@ -95,7 +95,7 @@ func Run() {
 	})
 
 	feeds := authed.Group("/feeds")
-	feedAPIHandler := newFeedAPI(server.NewFeed(repo.NewFeed(repo.DB), repo.NewItem(repo.DB)))
+	feedAPIHandler := newFeedAPI(server.NewFeed(repo.NewFeed(repo.DB)))
 	feeds.GET("", feedAPIHandler.All)
 	feeds.GET("/:id", feedAPIHandler.Get)
 	feeds.POST("", feedAPIHandler.Create)
@@ -105,7 +105,7 @@ func Run() {
 	feeds.POST("/refresh", feedAPIHandler.Refresh)
 
 	groups := authed.Group("/groups")
-	groupAPIHandler := newGroupAPI(server.NewGroup(repo.NewGroup(repo.DB), repo.NewFeed(repo.DB)))
+	groupAPIHandler := newGroupAPI(server.NewGroup(repo.NewGroup(repo.DB)))
 	groups.GET("", groupAPIHandler.All)
 	groups.POST("", groupAPIHandler.Create)
 	groups.PATCH("/:id", groupAPIHandler.Update)

@@ -18,23 +18,18 @@ type GroupRepo interface {
 	Delete(id uint) error
 }
 
-type FeedinGroupRepo interface {
-	UpdateGroupID(from uint, to uint) error
-}
 type Group struct {
-	groupRepo GroupRepo
-	feedRepo  FeedinGroupRepo
+	repo GroupRepo
 }
 
-func NewGroup(groupRepo GroupRepo, feedRepo FeedinGroupRepo) *Group {
+func NewGroup(repo GroupRepo) *Group {
 	return &Group{
-		groupRepo: groupRepo,
-		feedRepo:  feedRepo,
+		repo: repo,
 	}
 }
 
 func (g Group) All(ctx context.Context) (*RespGroupAll, error) {
-	data, err := g.groupRepo.All()
+	data, err := g.repo.All()
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +50,7 @@ func (g Group) Create(ctx context.Context, req *ReqGroupCreate) error {
 	newGroup := &model.Group{
 		Name: req.Name,
 	}
-	err := g.groupRepo.Create(newGroup)
+	err := g.repo.Create(newGroup)
 	if errors.Is(err, repo.ErrDuplicatedKey) {
 		err = NewBizError(err, http.StatusBadRequest, "name is not allowed to be the same as other groups")
 	}
@@ -63,7 +58,7 @@ func (g Group) Create(ctx context.Context, req *ReqGroupCreate) error {
 }
 
 func (g Group) Update(ctx context.Context, req *ReqGroupUpdate) error {
-	err := g.groupRepo.Update(req.ID, &model.Group{
+	err := g.repo.Update(req.ID, &model.Group{
 		Name: req.Name,
 	})
 	if errors.Is(err, repo.ErrDuplicatedKey) {
@@ -76,9 +71,5 @@ func (g Group) Delete(ctx context.Context, req *ReqGroupDelete) error {
 	if req.ID == 1 {
 		return errors.New("cannot delete the default group")
 	}
-	// FIX: transaction
-	if err := g.feedRepo.UpdateGroupID(req.ID, 1); err != nil && !errors.Is(err, repo.ErrNotFound) {
-		return err
-	}
-	return g.groupRepo.Delete(req.ID)
+	return g.repo.Delete(req.ID)
 }

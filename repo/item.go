@@ -79,10 +79,6 @@ func (i Item) Delete(id uint) error {
 	return i.db.Delete(&model.Item{}, id).Error
 }
 
-func (i Item) DeleteByFeed(feedID uint) error {
-	return i.db.Where("feed_id = ?", feedID).Delete(&model.Item{}).Error
-}
-
 func (i Item) UpdateUnread(ids []uint, unread *bool) error {
 	return i.db.Model(&model.Item{}).Where("id IN ?", ids).Update("unread", unread).Error
 }

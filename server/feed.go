@@ -23,24 +23,18 @@ type FeedRepo interface {
 	Delete(id uint) error
 }
 
-type ItemInFeedRepo interface {
-	DeleteByFeed(id uint) error
-}
-
 type Feed struct {
-	feedRepo FeedRepo
-	itemRepo ItemInFeedRepo
+	repo FeedRepo
 }
 
-func NewFeed(feedRepo FeedRepo, itemRepo ItemInFeedRepo) *Feed {
+func NewFeed(repo FeedRepo) *Feed {
 	return &Feed{
-		feedRepo: feedRepo,
-		itemRepo: itemRepo,
+		repo: repo,
 	}
 }
 
 func (f Feed) All(ctx context.Context) (*RespFeedAll, error) {
-	data, err := f.feedRepo.All()
+	data, err := f.repo.All()
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +58,7 @@ func (f Feed) All(ctx context.Context) (*RespFeedAll, error) {
 }
 
 func (f Feed) Get(ctx context.Context, req *ReqFeedGet) (*RespFeedGet, error) {
-	data, err := f.feedRepo.Get(req.ID)
+	data, err := f.repo.Get(req.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +88,7 @@ func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 		return nil
 	}
 
-	if err := f.feedRepo.Create(feeds); err != nil {
+	if err := f.repo.Create(feeds); err != nil {
 		if errors.Is(err, repo.ErrDuplicatedKey) {
 			err = NewBizError(err, http.StatusBadRequest, "link is not allowed to be the same as other feeds")
 		}
@@ -167,7 +161,7 @@ func (f Feed) Update(ctx context.Context, req *ReqFeedUpdate) error {
 	if req.GroupID != nil {
 		data.GroupID = *req.GroupID
 	}
-	err := f.feedRepo.Update(req.ID, data)
+	err := f.repo.Update(req.ID, data)
 	if errors.Is(err, repo.ErrDuplicatedKey) {
 		err = NewBizError(err, http.StatusBadRequest, "link is not allowed to be the same as other feeds")
 	}
@@ -175,11 +169,7 @@ func (f Feed) Update(ctx context.Context, req *ReqFeedUpdate) error {
 }
 
 func (f Feed) Delete(ctx context.Context, req *ReqFeedDelete) error {
-	// FIX: transaction
-	if err := f.itemRepo.DeleteByFeed(req.ID); err != nil && !errors.Is(err, repo.ErrNotFound) {
-		return err
-	}
-	return f.feedRepo.Delete(req.ID)
+	return f.repo.Delete(req.ID)
 }
 
 func (f Feed) Refresh(ctx context.Context, req *ReqFeedRefresh) error {

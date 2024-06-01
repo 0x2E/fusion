@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"errors"
+
 	"github.com/0x2e/fusion/model"
 
 	"gorm.io/gorm"
@@ -37,9 +39,10 @@ func (f Feed) Update(id uint, feed *model.Feed) error {
 }
 
 func (f Feed) Delete(id uint) error {
-	return f.db.Delete(&model.Feed{}, id).Error
-}
-
-func (f Feed) UpdateGroupID(from uint, to uint) error {
-	return f.db.Model(&model.Feed{}).Where("group_id = ?", from).Update("group_id", to).Error
+	return f.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.Item{}).Where("feed_id = ?", id).Delete(&model.Item{}).Error; err != nil && !errors.Is(err, ErrNotFound) {
+			return err
+		}
+		return tx.Delete(&model.Feed{}, id).Error
+	})
 }
