@@ -50,7 +50,7 @@ jobs:
           go-version: "1.22"
       - name: Build for Darwin
         if: ${{ startsWith(matrix.os, 'macos') }}
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           args: release --skip=publish --clean --config .goreleaser.darwin.yaml
       - name: Prepare for Linux and Windows
@@ -59,7 +59,7 @@ jobs:
           sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64
       - name: Build for Linux and Windows
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           args: release --skip=publish --clean --config .goreleaser.linux.yaml
       - name: Upload dist
@@ -92,7 +92,7 @@ jobs:
       - name: Publish release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           args: release --config .goreleaser.yaml

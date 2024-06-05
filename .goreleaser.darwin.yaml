@@ -1,3 +1,4 @@
+version: 2
 dist: ./dist
 builds:
   - binary: fusion
