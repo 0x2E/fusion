@@ -39,7 +39,7 @@
 			variant="outline"
 			role="combobox"
 			aria-expanded={open}
-			class="w-[200px] justify-between {className}"
+			class="w-[200px] justify-between text-muted-foreground {className}"
 		>
 			<span class="truncate">
 				{feeds.find((f) => f.value === String(selected))?.label ?? 'Select a feed...'}

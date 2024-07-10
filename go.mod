@@ -6,16 +6,16 @@ require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
-	github.com/go-playground/validator/v10 v10.20.0
-	github.com/gorilla/sessions v1.2.2
+	github.com/go-playground/validator/v10 v10.22.0
+	github.com/gorilla/sessions v1.3.0
 	github.com/labstack/echo-contrib v0.17.1
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/mmcdole/gofeed v1.3.0
-	github.com/spf13/viper v1.18.2
+	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/mock v0.4.0
 	go.uber.org/zap v1.27.0
-	gorm.io/driver/sqlite v1.5.5
+	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.10
 	gorm.io/plugin/soft_delete v1.2.1
 )
