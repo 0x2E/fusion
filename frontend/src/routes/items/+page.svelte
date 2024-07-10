@@ -60,7 +60,7 @@
 		// 	return `src="${res}"`;
 		// });
 
-		return DOMPurify.sanitize(replaced);
+		return DOMPurify.sanitize(replaced, { FORBID_ATTR: ['class', 'style'] });
 	}
 
 	let fixActionbar = true;
