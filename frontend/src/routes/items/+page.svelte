@@ -60,6 +60,7 @@
 		// 	return `src="${res}"`;
 		// });
 
+		// FIX: sanitize should be the first
 		return DOMPurify.sanitize(replaced, { FORBID_ATTR: ['class', 'style'] });
 	}
 
