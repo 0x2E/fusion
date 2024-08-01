@@ -7,6 +7,7 @@ build() {
 	cd ./frontend && npm i && npm run build || exit 1
 	cd $root || exit 1
 	echo "building backend"
+	mkdir build
 	cp .env build/
 	go build -o ./build/fusion ./cmd/server/* || exit 1
 }
