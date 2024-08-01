@@ -26,8 +26,7 @@ func (s Session) Create(c echo.Context) error {
 
 	sess, _ := session.Get("login", c)
 
-	//使用非https请求时，为保证Set-Cookie能正常生效，对Option进行特殊设置
-	if conf.Conf.InSecure {
+	if !conf.Conf.SecureCookie {
 		sess.Options.Secure = false
 		sess.Options.SameSite = http.SameSiteDefaultMode
 	}
