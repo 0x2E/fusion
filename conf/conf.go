@@ -13,6 +13,7 @@ var Conf struct {
 	Port     int    `mapstructure:"PORT"`
 	Password string `mapstructure:"PASSWORD"`
 	DB       string
+	InSecure bool `mapstructure:"INSECURE"`
 }
 
 func Load() {

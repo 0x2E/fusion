@@ -25,6 +25,13 @@ func (s Session) Create(c echo.Context) error {
 	}
 
 	sess, _ := session.Get("login", c)
+
+	//使用非https请求时，为保证Set-Cookie能正常生效，对Option进行特殊设置
+	if conf.Conf.InSecure {
+		sess.Options.Secure = false
+		sess.Options.SameSite = http.SameSiteDefaultMode
+	}
+
 	sess.Values["password"] = conf.Conf.Password
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		return c.NoContent(http.StatusInternalServerError)
