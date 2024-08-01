@@ -2,31 +2,38 @@ package conf
 
 import (
 	"errors"
+	"fmt"
+	"os"
 
-	"github.com/spf13/viper"
+	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
 )
 
 const Debug = false
 
 var Conf struct {
-	Host     string `mapstructure:"HOST"`
-	Port     int    `mapstructure:"PORT"`
-	Password string `mapstructure:"PASSWORD"`
-	DB       string
 	InSecure bool `mapstructure:"INSECURE"`
+	Host     string `env:"HOST" envDefault:"0.0.0.0"`
+	Port     int    `env:"PORT" envDefault:"8080"`
+	Password string `env:"PASSWORD"`
+	DB       string `env:"DB" envDefault:"fusion.db"`
 }
 
 func Load() {
-	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
+	if err := godotenv.Load(".env"); err != nil {
+		if !os.IsNotExist(err) {
+			panic(err)
+		}
+		fmt.Println("cannot find .env, skip")
 	}
-	if err := viper.Unmarshal(&Conf); err != nil {
+	if err := env.Parse(&Conf); err != nil {
 		panic(err)
 	}
 	if err := validate(); err != nil {
 		panic(err)
+	}
+	if Debug {
+		fmt.Println(Conf)
 	}
 }
 
