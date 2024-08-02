@@ -24,31 +24,28 @@ docker run -it -d -p 8080:8080 -v $(pwd)/fusion:/data \
 
 ### 2. Pre-built binary
 
-Download an release, edit `.env`, then run:
-
-```shell
-./fusion
-```
+Download from [Releases](https://github.com/0x2E/fusion/releases).
 
 ### 3. Build from source
 
-1. Prepare dependencies: Go 1.22, Node 21 with NPM
-2. Build
+1. Prepare dependencies: Go 1.22+, Node.js 21+.
+2. Check `scripts.sh` for more details.
+
+For example:
 
 ```shell
 ./scripts.sh build
 ```
 
-3. Deploy
+## Configuration
 
-```shell
-cd build
+Fusion can be configured in many ways:
 
-# edit .env
+- System environment variables, such as those set by `export PASSWORD=123abc`.
+- Create a `.env` file in the same directory as the binary file, and then copy the items you want to modify into it.
+  - NOTE: values in `.env` file can be overwritten by system environment variables.
 
-# run
-./fusion
-```
+All configuration items can be found [here](https://github.com/0x2E/fusion/blob/main/.env).
 
 ## Credits
 

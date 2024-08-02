@@ -25,6 +25,12 @@ func (s Session) Create(c echo.Context) error {
 	}
 
 	sess, _ := session.Get("login", c)
+
+	if !conf.Conf.SecureCookie {
+		sess.Options.Secure = false
+		sess.Options.SameSite = http.SameSiteDefaultMode
+	}
+
 	sess.Values["password"] = conf.Conf.Password
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		return c.NoContent(http.StatusInternalServerError)

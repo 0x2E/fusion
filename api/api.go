@@ -119,7 +119,16 @@ func Run() {
 	items.PATCH("/-/unread", itemAPIHandler.UpdateUnread)
 	items.DELETE("/:id", itemAPIHandler.Delete)
 
-	apiLogger.Fatalln(r.Start(fmt.Sprintf("%s:%d", conf.Conf.Host, conf.Conf.Port)))
+	var err error
+	addr := fmt.Sprintf("%s:%d", conf.Conf.Host, conf.Conf.Port)
+	if conf.Conf.TLSCert != "" {
+		err = r.StartTLS(addr, conf.Conf.TLSCert, conf.Conf.TLSKey)
+	} else {
+		err = r.Start(addr)
+	}
+	if err != nil {
+		apiLogger.Fatalln(err)
+	}
 }
 
 func errorHandler(err error, c echo.Context) {
