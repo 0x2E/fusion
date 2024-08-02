@@ -40,7 +40,6 @@ archives:
     files:
       - "LICENSE*"
       - "README*"
-      - .env
 
 checksum:
   algorithm: sha256
