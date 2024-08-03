@@ -34,7 +34,9 @@
 			{ tag: 'object', attrs: ['data'] }
 		];
 
-		const dom = new DOMParser().parseFromString(content, 'text/html');
+		const cleaned = DOMPurify.sanitize(content, { FORBID_ATTR: ['class', 'style'] });
+
+		const dom = new DOMParser().parseFromString(cleaned, 'text/html');
 		for (const el of elements) {
 			dom.querySelectorAll(el.tag).forEach((v) => {
 				for (const attr of el.attrs) {
@@ -54,14 +56,12 @@
 			}
 		});
 
-		const replaced = new XMLSerializer().serializeToString(dom);
 		// data.content = data.content.replace(/src="(.*?)"/g, (_, match) => {
 		// 	const res = new URL(match, data.link).href;
 		// 	return `src="${res}"`;
 		// });
 
-		// FIX: sanitize should be the first
-		return DOMPurify.sanitize(replaced, { FORBID_ATTR: ['class', 'style'] });
+		return new XMLSerializer().serializeToString(dom);
 	}
 
 	let fixActionbar = true;
