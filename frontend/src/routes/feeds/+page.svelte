@@ -71,11 +71,16 @@
 								{/if}
 							</span>
 							<span class="inline-block w-1/2 truncate">{f.name}</span>
-							<span class="inline-block w-1/2 truncate text-muted-foreground"
-								>{f.failure
-									? 'Error: ' + f.failure
-									: 'Last refreshed at ' + moment(f.updated_at).format('lll')}</span
-							>
+							<span class="inline-block w-1/2 truncate text-muted-foreground">
+								{#if f.failure}
+									Error: {f.failure}
+								{:else if f.suspended}
+									Suspended
+								{:else}
+									<span class="hidden md:inline">Refreshed at </span>
+									{moment(f.updated_at).format('LTS')}
+								{/if}
+							</span>
 						</Button>
 					</li>
 				{/each}
