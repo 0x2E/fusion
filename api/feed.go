@@ -18,8 +18,13 @@ func newFeedAPI(srv *server.Feed) *feedAPI {
 	}
 }
 
-func (f feedAPI) All(c echo.Context) error {
-	resp, err := f.srv.All(c.Request().Context())
+func (f feedAPI) List(c echo.Context) error {
+	var req server.ReqFeedList
+	if err := bindAndValidate(&req, c); err != nil {
+		return err
+	}
+
+	resp, err := f.srv.List(c.Request().Context(), &req)
 	if err != nil {
 		return err
 	}

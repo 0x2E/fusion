@@ -16,7 +16,7 @@ import (
 //go:generate mockgen -destination=feed_mock.go -source=feed.go -package=server
 
 type FeedRepo interface {
-	All() ([]*model.Feed, error)
+	List(filter *repo.FeedListFilter) ([]*model.Feed, error)
 	Get(id uint) (*model.Feed, error)
 	Create(feed []*model.Feed) error
 	Update(id uint, feed *model.Feed) error
@@ -33,8 +33,12 @@ func NewFeed(repo FeedRepo) *Feed {
 	}
 }
 
-func (f Feed) All(ctx context.Context) (*RespFeedAll, error) {
-	data, err := f.repo.All()
+func (f Feed) List(ctx context.Context, req *ReqFeedList) (*RespFeedList, error) {
+	filter := &repo.FeedListFilter{
+		HaveUnread:   req.HaveUnread,
+		HaveBookmark: req.HaveBookmark,
+	}
+	data, err := f.repo.List(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +56,7 @@ func (f Feed) All(ctx context.Context) (*RespFeedAll, error) {
 			Group:     GroupForm{ID: v.GroupID, Name: v.Group.Name},
 		})
 	}
-	return &RespFeedAll{
+	return &RespFeedList{
 		Feeds: feeds,
 	}, nil
 }

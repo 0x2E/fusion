@@ -96,7 +96,7 @@ func Run() {
 
 	feeds := authed.Group("/feeds")
 	feedAPIHandler := newFeedAPI(server.NewFeed(repo.NewFeed(repo.DB)))
-	feeds.GET("", feedAPIHandler.All)
+	feeds.GET("", feedAPIHandler.List)
 	feeds.GET("/:id", feedAPIHandler.Get)
 	feeds.POST("", feedAPIHandler.Create)
 	feeds.POST("/validation", feedAPIHandler.CheckValidity)

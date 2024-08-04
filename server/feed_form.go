@@ -13,7 +13,12 @@ type FeedForm struct {
 	Group     GroupForm `json:"group"`
 }
 
-type RespFeedAll struct {
+type ReqFeedList struct {
+	HaveUnread   *bool `query:"have_unread"`
+	HaveBookmark *bool `query:"have_bookmark"`
+}
+
+type RespFeedList struct {
 	Feeds []*FeedForm `json:"feeds"`
 }
 

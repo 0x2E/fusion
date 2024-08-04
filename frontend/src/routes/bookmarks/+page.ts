@@ -1,4 +1,4 @@
-import { allFeeds } from '$lib/api/feed';
+import { listFeeds } from '$lib/api/feed';
 import { listItems, parseURLtoFilter } from '$lib/api/item';
 import type { PageLoad } from './$types';
 
@@ -6,7 +6,7 @@ export const load: PageLoad = async ({ url }) => {
 	const filter = parseURLtoFilter(url.searchParams);
 	filter.unread = undefined;
 	filter.bookmark = true;
-	const feeds = await allFeeds();
+	const feeds = await listFeeds({ have_bookmark: true });
 	const items = await listItems(filter);
 	return {
 		feeds: feeds,

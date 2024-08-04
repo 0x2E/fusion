@@ -18,7 +18,7 @@ var (
 )
 
 type FeedRepo interface {
-	All() ([]*model.Feed, error)
+	List(filter *repo.FeedListFilter) ([]*model.Feed, error)
 	Get(id uint) (*model.Feed, error)
 	Update(id uint, feed *model.Feed) error
 }
@@ -57,7 +57,7 @@ func (p *Puller) PullAll(ctx context.Context, force bool) error {
 	ctx, cancel := context.WithTimeout(ctx, interval/2)
 	defer cancel()
 
-	feeds, err := p.feedRepo.All()
+	feeds, err := p.feedRepo.List(nil)
 	if err != nil {
 		if errors.Is(err, repo.ErrNotFound) {
 			err = nil

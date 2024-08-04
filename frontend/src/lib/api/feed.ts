@@ -1,8 +1,21 @@
 import { api } from './api';
 import type { Feed } from './model';
 
-export async function allFeeds() {
-	const resp = await api.get('feeds').json<{ feeds: Feed[] }>();
+export type FeedListFiler = {
+	have_unread?: boolean;
+	have_bookmark?: boolean;
+};
+
+export async function listFeeds(filter?: FeedListFiler) {
+	if (filter) {
+		filter = JSON.parse(JSON.stringify(filter));
+	}
+
+	const resp = await api
+		.get('feeds', {
+			searchParams: filter
+		})
+		.json<{ feeds: Feed[] }>();
 	return resp.feeds;
 }
 

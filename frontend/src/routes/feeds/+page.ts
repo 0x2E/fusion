@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 import type { Feed } from '$lib/api/model';
-import { allFeeds } from '$lib/api/feed';
+import { listFeeds } from '$lib/api/feed';
 import { allGroups } from '$lib/api/group';
 
 export type groupFeeds = {
@@ -10,7 +10,7 @@ export type groupFeeds = {
 };
 
 export const load: PageLoad = async () => {
-	const feeds = await allFeeds();
+	const feeds = await listFeeds();
 	const groups = await allGroups();
 	const data: groupFeeds[] = [];
 	for (const g of groups) {

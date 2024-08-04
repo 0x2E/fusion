@@ -18,9 +18,25 @@ type Feed struct {
 	db *gorm.DB
 }
 
-func (f Feed) All() ([]*model.Feed, error) {
+type FeedListFilter struct {
+	HaveUnread   *bool
+	HaveBookmark *bool
+}
+
+func (f Feed) List(filter *FeedListFilter) ([]*model.Feed, error) {
 	var res []*model.Feed
-	err := f.db.Model(&model.Feed{}).Joins("Group").Find(&res).Error
+	db := f.db.Model(&model.Feed{}).Joins("Group")
+	if filter != nil {
+		if filter.HaveUnread != nil && *filter.HaveUnread {
+			db = db.Joins("inner join items on feeds.id = items.feed_id and items.unread = true").
+				Group("feeds.id")
+		}
+		if filter.HaveBookmark != nil && *filter.HaveBookmark {
+			db = db.Joins("inner join items on feeds.id = items.feed_id and items.bookmark = true").
+				Group("feeds.id")
+		}
+	}
+	err := db.Find(&res).Error
 	return res, err
 }
 
