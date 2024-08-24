@@ -1,15 +1,15 @@
 # Fusion
-A lightweight RSS feed aggregator and reader with a modern interface.
+
+A lightweight RSS feed aggregator and reader.
 
 ![preview](./assets/screenshot.png)
 
 Key features include:
 
-- Group, Bookmark, Search, Sniff feeds automatically,
+- Group, Bookmark, Search, Sniff feeds automatically
 - Import/Export OPML file
 - Support RSS, Atom, JSON types feed
 - Responsive, Light/Dark mode, PWA
-- Displays post's content with a nice reading UI
 - Lightweight, Self-hosted friendly
   - Built with Golang and SQLite, Deploy with a single binary
   - Pre-built Docker image
@@ -19,15 +19,18 @@ Key features include:
 
 ### 1. Docker
 
-Choose Docker run CLI or Docker Compose examples below:
+Choose Docker CLI or Docker Compose examples below:
 
 #### 1.a. Docker CLI
+
 ```shell
 docker run -it -d -p 8080:8080 -v $(pwd)/fusion:/data \
       -e PASSWORD="rss123456" \
       rook1e404/fusion
 ```
+
 #### 1.b. Docker Compose
+
 ```compose
 version: '3'
 services:
@@ -41,7 +44,8 @@ services:
     volumes:
       - ./data:/data
 ```
-_Change `./data` to where you want the files stored. Remember to specify localhost IP unless you want Docker exposing the port though your firewall. Then, in the same directory as this `compose.yml` file run `docker compose up -d` (or `docker-compose up -d` on older versions)._
+
+Change `./data` to where you want the files stored. Remember to specify localhost IP unless you want Docker exposing the port though your firewall. Then, in the same directory as this `compose.yml` file run `docker compose up -d` (or `docker-compose up -d` on older versions).
 
 ### 2. Pre-built binary
 
