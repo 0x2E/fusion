@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Button } from './ui/button';
-	import ItemAction from './ItemAction.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import * as Pagination from '$lib/components/ui/pagination';
@@ -13,6 +12,9 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import FeedsSelect from './FeedsSelect.svelte';
 	import { Input } from './ui/input';
+	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
+	import ItemActionBookmark from './ItemActionBookmark.svelte';
+	import ItemActionUnread from './ItemActionUnread.svelte';
 
 	export let data: { feeds: Feed[]; items: { total: number; data: Item[] } };
 	let filter = parseURLtoFilter($page.url.searchParams);
@@ -121,7 +123,7 @@
 	<div class="flex flex-col md:flex-row gap-2">
 		<FeedsSelect data={data.feeds} bind:selected={selectedFeed} className="w-full md:w-[200px]" />
 		<Input
-			type="text"
+			type="search"
 			placeholder="Search in title and content..."
 			class="w-full md:w-[400px]"
 			value={filter.keyword}
@@ -176,7 +178,15 @@
 					</div>
 
 					<div class="w-full hidden group-hover:inline-flex justify-end">
-						<ItemAction bind:data={item} />
+						<ItemActionUnread data={item} buttonClass="hover:bg-gray-300 dark:hover:bg-gray-700" />
+						<ItemActionBookmark
+							data={item}
+							buttonClass="hover:bg-gray-300 dark:hover:bg-gray-700"
+						/>
+						<ItemActionVisitLink
+							data={item}
+							buttonClass="hover:bg-gray-300 dark:hover:bg-gray-700"
+						/>
 					</div>
 				</div>
 			</Button>
@@ -222,7 +232,7 @@
 		<Select.Root
 			items={[{ value: 10, label: '10' }]}
 			onSelectedChange={(v) => {
-				v && (filter.page_size = v.value);
+				filter.page_size = v?.value || 10;
 			}}
 		>
 			<Select.Trigger class="w-[110px]">
