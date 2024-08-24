@@ -1,11 +1,11 @@
 # build frontend
-FROM node:21 as fe
+FROM node:22 as fe
 WORKDIR /src
 COPY .git frontend ./
 RUN npm i && npm run build
 
 # build backend
-FROM golang:1.22 as be
+FROM golang:1.23 as be
 WORKDIR /src
 COPY . ./
 COPY --from=fe /src/build ./frontend/build/
