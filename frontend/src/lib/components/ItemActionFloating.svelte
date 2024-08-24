@@ -5,6 +5,7 @@
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
 	import ItemActionBase from './ItemActionBase.svelte';
+	import { Separator } from './ui/separator';
 
 	export let data: Item;
 	export let fixed = true;
@@ -20,8 +21,11 @@
 		class="flex flex-row justify-center items-center gap-2 rounded-full border shadow w-fit mx-auto bg-background px-6 py-2"
 	>
 		<ItemActionUnread {data} />
+		<Separator orientation="vertical" class="h-5" />
 		<ItemActionBookmark {data} />
+		<Separator orientation="vertical" class="h-5" />
 		<ItemActionVisitLink {data} />
+		<Separator orientation="vertical" class="h-5" />
 		<ItemActionBase fn={handleScrollTop} tooltip="Back to Top" icon={ArrowUpIcon} />
 	</div>
 </div>
