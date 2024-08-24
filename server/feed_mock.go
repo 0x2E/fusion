@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	model "github.com/0x2e/fusion/model"
+	repo "github.com/0x2e/fusion/repo"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -37,21 +38,6 @@ func NewMockFeedRepo(ctrl *gomock.Controller) *MockFeedRepo {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockFeedRepo) EXPECT() *MockFeedRepoMockRecorder {
 	return m.recorder
-}
-
-// All mocks base method.
-func (m *MockFeedRepo) All() ([]*model.Feed, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "All")
-	ret0, _ := ret[0].([]*model.Feed)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// All indicates an expected call of All.
-func (mr *MockFeedRepoMockRecorder) All() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "All", reflect.TypeOf((*MockFeedRepo)(nil).All))
 }
 
 // Create mocks base method.
@@ -95,6 +81,21 @@ func (m *MockFeedRepo) Get(id uint) (*model.Feed, error) {
 func (mr *MockFeedRepoMockRecorder) Get(id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockFeedRepo)(nil).Get), id)
+}
+
+// List mocks base method.
+func (m *MockFeedRepo) List(filter *repo.FeedListFilter) ([]*model.Feed, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List", filter)
+	ret0, _ := ret[0].([]*model.Feed)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// List indicates an expected call of List.
+func (mr *MockFeedRepoMockRecorder) List(filter any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockFeedRepo)(nil).List), filter)
 }
 
 // Update mocks base method.
