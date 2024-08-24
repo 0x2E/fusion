@@ -26,7 +26,7 @@ Choose Docker CLI or Docker Compose examples below:
 ```shell
 docker run -it -d -p 8080:8080 -v $(pwd)/fusion:/data \
       -e PASSWORD="rss123456" \
-      rook1e404/fusion
+      rook1e404/fusion:latest
 ```
 
 #### 1.b. Docker Compose
@@ -35,7 +35,7 @@ docker run -it -d -p 8080:8080 -v $(pwd)/fusion:/data \
 version: '3'
 services:
   fusion:
-    image: rook1e404/fusion
+    image: rook1e404/fusion:latest
     ports:
       - '127.0.0.1:8080:8080'
     environment:
