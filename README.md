@@ -1,10 +1,13 @@
 # Fusion
 
+A lightweight RSS feed aggregator and reader.
+
 ![preview](./assets/screenshot.png)
 
-Fusion is an RSS aggregator and reader with:
+Key features include:
 
-- Group, Bookmark, Search, Sniff feeds automatically, Import/Export OPML file
+- Group, Bookmark, Search, Sniff feeds automatically
+- Import/Export OPML file
 - Support RSS, Atom, JSON types feed
 - Responsive, Light/Dark mode, PWA
 - Lightweight, Self-hosted friendly
@@ -16,11 +19,33 @@ Fusion is an RSS aggregator and reader with:
 
 ### 1. Docker
 
+Choose Docker CLI or Docker Compose examples below:
+
+#### 1.a. Docker CLI
+
 ```shell
 docker run -it -d -p 8080:8080 -v $(pwd)/fusion:/data \
-      -e PASSWORD="123456" \
+      -e PASSWORD="rss123456" \
       rook1e404/fusion
 ```
+
+#### 1.b. Docker Compose
+
+```compose
+version: '3'
+services:
+  fusion:
+    image: rook1e404/fusion
+    ports:
+      - '127.0.0.1:8080:8080'
+    environment:
+      - PASSWORD=rss123456
+    restart: "unless-stopped"
+    volumes:
+      - ./data:/data
+```
+
+Change `./data` to where you want the files stored. Remember to specify localhost IP unless you want Docker exposing the port though your firewall. Then, in the same directory as this `compose.yml` file run `docker compose up -d` (or `docker-compose up -d` on older versions).
 
 ### 2. Pre-built binary
 
