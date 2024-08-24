@@ -156,7 +156,7 @@
 	{/if}
 </div>
 
-<ul class="mt-4">
+<ul data-sveltekit-preload-data="hover" class="mt-4">
 	{#each data.items.data as item}
 		<li class="group rounded-md">
 			<Button
