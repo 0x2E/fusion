@@ -22,7 +22,7 @@
 	<title>Login</title>
 </svelte:head>
 
-<form on:submit={handleSubmit} class="max-w-[400px] mx-auto">
+<form on:submit={handleSubmit} class="container max-w-[400px] mt-[20vh]">
 	<h1 class="text-2xl font-bold text-center mt-10 mb-4">Login</h1>
 	<div>
 		<Label for="password">Password</Label>

@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
-	import { MenuIcon, XIcon } from 'lucide-svelte';
+	import { LogOutIcon, MenuIcon, XIcon } from 'lucide-svelte';
 	import ThemeToggler from './ThemeToggler.svelte';
+	import { logout } from '$lib/api/login';
+	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
 
 	interface link {
 		label: string;
@@ -38,6 +41,16 @@
 	function disableBodyScoll(showMenu: boolean) {
 		document.body.style.overflow = showMenu ? 'hidden' : bodyOverflowDefault;
 	}
+
+	async function handleLogout() {
+		try {
+			await logout();
+			toast.success('Bye');
+			goto('/login');
+		} catch {
+			toast.error('Failed to logout.');
+		}
+	}
 </script>
 
 <nav class="block w-full sm:mt-3 mb-6">
@@ -61,6 +74,18 @@
 			</div>
 			<ThemeToggler className="hidden sm:flex" />
 			<Button
+				variant="ghost"
+				size="icon"
+				on:click={() => {
+					handleLogout();
+					showMenu = false;
+				}}
+				class="hidden sm:flex"
+			>
+				<LogOutIcon class="h-[1rem] w-[1rem]" />
+				<span class="sr-only">Logout</span>
+			</Button>
+			<Button
 				variant="outline"
 				size="icon"
 				on:click={() => (showMenu = !showMenu)}
@@ -75,9 +100,9 @@
 		</div>
 
 		<div
-			class={`${showMenu ? 'opacity-100 visible' : 'opacity-0 invisible'} sm:hidden w-full h-screen z-50 fixed top-0 pt-14 pointer-events-none transition-all duration-300 origin-center overflow-y-auto`}
+			class={`${showMenu ? 'opacity-100 visible' : 'opacity-0 invisible'} sm:hidden w-full h-[calc(100dvh)] z-50 fixed top-0 pt-14 pointer-events-none transition-all duration-300 origin-center overflow-y-auto`}
 		>
-			<div class="flex flex-col w-full h-full bg-background pointer-events-auto pt-6">
+			<div class="flex flex-col w-full h-full bg-background pointer-events-auto pt-6 pb-10">
 				{#each links as l}
 					<Button
 						variant="ghost"
@@ -89,6 +114,16 @@
 					</Button>
 				{/each}
 				<ThemeToggler className="w-full h-14" />
+				<Button
+					variant="outline"
+					on:click={() => {
+						handleLogout();
+						showMenu = false;
+					}}
+					class="w-[50%] text-lg h-14 mt-auto mx-auto text-destructive"
+				>
+					Logout
+				</Button>
 			</div>
 		</div>
 	</div>

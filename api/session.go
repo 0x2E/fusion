@@ -50,3 +50,17 @@ func (s Session) Check(c echo.Context) (bool, error) {
 	}
 	return v == conf.Conf.Password, nil
 }
+
+func (s Session) Delete(c echo.Context) error {
+	sess, err := session.Get("login", c)
+	if err != nil {
+		return err
+	}
+	sess.Values["password"] = ""
+	sess.Options.MaxAge = -1
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}

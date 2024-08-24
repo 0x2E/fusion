@@ -6,7 +6,6 @@ export const handleError: HandleClientError = async ({ error, event, status, mes
 	console.log(error);
 	if (error instanceof HTTPError) {
 		if (error.response.status === 401) {
-			console.log('goto login');
 			goto('/login');
 			return;
 		}

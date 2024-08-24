@@ -1,25 +1,23 @@
 <script lang="ts">
 	import '../app.css';
 	import { Toaster } from '$lib/components/ui/sonner';
-	import Navbar from '$lib/components/Navbar.svelte';
 	import { ModeWatcher } from 'mode-watcher';
 	import Footer from '$lib/components/Footer.svelte';
 	import { page } from '$app/stores';
-
 </script>
 
 <svelte:head>
-	<title>{$page.data.title ?? "Fusion"}</title>
+	<title>{$page.data.title ?? 'Fusion'}</title>
 </svelte:head>
 
 <ModeWatcher defaultMode="system" />
 <Toaster position="top-right" richColors closeButton />
-<main class="min-h-screen flex flex-col">
+
+<!-- h-screen does not work properly on mobile. Use calc(100dvh) instead. 
+     https://stackoverflow.com/a/76120728/12812480 -->
+<main class="min-h-[calc(100dvh)] flex flex-col">
 	<div class="flex flex-col grow max-w-[900px] w-full mx-auto">
-		<Navbar />
-		<div class="px-4 grow">
-			<slot />
-		</div>
+		<slot />
 	</div>
 	<Footer />
 </main>

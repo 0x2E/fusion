@@ -7,3 +7,7 @@ export async function login(password: string) {
 		}
 	});
 }
+
+export async function logout() {
+	return api.delete('sessions');
+}

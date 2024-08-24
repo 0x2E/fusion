@@ -94,6 +94,8 @@ func Run() {
 		}
 	})
 
+	authed.DELETE("/sessions", loginAPI.Delete)
+
 	feeds := authed.Group("/feeds")
 	feedAPIHandler := newFeedAPI(server.NewFeed(repo.NewFeed(repo.DB)))
 	feeds.GET("", feedAPIHandler.List)
