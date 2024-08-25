@@ -3,6 +3,7 @@ package repo
 import (
 	"errors"
 	"log"
+	"strings"
 
 	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/model"
@@ -32,6 +33,11 @@ func migrage() {
 	// We must delete any duplicate feeds before AutoMigrate applies the
 	// new unique constraint.
 	err := DB.Transaction(func(tx *gorm.DB) error {
+		// skip if it's the first launch
+		if !tableExist(&model.Feed{}) || !tableExist(&model.Feed{}) {
+			return nil
+		}
+
 		// query duplicate feeds
 		dupFeeds := make([]model.Feed, 0)
 		err := tx.Model(&model.Feed{}).Where(
@@ -80,6 +86,17 @@ func migrage() {
 		FirstOrCreate(&model.Group{ID: 1, Name: &defaultGroup}).Error; err != nil {
 		panic(err)
 	}
+}
+
+func tableExist(table interface{}) bool {
+	err := DB.Model(table).First(table, "id = 1").Error
+	if err != nil {
+		if strings.Contains(err.Error(), "no such table") {
+			return false
+		}
+		panic(err)
+	}
+	return true
 }
 
 func registerCallback() {
