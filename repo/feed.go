@@ -50,7 +50,7 @@ func (f Feed) Get(id uint) (*model.Feed, error) {
 func (f Feed) Create(data []*model.Feed) error {
 	return f.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "link"}, {Name: "deleted_at"}},
-		DoUpdates: clause.AssignmentColumns([]string{"name", "link"}),
+		DoUpdates: clause.AssignmentColumns([]string{"name", "link", "group_id"}),
 	}).Create(data).Error
 }
 
