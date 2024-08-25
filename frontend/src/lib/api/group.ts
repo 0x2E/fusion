@@ -7,11 +7,13 @@ export async function allGroups() {
 }
 
 export async function createGroup(name: string) {
-	return await api.post('groups', {
-		json: {
-			name: name
-		}
-	});
+	return await api
+		.post('groups', {
+			json: {
+				name: name
+			}
+		})
+		.json<{ id: number }>();
 }
 
 export async function updateGroup(id: number, name: string) {

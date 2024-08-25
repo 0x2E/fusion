@@ -106,6 +106,9 @@
 						}}
 						required
 					/>
+					<p class="text-sm text-muted-foreground">
+						The existing feed with the same link will be override.
+					</p>
 				</div>
 
 				<div>
@@ -121,11 +124,6 @@
 						}}
 						required
 					/>
-					{#if formData.name}
-						<p class="text-sm text-muted-foreground">
-							The existing feed with the same link will be renamed as <b>{formData.name}</b>.
-						</p>
-					{/if}
 				</div>
 
 				<div>
