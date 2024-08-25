@@ -144,7 +144,11 @@
 							1. Feeds will be imported into the corresponding group, which will be created
 							automatically if it does not exist.
 						</p>
-						<p>2. The existing feed with the same link will be override.</p>
+						<p>
+							2. Multidimensional group will be flattened to a one-dimensional structure, using a
+							naming convention like 'a/b/c'.
+						</p>
+						<p>3. The existing feed with the same link will be override.</p>
 					</div>
 					<Button type="submit" disabled={importing}>Import</Button>
 				</form>
