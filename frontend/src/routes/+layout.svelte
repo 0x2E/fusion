@@ -11,7 +11,7 @@
 </svelte:head>
 
 <ModeWatcher defaultMode="system" />
-<Toaster position="top-right" richColors closeButton visibleToasts={10} />
+<Toaster position="bottom-right" richColors closeButton visibleToasts={10} />
 
 <!-- h-screen does not work properly on mobile. Use calc(100dvh) instead. 
      https://stackoverflow.com/a/76120728/12812480 -->
