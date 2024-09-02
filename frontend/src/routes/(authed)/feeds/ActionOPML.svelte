@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { groupFeeds } from './+page';
 	import * as Sheet from '$lib/components/ui/sheet';
-	import * as Select from '$lib/components/ui/select';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
@@ -9,22 +8,26 @@
 	import { toast } from 'svelte-sonner';
 	import { invalidateAll } from '$app/navigation';
 	import { dump, parse } from '$lib/opml';
+	import { FolderIcon } from 'lucide-svelte';
+	import { createGroup } from '$lib/api/group';
 
 	export let groups: groupFeeds[];
 	export let open: boolean;
 
 	let uploadedOpmls: FileList;
 	$: parseOPML(uploadedOpmls);
-	let opmlGroup = { id: groups[0].id, name: groups[0].name };
-	let parsedOpmlFeeds: { name: string; link: string }[] = [];
+	let parsedGroupFeeds: { name: string; feeds: { name: string; link: string }[] }[] = [];
+	let importing = false;
+
 	$: {
 		if (!open) {
-			parsedOpmlFeeds = [];
+			parsedGroupFeeds = [];
 		}
 	}
 
 	function parseOPML(opmls: FileList) {
 		if (!opmls) return;
+
 		const reader = new FileReader();
 		reader.onload = (f) => {
 			const content = f.target?.result?.toString();
@@ -32,19 +35,37 @@
 				toast.error('Failed to load file content');
 				return;
 			}
-			parsedOpmlFeeds = parse(content);
-			console.log(parsedOpmlFeeds);
+			parsedGroupFeeds = parse(content).filter((v) => v.feeds.length > 0);
+			console.log(parsedGroupFeeds);
 		};
 		reader.readAsText(opmls[0]);
 	}
 
 	async function handleImportFeeds() {
-		try {
-			await createFeed({ group_id: opmlGroup.id, feeds: parsedOpmlFeeds });
-			toast.success('Feeds have been imported. Refreshing is running in the background');
-		} catch (e) {
-			toast.error((e as Error).message);
+		importing = true;
+		let success = 0;
+		const existingGroups = groups.map((v) => {
+			return { id: v.id, name: v.name };
+		});
+		for (const g of parsedGroupFeeds) {
+			try {
+				let groupID = existingGroups.find((v) => v.name === g.name)?.id;
+				if (groupID === undefined) {
+					groupID = (await createGroup(g.name)).id;
+					toast.success(`Created group ${g.name}`);
+				}
+				await createFeed({ group_id: groupID, feeds: g.feeds });
+				toast.success(`Imported into group ${g.name}`);
+				success++;
+			} catch (e) {
+				toast.error(`Failed to import group ${g.name}, error: ${(e as Error).message}`);
+				break;
+			}
 		}
+		if (success === parsedGroupFeeds.length) {
+			toast.success('All feeds have been imported. Refreshing is running in the background');
+		}
+		importing = false;
 		invalidateAll();
 	}
 
@@ -69,7 +90,7 @@
 </script>
 
 <Sheet.Root bind:open>
-	<Sheet.Content class="w-full md:w-auto">
+	<Sheet.Content class="w-full md:max-w-[700px] overflow-y-auto">
 		<Sheet.Header>
 			<Sheet.Title>Import or Export Feeds</Sheet.Title>
 			<Sheet.Description>
@@ -88,25 +109,6 @@
 			<Tabs.Content value="import">
 				<form class="space-y-2" on:submit|preventDefault={handleImportFeeds}>
 					<div>
-						<Label for="group">Group</Label>
-						<Select.Root
-							disabled={groups.length < 2}
-							items={groups.map((v) => {
-								return { value: v.id, label: v.name };
-							})}
-							onSelectedChange={(v) => v && (opmlGroup.id = v.value)}
-						>
-							<Select.Trigger>
-								<Select.Value placeholder={opmlGroup.name} />
-							</Select.Trigger>
-							<Select.Content>
-								{#each groups as g}
-									<Select.Item value={g.id}>{g.name}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					</div>
-					<div>
 						<Label for="feed_file">File</Label>
 						<input
 							type="file"
@@ -117,21 +119,38 @@
 							class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 						/>
 					</div>
-					{#if parsedOpmlFeeds.length > 0}
+					{#if parsedGroupFeeds.length > 0}
 						<div>
-							<p class="text-sm text-muted-foreground">Parsed out {parsedOpmlFeeds.length} feeds</p>
+							<p class="text-sm text-green-700">Parsed successfully.</p>
 							<div
-								class="max-h-[200px] overflow-scroll p-2 rounded-md border bg-muted text-muted-foreground text-nowrap"
+								class="p-2 rounded-md border bg-muted/40 text-muted-foreground text-nowrap overflow-x-auto"
 							>
-								<ul>
-									{#each parsedOpmlFeeds as feed, index}
-										<li>{index + 1}. <b>{feed.name}</b> {feed.link}</li>
-									{/each}
-								</ul>
+								{#each parsedGroupFeeds as group}
+									<div class="flex flex-row items-center gap-1">
+										<FolderIcon size={14} />{group.name}
+									</div>
+									<ul class="list-inside list-decimal ml-[2ch] [&:not(:last-child)]:mb-2">
+										{#each group.feeds as feed}
+											<li>{feed.name}, {feed.link}</li>
+										{/each}
+									</ul>
+								{/each}
 							</div>
 						</div>
 					{/if}
-					<Button type="submit">Import</Button>
+					<div class="text-sm text-secondary-foreground">
+						<p>Note:</p>
+						<p>
+							1. Feeds will be imported into the corresponding group, which will be created
+							automatically if it does not exist.
+						</p>
+						<p>
+							2. Multidimensional group will be flattened to a one-dimensional structure, using a
+							naming convention like 'a/b/c'.
+						</p>
+						<p>3. The existing feed with the same link will be override.</p>
+					</div>
+					<Button type="submit" disabled={importing}>Import</Button>
 				</form>
 			</Tabs.Content>
 			<Tabs.Content value="export">

@@ -2,6 +2,8 @@ package repo
 
 import (
 	"errors"
+	"log"
+	"strings"
 
 	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/model"
@@ -27,6 +29,53 @@ func Init() {
 }
 
 func migrage() {
+	// The verison after v0.8.7 will add a unique index to Feed.Link.
+	// We must delete any duplicate feeds before AutoMigrate applies the
+	// new unique constraint.
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		// skip if it's the first launch
+		if !tableExist(&model.Feed{}) || !tableExist(&model.Feed{}) {
+			return nil
+		}
+
+		// query duplicate feeds
+		dupFeeds := make([]model.Feed, 0)
+		err := tx.Model(&model.Feed{}).Where(
+			"link IN (?)",
+			tx.Model(&model.Feed{}).Select("link").Group("link").
+				Having("count(link) > 1"),
+		).Order("link, id").Find(&dupFeeds).Error
+		if err != nil {
+			return err
+		}
+
+		// filter out feeds that will be deleted.
+		// we've queried with order, so the first one is the one we should keep.
+		distinct := map[string]uint{}
+		deleteIDs := make([]uint, 0, len(dupFeeds))
+		for _, f := range dupFeeds {
+			if _, ok := distinct[*f.Link]; !ok {
+				distinct[*f.Link] = f.ID
+				continue
+			}
+			deleteIDs = append(deleteIDs, f.ID)
+			log.Println("delete duplicate feed: ", f.ID, *f.Name, *f.Link)
+		}
+
+		if len(deleteIDs) > 0 {
+			// **hard** delete duplicate feeds and their items
+			err = tx.Where("id IN ?", deleteIDs).Unscoped().Delete(&model.Feed{}).Error
+			if err != nil {
+				return err
+			}
+			return tx.Where("feed_id IN ?", deleteIDs).Unscoped().Delete(&model.Item{}).Error
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	// FIX: gorm not auto drop index and change 'not null'
 	if err := DB.AutoMigrate(&model.Feed{}, &model.Group{}, &model.Item{}); err != nil {
 		panic(err)
@@ -37,6 +86,17 @@ func migrage() {
 		FirstOrCreate(&model.Group{ID: 1, Name: &defaultGroup}).Error; err != nil {
 		panic(err)
 	}
+}
+
+func tableExist(table interface{}) bool {
+	err := DB.Model(table).First(table, "id = 1").Error
+	if err != nil {
+		if strings.Contains(err.Error(), "no such table") {
+			return false
+		}
+		panic(err)
+	}
+	return true
 }
 
 func registerCallback() {

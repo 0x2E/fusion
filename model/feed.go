@@ -16,10 +16,10 @@ type Feed struct {
 	ID        uint `gorm:"primarykey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt soft_delete.DeletedAt
+	DeletedAt soft_delete.DeletedAt `gorm:"uniqueIndex:idx_link"`
 
 	Name *string `gorm:"name;not null"`
-	Link *string `gorm:"link;not null"` // FIX: unique index?
+	Link *string `gorm:"link;not null;uniqueIndex:idx_link"`
 	// LastBuild is the last time the content of the feed changed
 	LastBuild *time.Time `gorm:"last_build"`
 	// Failure is the reason of failure. If it is not null or empty, the fetch processor

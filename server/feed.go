@@ -93,9 +93,6 @@ func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 	}
 
 	if err := f.repo.Create(feeds); err != nil {
-		if errors.Is(err, repo.ErrDuplicatedKey) {
-			err = NewBizError(err, http.StatusBadRequest, "link is not allowed to be the same as other feeds")
-		}
 		return err
 	}
 

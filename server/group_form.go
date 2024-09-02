@@ -13,6 +13,10 @@ type ReqGroupCreate struct {
 	Name *string `json:"name" validate:"required"`
 }
 
+type RespGroupCreate struct {
+	ID uint `json:"id"`
+}
+
 type ReqGroupUpdate struct {
 	ID   uint    `param:"id" validate:"required"`
 	Name *string `json:"name" validate:"required"`

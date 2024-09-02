@@ -6,6 +6,7 @@ import (
 	"github.com/0x2e/fusion/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func NewFeed(db *gorm.DB) *Feed {
@@ -47,7 +48,10 @@ func (f Feed) Get(id uint) (*model.Feed, error) {
 }
 
 func (f Feed) Create(data []*model.Feed) error {
-	return f.db.Create(data).Error
+	return f.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "link"}, {Name: "deleted_at"}},
+		DoUpdates: clause.AssignmentColumns([]string{"name", "link", "group_id"}),
+	}).Create(data).Error
 }
 
 func (f Feed) Update(id uint, feed *model.Feed) error {

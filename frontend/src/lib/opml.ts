@@ -1,18 +1,55 @@
 export function parse(content: string) {
-	const feeds: { name: string; link: string }[] = [];
-	const xmlDoc = new DOMParser().parseFromString(content, 'text/xml');
-	const outlines = xmlDoc.getElementsByTagName('outline');
+	type feedT = {
+		name: string;
+		link: string;
+	};
+	type groupT = {
+		name: string;
+		feeds: feedT[];
+	};
+	const groups = new Map<string, groupT>();
+	const defaultGroup = { name: 'Default', feeds: [] };
+	groups.set('Default', defaultGroup);
 
-	for (let i = 0; i < outlines.length; i++) {
-		const outline = outlines.item(i);
-		if (!outline) continue;
-		const link = outline.getAttribute('xmlUrl') || outline.getAttribute('htmlUrl') || '';
-		if (!link) continue;
-		const name = outline.getAttribute('title') || outline.getAttribute('text') || '';
-		feeds.push({ name, link });
+	function dfs(parentGroup: groupT | null, node: Element) {
+		if (node.tagName !== 'outline') {
+			return;
+		}
+		if (node.getAttribute('type')?.toLowerCase() == 'rss') {
+			if (!parentGroup) {
+				parentGroup = defaultGroup;
+			}
+			parentGroup.feeds.push({
+				name: node.getAttribute('title') || node.getAttribute('text') || '',
+				link: node.getAttribute('xmlUrl') || node.getAttribute('htmlUrl') || ''
+			});
+			return;
+		}
+		if (!node.children.length) {
+			return;
+		}
+		const nodeName = node.getAttribute('text') || node.getAttribute('title') || '';
+		const name = parentGroup ? parentGroup.name + '/' + nodeName : nodeName;
+		let curGroup = groups.get(name);
+		if (!curGroup) {
+			curGroup = { name: name, feeds: [] };
+			groups.set(name, curGroup);
+		}
+		for (const n of node.children) {
+			dfs(curGroup, n);
+		}
 	}
 
-	return feeds;
+	const xmlDoc = new DOMParser().parseFromString(content, 'text/xml');
+	const body = xmlDoc.getElementsByTagName('body')[0];
+	if (!body) {
+		return [];
+	}
+	for (const n of body.children) {
+		dfs(null, n);
+	}
+
+	return Array.from(groups.values());
 }
 
 export function dump(data: { name: string; feeds: { name: string; link: string }[] }[]) {

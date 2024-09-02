@@ -46,15 +46,18 @@ func (g Group) All(ctx context.Context) (*RespGroupAll, error) {
 	}, nil
 }
 
-func (g Group) Create(ctx context.Context, req *ReqGroupCreate) error {
+func (g Group) Create(ctx context.Context, req *ReqGroupCreate) (*RespGroupCreate, error) {
 	newGroup := &model.Group{
 		Name: req.Name,
 	}
 	err := g.repo.Create(newGroup)
-	if errors.Is(err, repo.ErrDuplicatedKey) {
-		err = NewBizError(err, http.StatusBadRequest, "name is not allowed to be the same as other groups")
+	if err != nil {
+		if errors.Is(err, repo.ErrDuplicatedKey) {
+			err = NewBizError(err, http.StatusBadRequest, "name is not allowed to be the same as other groups")
+		}
+		return nil, err
 	}
-	return err
+	return &RespGroupCreate{ID: newGroup.ID}, nil
 }
 
 func (g Group) Update(ctx context.Context, req *ReqGroupUpdate) error {
