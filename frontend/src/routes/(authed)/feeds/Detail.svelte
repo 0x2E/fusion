@@ -89,7 +89,7 @@
 			<Sheet.Description>
 				<p>Last refreshed at {moment(selectedFeed.updated_at).format('lll')}</p>
 				{#if selectedFeed.failure}
-					<Alert.Root variant="destructive" class="container">
+					<Alert.Root variant="destructive" class="container break-all">
 						<AlertCircleIcon class="h-4 w-4" />
 						<Alert.Title>Error</Alert.Title>
 						<Alert.Description>{selectedFeed.failure}</Alert.Description>
