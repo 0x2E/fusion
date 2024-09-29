@@ -1,15 +1,5 @@
 #!/bin/sh
 
-build() {
-  root=$(pwd)
-  mkdir build
-  echo "building frontend"
-  cd ./frontend && npm i && npm run build || exit 1
-  cd $root || exit 1
-  echo "building backend"
-  go build -o ./build/fusion ./cmd/server/* || exit 1
-}
-
 gen() {
   go generate ./...
 }
@@ -21,12 +11,34 @@ test_go() {
   go test ./...
 }
 
+build() {
+  echo "testing"
+  gen
+  test_go
+
+  root=$(pwd)
+  mkdir build
+  echo "building frontend"
+  cd ./frontend && npm i && npm run build || exit 1
+  cd $root || exit 1
+  echo "building backend"
+  go build -o ./build/fusion ./cmd/server/* || exit 1
+}
+
+dev() {
+  gen
+  go run ./cmd/server
+}
+
 case $1 in
 "test")
   test_go
   ;;
 "gen")
   gen
+  ;;
+"dev")
+  dev
   ;;
 "build")
   build
