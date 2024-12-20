@@ -13,6 +13,7 @@ RUN go build -o fusion ./cmd/server/*
 
 # deploy
 FROM debian:12
+LABEL org.opencontainers.image.source="https://github.com/0x2E/fusion"
 RUN apt-get update && apt-get install -y sqlite3 ca-certificates
 WORKDIR /fusion
 COPY --from=be /src/fusion ./
