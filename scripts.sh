@@ -1,13 +1,17 @@
 #!/bin/sh
 
+# Exit on first failure.
+set -e
+
 gen() {
   go generate ./...
 }
 
 test_go() {
-  gen || exit 1
+  gen
   # make some files for embed
-  mkdir -p ./frontend/build && touch ./frontend/build/index.html || exit 1
+  mkdir -p ./frontend/build
+  touch ./frontend/build/index.html
   go test ./...
 }
 
@@ -17,12 +21,14 @@ build() {
   test_go
 
   root=$(pwd)
-  mkdir build
+  mkdir -p ./build
   echo "building frontend"
-  cd ./frontend && npm i && npm run build || exit 1
-  cd $root || exit 1
+  cd ./frontend
+  npm i
+  npm run build
+  cd $root
   echo "building backend"
-  go build -o ./build/fusion ./cmd/server/* || exit 1
+  go build -o ./build/fusion ./cmd/server/*
 }
 
 dev() {
