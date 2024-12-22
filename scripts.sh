@@ -8,6 +8,7 @@ gen() {
 }
 
 test_go() {
+  echo "testing"
   gen
   # make some files for embed
   mkdir -p ./frontend/build
@@ -15,20 +16,25 @@ test_go() {
   go test ./...
 }
 
-build() {
-  echo "testing"
-  gen
-  test_go
-
-  root=$(pwd)
-  mkdir -p ./build
+build_frontend() {
   echo "building frontend"
+  mkdir -p ./build
+  root=$(pwd)
   cd ./frontend
   npm i
   npm run build
   cd $root
+}
+
+build_backend() {
   echo "building backend"
   go build -o ./build/fusion ./cmd/server/*
+}
+
+build() {
+  test_go
+  build_frontend
+  build_backend
 }
 
 dev() {
@@ -45,6 +51,12 @@ case $1 in
   ;;
 "dev")
   dev
+  ;;
+"build-frontend")
+  build_frontend
+  ;;
+"build-backend")
+  build_backend
   ;;
 "build")
   build
