@@ -1,12 +1,34 @@
 version: 2
+dist: ./dist
+
 builds:
-  - skip: true
+  - binary: fusion
+    main: ./cmd/server
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: default
+    format: zip
+    # Additional files/globs you want to add to the archive.
+    files:
+      - "LICENSE*"
+      - "README*"
+
+checksum:
+  algorithm: sha256
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   use: github
 
 release:
   draft: true
-  extra_files:
-    - glob: ./build/*.zip
-    - glob: ./build/checksums.txt

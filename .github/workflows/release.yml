@@ -9,90 +9,28 @@ permissions:
   contents: write
 
 jobs:
-  build_fe:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 // for vite extracting git tag/hash
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Build
-        working-directory: frontend
+      - name: Build FE
         run: |
-          npm i && npm run build
-      - name: Upload dist
-        uses: actions/upload-artifact@v4
-        with:
-          name: fe_dist
-          path: frontend/build
-          retention-days: 1
-  build_be:
-    needs: build_fe
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Download the dist of FE
-        uses: actions/download-artifact@v4
-        with:
-          name: fe_dist
-          path: frontend/build/
+          ./scripts.sh build-frontend
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
-      - name: Build for Darwin
-        if: ${{ startsWith(matrix.os, 'macos') }}
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          args: release --skip=publish --clean --config .goreleaser.darwin.yaml
-      - name: Prepare for Linux and Windows
-        if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: |
-          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64
-      - name: Build for Linux and Windows
-        if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          args: release --skip=publish --clean --config .goreleaser.linux.yaml
-      - name: Upload dist
-        uses: actions/upload-artifact@v4
-        with:
-          name: "be_${{ matrix.os }}_dist"
-          path: |
-            dist/*.zip
-            dist/*_checksums.txt
-          retention-days: 1
-  publish:
-    needs: [build_be]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # for goreleaser generating changelog
-      - name: Download the dist of BE
-        uses: actions/download-artifact@v4
-        with:
-          pattern: be_*_dist
-          path: ./build/
-          merge-multiple: true
-      - name: Merge checksums
-        working-directory: ./build
-        run: |
-          cat *_checksums.txt >> checksums.txt
-          rm *_checksums.txt
-      - name: Publish release
+      - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          args: release --config .goreleaser.yaml
+          args: release --clean
