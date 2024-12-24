@@ -4,3 +4,8 @@
 tmp/
 build/
 dist/
+
+# The .env file may contain secrets, so exclude it from source control.
+.env*
+# .env.example is an exception as it only contains dummy secrets.
+!.env.example
