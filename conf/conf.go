@@ -3,13 +3,18 @@ package conf
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )
 
-const Debug = false
+const (
+	Debug = false
+
+	dotEnvFilename = ".env"
+)
 
 var Conf struct {
 	Host     string `env:"HOST" envDefault:"0.0.0.0"`
@@ -23,11 +28,13 @@ var Conf struct {
 }
 
 func Load() {
-	if err := godotenv.Load(".env"); err != nil {
+	if err := godotenv.Load(dotEnvFilename); err != nil {
 		if !os.IsNotExist(err) {
 			panic(err)
 		}
-		fmt.Println("cannot find .env, skip")
+		log.Printf("no configuration file found at %s", dotEnvFilename)
+	} else {
+		log.Printf("read configuration from %s", dotEnvFilename)
 	}
 	if err := env.Parse(&Conf); err != nil {
 		panic(err)

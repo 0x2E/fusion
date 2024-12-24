@@ -70,7 +70,7 @@ Fusion can be configured in many ways:
 - Create a `.env` file in the same directory as the binary file, and then copy the items you want to modify into it.
   - NOTE: values in `.env` file can be overwritten by system environment variables.
 
-All configuration items can be found [here](https://github.com/0x2E/fusion/blob/main/.env).
+All configuration items can be found [here](https://github.com/0x2E/fusion/blob/main/.env.example).
 
 ## Credits
 
