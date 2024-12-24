@@ -7,7 +7,7 @@ import (
 	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/model"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
