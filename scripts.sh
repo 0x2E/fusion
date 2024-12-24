@@ -28,7 +28,10 @@ build_frontend() {
 
 build_backend() {
   echo "building backend"
-  go build -o ./build/fusion ./cmd/server/*
+  go build \
+    -ldflags '-extldflags "-static"' \
+    -o ./build/fusion \
+    ./cmd/server/*
 }
 
 build() {
@@ -39,7 +42,9 @@ build() {
 
 dev() {
   gen
-  go run ./cmd/server
+  go run \
+    -ldflags '-extldflags "-static"' \
+    ./cmd/server
 }
 
 case $1 in
