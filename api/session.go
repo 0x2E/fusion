@@ -11,6 +11,10 @@ import (
 
 type Session struct{}
 
+// sessionKeyName is the name of the key in the session store, and it's also the
+// client-visible name of the HTTP cookie for the session.
+const sessionKeyName = "session-token"
+
 func (s Session) Create(c echo.Context) error {
 	var req struct {
 		Password string `json:"password" validate:"required"`
@@ -24,7 +28,7 @@ func (s Session) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Wrong password")
 	}
 
-	sess, _ := session.Get("login", c)
+	sess, _ := session.Get(sessionKeyName, c)
 
 	if !conf.Conf.SecureCookie {
 		sess.Options.Secure = false
@@ -40,7 +44,7 @@ func (s Session) Create(c echo.Context) error {
 }
 
 func (s Session) Check(c echo.Context) (bool, error) {
-	sess, err := session.Get("login", c)
+	sess, err := session.Get(sessionKeyName, c)
 	if err != nil {
 		return false, err
 	}
@@ -52,7 +56,7 @@ func (s Session) Check(c echo.Context) (bool, error) {
 }
 
 func (s Session) Delete(c echo.Context) error {
-	sess, err := session.Get("login", c)
+	sess, err := session.Get(sessionKeyName, c)
 	if err != nil {
 		return err
 	}
