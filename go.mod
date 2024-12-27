@@ -15,7 +15,6 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/stretchr/testify v1.9.0
-	go.uber.org/mock v0.4.0
 	go.uber.org/zap v1.27.0
 	gorm.io/gorm v1.25.12
 	gorm.io/plugin/soft_delete v1.2.1

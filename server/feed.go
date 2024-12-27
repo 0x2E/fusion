@@ -13,8 +13,6 @@ import (
 	"github.com/0x2e/fusion/service/sniff"
 )
 
-//go:generate mockgen -destination=feed_mock.go -source=feed.go -package=server
-
 type FeedRepo interface {
 	List(filter *repo.FeedListFilter) ([]*model.Feed, error)
 	Get(id uint) (*model.Feed, error)
