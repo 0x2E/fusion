@@ -7,8 +7,6 @@ import (
 	"github.com/0x2e/fusion/repo"
 )
 
-//go:generate mockgen -destination=item_mock.go -source=item.go -package=server
-
 type ItemRepo interface {
 	List(filter repo.ItemFilter, page, pageSize int) ([]*model.Item, int, error)
 	Get(id uint) (*model.Item, error)

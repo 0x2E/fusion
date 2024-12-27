@@ -9,8 +9,6 @@ import (
 	"github.com/0x2e/fusion/repo"
 )
 
-//go:generate mockgen -destination=group_mock.go -source=group.go -package=server
-
 type GroupRepo interface {
 	All() ([]*model.Group, error)
 	Create(group *model.Group) error
