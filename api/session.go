@@ -28,7 +28,10 @@ func (s Session) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Wrong password")
 	}
 
-	sess, _ := session.Get(sessionKeyName, c)
+	sess, err := session.Get(sessionKeyName, c)
+	if err != nil {
+		return err
+	}
 
 	if !conf.Conf.SecureCookie {
 		sess.Options.Secure = false
