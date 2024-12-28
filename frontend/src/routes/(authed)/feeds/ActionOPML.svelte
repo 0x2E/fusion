@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run, preventDefault } from 'svelte/legacy';
+
 	import type { groupFeeds } from './+page';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import * as Tabs from '$lib/components/ui/tabs';
@@ -11,19 +13,17 @@
 	import { FolderIcon } from 'lucide-svelte';
 	import { createGroup } from '$lib/api/group';
 
-	export let groups: groupFeeds[];
-	export let open: boolean;
-
-	let uploadedOpmls: FileList;
-	$: parseOPML(uploadedOpmls);
-	let parsedGroupFeeds: { name: string; feeds: { name: string; link: string }[] }[] = [];
-	let importing = false;
-
-	$: {
-		if (!open) {
-			parsedGroupFeeds = [];
-		}
+	interface Props {
+		groups: groupFeeds[];
+		open: boolean;
 	}
+
+	let { groups, open = $bindable() }: Props = $props();
+
+	let uploadedOpmls: FileList = $state();
+	let parsedGroupFeeds: { name: string; feeds: { name: string; link: string }[] }[] = $state([]);
+	let importing = $state(false);
+
 
 	function parseOPML(opmls: FileList) {
 		if (!opmls) return;
@@ -87,6 +87,14 @@
 		link.click();
 		document.body.removeChild(link);
 	}
+	run(() => {
+		parseOPML(uploadedOpmls);
+	});
+	run(() => {
+		if (!open) {
+			parsedGroupFeeds = [];
+		}
+	});
 </script>
 
 <Sheet.Root bind:open>
@@ -107,7 +115,7 @@
 				<Tabs.Trigger value="export">Export</Tabs.Trigger>
 			</Tabs.List>
 			<Tabs.Content value="import">
-				<form class="space-y-2" on:submit|preventDefault={handleImportFeeds}>
+				<form class="space-y-2" onsubmit={preventDefault(handleImportFeeds)}>
 					<div>
 						<Label for="feed_file">File</Label>
 						<input

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
 	import { LogOutIcon, MenuIcon, XIcon } from 'lucide-svelte';
@@ -13,29 +15,13 @@
 		highlight?: boolean;
 	}
 
-	let links: link[] = [
+	let links: link[] = $state([
 		{ label: 'Unread', url: '/' },
 		{ label: 'Bookmark', url: '/bookmarks' },
 		{ label: 'All', url: '/all' },
 		{ label: 'Feeds', url: '/feeds' }
-	];
-	$: {
-		let path = $page.url.pathname;
-		for (const l of links) {
-			l.highlight = false;
-			let p = path.split('/');
-			while (p.length > 1) {
-				if (p.join('/') === l.url) {
-					l.highlight = true;
-					break;
-				}
-				p.pop();
-			}
-		}
-		links = links;
-	}
-	let showMenu = false;
-	$: disableBodyScoll(showMenu);
+	]);
+	let showMenu = $state(false);
 
 	let bodyOverflowDefault = document.body.style.overflow;
 	function disableBodyScoll(showMenu: boolean) {
@@ -51,6 +37,24 @@
 			toast.error('Failed to logout.');
 		}
 	}
+	run(() => {
+		let path = $page.url.pathname;
+		for (const l of links) {
+			l.highlight = false;
+			let p = path.split('/');
+			while (p.length > 1) {
+				if (p.join('/') === l.url) {
+					l.highlight = true;
+					break;
+				}
+				p.pop();
+			}
+		}
+		links = links;
+	});
+	run(() => {
+		disableBodyScoll(showMenu);
+	});
 </script>
 
 <nav class="block w-full sm:mt-3 mb-6">

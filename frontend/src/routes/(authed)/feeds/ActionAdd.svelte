@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run, preventDefault } from 'svelte/legacy';
+
 	import { Loader2Icon } from 'lucide-svelte';
 	import type { Feed } from '$lib/api/model';
 	import type { groupFeeds } from './+page';
@@ -13,8 +15,12 @@
 	import { toast } from 'svelte-sonner';
 	import { invalidateAll } from '$app/navigation';
 
-	export let groups: groupFeeds[];
-	export let open: boolean;
+	interface Props {
+		groups: groupFeeds[];
+		open: boolean;
+	}
+
+	let { groups, open = $bindable() }: Props = $props();
 
 	function emptyForm(): Feed {
 		return {
@@ -28,16 +34,16 @@
 		};
 	}
 
-	let openCandidate = false;
-	let loading = false;
-	let formData = emptyForm();
-	let linkCandidate: { title: string; link: string }[] = [];
+	let openCandidate = $state(false);
+	let loading = $state(false);
+	let formData = $state(emptyForm());
+	let linkCandidate: { title: string; link: string }[] = $state([]);
 
-	$: {
+	run(() => {
 		if (!open) {
 			formData = emptyForm();
 		}
-	}
+	});
 
 	async function handleAdd() {
 		loading = true;
@@ -92,7 +98,7 @@
 			</Sheet.Description>
 		</Sheet.Header>
 		<div class="w-full mt-4">
-			<form on:submit|preventDefault={handleAdd} class="flex flex-col gap-2">
+			<form onsubmit={preventDefault(handleAdd)} class="flex flex-col gap-2">
 				<div>
 					<Label for="name">Name</Label>
 					<Input

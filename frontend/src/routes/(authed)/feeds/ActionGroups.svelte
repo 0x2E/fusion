@@ -9,13 +9,17 @@
 	import { CheckIcon, PenIcon, PlusIcon, TrashIcon, XIcon } from 'lucide-svelte';
 	import { createGroup, deleteGroup, updateGroup } from '$lib/api/group';
 
-	export let groups: groupFeeds[];
-	export let open: boolean;
+	interface Props {
+		groups: groupFeeds[];
+		open: boolean;
+	}
 
-	let editingGroup: groupFeeds = { id: -1, name: '', feeds: [] };
-	let showNew = false;
-	let newGroup = '';
-	let openDelete = false;
+	let { groups, open = $bindable() }: Props = $props();
+
+	let editingGroup: groupFeeds = $state({ id: -1, name: '', feeds: [] });
+	let showNew = $state(false);
+	let newGroup = $state('');
+	let openDelete = $state(false);
 
 	async function handleAddNew() {
 		try {

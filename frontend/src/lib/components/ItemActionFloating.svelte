@@ -7,8 +7,12 @@
 	import ItemActionBase from './ItemActionBase.svelte';
 	import { Separator } from './ui/separator';
 
-	export let data: Item;
-	export let fixed = true;
+	interface Props {
+		data: Item;
+		fixed?: boolean;
+	}
+
+	let { data, fixed = true }: Props = $props();
 
 	function handleScrollTop(e: Event) {
 		e.preventDefault();

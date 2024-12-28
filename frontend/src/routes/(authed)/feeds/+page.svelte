@@ -8,17 +8,21 @@
 	import Actions from './Actions.svelte';
 	import { AlertCircleIcon, CirclePauseIcon } from 'lucide-svelte';
 
-	export let data: PageData;
+	interface Props {
+		data: PageData;
+	}
 
-	let showDetail = false;
-	let selectedGroup = 1;
-	let selectedFeedID: number;
+	let { data }: Props = $props();
+
+	let showDetail = $state(false);
+	let selectedGroup = $state(1);
+	let selectedFeedID: number = $state();
 
 	// ensure selectedFeed is reactive so that we can keep the info in detail
 	// up-to-date
-	$: selectedFeed =
-		data.groups.find((v) => v.id === selectedGroup)?.feeds.find((v) => v.id === selectedFeedID) ??
-		data.groups[0].feeds[0];
+	let selectedFeed =
+		$derived(data.groups.find((v) => v.id === selectedGroup)?.feeds.find((v) => v.id === selectedFeedID) ??
+		data.groups[0].feeds[0]);
 
 	function handleShowDetail(id: number) {
 		showDetail = true;

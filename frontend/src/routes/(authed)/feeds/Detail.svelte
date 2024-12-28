@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run, preventDefault } from 'svelte/legacy';
+
 	import { Separator } from '$lib/components/ui/separator';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import * as Select from '$lib/components/ui/select';
@@ -15,17 +17,21 @@
 	import { Button } from '$lib/components/ui/button';
 	import moment from 'moment';
 
-	export let groups: groupFeeds[];
-	export let show = false;
-	export let selectedFeed: Feed;
-	let formData: FeedUpdateForm;
-	let refreshing = false;
+	interface Props {
+		groups: groupFeeds[];
+		show?: boolean;
+		selectedFeed: Feed;
+	}
 
-	$: {
+	let { groups, show = $bindable(false), selectedFeed }: Props = $props();
+	let formData: FeedUpdateForm = $state();
+	let refreshing = $state(false);
+
+	run(() => {
 		if (show) {
 			formData = {};
 		}
-	}
+	});
 
 	async function handleRefresh() {
 		refreshing = true;
@@ -99,7 +105,7 @@
 		</Sheet.Header>
 		<div class="flex flex-col w-full mt-4">
 			{#if selectedFeed !== undefined}
-				<form on:submit|preventDefault={handleUpdate} class="flex flex-col gap-2">
+				<form onsubmit={preventDefault(handleUpdate)} class="flex flex-col gap-2">
 					<div>
 						<Label for="name">Name</Label>
 						<Input
@@ -190,15 +196,17 @@
 			<Separator class="my-6" />
 			<div class="flex flex-col w-full gap-2">
 				<AlertDialog.Root>
-					<AlertDialog.Trigger asChild let:builder>
-						<Button builders={[builder]} variant="secondary">
-							{#if selectedFeed.suspended}
-								Resume
-							{:else}
-								Suspend
-							{/if}
-						</Button>
-					</AlertDialog.Trigger>
+					<AlertDialog.Trigger asChild >
+						{#snippet children({ builder })}
+												<Button builders={[builder]} variant="secondary">
+								{#if selectedFeed.suspended}
+									Resume
+								{:else}
+									Suspend
+								{/if}
+							</Button>
+																	{/snippet}
+										</AlertDialog.Trigger>
 					<AlertDialog.Content>
 						<AlertDialog.Header>
 							<AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
@@ -218,9 +226,11 @@
 				</AlertDialog.Root>
 
 				<AlertDialog.Root>
-					<AlertDialog.Trigger asChild let:builder>
-						<Button builders={[builder]} variant="destructive">Delete</Button>
-					</AlertDialog.Trigger>
+					<AlertDialog.Trigger asChild >
+						{#snippet children({ builder })}
+												<Button builders={[builder]} variant="destructive">Delete</Button>
+																	{/snippet}
+										</AlertDialog.Trigger>
 					<AlertDialog.Content>
 						<AlertDialog.Header>
 							<AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>

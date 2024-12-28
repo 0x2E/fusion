@@ -6,9 +6,13 @@
 	import ItemActionBase from './ItemActionBase.svelte';
 	import { BookmarkXIcon, BookmarkIcon } from 'lucide-svelte';
 
-	export let data: Item;
-	export let buttonClass = '';
-	export let iconSize = 18;
+	interface Props {
+		data: Item;
+		buttonClass?: string;
+		iconSize?: number;
+	}
+
+	let { data, buttonClass = '', iconSize = 18 }: Props = $props();
 
 	async function toggleBookmark(e: Event) {
 		e.preventDefault();
@@ -19,8 +23,8 @@
 			toast.error((e as Error).message);
 		}
 	}
-	$: icon = data.bookmark ? BookmarkXIcon : BookmarkIcon;
-	$: tooltip = data.bookmark ? 'Cancel Bookmark' : 'Add to Bookmark';
+	let icon = $derived(data.bookmark ? BookmarkXIcon : BookmarkIcon);
+	let tooltip = $derived(data.bookmark ? 'Cancel Bookmark' : 'Add to Bookmark');
 </script>
 
 <ItemActionBase fn={toggleBookmark} {tooltip} {buttonClass} {icon} {iconSize} />

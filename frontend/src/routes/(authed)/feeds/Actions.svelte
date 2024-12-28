@@ -15,12 +15,16 @@
 	import ActionRefreshAll from './ActionRefreshAll.svelte';
 	import ActionGroups from './ActionGroups.svelte';
 
-	export let groups: groupFeeds[];
+	interface Props {
+		groups: groupFeeds[];
+	}
 
-	let openRefreshAll = false;
-	let openAdd = false;
-	let openGroups = false;
-	let openOPML = false;
+	let { groups }: Props = $props();
+
+	let openRefreshAll = $state(false);
+	let openAdd = $state(false);
+	let openGroups = $state(false);
+	let openOPML = $state(false);
 
 	const actions: { icon: ComponentType<Icon>; tooltip: string; handler: () => void }[] = [
 		{
@@ -57,17 +61,19 @@
 <div>
 	{#each actions as action}
 		<Tooltip.Root>
-			<Tooltip.Trigger asChild let:builder>
-				<Button
-					builders={[builder]}
-					variant="outline"
-					on:click={action.handler}
-					size="icon"
-					aria-label={action.tooltip}
-				>
-					<svelte:component this={action.icon} size="20" />
-				</Button>
-			</Tooltip.Trigger>
+			<Tooltip.Trigger asChild >
+				{#snippet children({ builder })}
+								<Button
+						builders={[builder]}
+						variant="outline"
+						on:click={action.handler}
+						size="icon"
+						aria-label={action.tooltip}
+					>
+						<action.icon size="20" />
+					</Button>
+											{/snippet}
+						</Tooltip.Trigger>
 			<Tooltip.Content>
 				<p>{action.tooltip}</p>
 			</Tooltip.Content>

@@ -4,6 +4,11 @@
 	import { ModeWatcher } from 'mode-watcher';
 	import Footer from '$lib/components/Footer.svelte';
 	import { page } from '$app/stores';
+	interface Props {
+		children?: import('svelte').Snippet;
+	}
+
+	let { children }: Props = $props();
 </script>
 
 <svelte:head>
@@ -17,7 +22,7 @@
      https://stackoverflow.com/a/76120728/12812480 -->
 <main class="min-h-[calc(100dvh)] flex flex-col">
 	<div class="flex flex-col grow max-w-[900px] w-full mx-auto">
-		<slot />
+		{@render children?.()}
 	</div>
 	<Footer />
 </main>

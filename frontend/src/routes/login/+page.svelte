@@ -6,7 +6,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { toast } from 'svelte-sonner';
 
-	let password = '';
+	let password = $state('');
 
 	async function handleSubmit() {
 		try {
@@ -22,7 +22,7 @@
 	<title>Login</title>
 </svelte:head>
 
-<form on:submit={handleSubmit} class="container max-w-[400px] mt-[20vh]">
+<form onsubmit={handleSubmit} class="container max-w-[400px] mt-[20vh]">
 	<h1 class="text-2xl font-bold text-center mt-10 mb-4">Login</h1>
 	<div>
 		<Label for="password">Password</Label>

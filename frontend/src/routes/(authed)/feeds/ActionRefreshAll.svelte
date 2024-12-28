@@ -3,7 +3,11 @@
 	import { toast } from 'svelte-sonner';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
-	export let open: boolean;
+	interface Props {
+		open: boolean;
+	}
+
+	let { open = $bindable() }: Props = $props();
 
 	async function handleRefreshAll() {
 		try {

@@ -8,10 +8,14 @@
 	import type { Feed } from '$lib/api/model';
 	import { Button } from './ui/button';
 
-	export let data: Feed[];
-	export let selected: number | undefined;
-	export let className = '';
-	let open = false;
+	interface Props {
+		data: Feed[];
+		selected: number | undefined;
+		className?: string;
+	}
+
+	let { data, selected = $bindable(), className = '' }: Props = $props();
+	let open = $state(false);
 
 	let optionAll = { value: '-1', label: 'All' };
 	let feeds = data
@@ -32,57 +36,61 @@
 	}
 </script>
 
-<Popover.Root bind:open let:ids>
-	<Popover.Trigger asChild let:builder>
-		<Button
-			builders={[builder]}
-			variant="outline"
-			role="combobox"
-			aria-expanded={open}
-			class="w-[200px] justify-between text-muted-foreground {className}"
-		>
-			<span class="truncate">
-				{feeds.find((f) => f.value === String(selected))?.label ?? 'Select a feed...'}
-			</span>
-			<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-		</Button>
-	</Popover.Trigger>
-	<Popover.Content class="w-[200px] p-0">
-		<Command.Root
-			filter={(value, search) => {
-				// TODO: use better fuzz way: https://github.com/krisk/Fuse
-				let name = '';
-				if (value === optionAll.value) {
-					name = optionAll.label;
-				} else {
-					name = data.find((v) => v.id === parseInt(value))?.name ?? '';
-				}
-				return name.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
-			}}
-		>
-			<Command.Input placeholder="Search feed..." />
-			<Command.List class="h-[300px] overflow-y-scroll">
-				<Command.Empty>No feed found.</Command.Empty>
-				{#each feeds as f}
-					<Command.Item
-						value={String(f.value)}
-						onSelect={(v) => {
-							selected = parseInt(v);
-							closeAndFocusTrigger(ids.trigger);
-						}}
-					>
-						<Check
-							class={cn(
-								'mr-2 h-4 w-4 flex-shrink-0',
-								String(selected) !== f.value && 'text-transparent'
-							)}
-						/>
-						<span class="truncate">
-							{f.label}
-						</span>
-					</Command.Item>
-				{/each}
-			</Command.List>
-		</Command.Root>
-	</Popover.Content>
+<Popover.Root bind:open >
+	{#snippet children({ ids })}
+		<Popover.Trigger asChild >
+			{#snippet children({ builder })}
+				<Button
+					builders={[builder]}
+					variant="outline"
+					role="combobox"
+					aria-expanded={open}
+					class="w-[200px] justify-between text-muted-foreground {className}"
+				>
+					<span class="truncate">
+						{feeds.find((f) => f.value === String(selected))?.label ?? 'Select a feed...'}
+					</span>
+					<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+				</Button>
+						{/snippet}
+		</Popover.Trigger>
+		<Popover.Content class="w-[200px] p-0">
+			<Command.Root
+				filter={(value, search) => {
+					// TODO: use better fuzz way: https://github.com/krisk/Fuse
+					let name = '';
+					if (value === optionAll.value) {
+						name = optionAll.label;
+					} else {
+						name = data.find((v) => v.id === parseInt(value))?.name ?? '';
+					}
+					return name.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+				}}
+			>
+				<Command.Input placeholder="Search feed..." />
+				<Command.List class="h-[300px] overflow-y-scroll">
+					<Command.Empty>No feed found.</Command.Empty>
+					{#each feeds as f}
+						<Command.Item
+							value={String(f.value)}
+							onSelect={(v) => {
+								selected = parseInt(v);
+								closeAndFocusTrigger(ids.trigger);
+							}}
+						>
+							<Check
+								class={cn(
+									'mr-2 h-4 w-4 flex-shrink-0',
+									String(selected) !== f.value && 'text-transparent'
+								)}
+							/>
+							<span class="truncate">
+								{f.label}
+							</span>
+						</Command.Item>
+					{/each}
+				</Command.List>
+			</Command.Root>
+		</Popover.Content>
+	{/snippet}
 </Popover.Root>

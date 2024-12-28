@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { Button } from './ui/button';
 	import * as Select from '$lib/components/ui/select';
 	import * as Tooltip from '$lib/components/ui/tooltip';
@@ -16,8 +18,12 @@
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionUnread from './ItemActionUnread.svelte';
 
-	export let data: { feeds: Feed[]; items: { total: number; data: Item[] } };
-	let filter = parseURLtoFilter($page.url.searchParams);
+	interface Props {
+		data: { feeds: Feed[]; items: { total: number; data: Item[] } };
+	}
+
+	let { data }: Props = $props();
+	let filter = $state(parseURLtoFilter($page.url.searchParams));
 
 	// NOTE: Svelte treats object as dirty, it may cause poorly reactive updates
 	// when using it in two-way binding.
@@ -28,8 +34,7 @@
 
 	let oldFilter = Object.assign({}, filter);
 
-	let selectedFeed = filter?.feed_id;
-	$: updateSelectedFeed(selectedFeed);
+	let selectedFeed = $state(filter?.feed_id);
 	function updateSelectedFeed(id: number | undefined) {
 		if (id === filter.feed_id) return;
 		filter.feed_id = id !== -1 ? id : undefined;
@@ -37,7 +42,6 @@
 		console.log(filter);
 	}
 
-	$: setURLSearchParams(filter);
 	function setURLSearchParams(f: ListFilter) {
 		console.log(
 			`filter reactive updates:\nnew: ${JSON.stringify(f)}\nold: ${JSON.stringify(oldFilter)}`
@@ -117,6 +121,12 @@
 	const actions: { icon: ComponentType<Icon>; tooltip: string; handler: () => void }[] = [
 		{ icon: CheckCheckIcon, tooltip: 'Mark as Read', handler: handleMarkAllAsRead }
 	];
+	run(() => {
+		updateSelectedFeed(selectedFeed);
+	});
+	run(() => {
+		setURLSearchParams(filter);
+	});
 </script>
 
 <div class="flex flex-col md:flex-row md:justify-between md:items-center w-full gap-2">
@@ -135,18 +145,20 @@
 		<div>
 			{#each actions as action}
 				<Tooltip.Root>
-					<Tooltip.Trigger asChild let:builder>
-						<Button
-							builders={[builder]}
-							on:click={action.handler}
-							variant="outline"
-							size="icon"
-							class="w-full md:w-[40px]"
-						>
-							<svelte:component this={action.icon} size="20" />
-							<span class="ml-1 md:hidden">{action.tooltip}</span>
-						</Button>
-					</Tooltip.Trigger>
+					<Tooltip.Trigger asChild >
+						{#snippet children({ builder })}
+												<Button
+								builders={[builder]}
+								on:click={action.handler}
+								variant="outline"
+								size="icon"
+								class="w-full md:w-[40px]"
+							>
+								<action.icon size="20" />
+								<span class="ml-1 md:hidden">{action.tooltip}</span>
+							</Button>
+																	{/snippet}
+										</Tooltip.Trigger>
 					<Tooltip.Content>
 						<p>{action.tooltip}</p>
 					</Tooltip.Content>
@@ -202,32 +214,34 @@
 			count={data.items.total}
 			bind:perPage={filter.page_size}
 			bind:page={filter.page}
-			let:pages
-			let:currentPage
+			
+			
 			class="w-auto mx-0"
 		>
-			<Pagination.Content class="flex-wrap">
-				<Pagination.Item>
-					<Pagination.PrevButton />
-				</Pagination.Item>
-				{#each pages as page (page.key)}
-					{#if page.type === 'ellipsis'}
-						<Pagination.Item>
-							<Pagination.Ellipsis />
-						</Pagination.Item>
-					{:else}
-						<Pagination.Item>
-							<Pagination.Link {page} isActive={currentPage == page.value}>
-								{page.value}
-							</Pagination.Link>
-						</Pagination.Item>
-					{/if}
-				{/each}
-				<Pagination.Item>
-					<Pagination.NextButton />
-				</Pagination.Item>
-			</Pagination.Content>
-		</Pagination.Root>
+			{#snippet children({ pages, currentPage })}
+						<Pagination.Content class="flex-wrap">
+					<Pagination.Item>
+						<Pagination.PrevButton />
+					</Pagination.Item>
+					{#each pages as page (page.key)}
+						{#if page.type === 'ellipsis'}
+							<Pagination.Item>
+								<Pagination.Ellipsis />
+							</Pagination.Item>
+						{:else}
+							<Pagination.Item>
+								<Pagination.Link {page} isActive={currentPage == page.value}>
+									{page.value}
+								</Pagination.Link>
+							</Pagination.Item>
+						{/if}
+					{/each}
+					<Pagination.Item>
+						<Pagination.NextButton />
+					</Pagination.Item>
+				</Pagination.Content>
+								{/snippet}
+				</Pagination.Root>
 
 		<Select.Root
 			items={[{ value: 10, label: '10' }]}
