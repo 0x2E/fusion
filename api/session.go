@@ -42,6 +42,11 @@ func (s Session) Create(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
+func (s Session) Check(c echo.Context) error {
+	_, err := session.Get(sessionKeyName, c)
+	return err
+}
+
 func (s Session) Delete(c echo.Context) error {
 	sess, err := session.Get(sessionKeyName, c)
 	if err != nil {

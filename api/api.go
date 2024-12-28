@@ -83,7 +83,7 @@ func Run() {
 
 	authed := r.Group("/api", func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if _, err := session.Get(sessionName, c); err != nil {
+			if err := loginAPI.Check(c); err != nil {
 				return echo.NewHTTPError(http.StatusUnauthorized)
 			}
 			return next(c)
