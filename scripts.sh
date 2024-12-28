@@ -28,7 +28,7 @@ build_frontend() {
 
 build_backend() {
   echo "building backend"
-  go build \
+  CGO_ENABLED=0 go build \
     -ldflags '-extldflags "-static"' \
     -o ./build/fusion \
     ./cmd/server/*
