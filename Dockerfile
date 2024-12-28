@@ -14,9 +14,8 @@ COPY --from=fe /src/frontend/build ./frontend/build/
 RUN ./scripts.sh build-backend
 
 # deploy
-FROM debian:12
+FROM alpine:3.21.0
 LABEL org.opencontainers.image.source="https://github.com/0x2E/fusion"
-RUN apt-get update && apt-get install -y sqlite3 ca-certificates
 WORKDIR /fusion
 COPY --from=be /src/build/fusion ./
 EXPOSE 8080
