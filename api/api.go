@@ -61,7 +61,7 @@ func Run() {
 	r.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Timeout: 30 * time.Second,
 	}))
-	r.Use(session.Middleware(sessions.NewCookieStore([]byte("fusion"))))
+	r.Use(session.Middleware(sessions.NewCookieStore([]byte(conf.Conf.Password))))
 	r.Pre(middleware.RemoveTrailingSlash())
 	r.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -83,11 +83,7 @@ func Run() {
 
 	authed := r.Group("/api", func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			ok, err := loginAPI.Check(c)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusUnauthorized)
-			}
-			if !ok {
+			if err := loginAPI.Check(c); err != nil {
 				return echo.NewHTTPError(http.StatusUnauthorized)
 			}
 			return next(c)
