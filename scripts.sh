@@ -3,13 +3,8 @@
 # Exit on first failure.
 set -e
 
-gen() {
-  go generate ./...
-}
-
 test_go() {
   echo "testing"
-  gen
   # make some files for embed
   mkdir -p ./frontend/build
   touch ./frontend/build/index.html
@@ -41,7 +36,6 @@ build() {
 }
 
 dev() {
-  gen
   go run \
     -ldflags '-extldflags "-static"' \
     ./cmd/server
@@ -50,9 +44,6 @@ dev() {
 case $1 in
 "test")
   test_go
-  ;;
-"gen")
-  gen
   ;;
 "dev")
   dev
