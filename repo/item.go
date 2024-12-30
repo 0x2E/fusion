@@ -48,7 +48,7 @@ func (i Item) List(filter ItemFilter, page, pageSize int) ([]*model.Item, int, e
 		return nil, 0, err
 	}
 
-	err = db.Joins("Feed").Order("items.created_at desc, items.pub_date desc").
+	err = db.Joins("Feed").Order("items.pub_date desc, items.created_at desc").
 		Offset((page - 1) * pageSize).Limit(pageSize).Find(&res).Error
 	return res, int(total), err
 }
