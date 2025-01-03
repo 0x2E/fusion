@@ -61,7 +61,7 @@ func Run() {
 	r.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Timeout: 30 * time.Second,
 	}))
-	r.Use(session.Middleware(sessions.NewCookieStore([]byte(conf.Conf.Password))))
+	r.Use(session.Middleware(sessions.NewCookieStore([]byte(conf.Password()))))
 	r.Pre(middleware.RemoveTrailingSlash())
 	r.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -118,9 +118,9 @@ func Run() {
 	items.DELETE("/:id", itemAPIHandler.Delete)
 
 	var err error
-	addr := fmt.Sprintf("%s:%d", conf.Conf.Host, conf.Conf.Port)
-	if conf.Conf.TLSCert != "" {
-		err = r.StartTLS(addr, conf.Conf.TLSCert, conf.Conf.TLSKey)
+	addr := fmt.Sprintf("%s:%d", conf.Host(), conf.Port())
+	if conf.TLSCert() != "" {
+		err = r.StartTLS(addr, conf.TLSCert(), conf.TLSKey())
 	} else {
 		err = r.Start(addr)
 	}

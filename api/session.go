@@ -24,7 +24,7 @@ func (s Session) Create(c echo.Context) error {
 		return err
 	}
 
-	if req.Password != conf.Conf.Password {
+	if req.Password != conf.Password() {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Wrong password")
 	}
 
@@ -33,7 +33,7 @@ func (s Session) Create(c echo.Context) error {
 		return err
 	}
 
-	if !conf.Conf.SecureCookie {
+	if !conf.SecureCookie() {
 		sess.Options.Secure = false
 		sess.Options.SameSite = http.SameSiteDefaultMode
 	}
