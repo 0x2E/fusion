@@ -15,7 +15,7 @@ var DB *gorm.DB
 
 func Init() {
 	conn, err := gorm.Open(
-		sqlite.Open(conf.Conf.DB),
+		sqlite.Open(conf.DB()),
 		&gorm.Config{TranslateError: true},
 	)
 	if err != nil {
