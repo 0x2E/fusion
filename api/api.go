@@ -23,7 +23,16 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func Run() {
+type Params struct {
+	Host            string
+	Port            int
+	Password        string
+	UseSecureCookie bool
+	TLSCert         string
+	TLSKey          string
+}
+
+func Run(params Params) {
 	r := echo.New()
 	apiLogger := logx.Logger.With("module", "api")
 
@@ -61,7 +70,7 @@ func Run() {
 	r.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Timeout: 30 * time.Second,
 	}))
-	r.Use(session.Middleware(sessions.NewCookieStore([]byte(conf.Password()))))
+	r.Use(session.Middleware(sessions.NewCookieStore([]byte(params.Password))))
 	r.Pre(middleware.RemoveTrailingSlash())
 	r.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -78,7 +87,10 @@ func Run() {
 		Browse:     false,
 	}))
 
-	loginAPI := Session{}
+	loginAPI := Session{
+		Password:        params.Password,
+		UseSecureCookie: params.UseSecureCookie,
+	}
 	r.POST("/api/sessions", loginAPI.Create)
 
 	authed := r.Group("/api", func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -118,9 +130,9 @@ func Run() {
 	items.DELETE("/:id", itemAPIHandler.Delete)
 
 	var err error
-	addr := fmt.Sprintf("%s:%d", conf.Host(), conf.Port())
-	if conf.TLSCert() != "" {
-		err = r.StartTLS(addr, conf.TLSCert(), conf.TLSKey())
+	addr := fmt.Sprintf("%s:%d", params.Host, params.Port)
+	if params.TLSCert != "" {
+		err = r.StartTLS(addr, params.TLSCert, params.TLSKey)
 	} else {
 		err = r.Start(addr)
 	}
