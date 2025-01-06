@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 
-	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/model"
 
 	"github.com/glebarez/sqlite"
@@ -13,9 +12,9 @@ import (
 
 var DB *gorm.DB
 
-func Init() {
+func Init(dbPath string) {
 	conn, err := gorm.Open(
-		sqlite.Open(conf.Conf.DB),
+		sqlite.Open(dbPath),
 		&gorm.Config{TranslateError: true},
 	)
 	if err != nil {

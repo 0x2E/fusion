@@ -3,13 +3,14 @@ package api
 import (
 	"net/http"
 
-	"github.com/0x2e/fusion/conf"
-
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
-type Session struct{}
+type Session struct {
+	Password        string
+	UseSecureCookie bool
+}
 
 // sessionKeyName is the name of the key in the session store, and it's also the
 // client-visible name of the HTTP cookie for the session.
@@ -24,7 +25,7 @@ func (s Session) Create(c echo.Context) error {
 		return err
 	}
 
-	if req.Password != conf.Conf.Password {
+	if req.Password != s.Password {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Wrong password")
 	}
 
@@ -33,7 +34,7 @@ func (s Session) Create(c echo.Context) error {
 		return err
 	}
 
-	if !conf.Conf.SecureCookie {
+	if !s.UseSecureCookie {
 		sess.Options.Secure = false
 		sess.Options.SameSite = http.SameSiteDefaultMode
 	}
