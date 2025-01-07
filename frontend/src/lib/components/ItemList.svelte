@@ -6,14 +6,14 @@
 	import * as Pagination from '$lib/components/ui/pagination';
 	import * as Select from '$lib/components/ui/select';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { debounce } from '$lib/utils';
+	import { cn, debounce } from '$lib/utils';
 	import { CheckCheck, type Icon as IconType } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import FeedsSelect from './FeedsSelect.svelte';
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionUnread from './ItemActionUnread.svelte';
 	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
-	import { Button } from './ui/button';
+	import { Button, buttonVariants } from './ui/button';
 	import { Input } from './ui/input';
 
 	interface Props {
@@ -100,16 +100,12 @@
 			{#each actions as action}
 				<Tooltip.Provider>
 					<Tooltip.Root delayDuration={100}>
-						<Tooltip.Trigger>
-							<Button
-								onclick={action.handler}
-								variant="outline"
-								size="icon"
-								class="w-full md:w-[40px]"
-							>
-								<action.icon size="20" />
-								<span class="ml-1 md:hidden">{action.tooltip}</span>
-							</Button>
+						<Tooltip.Trigger
+							onclick={action.handler}
+							class={cn(buttonVariants({ variant: 'outline', size: 'icon' }), 'w-full md:w-[40px]')}
+						>
+							<action.icon size="20" />
+							<span class="ml-1 md:hidden">{action.tooltip}</span>
 						</Tooltip.Trigger>
 						<Tooltip.Content>
 							{action.tooltip}
