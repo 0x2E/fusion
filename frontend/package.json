@@ -23,7 +23,7 @@
 		"@typescript-eslint/eslint-plugin": "^8.0.0",
 		"@typescript-eslint/parser": "^8.0.0",
 		"autoprefixer": "^10.4.20",
-		"bits-ui": "^1.0.0-next.74",
+		"bits-ui": "^1.0.0-next.77",
 		"clsx": "^2.1.1",
 		"eslint": "^9.17.0",
 		"eslint-config-prettier": "^9.1.0",
@@ -46,7 +46,6 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@types/dompurify": "^3.0.5",
 		"dompurify": "^3.2.3",
 		"ky": "^1.7.4",
 		"moment": "^2.30.1",

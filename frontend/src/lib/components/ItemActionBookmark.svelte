@@ -2,9 +2,9 @@
 	import { invalidateAll } from '$app/navigation';
 	import { updateBookmark } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
+	import { BookmarkIcon, BookmarkXIcon } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import ItemActionBase from './ItemActionBase.svelte';
-	import { BookmarkXIcon, BookmarkIcon } from 'lucide-svelte';
 
 	interface Props {
 		data: Item;

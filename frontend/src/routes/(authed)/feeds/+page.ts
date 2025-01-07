@@ -1,7 +1,7 @@
-import type { PageLoad } from './$types';
-import type { Feed } from '$lib/api/model';
 import { listFeeds } from '$lib/api/feed';
 import { allGroups } from '$lib/api/group';
+import type { Feed } from '$lib/api/model';
+import type { PageLoad } from './$types';
 
 export type groupFeeds = {
 	id: number;

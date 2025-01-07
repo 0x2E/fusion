@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { run, preventDefault } from 'svelte/legacy';
-
 	import type { groupFeeds } from './+page';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import * as Tabs from '$lib/components/ui/tabs';
@@ -12,6 +10,7 @@
 	import { dump, parse } from '$lib/opml';
 	import { FolderIcon } from 'lucide-svelte';
 	import { createGroup } from '$lib/api/group';
+	import { Input } from '$lib/components/ui/input';
 
 	interface Props {
 		groups: groupFeeds[];
@@ -23,7 +22,6 @@
 	let uploadedOpmls: FileList = $state();
 	let parsedGroupFeeds: { name: string; feeds: { name: string; link: string }[] }[] = $state([]);
 	let importing = $state(false);
-
 
 	function parseOPML(opmls: FileList) {
 		if (!opmls) return;
@@ -41,7 +39,9 @@
 		reader.readAsText(opmls[0]);
 	}
 
-	async function handleImportFeeds() {
+	async function handleImportFeeds(e: Event) {
+		e.preventDefault();
+
 		importing = true;
 		let success = 0;
 		const existingGroups = groups.map((v) => {
@@ -87,10 +87,12 @@
 		link.click();
 		document.body.removeChild(link);
 	}
-	run(() => {
+
+	$effect(() => {
 		parseOPML(uploadedOpmls);
 	});
-	run(() => {
+
+	$effect(() => {
 		if (!open) {
 			parsedGroupFeeds = [];
 		}
@@ -115,16 +117,17 @@
 				<Tabs.Trigger value="export">Export</Tabs.Trigger>
 			</Tabs.List>
 			<Tabs.Content value="import">
-				<form class="space-y-2" onsubmit={preventDefault(handleImportFeeds)}>
+				<form class="space-y-2" onsubmit={handleImportFeeds}>
 					<div>
 						<Label for="feed_file">File</Label>
 						<input
 							type="file"
 							id="feed_file"
+							name="feed_file"
 							accept=".opml,.xml,.txt"
 							required
 							bind:files={uploadedOpmls}
-							class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							class="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
 						/>
 					</div>
 					{#if parsedGroupFeeds.length > 0}
@@ -162,7 +165,7 @@
 				</form>
 			</Tabs.Content>
 			<Tabs.Content value="export">
-				<Button on:click={handleExportFeeds}>Download</Button>
+				<Button onclick={handleExportFeeds}>Download</Button>
 			</Tabs.Content>
 		</Tabs.Root>
 	</Sheet.Content>

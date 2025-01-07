@@ -1,13 +1,11 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
-	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { logout } from '$lib/api/login';
 	import { Button } from '$lib/components/ui/button';
 	import { LogOutIcon, MenuIcon, XIcon } from 'lucide-svelte';
-	import ThemeToggler from './ThemeToggler.svelte';
-	import { logout } from '$lib/api/login';
-	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
+	import ThemeToggler from './ThemeToggler.svelte';
 
 	interface link {
 		label: string;
@@ -24,9 +22,9 @@
 	let showMenu = $state(false);
 
 	let bodyOverflowDefault = document.body.style.overflow;
-	function disableBodyScoll(showMenu: boolean) {
+	$effect(() => {
 		document.body.style.overflow = showMenu ? 'hidden' : bodyOverflowDefault;
-	}
+	});
 
 	async function handleLogout() {
 		try {
@@ -37,8 +35,9 @@
 			toast.error('Failed to logout.');
 		}
 	}
-	run(() => {
-		let path = $page.url.pathname;
+
+	$effect(() => {
+		let path = page.url.pathname;
 		for (const l of links) {
 			l.highlight = false;
 			let p = path.split('/');
@@ -50,10 +49,6 @@
 				p.pop();
 			}
 		}
-		links = links;
-	});
-	run(() => {
-		disableBodyScoll(showMenu);
 	});
 </script>
 
@@ -80,7 +75,7 @@
 			<Button
 				variant="ghost"
 				size="icon"
-				on:click={() => {
+				onclick={() => {
 					handleLogout();
 					showMenu = false;
 				}}
@@ -92,7 +87,7 @@
 			<Button
 				variant="outline"
 				size="icon"
-				on:click={() => (showMenu = !showMenu)}
+				onclick={() => (showMenu = !showMenu)}
 				class="flex sm:hidden"
 			>
 				{#if showMenu}
@@ -111,7 +106,7 @@
 					<Button
 						variant="ghost"
 						href={l.url}
-						on:click={() => (showMenu = false)}
+						onclick={() => (showMenu = false)}
 						class={`w-full text-lg h-14 ${l.highlight ? 'bg-accent text-accent-foreground' : ''}`}
 					>
 						{l.label}
@@ -120,7 +115,7 @@
 				<ThemeToggler className="w-full h-14" />
 				<Button
 					variant="outline"
-					on:click={() => {
+					onclick={() => {
 						handleLogout();
 						showMenu = false;
 					}}

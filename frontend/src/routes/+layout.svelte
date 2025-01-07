@@ -1,18 +1,15 @@
 <script lang="ts">
-	import '../app.css';
+	import { page } from '$app/state';
+	import Footer from '$lib/components/Footer.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { ModeWatcher } from 'mode-watcher';
-	import Footer from '$lib/components/Footer.svelte';
-	import { page } from '$app/stores';
-	interface Props {
-		children?: import('svelte').Snippet;
-	}
+	import '../app.css';
 
-	let { children }: Props = $props();
+	let { children } = $props();
 </script>
 
 <svelte:head>
-	<title>{$page.data.title ?? 'Fusion'}</title>
+	<title>{page.data.title ?? 'Fusion'}</title>
 </svelte:head>
 
 <ModeWatcher defaultMode="system" />

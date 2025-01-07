@@ -1,13 +1,12 @@
 <script lang="ts">
-	import type { groupFeeds } from './+page';
-	import * as Sheet from '$lib/components/ui/sheet';
-	import { Button } from '$lib/components/ui/button';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
-	import { toast } from 'svelte-sonner';
 	import { invalidateAll } from '$app/navigation';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import { CheckIcon, PenIcon, PlusIcon, TrashIcon, XIcon } from 'lucide-svelte';
 	import { createGroup, deleteGroup, updateGroup } from '$lib/api/group';
+	import { Button } from '$lib/components/ui/button';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import * as Sheet from '$lib/components/ui/sheet';
+	import { CheckIcon, PenIcon, PlusIcon, TrashIcon, XIcon } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
+	import type { groupFeeds } from './+page';
 
 	interface Props {
 		groups: groupFeeds[];
@@ -19,7 +18,6 @@
 	let editingGroup: groupFeeds = $state({ id: -1, name: '', feeds: [] });
 	let showNew = $state(false);
 	let newGroup = $state('');
-	let openDelete = $state(false);
 
 	async function handleAddNew() {
 		try {
@@ -68,17 +66,17 @@
 				<div class="flex gap-2">
 					<Input
 						value={group.name}
-						on:change={(e) => (editingGroup.name = e.target.value)}
+						onchange={(e) => (editingGroup.name = e.target.value)}
 						disabled={editingGroup.id !== group.id}
 						required
 					/>
 					<div class="flex flex-nowrap gap-1">
 						{#if editingGroup.id === group.id}
-							<Button size="icon" variant="outline" on:click={handleUpdate}>
+							<Button size="icon" variant="outline" onclick={handleUpdate}>
 								<CheckIcon size="15" />
 							</Button>
 						{:else}
-							<Button size="icon" variant="outline" on:click={() => (editingGroup = group)}>
+							<Button size="icon" variant="outline" onclick={() => (editingGroup = group)}>
 								<PenIcon size="15" />
 							</Button>
 						{/if}
@@ -86,9 +84,16 @@
 							size="icon"
 							variant="outline"
 							class="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-							on:click={() => {
+							onclick={() => {
 								editingGroup = group;
-								openDelete = true;
+								if (
+									!confirm(
+										`Are you sure you want to delete this group? ${group.feeds.length > 0 ? 'All its feeds will be moved to the default group' : ''}`
+									)
+								) {
+									return;
+								}
+								handleDelete();
 							}}
 							disabled={group.id === 1}
 						>
@@ -101,39 +106,16 @@
 				<div class="flex gap-2">
 					<Input bind:value={newGroup} placeholder="group name" required />
 					<div class="flex flex-nowrap gap-1">
-						<Button size="icon" variant="outline" on:click={handleAddNew}>
+						<Button size="icon" variant="outline" onclick={handleAddNew}>
 							<CheckIcon size="15" />
 						</Button>
-						<Button size="icon" variant="outline" on:click={() => (showNew = false)}
+						<Button size="icon" variant="outline" onclick={() => (showNew = false)}
 							><XIcon size="15" /></Button
 						>
 					</div>
 				</div>
 			{/if}
 		</div>
-		<Button class="mt-2 w-full" size="icon" on:click={() => (showNew = true)}><PlusIcon /></Button>
+		<Button class="mt-2 w-full" size="icon" onclick={() => (showNew = true)}><PlusIcon /></Button>
 	</Sheet.Content>
 </Sheet.Root>
-
-<AlertDialog.Root bind:open={openDelete}>
-	<AlertDialog.Content>
-		<AlertDialog.Header>
-			<AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
-			<AlertDialog.Description>
-				<p>
-					This action cannot be undone. This will permanently delete <b>{editingGroup.name}</b>.
-				</p>
-				{#if editingGroup.feeds.length > 0}
-					<p>
-						Its <b>{editingGroup.feeds.length}</b> feeds will be moved to the default group
-						<b>{groups.find((v) => v.id === 1)?.name}</b>.
-					</p>
-				{/if}
-			</AlertDialog.Description>
-		</AlertDialog.Header>
-		<AlertDialog.Footer>
-			<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-			<AlertDialog.Action on:click={handleDelete}>Continue</AlertDialog.Action>
-		</AlertDialog.Footer>
-	</AlertDialog.Content>
-</AlertDialog.Root>

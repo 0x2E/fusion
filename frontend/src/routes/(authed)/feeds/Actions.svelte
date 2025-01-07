@@ -1,19 +1,19 @@
 <script lang="ts">
+	import { refreshFeeds } from '$lib/api/feed';
+	import { buttonVariants } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		FileSpreadsheetIcon,
 		FolderTreeIcon,
 		PlusCircleIcon,
-		RefreshCcwIcon
+		RefreshCcwIcon,
+		type Icon as IconType
 	} from 'lucide-svelte';
-	import type { ComponentType } from 'svelte';
-	import type { Icon } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import type { groupFeeds } from './+page';
-	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { Button } from '$lib/components/ui/button';
-	import ActionOpml from './ActionOPML.svelte';
 	import ActionAdd from './ActionAdd.svelte';
-	import ActionRefreshAll from './ActionRefreshAll.svelte';
 	import ActionGroups from './ActionGroups.svelte';
+	import ActionOpml from './ActionOPML.svelte';
 
 	interface Props {
 		groups: groupFeeds[];
@@ -21,17 +21,24 @@
 
 	let { groups }: Props = $props();
 
-	let openRefreshAll = $state(false);
 	let openAdd = $state(false);
 	let openGroups = $state(false);
 	let openOPML = $state(false);
 
-	const actions: { icon: ComponentType<Icon>; tooltip: string; handler: () => void }[] = [
+	const actions: { icon: typeof IconType; tooltip: string; handler: () => void }[] = [
 		{
 			icon: RefreshCcwIcon,
 			tooltip: 'Refresh All Feeds',
-			handler: () => {
-				openRefreshAll = true;
+			handler: async () => {
+				if (!confirm('Are you sure you want to refresh all feeds except the suspended ones?')) {
+					return;
+				}
+				try {
+					await refreshFeeds({ all: true });
+					toast.success('Start refreshing in the background');
+				} catch (e) {
+					toast.error((e as Error).message);
+				}
 			}
 		},
 		{
@@ -60,28 +67,23 @@
 
 <div>
 	{#each actions as action}
-		<Tooltip.Root>
-			<Tooltip.Trigger asChild >
-				{#snippet children({ builder })}
-								<Button
-						builders={[builder]}
-						variant="outline"
-						on:click={action.handler}
-						size="icon"
-						aria-label={action.tooltip}
-					>
-						<action.icon size="20" />
-					</Button>
-											{/snippet}
-						</Tooltip.Trigger>
-			<Tooltip.Content>
-				<p>{action.tooltip}</p>
-			</Tooltip.Content>
-		</Tooltip.Root>
+		<Tooltip.Provider>
+			<Tooltip.Root delayDuration={100}>
+				<Tooltip.Trigger
+					onclick={action.handler}
+					aria-label={action.tooltip}
+					class={buttonVariants({ variant: 'outline', size: 'icon' })}
+				>
+					<action.icon size="20" />
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					<p>{action.tooltip}</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
+		</Tooltip.Provider>
 	{/each}
 </div>
 
-<ActionRefreshAll bind:open={openRefreshAll} />
 <ActionAdd bind:open={openAdd} {groups} />
 <ActionGroups bind:open={openGroups} {groups} />
 <ActionOpml bind:open={openOPML} {groups} />

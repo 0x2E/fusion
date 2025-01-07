@@ -1,44 +1,31 @@
 <script lang="ts">
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import Button from './ui/button/button.svelte';
-	import type { ComponentType } from 'svelte';
-	import type { Icon } from 'lucide-svelte';
 	import { cn } from '$lib/utils';
+	import type { Icon as IconType } from 'lucide-svelte';
+	import { buttonVariants } from './ui/button';
 
 	interface Props {
 		fn: (e: Event) => void;
 		tooltip?: string;
-		icon: ComponentType<Icon>;
+		icon: typeof IconType;
 		iconSize?: number;
 		buttonClass?: string;
 	}
 
-	let {
-		fn,
-		tooltip = '',
-		icon,
-		iconSize = 18,
-		buttonClass = ''
-	}: Props = $props();
+	let { fn, tooltip = '', icon: Icon, iconSize = 18, buttonClass = '' }: Props = $props();
 </script>
 
-<Tooltip.Root openDelay={300}>
-	<Tooltip.Trigger asChild >
-		{#snippet children({ builder })}
-				<Button
-				builders={[builder]}
-				variant="ghost"
-				on:click={fn}
-				class={cn('rounded-full', buttonClass)}
-				size="icon"
-				aria-label={tooltip}
-			>
-				{@const SvelteComponent = icon}
-			<SvelteComponent size={iconSize} />
-			</Button>
-					{/snippet}
+<Tooltip.Provider>
+	<Tooltip.Root delayDuration={100}>
+		<Tooltip.Trigger
+			onclick={fn}
+			aria-label={tooltip}
+			class={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'rounded-full', buttonClass)}
+		>
+			<Icon size={iconSize} />
 		</Tooltip.Trigger>
-	<Tooltip.Content>
-		<p>{tooltip}</p>
-	</Tooltip.Content>
-</Tooltip.Root>
+		<Tooltip.Content>
+			<p>{tooltip}</p>
+		</Tooltip.Content>
+	</Tooltip.Root>
+</Tooltip.Provider>
