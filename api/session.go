@@ -47,8 +47,17 @@ func (s Session) Create(c echo.Context) error {
 }
 
 func (s Session) Check(c echo.Context) error {
-	_, err := session.Get(sessionKeyName, c)
-	return err
+	sess, err := session.Get(sessionKeyName, c)
+	if err != nil {
+		// If the session token is invalid, advise the client browser to delete the
+		// session token cookie.
+		sess.Options.MaxAge = -1
+		// Deliberately swallow the error because we're already returning a more
+		// important error.
+		sess.Save(c.Request(), c.Response())
+		return err
+	}
+	return nil
 }
 
 func (s Session) Delete(c echo.Context) error {
