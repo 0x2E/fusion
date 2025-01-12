@@ -53,7 +53,7 @@ Download from [Releases](https://github.com/0x2E/fusion/releases).
 
 ### 3. Build from source
 
-1. Prepare dependencies: Go 1.23+, Node.js 22+.
+1. Prepare dependencies: Go 1.23+, Node.js 23+.
 2. Check `scripts.sh` for more details.
 
 For example:

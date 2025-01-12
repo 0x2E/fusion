@@ -1,24 +1,29 @@
 <script lang="ts">
-	import moment from 'moment';
-	import type { PageData } from './$types';
+	import PageHead from '$lib/components/PageHead.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tabs from '$lib/components/ui/tabs';
-	import PageHead from '$lib/components/PageHead.svelte';
-	import Detail from './Detail.svelte';
-	import Actions from './Actions.svelte';
 	import { AlertCircleIcon, CirclePauseIcon } from 'lucide-svelte';
+	import moment from 'moment';
+	import type { PageData } from './$types';
+	import Actions from './Actions.svelte';
+	import Detail from './Detail.svelte';
 
-	export let data: PageData;
+	interface Props {
+		data: PageData;
+	}
 
-	let showDetail = false;
-	let selectedGroup = 1;
-	let selectedFeedID: number;
+	let { data }: Props = $props();
+
+	let showDetail = $state(false);
+	let selectedGroup = $state(1);
+	let selectedFeedID = $state(0);
 
 	// ensure selectedFeed is reactive so that we can keep the info in detail
 	// up-to-date
-	$: selectedFeed =
+	let selectedFeed = $derived(
 		data.groups.find((v) => v.id === selectedGroup)?.feeds.find((v) => v.id === selectedFeedID) ??
-		data.groups[0].feeds[0];
+			data.groups[0].feeds[0]
+	);
 
 	function handleShowDetail(id: number) {
 		showDetail = true;
@@ -61,7 +66,7 @@
 						<Button
 							class="flex items-center w-full h-12 py-2 px-4 text-start gap-2"
 							variant="ghost"
-							on:click={() => handleShowDetail(f.id)}
+							onclick={() => handleShowDetail(f.id)}
 						>
 							<span class="w-[18px]">
 								{#if f.suspended}

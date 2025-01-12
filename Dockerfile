@@ -1,5 +1,5 @@
 # build frontend
-FROM node:22 as fe
+FROM node:23 as fe
 WORKDIR /src
 COPY .git .git/
 COPY frontend ./frontend

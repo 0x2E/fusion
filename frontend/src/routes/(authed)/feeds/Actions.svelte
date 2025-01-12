@@ -1,33 +1,44 @@
 <script lang="ts">
+	import { refreshFeeds } from '$lib/api/feed';
+	import { buttonVariants } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		FileSpreadsheetIcon,
 		FolderTreeIcon,
 		PlusCircleIcon,
-		RefreshCcwIcon
+		RefreshCcwIcon,
+		type Icon as IconType
 	} from 'lucide-svelte';
-	import type { ComponentType } from 'svelte';
-	import type { Icon } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import type { groupFeeds } from './+page';
-	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { Button } from '$lib/components/ui/button';
-	import ActionOpml from './ActionOPML.svelte';
 	import ActionAdd from './ActionAdd.svelte';
-	import ActionRefreshAll from './ActionRefreshAll.svelte';
 	import ActionGroups from './ActionGroups.svelte';
+	import ActionOpml from './ActionOPML.svelte';
 
-	export let groups: groupFeeds[];
+	interface Props {
+		groups: groupFeeds[];
+	}
 
-	let openRefreshAll = false;
-	let openAdd = false;
-	let openGroups = false;
-	let openOPML = false;
+	let { groups }: Props = $props();
 
-	const actions: { icon: ComponentType<Icon>; tooltip: string; handler: () => void }[] = [
+	let openAdd = $state(false);
+	let openGroups = $state(false);
+	let openOPML = $state(false);
+
+	const actions: { icon: typeof IconType; tooltip: string; handler: () => void }[] = [
 		{
 			icon: RefreshCcwIcon,
 			tooltip: 'Refresh All Feeds',
-			handler: () => {
-				openRefreshAll = true;
+			handler: async () => {
+				if (!confirm('Are you sure you want to refresh all feeds except the suspended ones?')) {
+					return;
+				}
+				try {
+					await refreshFeeds({ all: true });
+					toast.success('Start refreshing in the background');
+				} catch (e) {
+					toast.error((e as Error).message);
+				}
 			}
 		},
 		{
@@ -56,26 +67,23 @@
 
 <div>
 	{#each actions as action}
-		<Tooltip.Root>
-			<Tooltip.Trigger asChild let:builder>
-				<Button
-					builders={[builder]}
-					variant="outline"
-					on:click={action.handler}
-					size="icon"
+		<Tooltip.Provider>
+			<Tooltip.Root delayDuration={100}>
+				<Tooltip.Trigger
+					onclick={action.handler}
 					aria-label={action.tooltip}
+					class={buttonVariants({ variant: 'outline', size: 'icon' })}
 				>
-					<svelte:component this={action.icon} size="20" />
-				</Button>
-			</Tooltip.Trigger>
-			<Tooltip.Content>
-				<p>{action.tooltip}</p>
-			</Tooltip.Content>
-		</Tooltip.Root>
+					<action.icon size="20" />
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					<p>{action.tooltip}</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
+		</Tooltip.Provider>
 	{/each}
 </div>
 
-<ActionRefreshAll bind:open={openRefreshAll} />
 <ActionAdd bind:open={openAdd} {groups} />
 <ActionGroups bind:open={openGroups} {groups} />
 <ActionOpml bind:open={openOPML} {groups} />

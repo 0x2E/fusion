@@ -1,20 +1,24 @@
 <script lang="ts">
-	import { Loader2Icon } from 'lucide-svelte';
-	import type { Feed } from '$lib/api/model';
-	import type { groupFeeds } from './+page';
-	import * as RadioGroup from '$lib/components/ui/radio-group';
-	import * as Sheet from '$lib/components/ui/sheet';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Select from '$lib/components/ui/select';
-	import { Button } from '$lib/components/ui/button';
-	import { Label } from '$lib/components/ui/label';
-	import { Input } from '$lib/components/ui/input';
-	import { checkValidity, createFeed } from '$lib/api/feed';
-	import { toast } from 'svelte-sonner';
 	import { invalidateAll } from '$app/navigation';
+	import { checkValidity, createFeed } from '$lib/api/feed';
+	import type { Feed } from '$lib/api/model';
+	import { Button } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as RadioGroup from '$lib/components/ui/radio-group';
+	import * as Select from '$lib/components/ui/select';
+	import * as Sheet from '$lib/components/ui/sheet';
+	import { Loader2Icon } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
+	import type { groupFeeds } from './+page';
 
-	export let groups: groupFeeds[];
-	export let open: boolean;
+	interface Props {
+		groups: groupFeeds[];
+		open: boolean;
+	}
+
+	let { groups, open = $bindable() }: Props = $props();
 
 	function emptyForm(): Feed {
 		return {
@@ -22,24 +26,27 @@
 			name: '',
 			link: '',
 			failure: '',
+			req_proxy: '',
 			updated_at: new Date(),
 			suspended: false,
 			group: { id: groups[0].id, name: groups[0].name }
 		};
 	}
 
-	let openCandidate = false;
-	let loading = false;
-	let formData = emptyForm();
-	let linkCandidate: { title: string; link: string }[] = [];
+	let openCandidate = $state(false);
+	let loading = $state(false);
+	let formData = $state(emptyForm());
+	let linkCandidate: { title: string; link: string }[] = $state([]);
 
-	$: {
+	$effect(() => {
 		if (!open) {
 			formData = emptyForm();
 		}
-	}
+	});
 
-	async function handleAdd() {
+	async function handleAdd(e: Event) {
+		e.preventDefault();
+
 		loading = true;
 		toast.promise(checkValidity(formData.link), {
 			loading: 'Waiting for validating and sniffing ' + formData.link,
@@ -92,14 +99,14 @@
 			</Sheet.Description>
 		</Sheet.Header>
 		<div class="w-full mt-4">
-			<form on:submit|preventDefault={handleAdd} class="flex flex-col gap-2">
+			<form onsubmit={handleAdd} class="flex flex-col gap-2">
 				<div>
 					<Label for="name">Name</Label>
 					<Input
 						id="name"
 						type="text"
 						class="w-full"
-						on:change={(e) => {
+						onchange={(e) => {
 							if (e.target instanceof HTMLInputElement) {
 								formData.name = e.target.value;
 							}
@@ -117,7 +124,7 @@
 						id="link"
 						type="text"
 						class="w-full"
-						on:change={(e) => {
+						onchange={(e) => {
 							if (e.target instanceof HTMLInputElement) {
 								formData.link = e.target.value;
 							}
@@ -129,18 +136,16 @@
 				<div>
 					<Label for="group" class="mt-4">Group</Label>
 					<Select.Root
+						type="single"
 						disabled={groups.length < 2}
-						items={groups.map((v) => {
-							return { value: v.id, label: v.name };
-						})}
-						onSelectedChange={(v) => v && (formData.group.id = v.value)}
+						onValueChange={(v) => (formData.group.id = parseInt(v))}
 					>
 						<Select.Trigger>
-							<Select.Value placeholder={formData.group.name} />
+							{formData.group.name}
 						</Select.Trigger>
 						<Select.Content>
 							{#each groups as g}
-								<Select.Item value={g.id}>{g.name}</Select.Item>
+								<Select.Item value={String(g.id)}>{g.name}</Select.Item>
 							{/each}
 						</Select.Content>
 					</Select.Root>
@@ -175,8 +180,8 @@
 			{/each}
 		</RadioGroup.Root>
 		<Dialog.Footer>
-			<Button variant="secondary" on:click={() => (openCandidate = false)}>Cancel</Button>
-			<Button on:click={() => handleContinue()}>Continue</Button>
+			<Button variant="secondary" onclick={() => (openCandidate = false)}>Cancel</Button>
+			<Button onclick={() => handleContinue()}>Continue</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

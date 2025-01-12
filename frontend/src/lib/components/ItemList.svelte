@@ -1,72 +1,40 @@
 <script lang="ts">
-	import { Button } from './ui/button';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
+	import { parseURLtoFilter, updateUnread } from '$lib/api/item';
+	import type { Feed, Item } from '$lib/api/model';
+	import * as Pagination from '$lib/components/ui/pagination';
 	import * as Select from '$lib/components/ui/select';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import * as Pagination from '$lib/components/ui/pagination';
-	import type { Feed, Item } from '$lib/api/model';
-	import { type ListFilter, updateUnread, parseURLtoFilter } from '$lib/api/item';
+	import { cn, debounce } from '$lib/utils';
+	import { CheckCheck, type Icon as IconType } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { type ComponentType } from 'svelte';
-	import { CheckCheckIcon, type Icon } from 'lucide-svelte';
-	import { page } from '$app/stores';
-	import { goto, invalidateAll } from '$app/navigation';
 	import FeedsSelect from './FeedsSelect.svelte';
-	import { Input } from './ui/input';
-	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionUnread from './ItemActionUnread.svelte';
+	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
+	import { Button, buttonVariants } from './ui/button';
+	import { Input } from './ui/input';
 
-	export let data: { feeds: Feed[]; items: { total: number; data: Item[] } };
-	let filter = parseURLtoFilter($page.url.searchParams);
-
-	// NOTE: Svelte treats object as dirty, it may cause poorly reactive updates
-	// when using it in two-way binding.
-	// Therefore, we create an oldFilter as a control. Update url search params
-	// only when the filter is NOT EQUAL to oldFilter.
-	// TODO: this should be refactored after Svelte 5.0:
-	// https://github.com/sveltejs/svelte/issues/4265#issuecomment-1812428837
-
-	let oldFilter = Object.assign({}, filter);
-
-	let selectedFeed = filter?.feed_id;
-	$: updateSelectedFeed(selectedFeed);
-	function updateSelectedFeed(id: number | undefined) {
-		if (id === filter.feed_id) return;
-		filter.feed_id = id !== -1 ? id : undefined;
-		filter.page = 1;
-		console.log(filter);
+	interface Props {
+		data: { feeds: Feed[]; items: { total: number; data: Item[] } };
 	}
+	let { data }: Props = $props();
 
-	$: setURLSearchParams(filter);
-	function setURLSearchParams(f: ListFilter) {
-		console.log(
-			`filter reactive updates:\nnew: ${JSON.stringify(f)}\nold: ${JSON.stringify(oldFilter)}`
-		);
+	let filter = $state(parseURLtoFilter(page.url.searchParams));
+	function applyFilter() {
+		console.log(`filter reactive updates:\nnew: ${JSON.stringify(filter)}`);
 
-		let key: keyof ListFilter;
-		let updated = false;
-		for (key in f) {
-			if (f[key] != oldFilter[key]) {
-				updated = true;
-				break;
+		const url = page.url;
+		const p = url.searchParams;
+		for (const [key, v] of Object.entries(filter)) {
+			if (v !== undefined) {
+				p.set(key, String(v));
+			} else {
+				p.delete(key);
 			}
 		}
-		if (!updated) return;
-
-		if (oldFilter.keyword !== filter.keyword) filter.page = 1;
-
-		const p = new URLSearchParams($page.url.searchParams);
-		for (key in f) {
-			p.delete(key);
-			if (f[key] !== undefined) {
-				p.set(key, String(f[key]));
-			}
-		}
-
-		oldFilter = Object.assign({}, filter);
-
-		console.log(p.toString());
-		goto('?' + p.toString());
+		goto(url, { invalidateAll: true });
 	}
 
 	async function handleMarkAllAsRead() {
@@ -79,24 +47,12 @@
 			toast.error((e as Error).message);
 		}
 	}
-	function debounce(func: Function, wait: number): EventListener {
-		let timeout: ReturnType<typeof setTimeout>;
-
-		return function (this: HTMLElement, event: Event) {
-			const context = this;
-
-			const later = () => {
-				func.apply(context, [event]);
-			};
-
-			clearTimeout(timeout);
-			timeout = setTimeout(later, wait);
-		};
-	}
 
 	const handleSearchInput = debounce(function (e: Event) {
 		if (e.target instanceof HTMLInputElement) {
 			filter.keyword = e.target.value;
+			filter.page = 1;
+			applyFilter();
 		}
 	}, 500);
 
@@ -114,43 +70,48 @@
 		return '?';
 	}
 
-	const actions: { icon: ComponentType<Icon>; tooltip: string; handler: () => void }[] = [
-		{ icon: CheckCheckIcon, tooltip: 'Mark as Read', handler: handleMarkAllAsRead }
+	const actions: { icon: typeof IconType; tooltip: string; handler: () => void }[] = [
+		{ icon: CheckCheck, tooltip: 'Mark as Read', handler: handleMarkAllAsRead }
 	];
 </script>
 
 <div class="flex flex-col md:flex-row md:justify-between md:items-center w-full gap-2">
 	<div class="flex flex-col md:flex-row gap-2">
-		<FeedsSelect data={data.feeds} bind:selected={selectedFeed} className="w-full md:w-[200px]" />
+		<FeedsSelect
+			data={data.feeds}
+			selected={filter.feed_id}
+			onSelectedChange={(id: number | undefined) => {
+				filter.feed_id = id;
+				applyFilter();
+			}}
+			className="w-full md:w-[200px]"
+		/>
 		<Input
 			type="search"
 			placeholder="Search in title and content..."
-			class="w-full md:w-[400px]"
 			value={filter.keyword}
-			on:input={handleSearchInput}
+			oninput={handleSearchInput}
+			class="w-full md:w-[400px]"
 		/>
 	</div>
 
 	{#if data.items.data.length > 0}
 		<div>
 			{#each actions as action}
-				<Tooltip.Root>
-					<Tooltip.Trigger asChild let:builder>
-						<Button
-							builders={[builder]}
-							on:click={action.handler}
-							variant="outline"
-							size="icon"
-							class="w-full md:w-[40px]"
+				<Tooltip.Provider>
+					<Tooltip.Root delayDuration={100}>
+						<Tooltip.Trigger
+							onclick={action.handler}
+							class={cn(buttonVariants({ variant: 'outline', size: 'icon' }), 'w-full md:w-[40px]')}
 						>
-							<svelte:component this={action.icon} size="20" />
+							<action.icon size="20" />
 							<span class="ml-1 md:hidden">{action.tooltip}</span>
-						</Button>
-					</Tooltip.Trigger>
-					<Tooltip.Content>
-						<p>{action.tooltip}</p>
-					</Tooltip.Content>
-				</Tooltip.Root>
+						</Tooltip.Trigger>
+						<Tooltip.Content>
+							{action.tooltip}
+						</Tooltip.Content>
+					</Tooltip.Root>
+				</Tooltip.Provider>
 			{/each}
 		</div>
 	{/if}
@@ -200,47 +161,50 @@
 	<div class="flex flex-col sm:flex-row items-center justify-center mt-8 gap-2">
 		<Pagination.Root
 			count={data.items.total}
-			bind:perPage={filter.page_size}
-			bind:page={filter.page}
-			let:pages
-			let:currentPage
-			class="w-auto mx-0"
+			perPage={filter.page_size}
+			page={filter.page}
+			onPageChange={(p) => {
+				filter.page = p;
+				applyFilter();
+			}}
 		>
-			<Pagination.Content class="flex-wrap">
-				<Pagination.Item>
-					<Pagination.PrevButton />
-				</Pagination.Item>
-				{#each pages as page (page.key)}
-					{#if page.type === 'ellipsis'}
-						<Pagination.Item>
-							<Pagination.Ellipsis />
-						</Pagination.Item>
-					{:else}
-						<Pagination.Item>
-							<Pagination.Link {page} isActive={currentPage == page.value}>
-								{page.value}
-							</Pagination.Link>
-						</Pagination.Item>
-					{/if}
-				{/each}
-				<Pagination.Item>
-					<Pagination.NextButton />
-				</Pagination.Item>
-			</Pagination.Content>
+			{#snippet children({ pages, currentPage })}
+				<Pagination.Content class="flex-wrap">
+					<Pagination.Item>
+						<Pagination.PrevButton />
+					</Pagination.Item>
+					{#each pages as page (page.key)}
+						{#if page.type === 'ellipsis'}
+							<Pagination.Item>
+								<Pagination.Ellipsis />
+							</Pagination.Item>
+						{:else}
+							<Pagination.Item isVisible={currentPage === page.value}>
+								<Pagination.Link {page} isActive={currentPage === page.value}>
+									{page.value}
+								</Pagination.Link>
+							</Pagination.Item>
+						{/if}
+					{/each}
+					<Pagination.Item>
+						<Pagination.NextButton />
+					</Pagination.Item>
+				</Pagination.Content>
+			{/snippet}
 		</Pagination.Root>
 
 		<Select.Root
-			items={[{ value: 10, label: '10' }]}
-			onSelectedChange={(v) => {
-				filter.page_size = v?.value || 10;
+			type="single"
+			value={String(filter.page_size)}
+			onValueChange={(v) => {
+				filter.page_size = parseInt(v) || 10;
+				applyFilter();
 			}}
 		>
-			<Select.Trigger class="w-[110px]">
-				<Select.Value placeholder="Page Size" />
-			</Select.Trigger>
+			<Select.Trigger class="w-[110px]">Page Size</Select.Trigger>
 			<Select.Content>
 				{#each [10, 25, 50, 100, 200, 500] as size}
-					<Select.Item value={size}>{size}</Select.Item>
+					<Select.Item value={String(size)}>{size}</Select.Item>
 				{/each}
 			</Select.Content>
 		</Select.Root>

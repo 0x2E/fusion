@@ -1,14 +1,18 @@
 <script lang="ts">
-	import { ArrowUpIcon } from 'lucide-svelte';
 	import type { Item } from '$lib/api/model';
-	import ItemActionUnread from './ItemActionUnread.svelte';
-	import ItemActionBookmark from './ItemActionBookmark.svelte';
-	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
+	import { ArrowUpIcon } from 'lucide-svelte';
 	import ItemActionBase from './ItemActionBase.svelte';
+	import ItemActionBookmark from './ItemActionBookmark.svelte';
+	import ItemActionUnread from './ItemActionUnread.svelte';
+	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
 	import { Separator } from './ui/separator';
 
-	export let data: Item;
-	export let fixed = true;
+	interface Props {
+		data: Item;
+		fixed?: boolean;
+	}
+
+	let { data, fixed = true }: Props = $props();
 
 	function handleScrollTop(e: Event) {
 		e.preventDefault();

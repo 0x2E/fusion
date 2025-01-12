@@ -3,9 +3,13 @@
 	import { ExternalLinkIcon } from 'lucide-svelte';
 	import ItemActionBase from './ItemActionBase.svelte';
 
-	export let data: Item;
-	export let buttonClass = '';
-	export let iconSize = 18;
+	interface Props {
+		data: Item;
+		buttonClass?: string;
+		iconSize?: number;
+	}
+
+	let { data, buttonClass = '', iconSize = 18 }: Props = $props();
 
 	function visitLink(e: Event) {
 		e.preventDefault();

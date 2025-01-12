@@ -6,8 +6,11 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { onMount } from 'svelte';
 
-	export let data: PageData;
-	$: safeContent = sanitize(data.content, data.link);
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
 
 	function sanitize(content: string, baseLink: string) {
 		function joinURL(s: string | null) {
@@ -64,7 +67,7 @@
 		return new XMLSerializer().serializeToString(dom);
 	}
 
-	let fixActionbar = true;
+	let fixActionbar = $state(true);
 	onMount(() => {
 		const observer = new IntersectionObserver(
 			(entries) => {
@@ -76,6 +79,7 @@
 		);
 		observer.observe(document.querySelector('#actionbar-anchor')!);
 	});
+	let safeContent = $derived(sanitize(data.content, data.link));
 </script>
 
 <div class="max-w-prose mx-auto">

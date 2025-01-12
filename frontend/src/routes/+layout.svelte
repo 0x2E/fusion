@@ -1,13 +1,15 @@
 <script lang="ts">
-	import '../app.css';
+	import { page } from '$app/state';
+	import Footer from '$lib/components/Footer.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { ModeWatcher } from 'mode-watcher';
-	import Footer from '$lib/components/Footer.svelte';
-	import { page } from '$app/stores';
+	import '../app.css';
+
+	let { children } = $props();
 </script>
 
 <svelte:head>
-	<title>{$page.data.title ?? 'Fusion'}</title>
+	<title>{page.data.title ?? 'Fusion'}</title>
 </svelte:head>
 
 <ModeWatcher defaultMode="system" />
@@ -17,7 +19,7 @@
      https://stackoverflow.com/a/76120728/12812480 -->
 <main class="min-h-[calc(100dvh)] flex flex-col">
 	<div class="flex flex-col grow max-w-[900px] w-full mx-auto">
-		<slot />
+		{@render children?.()}
 	</div>
 	<Footer />
 </main>
