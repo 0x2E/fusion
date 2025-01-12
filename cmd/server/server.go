@@ -32,7 +32,7 @@ func main() {
 	api.Run(api.Params{
 		Host:            config.Host,
 		Port:            config.Port,
-		Password:        config.Password,
+		PasswordHash:    config.PasswordHash,
 		UseSecureCookie: config.SecureCookie,
 		TLSCert:         config.TLSCert,
 		TLSKey:          config.TLSKey,
