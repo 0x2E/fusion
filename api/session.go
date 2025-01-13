@@ -3,12 +3,13 @@ package api
 import (
 	"net/http"
 
+	"github.com/0x2e/fusion/auth"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
 type Session struct {
-	Password        string
+	PasswordHash    auth.HashedPassword
 	UseSecureCookie bool
 }
 
@@ -25,7 +26,12 @@ func (s Session) Create(c echo.Context) error {
 		return err
 	}
 
-	if req.Password != s.Password {
+	attemptedPasswordHash, err := auth.HashPassword(req.Password)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid password")
+	}
+
+	if correctPasswordHash := s.PasswordHash; !attemptedPasswordHash.Equals(correctPasswordHash) {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Wrong password")
 	}
 

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0x2e/fusion/auth"
 	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/frontend"
 	"github.com/0x2e/fusion/pkg/logx"
@@ -26,7 +27,7 @@ import (
 type Params struct {
 	Host            string
 	Port            int
-	Password        string
+	PasswordHash    auth.HashedPassword
 	UseSecureCookie bool
 	TLSCert         string
 	TLSKey          string
@@ -70,7 +71,7 @@ func Run(params Params) {
 	r.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Timeout: 30 * time.Second,
 	}))
-	r.Use(session.Middleware(sessions.NewCookieStore([]byte(params.Password))))
+	r.Use(session.Middleware(sessions.NewCookieStore(params.PasswordHash.Bytes())))
 	r.Pre(middleware.RemoveTrailingSlash())
 	r.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -88,7 +89,7 @@ func Run(params Params) {
 	}))
 
 	loginAPI := Session{
-		Password:        params.Password,
+		PasswordHash:    params.PasswordHash,
 		UseSecureCookie: params.UseSecureCookie,
 	}
 	r.POST("/api/sessions", loginAPI.Create)
