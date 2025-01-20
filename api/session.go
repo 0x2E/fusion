@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/0x2e/fusion/auth"
@@ -63,6 +64,13 @@ func (s Session) Check(c echo.Context) error {
 		sess.Save(c.Request(), c.Response())
 		return err
 	}
+
+	// If IsNew is true, it means that Get created a new session on-demand rather
+	// than retrieving a previously authenticated session.
+	if sess.IsNew {
+		return errors.New("invalid session")
+	}
+
 	return nil
 }
 
