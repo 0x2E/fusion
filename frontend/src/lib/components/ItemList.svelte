@@ -82,6 +82,7 @@
 			selected={filter.feed_id}
 			onSelectedChange={(id: number | undefined) => {
 				filter.feed_id = id;
+				filter.page = 1;
 				applyFilter();
 			}}
 			className="w-full md:w-[200px]"
