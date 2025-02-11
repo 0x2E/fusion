@@ -13,7 +13,7 @@
 </script>
 
 {#snippet Fallback()}
-	<span class="hidden md:block">Next</span>
+	<span class="hidden sm:block">Next</span>
 	<ChevronRight />
 {/snippet}
 
