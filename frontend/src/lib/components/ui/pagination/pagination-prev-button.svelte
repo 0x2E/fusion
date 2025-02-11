@@ -13,13 +13,16 @@
 </script>
 
 {#snippet Fallback()}
-	<span>Previous</span>
 	<ChevronLeft />
+	<span class="hidden md:block">Previous</span>
 {/snippet}
 
 <PaginationPrimitive.PrevButton
 	bind:ref
 	{...restProps}
-	class={cn(buttonVariants({ variant: "ghost", className: "gap-1 pl-2.5" }), className)}
+	class={cn(
+		buttonVariants({ variant: 'ghost', className: 'gap-1 px-0 pl-0 md:px-4 md:pl-2.5' }),
+		className
+	)}
 	children={children || Fallback}
 />
