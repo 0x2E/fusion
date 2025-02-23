@@ -1,6 +1,9 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { Item } from '$lib/api/model';
-	import { ArrowUpIcon } from 'lucide-svelte';
+	import type { ListFilter } from '$lib/api/item';
+	import { listItems } from '$lib/api/item';
+	import { ArrowUpIcon, ArrowLeftIcon, ArrowRightIcon } from 'lucide-svelte';
 	import ItemActionBase from './ItemActionBase.svelte';
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionUnread from './ItemActionUnread.svelte';
@@ -13,10 +16,46 @@
 	}
 
 	let { data, fixed = true }: Props = $props();
+	let filter: ListFilter|undefined = sessionStorage.getItem("filter");
+	if (filter) {
+		filter = JSON.parse(filter);
+	}
 
 	function handleScrollTop(e: Event) {
 		e.preventDefault();
 		document.body.scrollIntoView({ behavior: 'smooth' });
+	}
+
+	async function anotherItem(next=true) {
+		console.log(data);
+		const items = await listItems(filter);
+		console.log(items);
+		const currentIndex = items.items.findIndex(item => item.id == data.id);
+		console.log(currentIndex)
+		let modifier;
+		if (next) {
+			if (currentIndex >= items.total) {
+				console.error("Deal with this error better");
+				return;
+			}
+			modifier = 1;
+		} else {
+			if (currentIndex <= 0) {
+				console.error("Deal with this error better too");
+				return;
+			}
+			modifier = -1;
+		}
+		const newItem = items.items[currentIndex + modifier];
+		await goto("/items?id=" + newItem.id)
+	}
+
+	async function previousItem(e: Event) {
+		anotherItem(false);
+	}
+
+	async function nextItem(e: Event) {
+		anotherItem(true);
 	}
 </script>
 
@@ -31,5 +70,10 @@
 		<ItemActionVisitLink {data} />
 		<Separator orientation="vertical" class="h-5" />
 		<ItemActionBase fn={handleScrollTop} tooltip="Back to Top" icon={ArrowUpIcon} />
+		{#if filter}
+		<Separator orientation="vertical" class="h-5" />
+		<ItemActionBase fn={previousItem} tooltip="Previous item" icon={ArrowLeftIcon} />
+		<ItemActionBase fn={nextItem} tooltip="Next item" icon={ArrowRightIcon} />
+		{/if}
 	</div>
 </div>

@@ -14,6 +14,7 @@ export async function listItems(options?: ListFilter) {
 	if (options) {
 		// trip undefinded fields: https://github.com/sindresorhus/ky/issues/293
 		options = JSON.parse(JSON.stringify(options));
+		sessionStorage.setItem("filter", JSON.stringify(options));
 	}
 	return await api
 		.get('items', {
