@@ -26,28 +26,41 @@
 		document.body.scrollIntoView({ behavior: 'smooth' });
 	}
 
-	async function anotherItem(next=true) {
-		console.log(data);
-		const items = await listItems(filter);
-		console.log(items);
+	async function _findItem(next=true): Item {
+		let items = await listItems(filter);
 		const currentIndex = items.items.findIndex(item => item.id == data.id);
-		console.log(currentIndex)
 		let modifier;
 		if (next) {
+			// If out of items
 			if (currentIndex >= items.total) {
 				console.error("Deal with this error better");
-				return;
+				return data;
+			}
+			// If switch to next page
+			if (currentIndex >= items.items.length - 1) {
+				filter.page = filter.page+1;
+				items = await listItems(filter);
+				return items.items[0];
 			}
 			modifier = 1;
 		} else {
 			if (currentIndex <= 0) {
-				console.error("Deal with this error better too");
-				return;
+				if (filter.page == 1) {
+					console.error("Deal with this error better too");
+					return data;
+				}
+				filter.page = filter.page-1;
+				items = await listItems(filter)
+				return items.items[items.items.length - 1];
 			}
 			modifier = -1;
 		}
 		const newItem = items.items[currentIndex + modifier];
-		await goto("/items?id=" + newItem.id)
+		return newItem;
+	}
+
+	async function anotherItem(next=true) {
+		await goto("/items?id=" + (await _findItem(next)).id)
 	}
 
 	async function previousItem(e: Event) {
