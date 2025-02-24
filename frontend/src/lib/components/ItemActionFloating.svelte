@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import type { Item } from '$lib/api/model';
-	import type { ListFilter } from '$lib/api/item';
 	import { listItems } from '$lib/api/item';
-	import { ArrowUpIcon, ArrowLeftIcon, ArrowRightIcon } from 'lucide-svelte';
+	import type { Item } from '$lib/api/model';
+	import { fullItemFilter } from '$lib/state.svelte';
+	import { ArrowUpIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import ItemActionBase from './ItemActionBase.svelte';
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionUnread from './ItemActionUnread.svelte';
@@ -16,59 +17,64 @@
 	}
 
 	let { data, fixed = true }: Props = $props();
-	let filter: ListFilter|undefined = sessionStorage.getItem("filter");
-	if (filter) {
-		filter = JSON.parse(filter);
-	}
+
+	let nextItem: Item | null = $state(null);
+	let prevItem: Item | null = $state(null);
+
+	$effect(() => {
+		console.log(data.id);
+		updatePrevNextItem();
+	});
 
 	function handleScrollTop(e: Event) {
 		e.preventDefault();
 		document.body.scrollIntoView({ behavior: 'smooth' });
 	}
 
-	async function _findItem(next=true): Item {
-		let items = await listItems(filter);
-		const currentIndex = items.items.findIndex(item => item.id == data.id);
-		let modifier;
-		if (next) {
-			// If out of items
-			if (currentIndex >= items.total) {
-				console.error("Deal with this error better");
-				return data;
-			}
-			// If switch to next page
-			if (currentIndex >= items.items.length - 1) {
-				filter.page = filter.page+1;
-				items = await listItems(filter);
-				return items.items[0];
-			}
-			modifier = 1;
-		} else {
-			if (currentIndex <= 0) {
-				if (filter.page == 1) {
-					console.error("Deal with this error better too");
-					return data;
-				}
-				filter.page = filter.page-1;
-				items = await listItems(filter)
-				return items.items[items.items.length - 1];
-			}
-			modifier = -1;
+	async function updatePrevNextItem() {
+		const { items } = await listItems(fullItemFilter);
+		if (items.length == 0) {
+			return;
 		}
-		const newItem = items.items[currentIndex + modifier];
-		return newItem;
+
+		const currentIndex = items.findIndex((item) => item.id == data.id);
+		prevItem = items[currentIndex - 1] || null;
+		nextItem = items[currentIndex + 1] || null;
 	}
 
-	async function anotherItem(next=true) {
-		await goto("/items?id=" + (await _findItem(next)).id)
-	}
+	async function handleSwitchItem(action: 'next' | 'previous') {
+		let gotoItemID = -1;
+		if (action === 'next') {
+			if (!nextItem) {
+				fullItemFilter.page = (fullItemFilter.page ?? 1) + 1;
+				const { items } = await listItems(fullItemFilter);
+				if (items.length == 0) {
+					toast.error('No more items');
+					return;
+				}
+				gotoItemID = items[0].id;
+			} else {
+				gotoItemID = nextItem.id;
+			}
+		} else {
+			if (!prevItem) {
+				if (!fullItemFilter.page) {
+					toast.error('No more items');
+					return;
+				}
+				fullItemFilter.page = fullItemFilter.page - 1;
+				const { items } = await listItems(fullItemFilter);
+				if (items.length == 0) {
+					toast.error('No more items');
+					return;
+				}
+				gotoItemID = items.at(-1)!.id;
+			} else {
+				gotoItemID = prevItem.id;
+			}
+		}
 
-	async function previousItem(e: Event) {
-		anotherItem(false);
-	}
-
-	async function nextItem(e: Event) {
-		anotherItem(true);
+		goto('/items?id=' + gotoItemID, { invalidateAll: true });
 	}
 </script>
 
@@ -83,10 +89,21 @@
 		<ItemActionVisitLink {data} />
 		<Separator orientation="vertical" class="h-5" />
 		<ItemActionBase fn={handleScrollTop} tooltip="Back to Top" icon={ArrowUpIcon} />
-		{#if filter}
 		<Separator orientation="vertical" class="h-5" />
-		<ItemActionBase fn={previousItem} tooltip="Previous item" icon={ArrowLeftIcon} />
-		<ItemActionBase fn={nextItem} tooltip="Next item" icon={ArrowRightIcon} />
-		{/if}
+		<Separator orientation="vertical" class="h-5" />
+		<ItemActionBase
+			fn={() => {
+				handleSwitchItem('previous');
+			}}
+			tooltip="Previous item"
+			icon={ChevronLeftIcon}
+		/>
+		<ItemActionBase
+			fn={() => {
+				handleSwitchItem('next');
+			}}
+			tooltip="Next item"
+			icon={ChevronRightIcon}
+		/>
 	</div>
 </div>

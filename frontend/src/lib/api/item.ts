@@ -1,9 +1,10 @@
+import type { URL } from 'url';
 import { api } from './api';
 import type { Item } from './model';
 
 export type ListFilter = {
-	page: number;
-	page_size: number;
+	page?: number;
+	page_size?: number;
 	keyword?: string;
 	feed_id?: number;
 	unread?: boolean;
@@ -14,7 +15,6 @@ export async function listItems(options?: ListFilter) {
 	if (options) {
 		// trip undefinded fields: https://github.com/sindresorhus/ky/issues/293
 		options = JSON.parse(JSON.stringify(options));
-		sessionStorage.setItem("filter", JSON.stringify(options));
 	}
 	return await api
 		.get('items', {
@@ -23,7 +23,7 @@ export async function listItems(options?: ListFilter) {
 		.json<{ total: number; items: Item[] }>();
 }
 
-export function parseURLtoFilter(params: URLSearchParams) {
+export function parseURLtoFilter(params: URLSearchParams): ListFilter {
 	const filter: ListFilter = {
 		page: parseInt(params.get('page') || '1'),
 		page_size: parseInt(params.get('page_size') || '10')
@@ -37,6 +37,17 @@ export function parseURLtoFilter(params: URLSearchParams) {
 	const bookmark = params.get('bookmark');
 	if (bookmark) filter.bookmark = bookmark === 'true';
 	return filter;
+}
+
+export function applyFilterToURL(url: URL, filter: ListFilter) {
+	const p = url.searchParams;
+	for (const [key, v] of Object.entries(filter)) {
+		if (v !== undefined) {
+			p.set(key, String(v));
+		} else {
+			p.delete(key);
+		}
+	}
 }
 
 export async function getItem(id: number) {
