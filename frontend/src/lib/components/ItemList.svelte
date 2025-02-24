@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
-	import { parseURLtoFilter, updateUnread } from '$lib/api/item';
+	import { applyFilterToURL, parseURLtoFilter, updateUnread } from '$lib/api/item';
 	import type { Feed, Item } from '$lib/api/model';
 	import * as Pagination from '$lib/components/ui/pagination';
 	import * as Select from '$lib/components/ui/select';
@@ -26,14 +26,7 @@
 		console.log(`filter reactive updates:\nnew: ${JSON.stringify(filter)}`);
 
 		const url = page.url;
-		const p = url.searchParams;
-		for (const [key, v] of Object.entries(filter)) {
-			if (v !== undefined) {
-				p.set(key, String(v));
-			} else {
-				p.delete(key);
-			}
-		}
+		applyFilterToURL(url, filter);
 		goto(url, { invalidateAll: true });
 	}
 
