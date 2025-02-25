@@ -59,7 +59,7 @@ func (i Item) Get(id uint) (*model.Item, error) {
 	return &res, err
 }
 
-func (i Item) Creates(items []*model.Item) error {
+func (i Item) Insert(items []*model.Item) error {
 	// limit batchSize to fix 'too many SQL variable' error
 	now := time.Now()
 	for _, i := range items {
