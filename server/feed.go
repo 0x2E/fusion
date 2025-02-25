@@ -121,7 +121,7 @@ func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 func (f Feed) CheckValidity(ctx context.Context, req *ReqFeedCheckValidity) (*RespFeedCheckValidity, error) {
 	link := req.Link
 	validLinks := make([]ValidityItem, 0)
-	parsed, err := pull.FetchFeeds(ctx, &model.Feed{Link: &link})
+	parsed, err := pull.FetchFeed(ctx, &model.Feed{Link: &link})
 	if err == nil && parsed != nil {
 		validLinks = append(validLinks, ValidityItem{
 			Title: &parsed.Title,

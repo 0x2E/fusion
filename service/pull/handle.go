@@ -33,7 +33,7 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 	}
 
 	failure := ""
-	fetched, err := FetchFeeds(ctx, f)
+	fetched, err := FetchFeed(ctx, f)
 	if err != nil {
 		failure = err.Error()
 		p.feedRepo.Update(f.ID, &model.Feed{Failure: &failure})
@@ -77,7 +77,7 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 	})
 }
 
-func FetchFeeds(ctx context.Context, f *model.Feed) (*gofeed.Feed, error) {
+func FetchFeed(ctx context.Context, f *model.Feed) (*gofeed.Feed, error) {
 	resp, err := httpx.FusionRequest(ctx, *f.Link, &f.FeedRequestOptions)
 	if err != nil {
 		return nil, err
