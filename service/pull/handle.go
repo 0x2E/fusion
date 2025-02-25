@@ -66,7 +66,7 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 				FeedID:  f.ID,
 			})
 		}
-		if err := p.itemRepo.Creates(data); err != nil {
+		if err := p.itemRepo.Insert(data); err != nil {
 			return err
 		}
 	}

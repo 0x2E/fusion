@@ -24,7 +24,7 @@ type FeedRepo interface {
 }
 
 type ItemRepo interface {
-	Creates(items []*model.Item) error
+	Insert(items []*model.Item) error
 }
 
 type Puller struct {
