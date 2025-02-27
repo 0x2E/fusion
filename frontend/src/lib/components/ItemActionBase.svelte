@@ -10,9 +10,17 @@
 		icon: typeof IconType;
 		iconSize?: number;
 		buttonClass?: string;
+		disabled?: boolean;
 	}
 
-	let { fn, tooltip = '', icon: Icon, iconSize = 18, buttonClass = '' }: Props = $props();
+	let {
+		fn,
+		tooltip = '',
+		icon: Icon,
+		iconSize = 18,
+		buttonClass = '',
+		disabled = false
+	}: Props = $props();
 </script>
 
 <Tooltip.Provider>
@@ -20,6 +28,7 @@
 		<Tooltip.Trigger
 			onclick={fn}
 			aria-label={tooltip}
+			{disabled}
 			class={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'rounded-full', buttonClass)}
 		>
 			<Icon size={iconSize} />
