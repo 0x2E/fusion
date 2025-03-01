@@ -17,18 +17,16 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 	logger := pullLogger.With("feed_id", f.ID, "feed_name", f.Name)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	if f.IsSuspended() {
-		logger.Infoln("skip: suspended")
-		return nil
-	}
 	if !force {
-		if f.IsFailed() {
-			logger.Infoln("skip: failure exists")
+		updateAction, skipReason := DecideFeedUpdateAction(f, time.Now())
+		switch updateAction {
+		case ActionSkipUpdate:
+			logger.Infoln("skip: %s", skipReason)
 			return nil
-		}
-		if time.Since(f.UpdatedAt) < interval {
-			logger.Infoln("skip: new enough")
-			return nil
+		case ActionFetchUpdate:
+			// Proceed to perform the fetch.
+		default:
+			panic("unexpected FeedUpdateAction")
 		}
 	}
 
@@ -75,6 +73,41 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 		LastBuild: fetched.PublishedParsed,
 		Failure:   &failure,
 	})
+}
+
+// FeedUpdateAction represents the action to take when considering checking a
+// feed for updates.
+type FeedUpdateAction uint8
+
+const (
+	ActionFetchUpdate FeedUpdateAction = iota
+	ActionSkipUpdate
+)
+
+// FeedSkipReason represents a reason for skipping a feed update.
+type FeedSkipReason struct {
+	reason string
+}
+
+func (r FeedSkipReason) String() string {
+	return r.reason
+}
+
+var (
+	SkipReasonSuspended        = FeedSkipReason{"user suspended feed updates"}
+	SkipReasonLastUpdateFailed = FeedSkipReason{"last update failed"}
+	SkipReasonTooSoon          = FeedSkipReason{"feed was updated too recently"}
+)
+
+func DecideFeedUpdateAction(f *model.Feed, now time.Time) (FeedUpdateAction, *FeedSkipReason) {
+	if f.IsSuspended() {
+		return ActionSkipUpdate, &SkipReasonSuspended
+	} else if f.IsFailed() {
+		return ActionSkipUpdate, &SkipReasonLastUpdateFailed
+	} else if now.Sub(f.UpdatedAt) < interval {
+		return ActionSkipUpdate, &SkipReasonTooSoon
+	}
+	return ActionFetchUpdate, nil
 }
 
 type feedHTTPRequest func(ctx context.Context, link string, options *model.FeedRequestOptions) (*http.Response, error)
