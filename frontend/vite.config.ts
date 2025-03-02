@@ -1,14 +1,12 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { execSync } from 'child_process';
 import { defineConfig } from 'vite';
+import * as process from 'process';
 
 export default defineConfig({
 	plugins: [sveltekit()],
 	define: {
 		'import.meta.env.FUSION': JSON.stringify({
-			version:
-				execSync('git describe --tags --abbrev=0').toString().trimEnd() ||
-				execSync('git rev-parse --short HEAD').toString().trimEnd()
+			version: process.env.VITE_FUSION_VERSION || 'unknown-version'
 		})
 	},
 	server: {

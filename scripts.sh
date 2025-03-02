@@ -15,9 +15,23 @@ build_frontend() {
   echo "building frontend"
   mkdir -p ./build
   root=$(pwd)
+
+  if [ -n "$FUSION_VERSION" ]; then
+    version="$FUSION_VERSION"
+  else
+    # Try to get version relative to the last git tag.
+    if git describe --tags --abbrev=0 >/dev/null 2>&1; then
+      version=$(git describe --tags --abbrev=0)
+    else
+      # If repo has no tags, just use the latest commit hash.
+      version=$(git rev-parse --short HEAD)
+    fi
+  fi
+  echo "Using fusion version string: ${version}"
+
   cd ./frontend
   npm i
-  npm run build
+  VITE_FUSION_VERSION="$version" npm run build
   cd $root
 }
 
