@@ -14,15 +14,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 // for vite extracting git tag/hash
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Build FE
         run: |
-          ./scripts.sh build-frontend
+          # Extract version from git tag (remove 'v' prefix).
+          VERSION=${GITHUB_REF#refs/tags/v}
+          FUSION_VERSION=$VERSION ./scripts.sh build-frontend
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
