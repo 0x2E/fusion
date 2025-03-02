@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/0x2e/fusion/model"
+	"github.com/0x2e/fusion/pkg/ptr"
 	"github.com/0x2e/fusion/service/pull"
 )
 
@@ -24,13 +25,6 @@ type mockReadCloser struct {
 }
 
 func TestDecideFeedUpdateAction(t *testing.T) {
-	makeStringPtr := func(s string) *string {
-		return &s
-	}
-	makeBoolPtr := func(b bool) *bool {
-		return &b
-	}
-
 	// Helper function to parse ISO8601 string to time.Time.
 	parseTime := func(iso8601 string) time.Time {
 		t, err := time.Parse(time.RFC3339, iso8601)
@@ -51,7 +45,7 @@ func TestDecideFeedUpdateAction(t *testing.T) {
 			description: "suspended feed should skip update",
 			currentTime: parseTime("2025-01-01T12:00:00Z"),
 			feed: model.Feed{
-				Suspended: makeBoolPtr(true),
+				Suspended: ptr.To(true),
 				UpdatedAt: parseTime("2025-01-01T12:00:00Z"),
 			},
 			expectedAction:     pull.ActionSkipUpdate,
@@ -61,8 +55,8 @@ func TestDecideFeedUpdateAction(t *testing.T) {
 			description: "failed feed should skip update",
 			currentTime: parseTime("2025-01-01T12:00:00Z"),
 			feed: model.Feed{
-				Failure:   makeStringPtr("dummy previous error"),
-				Suspended: makeBoolPtr(false),
+				Failure:   ptr.To("dummy previous error"),
+				Suspended: ptr.To(false),
 				UpdatedAt: parseTime("2025-01-01T12:00:00Z"),
 			},
 			expectedAction:     pull.ActionSkipUpdate,
@@ -72,8 +66,8 @@ func TestDecideFeedUpdateAction(t *testing.T) {
 			description: "recently updated feed should skip update",
 			currentTime: parseTime("2025-01-01T12:00:00Z"),
 			feed: model.Feed{
-				Failure:   makeStringPtr(""),
-				Suspended: makeBoolPtr(false),
+				Failure:   ptr.To(""),
+				Suspended: ptr.To(false),
 				UpdatedAt: parseTime("2025-01-01T11:45:00Z"), // 15 minutes before current time
 			},
 			expectedAction:     pull.ActionSkipUpdate,
@@ -83,8 +77,8 @@ func TestDecideFeedUpdateAction(t *testing.T) {
 			description: "feed should be updated when conditions are met",
 			currentTime: parseTime("2025-01-01T12:00:00Z"),
 			feed: model.Feed{
-				Failure:   makeStringPtr(""),
-				Suspended: makeBoolPtr(false),
+				Failure:   ptr.To(""),
+				Suspended: ptr.To(false),
 				UpdatedAt: parseTime("2025-01-01T11:15:00Z"), // 45 minutes before current time
 			},
 			expectedAction:     pull.ActionFetchUpdate,
@@ -95,7 +89,7 @@ func TestDecideFeedUpdateAction(t *testing.T) {
 			currentTime: parseTime("2025-01-01T12:00:00Z"),
 			feed: model.Feed{
 				Failure:   nil,
-				Suspended: makeBoolPtr(false),
+				Suspended: ptr.To(false),
 				UpdatedAt: parseTime("2025-01-01T11:15:00Z"), // 45 minutes before current time
 			},
 			expectedAction:     pull.ActionFetchUpdate,
@@ -105,7 +99,7 @@ func TestDecideFeedUpdateAction(t *testing.T) {
 			description: "feed with nil suspended should be updated",
 			currentTime: parseTime("2025-01-01T12:00:00Z"),
 			feed: model.Feed{
-				Failure:   makeStringPtr(""),
+				Failure:   ptr.To(""),
 				Suspended: nil,
 				UpdatedAt: parseTime("2025-01-01T11:15:00Z"), // 45 minutes before current time
 			},
