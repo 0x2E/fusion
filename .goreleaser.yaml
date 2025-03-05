@@ -14,7 +14,7 @@ builds:
 
 archives:
   - id: default
-    format: zip
+    formats: ["zip"]
     # Additional files/globs you want to add to the archive.
     files:
       - "LICENSE*"
@@ -29,6 +29,11 @@ snapshot:
 
 changelog:
   use: github
+  filters:
+    exclude:
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
 
 release:
   draft: true
