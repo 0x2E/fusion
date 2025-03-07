@@ -17,11 +17,16 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 	logger := pullLogger.With("feed_id", f.ID, "feed_name", f.Name)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
+
+	updateAction, skipReason := DecideFeedUpdateAction(f, time.Now())
+	if *skipReason == SkipReasonSuspended {
+		logger.Infof("skip: %s", skipReason)
+		return nil
+	}
 	if !force {
-		updateAction, skipReason := DecideFeedUpdateAction(f, time.Now())
 		switch updateAction {
 		case ActionSkipUpdate:
-			logger.Infoln("skip: %s", skipReason)
+			logger.Infof("skip: %s", skipReason)
 			return nil
 		case ActionFetchUpdate:
 			// Proceed to perform the fetch.
