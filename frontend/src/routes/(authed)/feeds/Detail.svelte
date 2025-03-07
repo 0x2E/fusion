@@ -195,7 +195,7 @@
 				<Button
 					variant="secondary"
 					onclick={() => {
-						const alertText = `Are you sure to ${selectedFeed.suspended ? 'resume' : 'suspend'} $[{selectedFeed.name}]?`;
+						const alertText = `Are you sure to ${selectedFeed.suspended ? 'resume' : 'suspend'} [${selectedFeed.name}]?`;
 						if (!confirm(alertText)) {
 							return;
 						}
