@@ -10,7 +10,6 @@ const config = {
 	kit: {
 		adapter: adapter(),
 		csp: {
-			//TODO:XSS
 			directives: {
 				'script-src': ['self']
 			}
