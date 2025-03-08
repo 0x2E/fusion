@@ -34,8 +34,10 @@
 			<a href={'/items/' + item.id} class="btn btn-ghost flex justify-between items-center py-6">
 				<div class="flex items-center gap-2">
 					{#if highlightUnread}
-						<div class={`size-2 ${item.unread ? '' : 'hidden'}`}>
-							<div class="bg-accent rounded-full w-full h-full"></div>
+						<div class="size-1">
+							<div
+								class={`bg-accent rounded-full w-full h-full ${item.unread ? '' : 'hidden'}`}
+							></div>
 						</div>
 					{/if}
 					<h2 class="truncate font-medium">

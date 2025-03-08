@@ -10,7 +10,7 @@
 </script>
 
 <div class="tooltip tooltip-bottom" data-tip={'Go to Feed'}>
-	<a href={'/feeds/' + data.feed.id} target="_blank" class="btn btn-ghost btn-square">
+	<a href={'/feeds/' + data.feed.id} class="btn btn-ghost btn-square">
 		<Newspaper class="size-5" />
 	</a>
 </div>

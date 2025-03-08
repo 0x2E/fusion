@@ -10,7 +10,7 @@
 	let { title, children }: Props = $props();
 </script>
 
-<header class="sticky top-0 bg-base-100 border-b border-base-content/10 py-2 mb-8 z-50">
+<header class="sticky top-0 bg-base-100 border-b border-base-content/10 py-2 mb-8">
 	<div class="flex justify-between items-center px-4">
 		<div>
 			<label for="sidebar-toggle" class="btn btn-ghost btn-square lg:hidden">

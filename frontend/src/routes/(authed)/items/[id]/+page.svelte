@@ -68,7 +68,6 @@
 
 <PageNavHeader title={data.title}>
 	<ItemActionGotoFeed {data} />
-	<ItemActionVisitLink {data} />
 	<ItemActionUnread {data} />
 	<ItemActionBookmark {data} />
 	<ItemActionVisitLink {data} />

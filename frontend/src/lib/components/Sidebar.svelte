@@ -37,6 +37,7 @@
 			// TODO sort feeds
 			groups.push(g);
 		}
+		groups.sort((a, b) => a.id - b.id);
 		return groups;
 	});
 

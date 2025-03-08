@@ -20,7 +20,7 @@ export async function listFeeds(filter?: FeedListFiler) {
 }
 
 export async function getFeed(id: number) {
-	return await api.get('feed/' + id).json<Feed>();
+	return await api.get('feeds/' + id).json<Feed>();
 }
 
 export async function checkValidity(link: string) {
