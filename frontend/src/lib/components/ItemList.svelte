@@ -70,16 +70,6 @@
 
 <div class="flex flex-col md:flex-row md:justify-between md:items-center w-full gap-2">
 	<div class="flex flex-col md:flex-row gap-2">
-		<FeedsSelect
-			data={data.feeds}
-			selected={filter.feed_id}
-			onSelectedChange={(id: number | undefined) => {
-				filter.feed_id = id;
-				filter.page = 1;
-				applyFilter();
-			}}
-			className="w-full md:w-[200px]"
-		/>
 		<Input
 			type="search"
 			placeholder="Search in title and content..."

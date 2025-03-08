@@ -5,7 +5,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import { LogOutIcon, MenuIcon, XIcon } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import ThemeToggler from './ThemeToggler.svelte';
 
 	interface link {
 		label: string;
@@ -71,7 +70,6 @@
 					</Button>
 				{/each}
 			</div>
-			<ThemeToggler className="hidden sm:flex" />
 			<Button
 				variant="ghost"
 				size="icon"
@@ -112,7 +110,6 @@
 						{l.label}
 					</Button>
 				{/each}
-				<ThemeToggler className="w-full h-14" />
 				<Button
 					variant="outline"
 					onclick={() => {
