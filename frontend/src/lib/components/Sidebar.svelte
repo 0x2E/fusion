@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import type { Feed } from '$lib/api/model';
 	import { BookmarkCheck, Inbox, List, Settings, type Icon } from 'lucide-svelte';
+	import ThemeController from './ThemeController.svelte';
 
 	interface Props {
 		feeds: Feed[];
@@ -62,17 +63,20 @@
 	}
 </script>
 
-<a
-	href="https://github.com/0x2E/fusion"
-	target="_blank"
-	class="btn hover:bg-base-content/10 flex items-center gap-2 justify-start"
->
-	<img src="/icon-96.png" alt="icon" class="w-6" />
-	<span class="text-lg font-bold">Fusion</span>
-	<span class="text-xs text-base-content/60 font-light">
-		{version}
-	</span>
-</a>
+<div class="flex items-center gap-2">
+	<a
+		href="https://github.com/0x2E/fusion"
+		target="_blank"
+		class="btn btn-ghost hover:bg-base-content/10 flex items-center gap-2 justify-start"
+	>
+		<img src="/icon-96.png" alt="icon" class="w-6" />
+		<span class="text-lg font-bold">Fusion</span>
+		<span class="text-xs text-base-content/60 font-light">
+			{version}
+		</span>
+	</a>
+	<ThemeController />
+</div>
 
 <ul class="menu w-full mt-4">
 	{#each systemLinks as v}

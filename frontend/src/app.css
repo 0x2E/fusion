@@ -3,7 +3,7 @@
 @plugin "@tailwindcss/typography";
 @plugin "daisyui" {
 	themes:
-		silk --default,
+		light --default,
 		business --prefersdark;
 }
 
