@@ -1,6 +1,8 @@
 <script lang="ts">
+	import ActionSearch from '$lib/components/ActionSearch.svelte';
 	import ItemList from '$lib/components/ItemList.svelte';
 	import PageHead from '$lib/components/PageHead.svelte';
+	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 	import type { PageData } from './$types';
 
 	interface Props {
@@ -14,5 +16,10 @@
 	<title>All</title>
 </svelte:head>
 
-<PageHead title="All" />
-<ItemList {data} />
+<div class="flex flex-col">
+	<PageNavHeader title="All">
+		<ActionSearch />
+	</PageNavHeader>
+	<PageHead title="All" />
+	<ItemList items={data.items.data} />
+</div>

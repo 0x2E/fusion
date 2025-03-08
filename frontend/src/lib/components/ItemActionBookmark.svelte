@@ -4,15 +4,12 @@
 	import type { Item } from '$lib/api/model';
 	import { BookmarkIcon, BookmarkXIcon } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import ItemActionBase from './ItemActionBase.svelte';
 
 	interface Props {
 		data: Item;
-		buttonClass?: string;
-		iconSize?: number;
 	}
 
-	let { data, buttonClass = '', iconSize = 18 }: Props = $props();
+	let { data }: Props = $props();
 
 	async function toggleBookmark(e: Event) {
 		e.preventDefault();
@@ -23,8 +20,12 @@
 			toast.error((e as Error).message);
 		}
 	}
-	let icon = $derived(data.bookmark ? BookmarkXIcon : BookmarkIcon);
+	let Icon = $derived(data.bookmark ? BookmarkXIcon : BookmarkIcon);
 	let tooltip = $derived(data.bookmark ? 'Cancel Bookmark' : 'Add to Bookmark');
 </script>
 
-<ItemActionBase fn={toggleBookmark} {tooltip} {buttonClass} {icon} {iconSize} />
+<div class="tooltip tooltip-bottom" data-tip={tooltip}>
+	<button onclick={toggleBookmark} aria-label={tooltip} class="btn btn-ghost btn-square">
+		<Icon class="size-5" />
+	</button>
+</div>

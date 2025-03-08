@@ -1,16 +1,12 @@
 <script lang="ts">
-	import moment from 'moment';
+	import ItemActionBookmark from '$lib/components/ItemActionBookmark.svelte';
+	import ItemActionGotoFeed from '$lib/components/ItemActionGotoFeed.svelte';
+	import ItemActionUnread from '$lib/components/ItemActionUnread.svelte';
+	import ItemActionVisitLink from '$lib/components/ItemActionVisitLink.svelte';
+	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 	import DOMPurify from 'dompurify';
-	import type { PageData } from './$types';
-	import ItemActionFloating from '$lib/components/ItemActionFloating.svelte';
-	import { Separator } from '$lib/components/ui/separator';
-	import { onMount } from 'svelte';
 
-	interface Props {
-		data: PageData;
-	}
-
-	let { data }: Props = $props();
+	let { data } = $props();
 
 	function sanitize(content: string, baseLink: string) {
 		function joinURL(s: string | null) {
@@ -19,7 +15,7 @@
 				// some rss's entry link is relative,
 				// we cannot determine the base url
 				const res = new URL(s, baseLink).href;
-				console.log(s + ' -> ' + res);
+				console.debug(s + ' -> ' + res);
 				return res;
 			} catch (e) {
 				console.log(e);
@@ -67,37 +63,24 @@
 		return new XMLSerializer().serializeToString(dom);
 	}
 
-	let fixActionbar = $state(true);
-	onMount(() => {
-		const observer = new IntersectionObserver(
-			(entries) => {
-				entries.forEach((entry) => {
-					fixActionbar = !entry.isIntersecting;
-				});
-			},
-			{ threshold: 1 }
-		);
-		observer.observe(document.querySelector('#actionbar-anchor')!);
-	});
 	let safeContent = $derived(sanitize(data.content, data.link));
 </script>
 
-<div class="max-w-prose mx-auto">
-	<h1 class="text-3xl font-bold mb-4">{data.title}</h1>
-	<p class="text-sm text-muted-foreground">
-		<a href={'/all?feed_id=' + data.feed.id} class="hover:underline">{data.feed.name}</a> / {moment(
-			data.pub_date
-		).format('lll')}
+<PageNavHeader title={data.title}>
+	<ItemActionGotoFeed {data} />
+	<ItemActionVisitLink {data} />
+	<ItemActionUnread {data} />
+	<ItemActionBookmark {data} />
+	<ItemActionVisitLink {data} />
+</PageNavHeader>
+
+<div class="max-w-prose mx-auto w-full px-4 pb-6">
+	<p class="flex flex-col md:flex-row text-sm text-base-content/60">
+		{new Date(data.pub_date).toLocaleString()}
 	</p>
 
-	<article class="mt-6 prose dark:prose-invert prose-lg text-wrap break-words">
-		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	<article class="prose dark:prose-invert prose-lg text-wrap break-words">
+		<h1>{data.title}</h1>
 		{@html safeContent}
 	</article>
-
-	<Separator class="my-4" />
-	<p class="text-muted-foreground text-center mb-4">End of Content</p>
-
-	<div id="actionbar-anchor"></div>
-	<ItemActionFloating {data} fixed={fixActionbar} />
 </div>

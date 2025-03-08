@@ -1,7 +1,10 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { logout } from '$lib/api/login';
 	import type { Feed } from '$lib/api/model';
-	import { BookmarkCheck, Inbox, List, Settings, type Icon } from 'lucide-svelte';
+	import { BookmarkCheck, Inbox, List, LogOut, Settings, type Icon } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import ThemeController from './ThemeController.svelte';
 
 	interface Props {
@@ -61,55 +64,78 @@
 		}
 		return false;
 	}
+
+	async function handleLogout() {
+		if (!confirm('Are you sure you want to log out?')) {
+			return;
+		}
+
+		try {
+			await logout();
+			toast.success('Bye');
+			goto('/login');
+		} catch {
+			toast.error('Failed to logout.');
+		}
+	}
 </script>
 
-<div class="flex items-center gap-2">
-	<a
-		href="https://github.com/0x2E/fusion"
-		target="_blank"
-		class="btn btn-ghost hover:bg-base-content/10 flex items-center gap-2 justify-start"
-	>
-		<img src="/icon-96.png" alt="icon" class="w-6" />
-		<span class="text-lg font-bold">Fusion</span>
-		<span class="text-xs text-base-content/60 font-light">
-			{version}
-		</span>
-	</a>
-	<ThemeController />
-</div>
-
-<ul class="menu w-full mt-4">
-	{#each systemLinks as v}
-		<li>
-			<a href={v.url} class={isHighlight(v.url) ? 'menu-active' : ''}>
-				<v.icon class="size-4" /><span>{v.label}</span>
+<div class="flex flex-col justify-between h-full">
+	<div>
+		<div class="flex items-center gap-2">
+			<a
+				href="https://github.com/0x2E/fusion"
+				target="_blank"
+				class="btn btn-ghost hover:bg-base-content/10 flex items-center gap-2 justify-start"
+			>
+				<img src="/icon-96.png" alt="icon" class="w-6" />
+				<span class="text-lg font-bold">Fusion</span>
+				<span class="text-xs text-base-content/60 font-light">
+					{version}
+				</span>
 			</a>
-		</li>
-	{/each}
-</ul>
+			<ThemeController />
+		</div>
 
-<ul class="menu w-full">
-	<li class="menu-title">Feeds</li>
-	<li><a>All</a></li>
-	{#each groups as group, index}
-		<li>
-			<details open={index === 0}>
-				<summary class="overflow-hidden">
-					<span class="line-clamp-1">{group.name}</span>
-				</summary>
-				<ul>
-					{#each group.feeds as feed}
-						<li>
-							<a
-								href="/feeds/{feed.id}"
-								class={isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''}
-							>
-								<span class="line-clamp-1">{feed.name}</span>
-							</a>
-						</li>
-					{/each}
-				</ul>
-			</details>
-		</li>
-	{/each}
-</ul>
+		<ul class="menu w-full mt-4 font-medium">
+			{#each systemLinks as v}
+				<li>
+					<a href={v.url} class={isHighlight(v.url) ? 'menu-active' : ''}>
+						<v.icon class="size-4" /><span>{v.label}</span>
+					</a>
+				</li>
+			{/each}
+		</ul>
+
+		<ul class="menu w-full">
+			<li class="menu-title">Feeds</li>
+			<li><a>All</a></li>
+			{#each groups as group, index}
+				<li>
+					<details open={index === 0}>
+						<summary class="overflow-hidden">
+							<span class="line-clamp-1">{group.name}</span>
+						</summary>
+						<ul>
+							{#each group.feeds as feed}
+								<li>
+									<a
+										href="/feeds/{feed.id}"
+										class={isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''}
+									>
+										<span class="line-clamp-1">{feed.name}</span>
+									</a>
+								</li>
+							{/each}
+						</ul>
+					</details>
+				</li>
+			{/each}
+		</ul>
+	</div>
+
+	<button onclick={handleLogout} class="btn btn-soft btn-sm w-full mt-auto">
+		<LogOut class="size-4" />
+		Logout</button
+	>
+</div>

@@ -1,22 +1,16 @@
 <script lang="ts">
 	import type { Item } from '$lib/api/model';
-	import { ExternalLinkIcon } from 'lucide-svelte';
-	import ItemActionBase from './ItemActionBase.svelte';
+	import { ExternalLink } from 'lucide-svelte';
 
 	interface Props {
 		data: Item;
-		buttonClass?: string;
-		iconSize?: number;
 	}
 
-	let { data, buttonClass = '', iconSize = 18 }: Props = $props();
-
-	function visitLink(e: Event) {
-		e.preventDefault();
-		window.open(data.link, '_blank');
-	}
-	const icon = ExternalLinkIcon;
-	const tooltip = 'Visit Original Link';
+	let { data }: Props = $props();
 </script>
 
-<ItemActionBase fn={visitLink} {tooltip} {buttonClass} {icon} {iconSize} />
+<div class="tooltip tooltip-bottom" data-tip={'Visit Original Link'}>
+	<a href={data.link} target="_blank" class="btn btn-ghost btn-square">
+		<ExternalLink class="size-5" />
+	</a>
+</div>
