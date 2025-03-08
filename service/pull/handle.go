@@ -19,7 +19,7 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 	defer cancel()
 
 	updateAction, skipReason := DecideFeedUpdateAction(f, time.Now())
-	if *skipReason == SkipReasonSuspended {
+	if skipReason == &SkipReasonSuspended {
 		logger.Infof("skip: %s", skipReason)
 		return nil
 	}
