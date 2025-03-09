@@ -1,24 +1,59 @@
 <script lang="ts">
-	let isMac = navigator.platform.indexOf('Mac') === 0 || navigator.platform === 'iPhone';
+	import { listItems } from '$lib/api/item';
+	import type { Item } from '$lib/api/model';
+	import { debounce } from '$lib/utils';
+	import { Search } from 'lucide-svelte';
+	import ItemList from './ItemList.svelte';
 
-	async function handleSearch() {
-		//
-	}
+	let modal = $state<HTMLDialogElement>();
+	let keyword = $state('');
+	let result = $state<{ total: number; items: Item[] } | null>();
+	// let isMac = navigator.platform.indexOf('Mac') === 0 || navigator.platform === 'iPhone';
+
+	const handleSearch = debounce(async () => {
+		const resp = await listItems(); // TODO filter
+		result = resp;
+	}, 500);
 </script>
 
 <label class="input input-sm lg:w-80">
-	<svg class="size-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-		><g
-			stroke-linejoin="round"
-			stroke-linecap="round"
-			stroke-width="2.5"
-			fill="none"
-			stroke="currentColor"
-			><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></g
-		></svg
-	>
-
-	<input type="search" class="grow" placeholder="Search in title and content" />
+	<Search class="size-4 opacity-50" />
+	<input
+		type="search"
+		class="input"
+		placeholder="Search in title and content"
+		onclick={() => modal?.showModal()}
+	/>
 	<!-- <kbd class="kbd kbd-sm">{isMac ? '⌘' : '^'}</kbd>
 	<kbd class="kbd kbd-sm">K</kbd> -->
 </label>
+
+<dialog id="search" bind:this={modal} class="modal modal-bottom sm:modal-middle">
+	<div class="modal-box min-h-80 w-full max-w-3xl">
+		<form method="dialog">
+			<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">✕</button>
+		</form>
+		<h3 class="text-lg font-bold">Search</h3>
+		<div class="py-4">
+			<label class="input w-full">
+				<Search class="size-4 opacity-50" />
+				<input
+					type="search"
+					required
+					placeholder="Search in title and content"
+					bind:value={keyword}
+					oninput={handleSearch}
+					class="w-full"
+				/>
+			</label>
+			{#if result?.total}
+				<div class="mt-6">
+					<ItemList items={result.items} total={result.total} />
+				</div>
+			{/if}
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
