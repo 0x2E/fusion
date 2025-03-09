@@ -8,9 +8,10 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		adapter: adapter(),
+		adapter: adapter({
+			fallback: 'index.html'
+		}),
 		csp: {
-			//TODO:XSS
 			directives: {
 				'script-src': ['self']
 			}

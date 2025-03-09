@@ -3,17 +3,14 @@
 	import { listItems } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
 	import { fullItemFilter } from '$lib/state.svelte';
-	import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-svelte';
+	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import ItemActionBase from './ItemActionBase.svelte';
 
 	interface Props {
 		data: Item;
-		buttonClass?: string;
-		iconSize?: number;
 	}
-	let { data, buttonClass = '', iconSize = 18 }: Props = $props();
+	let { data }: Props = $props();
 
 	const itemFilter = Object.assign({}, fullItemFilter);
 	let currentItemIndex = $state(0);
@@ -82,23 +79,24 @@
 	}
 </script>
 
-<ItemActionBase
-	fn={() => {
-		handleSwitchItem('previous');
-	}}
-	tooltip="Previous item"
-	{buttonClass}
-	{iconSize}
-	icon={ChevronLeftIcon}
-	{disabled}
-/>
-<ItemActionBase
-	fn={() => {
-		handleSwitchItem('next');
-	}}
-	tooltip="Next item"
-	{buttonClass}
-	{iconSize}
-	icon={ChevronRightIcon}
-	{disabled}
-/>
+<div class="tooltip" data-tip="Previous item">
+	<button
+		onclick={() => {
+			handleSwitchItem('previous');
+		}}
+		class="btn btn-ghost btn-square"
+	>
+		<ChevronLeft class="size-5" />
+	</button>
+</div>
+
+<div class="tooltip" data-tip="Next item">
+	<button
+		onclick={() => {
+			handleSwitchItem('next');
+		}}
+		class="btn btn-ghost btn-square"
+	>
+		<ChevronRight class="size-5" />
+	</button>
+</div>
