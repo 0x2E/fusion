@@ -11,6 +11,6 @@
 
 <div class="tooltip tooltip-bottom" data-tip={'Go to Feed'}>
 	<a href={'/feeds/' + data.feed.id} class="btn btn-ghost btn-square">
-		<Newspaper class="size-5" />
+		<Newspaper class="size-4" />
 	</a>
 </div>

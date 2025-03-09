@@ -26,6 +26,6 @@
 
 <div class="tooltip tooltip-bottom" data-tip={tooltip}>
 	<button onclick={toggleUnread} class="btn btn-ghost btn-square">
-		<Icon class="size-5" />
+		<Icon class="size-4" />
 	</button>
 </div>

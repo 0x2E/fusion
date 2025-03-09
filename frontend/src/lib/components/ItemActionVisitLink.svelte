@@ -11,6 +11,6 @@
 
 <div class="tooltip tooltip-bottom" data-tip={'Visit Original Link'}>
 	<a href={data.link} target="_blank" class="btn btn-ghost btn-square">
-		<ExternalLink class="size-5" />
+		<ExternalLink class="size-4" />
 	</a>
 </div>

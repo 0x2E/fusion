@@ -1,12 +1,14 @@
 import { getFeed } from '$lib/api/feed';
-import { listItems } from '$lib/api/item';
+import { listItems, parseURLtoFilter } from '$lib/api/item';
 import type { PageLoad } from './$types';
 
 export const prerender = false;
 
-export const load: PageLoad = async ({ params }) => {
+export const load: PageLoad = async ({ url, params }) => {
 	const id = parseInt(params.id);
 	const feed = getFeed(id);
-	const items = listItems({ feed_id: id });
+	const filter = parseURLtoFilter(url.searchParams);
+	filter.feed_id = id;
+	const items = listItems(filter);
 	return { feed: feed, items: items };
 };

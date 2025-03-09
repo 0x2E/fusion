@@ -29,6 +29,7 @@
 		"lucide-svelte": "^0.475.0",
 		"prettier": "^3.5.3",
 		"prettier-plugin-svelte": "^3.3.3",
+		"prettier-plugin-tailwindcss": "^0.6.11",
 		"svelte": "^5.22.6",
 		"svelte-check": "^4.1.5",
 		"svelte-sonner": "^0.3.28",

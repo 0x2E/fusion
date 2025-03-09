@@ -25,6 +25,6 @@
 
 <div class="tooltip tooltip-bottom" data-tip="Mark All as Read">
 	<button onclick={handleMarkAllAsRead} class="btn btn-ghost btn-square">
-		<CheckCheck class="size-5" />
+		<CheckCheck class="size-4" />
 	</button>
 </div>

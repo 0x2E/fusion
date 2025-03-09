@@ -1,7 +1,6 @@
 <script lang="ts">
 	import ActionSearch from '$lib/components/ActionSearch.svelte';
 	import ItemList from '$lib/components/ItemList.svelte';
-	import PageHead from '$lib/components/PageHead.svelte';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 	import type { PageData } from './$types';
 
@@ -17,9 +16,9 @@
 </svelte:head>
 
 <div class="flex flex-col">
-	<PageNavHeader title="All">
-		<ActionSearch />
-	</PageNavHeader>
-	<PageHead title="All" />
-	<ItemList items={data.items.data} />
+	<PageNavHeader showSearch={true}></PageNavHeader>
+	<div class="px-4 py-6">
+		<h1 class="text-3xl font-bold">All</h1>
+	</div>
+	<ItemList items={data.items.data} total={data.items.total} />
 </div>

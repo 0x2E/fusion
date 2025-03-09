@@ -1,14 +1,19 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { applyFilterToURL, parseURLtoFilter } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionUnread from './ItemActionUnread.svelte';
 	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
+	import Pagination from './Pagination.svelte';
 
 	interface Props {
+		total: number;
 		items: Item[];
 		highlightUnread?: boolean;
 	}
-	let { items, highlightUnread }: Props = $props();
+	let { items, total, highlightUnread }: Props = $props();
 
 	function timeDiff(d: Date) {
 		d = new Date(d);
@@ -26,17 +31,25 @@
 		if (hours > 0) return hours + 'h';
 		return '?';
 	}
+
+	let filter = parseURLtoFilter(page.url.searchParams);
+	async function handleChangePage(pageNumber: number) {
+		filter.page = pageNumber;
+		const url = page.url;
+		applyFilterToURL(url, filter);
+		goto(url, { invalidateAll: true });
+	}
 </script>
 
 <ul data-sveltekit-preload-data="hover" class="px-4">
 	{#each items as item}
 		<li class="group rounded-md">
-			<a href={'/items/' + item.id} class="btn btn-ghost flex justify-between items-center py-6">
+			<a href={'/items/' + item.id} class="btn btn-ghost flex items-center justify-between py-6">
 				<div class="flex items-center gap-2">
 					{#if highlightUnread}
-						<div class="size-1">
+						<div class="size-1.5">
 							<div
-								class={`bg-accent rounded-full w-full h-full ${item.unread ? '' : 'hidden'}`}
+								class={`bg-accent h-full w-full rounded-full ${item.unread ? '' : 'hidden'}`}
 							></div>
 						</div>
 					{/if}
@@ -44,9 +57,9 @@
 						{item.title}
 					</h2>
 				</div>
-				<div class="flex justify-between items-center flex-shrink-0 w-1/3 md:w-1/4">
+				<div class="flex w-1/3 flex-shrink-0 items-center justify-between md:w-1/4">
 					<div
-						class="flex justify-end w-full gap-2 text-xs text-base-content/60 group-hover:hidden font-normal"
+						class="text-base-content/60 flex w-full justify-end gap-2 text-xs font-normal group-hover:hidden"
 					>
 						<span class="w-full truncate">{item.feed.name}</span>
 						<span class="w-[5ch] truncate">
@@ -54,7 +67,7 @@
 						</span>
 					</div>
 
-					<div class="w-full hidden group-hover:inline-flex justify-end gap-2">
+					<div class="hidden w-full justify-end gap-2 group-hover:inline-flex">
 						<ItemActionUnread data={item} />
 						<ItemActionBookmark data={item} />
 						<ItemActionVisitLink data={item} />
@@ -63,6 +76,15 @@
 			</a>
 		</li>
 	{:else}
-		No data
+		Nothing here.
 	{/each}
 </ul>
+
+<div class="mt-6 flex w-full justify-center">
+	<Pagination
+		currentPage={filter.page}
+		pageSize={filter.page_size}
+		{total}
+		onPageChange={handleChangePage}
+	/>
+</div>

@@ -47,17 +47,6 @@
 		});
 	}
 
-	async function handleDelete() {
-		try {
-			await deleteFeed(selectedFeed.id);
-			toast.success('Feed has been deleted');
-		} catch (e) {
-			toast.error((e as Error).message);
-		}
-		show = false;
-		invalidateAll();
-	}
-
 	async function handleUpdate(e: Event) {
 		e.preventDefault();
 
@@ -74,21 +63,10 @@
 			}
 		});
 	}
-
-	async function handleToggleSuspended() {
-		const data: FeedUpdateForm = { suspended: !selectedFeed.suspended };
-		try {
-			await updateFeed(selectedFeed.id, data);
-			toast.success('Update successfully');
-		} catch (e) {
-			toast.error((e as Error).message);
-		}
-		invalidateAll();
-	}
 </script>
 
 <Sheet.Root bind:open={show}>
-	<Sheet.Content class="w-full md:min-w-[500px] md:w-auto overflow-scroll">
+	<Sheet.Content class="w-full overflow-scroll md:w-auto md:min-w-[500px]">
 		<Sheet.Header>
 			<Sheet.Title>{selectedFeed.name}</Sheet.Title>
 			<Sheet.Description>
@@ -102,7 +80,7 @@
 				{/if}
 			</Sheet.Description>
 		</Sheet.Header>
-		<div class="flex flex-col w-full mt-4">
+		<div class="mt-4 flex w-full flex-col">
 			{#if selectedFeed !== undefined}
 				<form onsubmit={handleUpdate} class="flex flex-col gap-2">
 					<div>
@@ -149,7 +127,7 @@
 								}
 							}}
 						/>
-						<p class="text-sm text-muted-foreground">
+						<p class="text-muted-foreground text-sm">
 							Proxy for HTTP client. The types 'http', 'https', and 'socks5' are supported.
 						</p>
 					</div>
@@ -175,7 +153,7 @@
 			{/if}
 
 			<Separator class="my-6" />
-			<div class="flex flex-col w-full gap-2">
+			<div class="flex w-full flex-col gap-2">
 				<Button variant="outline" href={'/all?feed_id=' + selectedFeed.id}>View items</Button>
 				<Button
 					variant="secondary"
@@ -191,7 +169,7 @@
 			</div>
 
 			<Separator class="my-6" />
-			<div class="flex flex-col w-full gap-2">
+			<div class="flex w-full flex-col gap-2">
 				<Button
 					variant="secondary"
 					onclick={() => {

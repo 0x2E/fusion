@@ -1,26 +1,30 @@
 <script lang="ts">
 	import { Menu } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
+	import ActionSearch from './ActionSearch.svelte';
 
 	interface Props {
 		children?: Snippet;
+		showSearch?: boolean;
 		title?: string;
 	}
 
-	let { title, children }: Props = $props();
+	let { title, children, showSearch }: Props = $props();
 </script>
 
-<header class="sticky top-0 bg-base-100 border-b border-base-content/10 py-2 mb-8">
-	<div class="flex justify-between items-center px-4">
-		<div>
+<header class="bg-base-100 border-base-content/10 sticky top-0 border-b py-2">
+	<div class="flex flex-col justify-between px-4 lg:flex-row lg:items-center">
+		<div class="flex items-center justify-between">
 			<label for="sidebar-toggle" class="btn btn-ghost btn-square lg:hidden">
-				<Menu class="size-5" />
+				<Menu class="size-4" />
 			</label>
-			{#if title}
-				<span class="text-sm text-base-content/60">{title}</span>
+			{#if showSearch}
+				<ActionSearch />
+			{:else if title}
+				<span class="text-base-content/60 text-sm">{title}</span>
 			{/if}
 		</div>
-		<div>
+		<div class="ml-auto">
 			{@render children?.()}
 		</div>
 	</div>

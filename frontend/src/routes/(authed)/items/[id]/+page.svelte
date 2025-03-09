@@ -73,8 +73,8 @@
 	<ItemActionVisitLink {data} />
 </PageNavHeader>
 
-<div class="max-w-prose mx-auto w-full px-4 pb-6">
-	<p class="flex flex-col md:flex-row text-sm text-base-content/60">
+<div class="mx-auto w-full max-w-prose px-4 py-6">
+	<p class="text-base-content/60 flex flex-col text-sm md:flex-row">
 		{new Date(data.pub_date).toLocaleString()}
 	</p>
 
