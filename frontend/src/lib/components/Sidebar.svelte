@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { logout } from '$lib/api/login';
-	import type { Feed } from '$lib/api/model';
+	import type { Feed, Group } from '$lib/api/model';
 	import {
 		BookmarkCheck,
 		CirclePlus,
@@ -18,36 +18,12 @@
 
 	interface Props {
 		feeds: Feed[];
+		groups: Group[];
 	}
 
-	let { feeds }: Props = $props();
+	let { feeds, groups }: Props = $props();
 
 	const version = import.meta.env.FUSION.version;
-
-	type GroupFeed = {
-		id: number;
-		name: string;
-		feeds: Feed[];
-	};
-
-	let groups = $derived.by(() => {
-		const map = new Map<number, GroupFeed>();
-		feeds.forEach((f) => {
-			let g = map.get(f.group.id);
-			if (!g) {
-				g = { id: f.group.id, name: f.group.name, feeds: [] };
-				map.set(f.group.id, g);
-			}
-			g.feeds.push(f);
-		});
-		const groups: GroupFeed[] = [];
-		for (const [_, g] of map) {
-			// TODO sort feeds
-			groups.push(g);
-		}
-		groups.sort((a, b) => a.id - b.id);
-		return groups;
-	});
 
 	type SystemNavLink = {
 		label: string;
@@ -107,7 +83,7 @@
 					onclick={() => {
 						toggleShow();
 					}}
-					class="btn btn-neutral btn-sm btn-soft"
+					class="btn btn-sm bg-base-100"
 				>
 					<CirclePlus class="size-4" />
 					<span>Add Feeds</span>
@@ -115,7 +91,7 @@
 			</li>
 		</ul>
 
-		<ul class="menu mt-4 w-full font-medium">
+		<ul class="menu w-full font-medium">
 			{#each systemLinks as v}
 				<li>
 					<a href={v.url} class={isHighlight(v.url) ? 'menu-active' : ''}>
@@ -134,7 +110,7 @@
 							<span class="line-clamp-1">{group.name}</span>
 						</summary>
 						<ul>
-							{#each group.feeds as feed}
+							{#each feeds.filter((v) => v.group.id === group.id) as feed}
 								<li>
 									<a
 										href="/feeds/{feed.id}"
@@ -164,7 +140,7 @@
 				{version}.
 			</span>
 			<span>
-				Icon by <a href="https://icons8.com/icon/FeQbTvGTsiN5/news" target="_blank">Icons8</a>
+				Logo by <a href="https://icons8.com/icon/FeQbTvGTsiN5/news" target="_blank">Icons8</a>
 			</span>
 		</p>
 	</div>

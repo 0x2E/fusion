@@ -52,7 +52,7 @@
 		>
 		{#each pages as page}
 			{#if typeof page === 'string'}
-				<button class="join-item btn btn-disabled">...</button>
+				<button class="join-item btn" disabled>...</button>
 			{:else}
 				<button
 					class="join-item btn"

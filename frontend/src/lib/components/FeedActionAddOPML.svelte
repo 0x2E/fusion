@@ -75,25 +75,6 @@
 		importing = false;
 		invalidateAll();
 	}
-
-	// async function handleExportFeeds() {
-	// 	const data = groups.map((g) => {
-	// 		return {
-	// 			name: g.name,
-	// 			feeds: g.feeds.map((f) => {
-	// 				return { name: f.name, link: f.link };
-	// 			})
-	// 		};
-	// 	});
-	// 	const content = dump(data);
-	// 	console.log(content);
-	// 	const link = document.createElement('a');
-	// 	link.href = 'data:text/xml;charset=utf-8,' + encodeURIComponent(content);
-	// 	link.download = 'feeds.opml';
-	// 	document.body.appendChild(link);
-	// 	link.click();
-	// 	document.body.removeChild(link);
-	// }
 </script>
 
 <form onsubmit={handleImportFeeds} class="flex flex-col">

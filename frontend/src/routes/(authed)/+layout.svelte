@@ -17,7 +17,7 @@
 		<div
 			class="bg-base-200 text-base-content h-full min-h-full w-[80%] overflow-x-hidden px-2 py-4 lg:w-72"
 		>
-			<Sidebar feeds={data.feeds} />
+			<Sidebar feeds={data.feeds} groups={data.groups} />
 		</div>
 	</div>
 </div>
