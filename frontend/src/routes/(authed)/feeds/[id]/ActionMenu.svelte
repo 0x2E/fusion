@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { deleteFeed, updateFeed, type FeedUpdateForm } from '$lib/api/feed';
 	import { allGroups } from '$lib/api/group';
 	import type { Feed, Group } from '$lib/api/model';
@@ -47,6 +47,7 @@
 		try {
 			await deleteFeed(feed.id);
 			toast.success('Feed has been deleted');
+			await goto('/');
 		} catch (e) {
 			toast.error((e as Error).message);
 		}

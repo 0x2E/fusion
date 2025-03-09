@@ -31,16 +31,16 @@
 		return '?';
 	}
 
-	let filter = parseURLtoFilter(page.url.searchParams);
+	let filter = $derived(parseURLtoFilter(page.url.searchParams));
 	async function handleChangePage(pageNumber: number) {
 		filter.page = pageNumber;
 		const url = page.url;
 		applyFilterToURL(url, filter);
-		goto(url, { invalidateAll: true });
+		await goto(url, { invalidateAll: true });
 	}
 </script>
 
-<ul data-sveltekit-preload-data="hover" class="px-4">
+<ul data-sveltekit-preload-data="hover">
 	{#each items as item}
 		<li class="group rounded-md">
 			<a href={'/items/' + item.id} class="btn btn-ghost flex items-center justify-between py-6">

@@ -16,8 +16,10 @@
 
 <div class="flex flex-col">
 	<PageNavHeader showSearch={true}></PageNavHeader>
-	<div class="px-4 py-6">
-		<h1 class="text-3xl font-bold">Bookmark</h1>
+	<div class="px-4 lg:px-8">
+		<div class="py-6">
+			<h1 class="text-3xl font-bold">Bookmark</h1>
+		</div>
+		<ItemList items={data.items.data} total={data.items.total} />
 	</div>
-	<ItemList items={data.items.data} total={data.items.total} />
 </div>

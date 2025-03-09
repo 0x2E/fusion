@@ -10,7 +10,7 @@
 
 		try {
 			await login(password);
-			goto('/');
+			await goto('/');
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
@@ -23,9 +23,9 @@
 
 <form
 	onsubmit={handleSubmit}
-	class="container flex flex-col bg-base-200 mx-auto max-w-[400px] mt-[20vh] p-8 rounded-md"
+	class="bg-base-200 container mx-auto mt-[20vh] flex max-w-[400px] flex-col rounded-md p-8"
 >
-	<h1 class="text-2xl font-bold text-center mb-4">Login</h1>
+	<h1 class="mb-4 text-center text-2xl font-bold">Login</h1>
 	<fieldset class="fieldset">
 		<legend class="fieldset-legend">Password</legend>
 		<input
@@ -36,5 +36,5 @@
 			class="input w-full"
 		/>
 	</fieldset>
-	<button type="submit" class="btn btn-primary w-full mt-4">Login</button>
+	<button type="submit" class="btn btn-primary mt-4 w-full">Login</button>
 </form>

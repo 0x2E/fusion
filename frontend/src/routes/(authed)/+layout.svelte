@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FeedActionAdd from '$lib/components/FeedActionAdd.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
 	let { children, data } = $props();
@@ -7,7 +8,9 @@
 <div class="drawer lg:drawer-open">
 	<input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
 	<div class="drawer-content relative overflow-x-clip">
-		{@render children()}
+		<div class="mx-auto max-w-6xl">
+			{@render children()}
+		</div>
 	</div>
 	<div class="drawer-side">
 		<label for="sidebar-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
@@ -18,3 +21,6 @@
 		</div>
 	</div>
 </div>
+
+<!-- put it outside the drawer because when its inner modal is placed inside the drawer sidebar, the underlying dialog won't close properly -->
+<FeedActionAdd />

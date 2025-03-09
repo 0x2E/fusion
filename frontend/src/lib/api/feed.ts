@@ -33,10 +33,15 @@ export async function checkValidity(link: string) {
 	return resp.feed_links;
 }
 
-export async function createFeed(data: {
+export type FeedCreateForm = {
 	group_id: number;
-	feeds: { name: string; link: string }[];
-}) {
+	feeds: {
+		name: string;
+		link: string;
+	}[];
+};
+
+export async function createFeed(data: FeedCreateForm) {
 	const feeds = data.feeds.map((v) => {
 		return { name: v.name, link: v.link };
 	});

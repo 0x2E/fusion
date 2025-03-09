@@ -5,7 +5,7 @@
 	import type { Feed } from '$lib/api/model';
 	import {
 		BookmarkCheck,
-		CircleAlert,
+		CirclePlus,
 		Inbox,
 		List,
 		LogOut,
@@ -13,6 +13,7 @@
 		type Icon
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import { toggleShow } from './FeedActionAdd.svelte';
 	import ThemeController from './ThemeController.svelte';
 
 	interface Props {
@@ -20,6 +21,8 @@
 	}
 
 	let { feeds }: Props = $props();
+
+	const version = import.meta.env.FUSION.version;
 
 	type GroupFeed = {
 		id: number;
@@ -45,8 +48,6 @@
 		groups.sort((a, b) => a.id - b.id);
 		return groups;
 	});
-
-	const version = import.meta.env.FUSION.version;
 
 	type SystemNavLink = {
 		label: string;
@@ -79,7 +80,7 @@
 		try {
 			await logout();
 			toast.success('Bye');
-			goto('/login');
+			await goto('/login');
 		} catch {
 			toast.error('Failed to logout.');
 		}
@@ -99,6 +100,20 @@
 			</a>
 			<ThemeController />
 		</div>
+
+		<ul class="menu mt-4 w-full font-medium">
+			<li>
+				<button
+					onclick={() => {
+						toggleShow();
+					}}
+					class="btn btn-neutral btn-sm btn-soft"
+				>
+					<CirclePlus class="size-4" />
+					<span>Add Feeds</span>
+				</button>
+			</li>
+		</ul>
 
 		<ul class="menu mt-4 w-full font-medium">
 			{#each systemLinks as v}
@@ -126,7 +141,7 @@
 										class={isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''}
 									>
 										{#if feed.failure}
-											<CircleAlert class="text-error size-3" />
+											<span class="bg-error size-1.5 rounded-full"></span>
 										{/if}
 										<span class="line-clamp-1">{feed.name}</span>
 									</a>
@@ -140,11 +155,11 @@
 	</div>
 
 	<div>
-		<button onclick={handleLogout} class="btn btn-soft btn-sm mt-auto w-full">
+		<button onclick={handleLogout} class="btn btn-ghost btn-sm mt-auto w-full">
 			<LogOut class="size-4" />
 			Logout</button
 		>
-		<p class="text-base-content/60 mt-2 text-center text-xs">
+		<p class="text-base-content/60 text-center text-xs">
 			<span>
 				{version}.
 			</span>

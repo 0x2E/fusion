@@ -59,13 +59,15 @@
 		</div>
 	{/if}
 
-	<div class="items-center px-4 py-6">
-		<h1 class="text-3xl font-bold">{feed.name}</h1>
-		<p class="text-base-content/60 text-sm">{feed.link}</p>
+	<div class="px-4 lg:px-8">
+		<div class="items-center py-6">
+			<h1 class="text-3xl font-bold">{feed.name}</h1>
+			<p class="text-base-content/60 text-sm">{feed.link}</p>
+		</div>
+		{#await data.items}
+			Loading...
+		{:then items}
+			<ItemList items={items.items} total={items.total} highlightUnread={true} />
+		{/await}
 	</div>
-	{#await data.items}
-		Loading...
-	{:then items}
-		<ItemList items={items.items} total={items.total} highlightUnread={true} />
-	{/await}
 {/await}
