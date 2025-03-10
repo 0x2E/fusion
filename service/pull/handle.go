@@ -9,6 +9,7 @@ import (
 
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/pkg/httpx"
+	"github.com/0x2e/fusion/pkg/ptr"
 
 	"github.com/mmcdole/gofeed"
 )
@@ -35,11 +36,9 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 		}
 	}
 
-	failure := ""
 	fetched, err := FetchFeed(ctx, f)
 	if err != nil {
-		failure = err.Error()
-		p.feedRepo.Update(f.ID, &model.Feed{Failure: &failure})
+		p.feedRepo.Update(f.ID, &model.Feed{Failure: ptr.To(err.Error())})
 		return err
 	}
 	if fetched == nil {
@@ -76,7 +75,7 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 	logger.Infof("fetched %d items", len(fetched.Items))
 	return p.feedRepo.Update(f.ID, &model.Feed{
 		LastBuild: fetched.PublishedParsed,
-		Failure:   &failure,
+		Failure:   ptr.To(""),
 	})
 }
 
