@@ -10,3 +10,7 @@
 html {
 	@apply font-sans;
 }
+
+body {
+	@apply bg-base-200;
+}

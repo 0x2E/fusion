@@ -132,7 +132,7 @@
 			</ul>
 		</div>
 	</details>
-	<button type="submit" disabled={importing} class="btn btn-neutral mt-4 ml-auto">
+	<button type="submit" disabled={importing} class="btn btn-primary mt-4 ml-auto">
 		{#if importing}
 			<span class="loading loading-spinner loading-sm"></span>
 		{/if}

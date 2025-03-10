@@ -57,11 +57,11 @@
 </script>
 
 <Section id="groups" title="Group Management" description="Group's name should be unique.">
-	<div class="flex flex-col gap-2">
+	<div class="flex flex-col space-y-4">
 		{#each existingGroups as g}
-			<div class="flex items-center gap-2">
-				<input type="text" class="input" bind:value={g.name} />
-				<div>
+			<div class="flex flex-col items-center space-x-2 md:flex-row">
+				<input type="text" class="input w-full md:w-56" bind:value={g.name} />
+				<div class="flex gap-2">
 					<button onclick={() => handleUpdate(g.id)} class="btn btn-ghost"> Save </button>
 					<button onclick={() => handleDelete(g.id)} class="btn btn-ghost text-red-600">
 						Delete
@@ -69,11 +69,9 @@
 				</div>
 			</div>
 		{/each}
-		<div class="flex items-center gap-2">
-			<input type="text" class="input" bind:value={newGroup} />
-			<div>
-				<button onclick={() => handleAddNew()} class="btn btn-ghost"> Add </button>
-			</div>
+		<div class="flex items-center space-x-2">
+			<input type="text" class="input w-full md:w-56" bind:value={newGroup} />
+			<button onclick={() => handleAddNew()} class="btn btn-ghost"> Add </button>
 		</div>
 	</div>
 </Section>

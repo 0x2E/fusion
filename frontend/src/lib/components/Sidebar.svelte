@@ -130,7 +130,7 @@
 		</ul>
 	</div>
 
-	<div>
+	<div class="mt-8">
 		<button onclick={handleLogout} class="btn btn-ghost btn-sm mt-auto w-full">
 			<LogOut class="size-4" />
 			Logout</button

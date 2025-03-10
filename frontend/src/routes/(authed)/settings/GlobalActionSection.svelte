@@ -41,7 +41,7 @@
 </script>
 
 <Section id="global-actions" title="Global Actions">
-	<div class="flex gap-2">
+	<div class="flex flex-wrap gap-2">
 		<button onclick={() => handleRefreshAllFeeds()} class="btn btn-wide">Refresh all feeds</button>
 		<button onclick={() => handleExportAllFeeds()} class="btn btn-wide">Export all feeds</button>
 	</div>

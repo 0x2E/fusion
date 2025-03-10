@@ -20,9 +20,9 @@
 	}
 </script>
 
-<div class="{fixed ? 'fixed' : ''} bottom-2 left-0 right-0 bg-base-100">
+<div class="{fixed ? 'fixed' : ''} bg-base-100 right-0 bottom-2 left-0">
 	<div
-		class="flex flex-row justify-center items-center gap-2 rounded-full border shadow w-fit mx-auto bg-background px-6 py-2"
+		class="bg-background mx-auto flex w-fit flex-row items-center justify-center gap-2 rounded-full border px-6 py-2 shadow"
 	>
 		<ItemActionUnread {data} />
 		<Separator orientation="vertical" class="h-5" />

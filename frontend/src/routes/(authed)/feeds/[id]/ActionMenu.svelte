@@ -139,7 +139,7 @@
 			<form method="dialog">
 				<button class="btn btn-ghost">Cancel</button>
 			</form>
-			<button onclick={handleUpdate} class="btn btn-neutral"> Save </button>
+			<button onclick={handleUpdate} class="btn btn-primary"> Save </button>
 		</div>
 	</div>
 	<form method="dialog" class="modal-backdrop">

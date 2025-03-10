@@ -89,7 +89,7 @@
 				{/each}
 			</select>
 		</fieldset>
-		<button type="submit" disabled={loading} class="btn btn-neutral mt-2 ml-auto">
+		<button type="submit" disabled={loading} class="btn btn-primary mt-2 ml-auto">
 			{#if loading}
 				<span class="loading loading-spinner loading-sm"></span>
 			{/if}
@@ -116,6 +116,6 @@
 				</label>
 			{/each}
 		</fieldset>
-		<button type="submit" class="btn btn-neutral mt-4 ml-auto">Confirm</button>
+		<button type="submit" class="btn btn-primary mt-4 ml-auto">Confirm</button>
 	</form>
 {/if}

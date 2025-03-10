@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
+	import { onMount } from 'svelte';
 	import GlobalActionSection from './GlobalActionSection.svelte';
 	import GroupSection from './GroupSection.svelte';
 
@@ -11,6 +13,14 @@
 		{ label: 'Global Actions', hash: '#global-actions' },
 		{ label: 'Groups', hash: '#groups' }
 	];
+
+	onMount(() => {
+		const url = page.url;
+		if (!links.map((v) => v.hash).includes(url.hash)) {
+			url.hash = links[0].hash;
+			goto(url);
+		}
+	});
 </script>
 
 <svelte:head>

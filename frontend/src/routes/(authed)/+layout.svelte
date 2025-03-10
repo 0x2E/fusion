@@ -7,15 +7,15 @@
 
 <div class="drawer lg:drawer-open">
 	<input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
-	<div class="drawer-content relative overflow-x-clip">
-		<div class="mx-auto max-w-6xl">
+	<div class="drawer-content bg-base-100 relative z-10 min-h-screen overflow-x-clip">
+		<div class="mx-auto max-w-6xl pb-4">
 			{@render children()}
 		</div>
 	</div>
-	<div class="drawer-side">
+	<div class="drawer-side z-10">
 		<label for="sidebar-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
 		<div
-			class="bg-base-200 text-base-content h-full min-h-full w-[80%] overflow-x-hidden px-2 py-4 lg:w-72"
+			class="text-base-content bg-base-200 z-50 h-full min-h-full w-[80%] overflow-x-hidden px-2 py-4 lg:w-72"
 		>
 			<Sidebar feeds={data.feeds} groups={data.groups} />
 		</div>
