@@ -5,6 +5,7 @@
 	import ItemActionVisitLink from '$lib/components/ItemActionVisitLink.svelte';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 	import DOMPurify from 'dompurify';
+	import ItemSwitcher from './ItemSwitcher.svelte';
 
 	let { data } = $props();
 
@@ -73,13 +74,17 @@
 	<ItemActionVisitLink {data} />
 </PageNavHeader>
 
-<div class="mx-auto w-full max-w-prose px-4 py-6">
-	<p class="text-base-content/60 flex flex-col text-sm md:flex-row">
-		{new Date(data.pub_date).toLocaleString()}
-	</p>
+<div class="relative flex w-full justify-around px-4 py-6">
+	<ItemSwitcher itemID={data.id} action="previous" />
+	<article class="w-full max-w-prose">
+		<p class="text-base-content/60 flex flex-col text-sm md:flex-row">
+			{new Date(data.pub_date).toLocaleString()}
+		</p>
 
-	<article class="prose dark:prose-invert prose-lg text-wrap break-words">
-		<h1>{data.title}</h1>
-		{@html safeContent}
+		<div class="prose text-wrap break-words">
+			<h1>{data.title}</h1>
+			{@html safeContent}
+		</div>
 	</article>
+	<ItemSwitcher itemID={data.id} action="next" />
 </div>

@@ -8,9 +8,10 @@
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
-		data: Item;
+		itemID: number;
+		action: 'next' | 'previous';
 	}
-	let { data }: Props = $props();
+	let { itemID, action }: Props = $props();
 
 	const itemFilter = Object.assign({}, fullItemFilter);
 	let currentItemIndex = $state(0);
@@ -18,7 +19,7 @@
 
 	onMount(async () => {
 		const { items } = await listItems(itemFilter);
-		currentItemIndex = items.findIndex((item) => item.id == data.id);
+		currentItemIndex = items.findIndex((item) => item.id == itemID);
 		disabled = currentItemIndex === -1;
 	});
 
@@ -34,7 +35,7 @@
 		if (action === 'previous') {
 			currentItemIndex -= 1;
 		} else {
-			let index = items.findIndex((v) => v.id === data.id);
+			let index = items.findIndex((v) => v.id === itemID);
 			if (index === -1) {
 				// the old item has been filtered out,
 				// and the item to its right has automatically filled the position.
@@ -65,7 +66,7 @@
 		return items[currentItemIndex];
 	}
 
-	async function handleSwitchItem(action: 'next' | 'previous') {
+	async function handleSwitchItem() {
 		const filterBackup = Object.assign({}, itemFilter);
 		const indexBackup = currentItemIndex;
 		const next = await getNextItem(action);
@@ -75,28 +76,17 @@
 			currentItemIndex = indexBackup;
 			return;
 		}
-		goto('/items?id=' + next.id, { invalidateAll: true });
+		goto('/items/' + next.id, { invalidateAll: true });
 	}
 </script>
 
-<div class="tooltip" data-tip="Previous item">
-	<button
-		onclick={() => {
-			handleSwitchItem('previous');
-		}}
-		class="btn btn-ghost btn-square"
-	>
-		<ChevronLeft class="size-5" />
-	</button>
-</div>
-
-<div class="tooltip" data-tip="Next item">
-	<button
-		onclick={() => {
-			handleSwitchItem('next');
-		}}
-		class="btn btn-ghost btn-square"
-	>
-		<ChevronRight class="size-5" />
-	</button>
-</div>
+<button
+	onclick={handleSwitchItem}
+	class={`btn lg:btn-ghost btn-circle lg:btn-xl fixed bottom-1 ${action === 'previous' ? 'left-1' : 'right-1'} lg:sticky lg:top-[50%]`}
+>
+	{#if action === 'previous'}
+		<ChevronLeft />
+	{:else}
+		<ChevronRight />
+	{/if}
+</button>
