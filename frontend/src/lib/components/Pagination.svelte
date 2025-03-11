@@ -55,8 +55,7 @@
 				<button class="join-item btn" disabled>...</button>
 			{:else}
 				<button
-					class="join-item btn"
-					class:btn-active={page === currentPage}
+					class={`join-item btn ${page === currentPage ? 'btn-active border-b-base-content/60 border-b-2' : ''}`}
 					onclick={() => handlePageChange(page)}
 				>
 					{page}
