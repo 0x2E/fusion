@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { listItems } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
+	import { defaultPageSize } from '$lib/consts';
 	import { fullItemFilter } from '$lib/state.svelte';
 	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { onMount } from 'svelte';
@@ -25,7 +26,7 @@
 
 	async function getNextItem(action: 'next' | 'previous'): Promise<Item | null> {
 		itemFilter.page = itemFilter.page ?? 1;
-		itemFilter.page_size = itemFilter.page_size ?? 10;
+		itemFilter.page_size = itemFilter.page_size ?? defaultPageSize;
 
 		let { total, items } = await listItems(itemFilter);
 		if (total === 0) {

@@ -1,3 +1,4 @@
+import { defaultPageSize } from '$lib/consts';
 import type { URL } from 'url';
 import { api } from './api';
 import type { Item } from './model';
@@ -26,7 +27,7 @@ export async function listItems(options?: ListFilter) {
 export function parseURLtoFilter(params: URLSearchParams): ListFilter {
 	const filter: ListFilter = {
 		page: parseInt(params.get('page') || '1'),
-		page_size: parseInt(params.get('page_size') || '10')
+		page_size: parseInt(params.get('page_size') || String(defaultPageSize))
 	};
 	const keyword = params.get('keyword');
 	if (keyword) filter.keyword = keyword;
