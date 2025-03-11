@@ -29,7 +29,7 @@
 </label>
 
 <dialog id="search" bind:this={modal} class="modal modal-bottom sm:modal-middle">
-	<div class="modal-box min-h-80 w-full max-w-3xl">
+	<div class="modal-box min-h-80 w-full sm:max-w-4xl">
 		<form method="dialog">
 			<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">✕</button>
 		</form>
