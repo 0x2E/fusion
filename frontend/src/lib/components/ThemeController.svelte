@@ -9,7 +9,7 @@
 
 <label class="btn btn-ghost btn-square swap swap-rotate">
 	<!-- this hidden checkbox controls the state -->
-	<input type="checkbox" class="theme-controller" value="business" bind:checked={isDark} />
+	<input type="checkbox" class="theme-controller" value="dark" bind:checked={isDark} />
 
 	<!-- sun icon -->
 	<svg class="swap-off size-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

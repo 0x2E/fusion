@@ -46,11 +46,11 @@
 			<li class="group rounded-md">
 				<a
 					href={'/items/' + item.id}
-					class="hover:bg-base-300 relative grid w-full grid-cols-1 items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 md:grid-cols-12"
+					class="hover:bg-base-300 relative grid w-full grid-cols-1 items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors md:grid-cols-12"
 				>
 					<div class="col-span-1 flex items-center gap-2 md:col-span-9">
 						{#if highlightUnread && item.unread}
-							<div class="">
+							<div>
 								<div class={`bg-accent size-1.5 rounded-full ${item.unread ? '' : 'hidden'}`}></div>
 							</div>
 						{/if}
