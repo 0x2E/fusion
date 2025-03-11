@@ -50,7 +50,7 @@
 				>
 					<div class="md:col-span-9">
 						<h2
-							class={`line-clamp-2 w-full truncate font-medium md:line-clamp-1 ${highlightUnread && item.unread ? '' : 'text-base-content/60'}`}
+							class={`line-clamp-2 w-full truncate font-medium md:line-clamp-1 ${highlightUnread && !item.unread ? 'text-base-content/60' : ''}`}
 						>
 							{item.title}
 						</h2>
