@@ -111,15 +111,27 @@
 						</summary>
 						<ul>
 							{#each feeds.filter((v) => v.group.id === group.id) as feed}
+								{@const domain = new URL(feed.link).hostname}
+								{@const textColor = feed.suspended
+									? 'text-base-content/60'
+									: feed.failure
+										? 'text-error'
+										: ''}
 								<li>
 									<a
 										href="/feeds/{feed.id}"
 										class={isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''}
 									>
-										{#if feed.failure}
-											<span class="bg-error size-1.5 rounded-full"></span>
-										{/if}
-										<span class="line-clamp-1">{feed.name}</span>
+										<div class="avatar">
+											<div class="size-4 rounded-full">
+												<img
+													src={'https://www.google.com/s2/favicons?sz=32&domain=' + domain}
+													alt={feed.name}
+													loading="lazy"
+												/>
+											</div>
+										</div>
+										<span class={`line-clamp-1  ${textColor}`}>{feed.name}</span>
 									</a>
 								</li>
 							{/each}
