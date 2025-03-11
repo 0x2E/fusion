@@ -14,6 +14,7 @@
 
 	let { doneCallback }: Props = $props();
 	let importing = $state(false);
+	let importLog = $state<{ content: string; isError?: boolean }[]>([]);
 	let parsedGroupFeeds: { name: string; feeds: { name: string; link: string }[] }[] = $state([]);
 	let uploadedOpmls = $state<FileList>();
 
@@ -25,6 +26,7 @@
 
 	$effect(() => {
 		if (uploadedOpmls) {
+			importLog = [];
 			parseOPML(uploadedOpmls);
 		}
 	});
@@ -49,30 +51,42 @@
 		e.preventDefault();
 
 		importing = true;
-		let success = 0;
 		const existingGroups = groups.map((v) => {
 			return { id: v.id, name: v.name };
 		});
 		for (const g of parsedGroupFeeds) {
-			try {
-				let groupID = existingGroups.find((v) => v.name === g.name)?.id;
-				if (groupID === undefined) {
+			let groupID = existingGroups.find((v) => v.name === g.name)?.id;
+
+			if (groupID === undefined) {
+				try {
 					groupID = (await createGroup(g.name)).id;
-					toast.success(`Created group ${g.name}`);
+					importLog.push({ content: `Created group ${g.name}` });
+				} catch (e) {
+					importLog.push({
+						content: `Failed to create group ${g.name}. error: ${(e as Error).message}`,
+						isError: true
+					});
+					continue;
 				}
+			}
+			try {
 				await createFeed({ group_id: groupID, feeds: g.feeds });
-				toast.success(`Imported into group ${g.name}`);
-				success++;
+				g.feeds.forEach((f) => importLog.push({ content: `Imported ${f.link}` }));
 			} catch (e) {
-				toast.error(`Failed to import group ${g.name}, error: ${(e as Error).message}`);
-				break;
+				g.feeds.forEach((f) =>
+					importLog.push({
+						content: `Failed to import ${g.name}. error: ${(e as Error).message}`,
+						isError: true
+					})
+				);
+				continue;
 			}
 		}
-		if (success === parsedGroupFeeds.length) {
-			toast.success('All feeds have been imported. Refreshing is running in the background');
+		importing = false;
+		if (!importLog.find((v) => v.isError)) {
+			toast.success('Imported successfully');
 			doneCallback();
 		}
-		importing = false;
 		invalidateAll();
 	}
 </script>
@@ -95,27 +109,6 @@
 			> format. You can get one from your previous RSS reader.
 		</p>
 	</fieldset>
-	{#if parsedGroupFeeds.length > 0}
-		<div>
-			<p class="text-sm text-green-700">Parsed successfully.</p>
-			<div class="bg-base-200 overflow-x-auto rounded-md p-2 text-sm text-nowrap">
-				{#each parsedGroupFeeds as group}
-					<div class="flex flex-row items-center gap-1">
-						<Folder size={14} />{group.name}
-					</div>
-					<ul class="ml-[2ch] list-inside list-decimal [&:not(:last-child)]:mb-2">
-						{#each group.feeds as feed}
-							<li>
-								{feed.name} (<a href={feed.link} target="_blank" class="text-blue-700"
-									>{feed.link}</a
-								>)
-							</li>
-						{/each}
-					</ul>
-				{/each}
-			</div>
-		</div>
-	{/if}
 	<details>
 		<summary class="text-base-content/60 text-sm font-medium"> How it works? </summary>
 		<div class="text-base-content/60 text-sm">
@@ -132,6 +125,33 @@
 			</ul>
 		</div>
 	</details>
+	{#if parsedGroupFeeds.length > 0}
+		<div>
+			<p class="text-success text-sm">Parsed successfully.</p>
+			<div class="bg-base-200 overflow-x-auto rounded-md p-2 text-sm text-nowrap">
+				{#each parsedGroupFeeds as group}
+					<div class="flex flex-row items-center gap-1">
+						<Folder size={14} />{group.name}
+					</div>
+					<ul class="ml-[2ch] list-inside list-decimal [&:not(:last-child)]:mb-2">
+						{#each group.feeds as feed}
+							<li>
+								{feed.name} (<a href={feed.link} target="_blank" class="text-blue-600"
+									>{feed.link}</a
+								>)
+							</li>
+						{/each}
+					</ul>
+				{/each}
+			</div>
+			<ul class="mt-2 list-inside list-disc">
+				{#each importLog as log}
+					<li class={log.isError ? 'text-error' : ''}>{log.content}</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
+
 	<button type="submit" disabled={importing} class="btn btn-primary mt-4 ml-auto">
 		{#if importing}
 			<span class="loading loading-spinner loading-sm"></span>
