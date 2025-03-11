@@ -48,13 +48,10 @@
 					href={'/items/' + item.id}
 					class="hover:bg-base-300 relative grid w-full grid-cols-1 items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors md:grid-cols-12"
 				>
-					<div class="col-span-1 flex items-center gap-2 md:col-span-9">
-						{#if highlightUnread && item.unread}
-							<div>
-								<div class={`bg-accent size-1.5 rounded-full ${item.unread ? '' : 'hidden'}`}></div>
-							</div>
-						{/if}
-						<h2 class="line-clamp-2 w-full truncate font-medium md:line-clamp-1">
+					<div class="md:col-span-9">
+						<h2
+							class={`line-clamp-2 w-full truncate font-medium md:line-clamp-1 ${highlightUnread && item.unread ? 'text-base-content/60' : ''}`}
+						>
 							{item.title}
 						</h2>
 					</div>
