@@ -39,6 +39,9 @@
 					);
 				}
 				if (resp.length === 1) {
+					if (!form.feeds[0].name) {
+						form.feeds[0].name = resp[0].title;
+					}
 					form.feeds[0].link = resp[0].link;
 					handleContinue();
 				} else if (resp.length > 1) {
@@ -55,6 +58,9 @@
 	}
 
 	async function handleContinue() {
+		if (!form.feeds[0].name) {
+			form.feeds[0].name = new URL(form.feeds[0].link).hostname;
+		}
 		try {
 			await createFeed(form);
 			toast.success('Feed has been created. Refreshing is running in the background');
@@ -70,15 +76,16 @@
 	<form onsubmit={handleAdd} class="flex flex-col">
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Name</legend>
-			<input type="text" class="input w-full" bind:value={form.feeds[0].name} required />
-			<p class="fieldset-label">
-				Either the RSS link or the website link. The server will automatically attempt to locate the
-				RSS feed.
-			</p>
+			<input type="text" class="input w-full" bind:value={form.feeds[0].name} />
+			<p class="fieldset-label">Optional. Leave blank for automatic naming.</p>
 		</fieldset>
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Link</legend>
 			<input type="url" class="input w-full" bind:value={form.feeds[0].link} required />
+			<p class="fieldset-label">
+				Either the RSS link or the website link. The server will automatically attempt to locate the
+				RSS feed.
+			</p>
 			<p class="fieldset-label">The existing feed with the same link will be overridden.</p>
 		</fieldset>
 		<fieldset class="fieldset">
@@ -108,6 +115,9 @@
 						name="feed_link"
 						value={l.link}
 						onchange={() => {
+							if (!form.feeds[0].name) {
+								form.feeds[0].name = l.title;
+							}
 							form.feeds[0].link = l.link;
 						}}
 						class="radio radio-sm"
