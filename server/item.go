@@ -57,6 +57,7 @@ func (i Item) List(ctx context.Context, req *ReqItemList) (*RespItemList, error)
 			Feed: ItemFeed{
 				ID:   v.Feed.ID,
 				Name: v.Feed.Name,
+				Link: v.Feed.Link,
 			},
 		})
 	}
@@ -85,6 +86,7 @@ func (i Item) Get(ctx context.Context, req *ReqItemGet) (*RespItemGet, error) {
 		Feed: ItemFeed{
 			ID:   data.Feed.ID,
 			Name: data.Feed.Name,
+			Link: data.Feed.Link,
 		},
 	}, nil
 }

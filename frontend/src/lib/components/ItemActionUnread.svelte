@@ -4,15 +4,12 @@
 	import type { Item } from '$lib/api/model';
 	import { CheckIcon, UndoIcon } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import ItemActionBase from './ItemActionBase.svelte';
 
 	interface Props {
 		data: Item;
-		buttonClass?: string;
-		iconSize?: number;
 	}
 
-	let { data, buttonClass = '', iconSize = 18 }: Props = $props();
+	let { data }: Props = $props();
 
 	async function toggleUnread(e: Event) {
 		e.preventDefault();
@@ -23,8 +20,12 @@
 			toast.error((e as Error).message);
 		}
 	}
-	let icon = $derived(data.unread ? CheckIcon : UndoIcon);
+	let Icon = $derived(data.unread ? CheckIcon : UndoIcon);
 	let tooltip = $derived(data.unread ? 'Mark as Read' : 'Mark as Unread');
 </script>
 
-<ItemActionBase fn={toggleUnread} {tooltip} {buttonClass} {icon} {iconSize} />
+<div class="tooltip tooltip-bottom" data-tip={tooltip}>
+	<button onclick={toggleUnread} class="btn btn-ghost btn-square">
+		<Icon class="size-4" />
+	</button>
+</div>

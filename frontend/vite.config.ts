@@ -1,9 +1,10 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 import * as process from 'process';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [tailwindcss(), sveltekit()],
 	define: {
 		'import.meta.env.FUSION': JSON.stringify({
 			version: process.env.VITE_FUSION_VERSION || 'unknown-version'

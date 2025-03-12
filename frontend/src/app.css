@@ -1,75 +1,82 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --primary: 220.9 39.3% 11%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 72.2% 50.6%;
-    --destructive-foreground: 210 20% 98%;
-    --ring: 224 71.4% 4.1%;
-    --radius: 0.5rem;
-	--sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+@plugin "@tailwindcss/typography";
+@plugin "daisyui";
 
-  .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --primary: 210 20% 98%;
-    --primary-foreground: 220.9 39.3% 11%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --ring: 216 12.2% 83.9%;
-	--sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+@plugin "daisyui/theme" {
+	name: 'light';
+	default: true;
+	prefersdark: false;
+	color-scheme: 'light';
+	--color-base-100: oklch(100% 0 0);
+	--color-base-200: oklch(98% 0 0);
+	--color-base-300: oklch(95% 0 0);
+	--color-base-content: oklch(21% 0.006 285.885);
+	--color-primary: oklch(42% 0.199 265.638);
+	--color-primary-content: oklch(97% 0.014 254.604);
+	--color-secondary: oklch(51% 0.262 276.966);
+	--color-secondary-content: oklch(94% 0.028 342.258);
+	--color-accent: oklch(64% 0.222 41.116);
+	--color-accent-content: oklch(98% 0.016 73.684);
+	--color-neutral: oklch(27% 0.006 286.033);
+	--color-neutral-content: oklch(96% 0.001 286.375);
+	--color-info: oklch(58% 0.158 241.966);
+	--color-info-content: oklch(97% 0.013 236.62);
+	--color-success: oklch(52% 0.154 150.069);
+	--color-success-content: oklch(98% 0.018 155.826);
+	--color-warning: oklch(76% 0.188 70.08);
+	--color-warning-content: oklch(98% 0.022 95.277);
+	--color-error: oklch(50% 0.213 27.518);
+	--color-error-content: oklch(97% 0.013 17.38);
+	--radius-selector: 0.25rem;
+	--radius-field: 0.5rem;
+	--radius-box: 0.5rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+@plugin "daisyui/theme" {
+	name: 'dark';
+	default: false;
+	prefersdark: false;
+	color-scheme: 'dark';
+	--color-base-100: oklch(21% 0.006 285.885);
+	--color-base-200: oklch(14% 0.005 285.823);
+	--color-base-300: oklch(0% 0 0);
+	--color-base-content: oklch(87% 0.006 286.286);
+	--color-primary: oklch(37% 0.146 265.522);
+	--color-primary-content: oklch(97% 0.014 254.604);
+	--color-secondary: oklch(45% 0.085 224.283);
+	--color-secondary-content: oklch(98% 0.019 200.873);
+	--color-accent: oklch(67.271% 0.167 35.791);
+	--color-accent-content: oklch(13.454% 0.033 35.791);
+	--color-neutral: oklch(27.441% 0.013 253.041);
+	--color-neutral-content: oklch(85.488% 0.002 253.041);
+	--color-info: oklch(50% 0.134 242.749);
+	--color-info-content: oklch(97% 0.013 236.62);
+	--color-success: oklch(44% 0.119 151.328);
+	--color-success-content: oklch(98% 0.018 155.826);
+	--color-warning: oklch(68% 0.162 75.834);
+	--color-warning-content: oklch(98% 0.026 102.212);
+	--color-error: oklch(50% 0.213 27.518);
+	--color-error-content: oklch(97% 0.013 17.38);
+	--radius-selector: 0.25rem;
+	--radius-field: 0.5rem;
+	--radius-box: 0.5rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 0;
+	--noise: 0;
+}
+
+html {
+	@apply font-sans;
+}
+
+body {
+	@apply bg-base-200;
 }

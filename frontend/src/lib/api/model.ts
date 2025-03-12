@@ -23,5 +23,5 @@ export type Item = {
 	bookmark: boolean;
 	pub_date: Date;
 	updated_at: Date;
-	feed: Pick<Feed, 'id' | 'name'>;
+	feed: Pick<Feed, 'id' | 'name' | 'link'>;
 };

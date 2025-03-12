@@ -1,18 +1,23 @@
 <script lang="ts">
+	import ItemActionMarkAllasRead from '$lib/components/ItemActionMarkAllasRead.svelte';
 	import ItemList from '$lib/components/ItemList.svelte';
-	import PageHead from '$lib/components/PageHead.svelte';
-	import type { PageData } from './$types';
+	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 
-	interface Props {
-		data: PageData;
-	}
-
-	let { data }: Props = $props();
+	let { data } = $props();
 </script>
 
 <svelte:head>
 	<title>Unread</title>
 </svelte:head>
 
-<PageHead title="Unread" />
-<ItemList {data} />
+<div class="flex flex-col">
+	<PageNavHeader showSearch={true}>
+		<ItemActionMarkAllasRead items={data.items.data} />
+	</PageNavHeader>
+	<div class="px-4 lg:px-8">
+		<div class="py-6">
+			<h1 class="text-3xl font-bold">Unread</h1>
+		</div>
+		<ItemList items={data.items.data} total={data.items.total} />
+	</div>
+</div>
