@@ -75,11 +75,6 @@
 {#if step === 1}
 	<form onsubmit={handleAdd} class="flex flex-col">
 		<fieldset class="fieldset">
-			<legend class="fieldset-legend">Name</legend>
-			<input type="text" class="input w-full" bind:value={form.feeds[0].name} />
-			<p class="fieldset-label">Optional. Leave blank for automatic naming.</p>
-		</fieldset>
-		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Link</legend>
 			<input type="url" class="input w-full" bind:value={form.feeds[0].link} required />
 			<p class="fieldset-label">
@@ -87,6 +82,11 @@
 				RSS feed.
 			</p>
 			<p class="fieldset-label">The existing feed with the same link will be overridden.</p>
+		</fieldset>
+		<fieldset class="fieldset">
+			<legend class="fieldset-legend">Name</legend>
+			<input type="text" class="input w-full" bind:value={form.feeds[0].name} />
+			<p class="fieldset-label">Optional. Leave blank for automatic naming.</p>
 		</fieldset>
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Group</legend>
