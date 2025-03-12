@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { getFavicon } from '$lib/api/favicon';
 	import { logout } from '$lib/api/login';
 	import type { Feed, Group } from '$lib/api/model';
 	import {
@@ -124,11 +125,7 @@
 									>
 										<div class="avatar">
 											<div class="size-4 rounded-full">
-												<img
-													src={'https://www.google.com/s2/favicons?sz=32&domain=' + domain}
-													alt={feed.name}
-													loading="lazy"
-												/>
+												<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
 											</div>
 										</div>
 										<span class={`line-clamp-1  ${textColor}`}>{feed.name}</span>

@@ -5,7 +5,9 @@ import "time"
 type ItemFeed struct {
 	ID   uint    `json:"id"`
 	Name *string `json:"name"`
+	Link *string `json:"link"`
 }
+
 type ItemForm struct {
 	ID        uint       `json:"id"`
 	Title     *string    `json:"title"`

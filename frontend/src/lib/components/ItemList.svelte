@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { getFavicon } from '$lib/api/favicon';
 	import { applyFilterToURL, parseURLtoFilter } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
@@ -46,21 +47,30 @@
 			<li class="group rounded-md">
 				<a
 					href={'/items/' + item.id}
-					class="hover:bg-base-300 relative grid w-full grid-cols-1 items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors md:grid-cols-12"
+					class="hover:bg-base-300 relative flex w-full flex-col items-center justify-between space-x-2 space-y-1 rounded-md px-2 py-2 transition-colors md:flex-row"
 				>
-					<div class="md:col-span-9">
+					<div class="flex w-full md:w-[80%] md:shrink-0">
 						<h2
 							class={`line-clamp-2 w-full truncate font-medium md:line-clamp-1 ${highlightUnread && !item.unread ? 'text-base-content/60' : ''}`}
 						>
 							{item.title}
 						</h2>
 					</div>
-					<div class="grid">
+					<div class="flex w-full md:grow">
 						<div
 							class="text-base-content/60 flex w-full justify-between gap-2 text-xs font-normal group-hover:hidden"
 						>
-							<span class="w-[120px] truncate">{item.feed.name}</span>
-							<span class="w-[32px] truncate text-right">
+							<div class="flex grow items-center space-x-2 overflow-x-hidden">
+								<div class="avatar">
+									<div class="size-4 rounded-full">
+										<img src={getFavicon(item.feed.link)} alt={item.feed.name} loading="lazy" />
+									</div>
+								</div>
+								<span class="line-clamp-1">
+									{item.feed.name}
+								</span>
+							</div>
+							<span class="w-[4ch] shrink-0 truncate text-right">
 								{timeDiff(item.pub_date)}
 							</span>
 						</div>
