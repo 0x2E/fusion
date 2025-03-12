@@ -13,7 +13,7 @@
 	let { doneCallback }: Props = $props();
 
 	let step = $state(1);
-	let form = $state<FeedCreateForm>({ group_id: 0, feeds: [{ name: '', link: '' }] });
+	let form = $state<FeedCreateForm>({ group_id: 1, feeds: [{ name: '', link: '' }] });
 	let loading = $state(false);
 	let linkCandidate: { title: string; link: string }[] = $state([]);
 	let groups: Group[] = $state([]);
@@ -96,7 +96,7 @@
 				{/each}
 			</select>
 		</fieldset>
-		<button type="submit" disabled={loading} class="btn btn-primary mt-2 ml-auto">
+		<button type="submit" disabled={loading} class="btn btn-primary ml-auto mt-2">
 			{#if loading}
 				<span class="loading loading-spinner loading-sm"></span>
 			{/if}
@@ -126,6 +126,6 @@
 				</label>
 			{/each}
 		</fieldset>
-		<button type="submit" class="btn btn-primary mt-4 ml-auto">Confirm</button>
+		<button type="submit" class="btn btn-primary ml-auto mt-4">Confirm</button>
 	</form>
 {/if}
