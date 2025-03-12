@@ -1,6 +1,7 @@
 # build frontend
 FROM node:23 as fe
 WORKDIR /src
+RUN npm i -g pnpm
 COPY .git .git/
 COPY frontend ./frontend
 COPY scripts.sh .

@@ -30,8 +30,8 @@ build_frontend() {
   echo "Using fusion version string: ${version}"
 
   cd ./frontend
-  npm i
-  VITE_FUSION_VERSION="$version" npm run build
+  pnpm i
+  VITE_FUSION_VERSION="$version" pnpm run build
   cd $root
 }
 
