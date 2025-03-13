@@ -51,8 +51,6 @@
 		} else if (currentItemIndex < 0) {
 			itemFilter.page -= 1;
 			if (itemFilter.page < 1) {
-				toast.error('No more items');
-
 				itemFilter.page = 1;
 				currentItemIndex = 0;
 				return null;

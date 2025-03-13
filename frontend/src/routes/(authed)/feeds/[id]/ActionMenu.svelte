@@ -60,6 +60,7 @@
 			loading: 'Updating',
 			success: () => {
 				invalidateAll();
+				settingsModal?.close();
 				return 'Update successfully';
 			},
 			error: (e) => {
