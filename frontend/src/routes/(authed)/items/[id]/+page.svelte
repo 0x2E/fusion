@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Item } from '$lib/api/model';
 	import ItemActionBookmark from '$lib/components/ItemActionBookmark.svelte';
 	import ItemActionGotoFeed from '$lib/components/ItemActionGotoFeed.svelte';
 	import ItemActionUnread from '$lib/components/ItemActionUnread.svelte';
@@ -65,7 +66,24 @@
 		return new XMLSerializer().serializeToString(dom);
 	}
 
-	let safeContent = $derived(sanitize(data.content, data.link));
+	function render(item: Item): string {
+		let content = sanitize(item.content, item.link);
+
+		// youtube video
+		const youtubeDomains = ['youtube.com', 'youtu.be'];
+		if (youtubeDomains.find((v) => new URL(item.link).hostname.endsWith(v))) {
+			const videoID = new URL(item.link).searchParams.get('v');
+			content =
+				`<iframe style="aspect-ratio: 16 / 9; width: 100% !important;" src="http://www.youtube.com/embed/` +
+				videoID +
+				`" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>` +
+				content;
+		}
+
+		return content;
+	}
+
+	let safeContent = $derived(render(data));
 </script>
 
 <PageNavHeader title={data.title}>
