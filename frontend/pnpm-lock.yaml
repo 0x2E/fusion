@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       daisyui:
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^5.0.3
+        version: 5.0.3
       dompurify:
         specifier: ^3.2.4
         version: 3.2.4
@@ -698,8 +698,8 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
 
-  daisyui@5.0.2:
-    resolution: {integrity: sha512-AfOlwcE+Ukwuh2NSrMDE8VXOl9UWidj2Q5f64DEYqtZVW0Z9pELBA50iGEKg2FpBUvztFY5DFv7+eZgRts70BA==}
+  daisyui@5.0.3:
+    resolution: {integrity: sha512-27dou80uFNgxVcmQNzS8QFBoE1/01u7N0smdGqA2pHbaRPTFoHdJfXNzilpvt/0jAVu8cMEhrVPoYxpdxLwumA==}
 
   debug@4.4.0:
     resolution: {integrity: sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA==}
@@ -1929,7 +1929,7 @@ snapshots:
 
   cssesc@3.0.0: {}
 
-  daisyui@5.0.2: {}
+  daisyui@5.0.3: {}
 
   debug@4.4.0:
     dependencies:

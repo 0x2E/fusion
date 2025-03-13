@@ -8,7 +8,7 @@
 <div class="drawer lg:drawer-open">
 	<input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
 	<div class="drawer-content bg-base-100 relative z-10 min-h-screen overflow-x-clip">
-		<div class="mx-auto max-w-6xl pb-4">
+		<div class="mx-auto h-full max-w-6xl pb-4">
 			{@render children()}
 		</div>
 	</div>

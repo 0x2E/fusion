@@ -40,7 +40,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"daisyui": "^5.0.2",
+		"daisyui": "^5.0.3",
 		"dompurify": "^3.2.4",
 		"ky": "^1.7.5"
 	}

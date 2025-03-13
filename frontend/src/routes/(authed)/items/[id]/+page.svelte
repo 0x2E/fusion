@@ -5,6 +5,7 @@
 	import ItemActionVisitLink from '$lib/components/ItemActionVisitLink.svelte';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 	import DOMPurify from 'dompurify';
+	import { ExternalLink } from 'lucide-svelte';
 	import ItemSwitcher from './ItemSwitcher.svelte';
 
 	let { data } = $props();
@@ -74,7 +75,7 @@
 	<ItemActionVisitLink {data} />
 </PageNavHeader>
 
-<div class="relative flex w-full justify-around px-4 py-6">
+<div class="relative flex h-full w-full justify-around px-4 py-6">
 	<ItemSwitcher itemID={data.id} action="previous" />
 	<article class="w-full max-w-prose">
 		<p class="text-base-content/60 flex flex-col text-sm md:flex-row">
@@ -82,7 +83,18 @@
 		</p>
 
 		<div class="prose text-wrap break-words">
-			<h1>{data.title}</h1>
+			<h1>
+				<a
+					href={data.link}
+					target="_blank"
+					class="inline-flex items-center gap-2 no-underline hover:underline"
+				>
+					<span>
+						{data.title}
+					</span>
+					<ExternalLink class="hidden size-5 md:block" />
+				</a>
+			</h1>
 			{@html safeContent}
 		</div>
 	</article>
