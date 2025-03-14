@@ -55,7 +55,7 @@ Download from [Releases](https://github.com/0x2E/fusion/releases).
 
 ### 3. Build from source
 
-1. Prepare environment: Go 1.23+, Node.js 23+ (and pnpm).
+1. Prepare environment: Go 1.24+, Node.js 23+ (and pnpm).
 2. Check `scripts.sh` for more details.
 
 For example:

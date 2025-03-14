@@ -8,7 +8,7 @@ COPY scripts.sh .
 RUN ./scripts.sh build-frontend
 
 # build backend
-FROM golang:1.23 as be
+FROM golang:1.24 as be
 WORKDIR /src
 COPY . ./
 COPY --from=fe /src/frontend/build ./frontend/build/
