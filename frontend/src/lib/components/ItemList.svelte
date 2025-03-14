@@ -6,6 +6,7 @@
 	import type { Item } from '$lib/api/model';
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionUnread from './ItemActionUnread.svelte';
+	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
 	import Pagination from './Pagination.svelte';
 
 	interface Props {
@@ -80,6 +81,7 @@
 					>
 						<ItemActionUnread data={item} />
 						<ItemActionBookmark data={item} />
+						<ItemActionVisitLink data={item} />
 					</div>
 				</a>
 			</li>
