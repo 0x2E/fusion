@@ -19,7 +19,7 @@ Key features include:
 
 ## Installation
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/XSPFK0?referralCode=milo)
+[Deploy on Railway](https://railway.com/template/XSPFK0?referralCode=milo)
 
 ### 1. Docker
 
