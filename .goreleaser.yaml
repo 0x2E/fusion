@@ -27,13 +27,5 @@ checksum:
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
-changelog:
-  use: github
-  filters:
-    exclude:
-      - Merge pull request
-      - Merge remote-tracking branch
-      - Merge branch
-
 release:
   draft: true
