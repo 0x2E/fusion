@@ -108,7 +108,7 @@
 					class="inline-flex items-center gap-2 no-underline hover:underline"
 				>
 					<span>
-						{data.title}
+						{data.title || data.link}
 					</span>
 					<ExternalLink class="hidden size-5 md:block" />
 				</a>

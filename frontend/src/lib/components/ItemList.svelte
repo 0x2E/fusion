@@ -48,13 +48,13 @@
 			<li class="group rounded-md">
 				<a
 					href={'/items/' + item.id}
-					class="hover:bg-base-300 relative flex w-full flex-col items-center justify-between space-x-2 space-y-1 rounded-md px-2 py-2 transition-colors md:flex-row"
+					class="hover:bg-base-300 relative flex w-full flex-col items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors md:flex-row"
 				>
 					<div class="flex w-full md:w-[80%] md:shrink-0">
 						<h2
 							class={`line-clamp-2 w-full truncate font-medium md:line-clamp-1 ${highlightUnread && !item.unread ? 'text-base-content/60' : ''}`}
 						>
-							{item.title}
+							{item.title || item.link}
 						</h2>
 					</div>
 					<div class="flex w-full md:grow">
