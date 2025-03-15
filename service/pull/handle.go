@@ -10,6 +10,7 @@ import (
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/pkg/httpx"
 	"github.com/0x2e/fusion/pkg/ptr"
+	"github.com/0x2e/fusion/service/pull/parse"
 
 	"github.com/mmcdole/gofeed"
 )
@@ -47,27 +48,7 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 	isLatestBuild := f.LastBuild != nil && fetched.UpdatedParsed != nil &&
 		fetched.UpdatedParsed.Equal(*f.LastBuild)
 	if len(fetched.Items) != 0 && !isLatestBuild {
-		data := make([]*model.Item, 0, len(fetched.Items))
-		for _, i := range fetched.Items {
-			unread := true
-			content := i.Content
-			if content == "" {
-				content = i.Description
-			}
-			guid := i.GUID
-			if guid == "" {
-				guid = i.Link
-			}
-			data = append(data, &model.Item{
-				Title:   &i.Title,
-				GUID:    &guid,
-				Link:    &i.Link,
-				Content: &content,
-				PubDate: i.PublishedParsed,
-				Unread:  &unread,
-				FeedID:  f.ID,
-			})
-		}
+		data := parse.GoFeedItems(fetched.Items, f.ID)
 		if err := p.itemRepo.Insert(data); err != nil {
 			return err
 		}
