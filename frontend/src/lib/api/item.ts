@@ -24,7 +24,7 @@ export async function listItems(options?: ListFilter) {
 		.json<{ total: number; items: Item[] }>();
 }
 
-export function parseURLtoFilter(params: URLSearchParams): ListFilter {
+export function parseURLtoFilter(params: URLSearchParams, override?: ListFilter): ListFilter {
 	const filter: ListFilter = {
 		page: parseInt(params.get('page') || '1'),
 		page_size: parseInt(params.get('page_size') || String(defaultPageSize))
@@ -37,7 +37,7 @@ export function parseURLtoFilter(params: URLSearchParams): ListFilter {
 	if (unread) filter.unread = unread === 'true';
 	const bookmark = params.get('bookmark');
 	if (bookmark) filter.bookmark = bookmark === 'true';
-	return filter;
+	return { ...filter, ...override };
 }
 
 export function applyFilterToURL(url: URL, filter: ListFilter) {
