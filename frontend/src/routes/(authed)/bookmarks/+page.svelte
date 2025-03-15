@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ItemList from '$lib/components/ItemList.svelte';
+	import ItemListPlaceholder from '$lib/components/ItemListPlaceholder.svelte';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 	import type { PageData } from './$types';
 
@@ -20,6 +21,10 @@
 		<div class="py-6">
 			<h1 class="text-3xl font-bold">Bookmark</h1>
 		</div>
-		<ItemList items={data.items.data} total={data.items.total} />
+		{#await data.items}
+			<ItemListPlaceholder />
+		{:then items}
+			<ItemList items={items.items} total={items.total} />
+		{/await}
 	</div>
 </div>

@@ -5,15 +5,25 @@
 	import { CheckCheck } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
-	interface Props {
-		items: Item[];
-	}
+	type Props =
+		| {
+				disabled: true;
+		  }
+		| {
+				disabled?: false;
+				items: Item[];
+		  };
 
-	let { items }: Props = $props();
+	let props: Props = $props();
 
 	async function handleMarkAllAsRead() {
+		if (props.disabled) {
+			console.error('unreachable code');
+			return;
+		}
+
 		try {
-			const ids = items.map((v) => v.id);
+			const ids = props.items.map((v) => v.id);
 			await updateUnread(ids, false);
 			toast.success('Update successfully');
 			invalidateAll();
@@ -23,8 +33,8 @@
 	}
 </script>
 
-<div class="tooltip tooltip-bottom" data-tip="Mark All as Read">
-	<button onclick={handleMarkAllAsRead} class="btn btn-ghost btn-square">
+<div class="tooltip tooltip-bottom" data-tip={props.disabled ? undefined : 'Mark All as Read'}>
+	<button disabled={props.disabled} onclick={handleMarkAllAsRead} class="btn btn-ghost btn-square">
 		<CheckCheck class="size-4" />
 	</button>
 </div>

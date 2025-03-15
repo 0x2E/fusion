@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ItemActionMarkAllasRead from '$lib/components/ItemActionMarkAllasRead.svelte';
 	import ItemList from '$lib/components/ItemList.svelte';
+	import ItemListPlaceholder from '$lib/components/ItemListPlaceholder.svelte';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 
 	let { data } = $props();
@@ -12,12 +13,20 @@
 
 <div class="flex flex-col">
 	<PageNavHeader showSearch={true}>
-		<ItemActionMarkAllasRead items={data.items.data} />
+		{#await data.items}
+			<ItemActionMarkAllasRead disabled />
+		{:then items}
+			<ItemActionMarkAllasRead items={items.items} />
+		{/await}
 	</PageNavHeader>
 	<div class="px-4 lg:px-8">
 		<div class="py-6">
 			<h1 class="text-3xl font-bold">Unread</h1>
 		</div>
-		<ItemList items={data.items.data} total={data.items.total} />
+		{#await data.items}
+			<ItemListPlaceholder />
+		{:then items}
+			<ItemList items={items.items} total={items.total} />
+		{/await}
 	</div>
 </div>
