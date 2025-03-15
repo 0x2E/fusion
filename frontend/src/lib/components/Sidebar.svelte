@@ -20,23 +20,28 @@
 	interface Props {
 		feeds: Feed[];
 		groups: Group[];
+		unreadCount: number;
 	}
 
-	let { feeds, groups }: Props = $props();
+	let { feeds, groups, unreadCount }: Props = $props();
 
 	const version = import.meta.env.FUSION.version;
 
 	type SystemNavLink = {
 		label: string;
 		url: string;
+		count?: number;
 		icon: typeof Icon;
 	};
-	const systemLinks: SystemNavLink[] = [
-		{ label: 'Unread', url: '/', icon: Inbox },
-		{ label: 'Bookmark', url: '/bookmarks', icon: BookmarkCheck },
-		{ label: 'All', url: '/all', icon: List },
-		{ label: 'Settings', url: '/settings', icon: Settings }
-	];
+	let systemLinks = $state<SystemNavLink[]>([]);
+	$effect(() => {
+		systemLinks = [
+			{ label: 'Unread', url: '/', icon: Inbox, count: unreadCount },
+			{ label: 'Bookmark', url: '/bookmarks', icon: BookmarkCheck },
+			{ label: 'All', url: '/all', icon: List },
+			{ label: 'Settings', url: '/settings', icon: Settings }
+		];
+	});
 
 	function isHighlight(url: string): boolean {
 		let chunks = page.url.pathname.split('/');
@@ -95,15 +100,22 @@
 		<ul class="menu w-full font-medium">
 			{#each systemLinks as v}
 				<li>
-					<a href={v.url} class={isHighlight(v.url) ? 'menu-active' : ''}>
-						<v.icon class="size-4" /><span>{v.label}</span>
+					<a href={v.url} class:menu-active={isHighlight(v.url)} class="flex justify-between">
+						<div class="flex items-center gap-2">
+							<v.icon class="size-4" /><span>{v.label}</span>
+						</div>
+						{#if v.count}
+							<div class="text-slate-400">{v.count}</div>
+						{/if}
 					</a>
 				</li>
 			{/each}
 		</ul>
 
 		<ul class="menu w-full">
-			<li class="menu-title">Feeds</li>
+			<li class="menu-title">
+				{feeds.length > 1 ? `${feeds.length} ` : ''}Feeds
+			</li>
 			{#each groups as group, index}
 				<li>
 					<details open={index === 0}>
