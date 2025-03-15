@@ -1,12 +1,17 @@
 <script lang="ts">
+	import { beforeNavigate } from '$app/navigation';
 	import FeedActionAdd from '$lib/components/FeedActionAdd.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
 	let { children, data } = $props();
+	let showSidebar = $state(false);
+	beforeNavigate(() => {
+		showSidebar = false;
+	});
 </script>
 
 <div class="drawer lg:drawer-open">
-	<input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
+	<input id="sidebar-toggle" type="checkbox" bind:checked={showSidebar} class="drawer-toggle" />
 	<div class="drawer-content bg-base-100 relative z-10 min-h-screen overflow-x-clip">
 		<div class="mx-auto h-full max-w-6xl pb-4">
 			{@render children()}
