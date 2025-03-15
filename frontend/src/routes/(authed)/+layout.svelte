@@ -22,7 +22,7 @@
 		<div
 			class="text-base-content bg-base-200 z-50 h-full min-h-full w-[80%] overflow-x-hidden px-2 py-4 lg:w-72"
 		>
-			<Sidebar feeds={data.feeds} groups={data.groups} />
+			<Sidebar feeds={data.feeds} groups={data.groups} unreadCount={data.unreadCount} />
 		</div>
 	</div>
 </div>
