@@ -74,7 +74,7 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 	}
 	logger.Infof("fetched %d items", len(fetched.Items))
 	return p.feedRepo.Update(f.ID, &model.Feed{
-		LastBuild: fetched.PublishedParsed,
+		LastBuild: fetched.UpdatedParsed,
 		Failure:   ptr.To(""),
 	})
 }
