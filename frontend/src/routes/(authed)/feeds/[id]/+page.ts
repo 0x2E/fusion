@@ -8,8 +8,9 @@ export const prerender = false;
 export const load: PageLoad = async ({ url, params }) => {
 	const id = parseInt(params.id);
 	const feed = getFeed(id);
-	const filter = parseURLtoFilter(url.searchParams);
-	filter.feed_id = id;
+	const filter = parseURLtoFilter(url.searchParams, {
+		feed_id: id
+	});
 	Object.assign(fullItemFilter, filter);
 	const items = listItems(filter);
 	return { feed: feed, items: items };
