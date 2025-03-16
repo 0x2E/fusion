@@ -84,7 +84,7 @@
 					onclick={() => {
 						toggleShow();
 					}}
-					class="btn btn-sm bg-base-100"
+					class="btn btn-sm bg-base-100 hover:bg-neutral"
 				>
 					<CirclePlus class="size-4" />
 					<span>Add Feeds</span>
@@ -140,16 +140,22 @@
 	</div>
 
 	<div class="mt-8">
-		<button onclick={handleLogout} class="btn btn-ghost btn-sm mt-auto w-full">
+		<button onclick={handleLogout} class="btn btn-ghost btn-sm hover:text-error mt-auto w-full">
 			<LogOut class="size-4" />
-			Logout</button
-		>
+			Logout
+		</button>
 		<p class="text-base-content/60 text-center text-xs">
 			<span>
 				{version}.
 			</span>
 			<span>
-				Logo by <a href="https://icons8.com/icon/FeQbTvGTsiN5/news" target="_blank">Icons8</a>
+				Logo by <a
+					class="hover:underline"
+					href="https://icons8.com/icon/FeQbTvGTsiN5/news"
+					target="_blank"
+				>
+					Icons8
+				</a>
 			</span>
 		</p>
 	</div>
