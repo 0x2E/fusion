@@ -78,13 +78,13 @@
 			<ThemeController />
 		</div>
 
-		<ul class="menu mt-4 w-full font-medium">
+		<ul class="menu w-full font-medium">
 			<li>
 				<button
 					onclick={() => {
 						toggleShow();
 					}}
-					class="btn btn-sm bg-base-100 hover:bg-neutral"
+					class="btn btn-sm bg-base-200 hover:bg-base-100"
 				>
 					<CirclePlus class="size-4" />
 					<span>Add Feeds</span>
