@@ -84,7 +84,7 @@
 					onclick={() => {
 						toggleShow();
 					}}
-					class="btn btn-sm bg-base-100 hover:bg-neutral"
+					class="btn btn-sm bg-base-100 hover:bg-base-content/10"
 				>
 					<CirclePlus class="size-4" />
 					<span>Add Feeds</span>
