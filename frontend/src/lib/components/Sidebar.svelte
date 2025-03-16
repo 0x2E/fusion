@@ -140,7 +140,7 @@
 	</div>
 
 	<div class="mt-8">
-		<button onclick={handleLogout} class="btn btn-ghost btn-sm hover:text-accent mt-auto w-full">
+		<button onclick={handleLogout} class="btn btn-ghost btn-sm hover:text-error mt-auto w-full">
 			<LogOut class="size-4" />
 			Logout
 		</button>
