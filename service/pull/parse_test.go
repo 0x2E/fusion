@@ -1,4 +1,4 @@
-package parse_test
+package pull_test
 
 import (
 	"testing"
@@ -9,10 +9,10 @@ import (
 
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/pkg/ptr"
-	"github.com/0x2e/fusion/service/pull/parse"
+	"github.com/0x2e/fusion/service/pull"
 )
 
-func TestGoFeedItems(t *testing.T) {
+func TestParseGoFeedItems(t *testing.T) {
 	// Helper function to parse ISO8601 string to time.Time.
 	parseTime := func(iso8601 string) *time.Time {
 		t, err := time.Parse(time.RFC3339, iso8601)
@@ -219,7 +219,7 @@ func TestGoFeedItems(t *testing.T) {
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
-			result := parse.GoFeedItems(tt.gfItems, tt.feedID)
+			result := pull.ParseGoFeedItems(tt.gfItems, tt.feedID)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

@@ -1,4 +1,4 @@
-package parse
+package pull
 
 import (
 	"github.com/0x2e/fusion/model"
@@ -6,7 +6,7 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-func GoFeedItems(gfItems []*gofeed.Item, feedID uint) []*model.Item {
+func ParseGoFeedItems(gfItems []*gofeed.Item, feedID uint) []*model.Item {
 	items := make([]*model.Item, 0, len(gfItems))
 	for _, item := range gfItems {
 		if item == nil {
