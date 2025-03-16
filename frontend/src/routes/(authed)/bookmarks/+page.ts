@@ -9,13 +9,9 @@ export const load: PageLoad = async ({ url }) => {
 		bookmark: true
 	});
 	Object.assign(fullItemFilter, filter);
-	const feeds = await listFeeds({ have_bookmark: true });
-	const items = await listItems(filter);
+
 	return {
-		feeds: feeds,
-		items: {
-			total: items.total,
-			data: items.items
-		}
+		feeds: listFeeds({ have_bookmark: true }),
+		items: listItems(filter)
 	};
 };
