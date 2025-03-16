@@ -19,21 +19,18 @@ Key features include:
 
 ## Installation
 
-[Deploy on Railway](https://railway.com/template/XSPFK0?referralCode=milo)
+### Docker
 
-### 1. Docker
-
-Choose Docker CLI or Docker Compose examples below:
-
-#### 1.a. Docker CLI
+- Docker CLI
 
 ```shell
-docker run -it -d -p 8080:8080 -v $(pwd)/fusion:/data \
-      -e PASSWORD="rss123456" \
-      rook1e404/fusion:latest
+docker run -it -d -p 8080:8080 \
+  -v $(pwd)/fusion:/data \
+  -e PASSWORD="rss123456" \
+  rook1e404/fusion:latest
 ```
 
-#### 1.b. Docker Compose
+- Docker Compose
 
 ```compose
 version: '3'
@@ -46,35 +43,43 @@ services:
       - PASSWORD=rss123456
     restart: "unless-stopped"
     volumes:
+      # Change `./data` to where you want the files stored
       - ./data:/data
 ```
 
-Change `./data` to where you want the files stored. Remember to specify localhost IP unless you want Docker exposing the port though your firewall. Then, in the same directory as this `compose.yml` file run `docker compose up -d` (or `docker-compose up -d` on older versions).
-
-### 2. Pre-built binary
+### Pre-built binary
 
 Download from [Releases](https://github.com/0x2E/fusion/releases).
 
-### 3. Build from source
+### One-Click Deployment
 
-1. Prepare environment: Go 1.24+, Node.js 23+ (and pnpm).
-2. Check `scripts.sh` for more details.
+Maintained by community:
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/XSPFK0?referralCode=milo)
+
+### Build from source
+
+Check out the Development section.
+
+## Configuration
+
+All configuration items can be found [here](./.env.example).
+
+Fusion can be configured in many ways:
+
+- System environment variables, such as those set by `export PASSWORD=123abc`.
+- Create a `.env` file in the same directory as the binary. Note that values in `.env` file can be overwritten by system environment variables.
+
+## Development
+
+- Prepare environment: Go 1.24+, Node.js 23+ (and pnpm).
+- Check out the commands in `scripts.sh`.
 
 For example:
 
 ```shell
 ./scripts.sh build
 ```
-
-## Configuration
-
-Fusion can be configured in many ways:
-
-- System environment variables, such as those set by `export PASSWORD=123abc`.
-- Create a `.env` file in the same directory as the binary file, and then copy the items you want to modify into it.
-  - NOTE: values in `.env` file can be overwritten by system environment variables.
-
-All configuration items can be found [here](https://github.com/0x2E/fusion/blob/main/.env.example).
 
 ## Credits
 
