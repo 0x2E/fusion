@@ -4,9 +4,4 @@
 	<div class="skeleton h-12 w-full rounded"></div>
 	<div class="skeleton h-12 w-full rounded"></div>
 	<div class="skeleton h-12 w-full rounded"></div>
-	<div class="skeleton h-12 w-full rounded"></div>
-	<div class="skeleton h-12 w-full rounded"></div>
-	<div class="skeleton h-12 w-full rounded"></div>
-	<div class="skeleton h-12 w-full rounded"></div>
-	<div class="skeleton h-12 w-full rounded"></div>
 </div>
