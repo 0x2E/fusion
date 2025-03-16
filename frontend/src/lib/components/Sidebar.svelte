@@ -33,15 +33,12 @@
 		count?: number;
 		icon: typeof Icon;
 	};
-	let systemLinks = $state<SystemNavLink[]>([]);
-	$effect(() => {
-		systemLinks = [
-			{ label: 'Unread', url: '/', icon: Inbox, count: unreadCount },
-			{ label: 'Bookmark', url: '/bookmarks', icon: BookmarkCheck },
-			{ label: 'All', url: '/all', icon: List },
-			{ label: 'Settings', url: '/settings', icon: Settings }
-		];
-	});
+	const systemLinks = $derived<SystemNavLink[]>([
+		{ label: 'Unread', url: '/', icon: Inbox, count: unreadCount },
+		{ label: 'Bookmark', url: '/bookmarks', icon: BookmarkCheck },
+		{ label: 'All', url: '/all', icon: List },
+		{ label: 'Settings', url: '/settings', icon: Settings }
+	]);
 
 	function isHighlight(url: string): boolean {
 		let chunks = page.url.pathname.split('/');
