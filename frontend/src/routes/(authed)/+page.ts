@@ -3,9 +3,10 @@ import { fullItemFilter } from '$lib/state.svelte';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ url }) => {
-	const filter = parseURLtoFilter(url.searchParams);
-	filter.unread = true;
-	filter.bookmark = undefined;
+	const filter = parseURLtoFilter(url.searchParams, {
+		unread: true,
+		bookmark: undefined
+	});
 	Object.assign(fullItemFilter, filter);
 	return {
 		items: listItems(filter)
