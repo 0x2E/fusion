@@ -111,7 +111,7 @@
 							<span class="line-clamp-1">{group.name}</span>
 						</summary>
 						<ul>
-							{#each feeds.filter((v) => v.group.id === group.id) as feed}
+							{#each feeds.filter((v) => v.group.id === group.id).sort((a, b) => a.name.localeCompare(b.name)) as feed}
 								{@const domain = new URL(feed.link).hostname}
 								{@const textColor = feed.suspended
 									? 'text-base-content/60'
