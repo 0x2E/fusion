@@ -7,7 +7,7 @@
 	});
 </script>
 
-<label class="btn btn-ghost btn-square swap swap-rotate hover:bg-base-100">
+<label class="btn btn-ghost btn-square swap swap-rotate hover:bg-neutral">
 	<!-- this hidden checkbox controls the state -->
 	<input type="checkbox" class="theme-controller" value="dark" bind:checked={isDark} />
 
