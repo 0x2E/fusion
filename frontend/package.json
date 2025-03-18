@@ -13,10 +13,10 @@
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^3.0.8",
-		"@sveltejs/kit": "^2.19.0",
+		"@sveltejs/kit": "^2.20.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.3",
 		"@tailwindcss/typography": "^0.5.16",
-		"@tailwindcss/vite": "^4.0.13",
+		"@tailwindcss/vite": "^4.0.14",
 		"@types/eslint": "^9.6.1",
 		"@types/node": "^22.13.10",
 		"@typescript-eslint/eslint-plugin": "^8.26.1",
@@ -24,23 +24,23 @@
 		"clsx": "^2.1.1",
 		"eslint": "^9.22.0",
 		"eslint-config-prettier": "^10.1.1",
-		"eslint-plugin-svelte": "^3.1.0",
+		"eslint-plugin-svelte": "^3.3.2",
 		"lucide-svelte": "^0.475.0",
 		"prettier": "^3.5.3",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
-		"svelte": "^5.23.0",
+		"svelte": "^5.23.1",
 		"svelte-check": "^4.1.5",
 		"svelte-sonner": "^0.3.28",
 		"tailwind-merge": "^3.0.2",
-		"tailwindcss": "^4.0.13",
+		"tailwindcss": "^4.0.14",
 		"typescript": "^5.8.2",
 		"typescript-eslint": "^8.26.1",
-		"vite": "^6.2.1"
+		"vite": "^6.2.2"
 	},
 	"type": "module",
 	"dependencies": {
-		"daisyui": "^5.0.3",
+		"daisyui": "^5.0.6",
 		"dompurify": "^3.2.4",
 		"ky": "^1.7.5"
 	}
