@@ -119,29 +119,31 @@ func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 }
 
 func (f Feed) CheckValidity(ctx context.Context, req *ReqFeedCheckValidity) (*RespFeedCheckValidity, error) {
-	link := req.Link
+	if parsed, err := pull.FetchFeed(ctx, &model.Feed{Link: &req.Link}); err == nil && parsed != nil {
+		return &RespFeedCheckValidity{
+			FeedLinks: []ValidityItem{
+				{
+					Title: &parsed.Title,
+					Link:  &req.Link,
+				},
+			},
+		}, nil
+	}
+
 	validLinks := make([]ValidityItem, 0)
-	parsed, err := pull.FetchFeed(ctx, &model.Feed{Link: &link})
-	if err == nil && parsed != nil {
+	target, err := url.Parse(req.Link)
+	if err != nil {
+		return nil, err
+	}
+	sniffed, err := sniff.Sniff(ctx, target)
+	if err != nil {
+		return nil, err
+	}
+	for _, l := range sniffed {
 		validLinks = append(validLinks, ValidityItem{
-			Title: &parsed.Title,
-			Link:  &req.Link,
+			Title: &l.Title,
+			Link:  &l.Link,
 		})
-	} else {
-		target, err := url.Parse(req.Link)
-		if err != nil {
-			return nil, err
-		}
-		sniffed, err := sniff.Sniff(ctx, target)
-		if err != nil {
-			return nil, err
-		}
-		for _, l := range sniffed {
-			validLinks = append(validLinks, ValidityItem{
-				Title: &l.Title,
-				Link:  &l.Link,
-			})
-		}
 	}
 	return &RespFeedCheckValidity{
 		FeedLinks: validLinks,
