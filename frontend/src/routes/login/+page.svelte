@@ -24,7 +24,7 @@
 <div class="flex h-[100vh] items-center justify-center">
 	<form
 		onsubmit={handleSubmit}
-		class="bg-base-100 border-base-content/10 container flex max-w-[400px] -translate-y-[10vh] flex-col rounded-xl border p-8"
+		class="border-base-content/10 container flex max-w-[400px] -translate-y-[10vh] flex-col rounded-xl border p-8 shadow"
 	>
 		<h1 class="mb-4 text-center text-2xl font-bold">Login</h1>
 		<fieldset class="fieldset">

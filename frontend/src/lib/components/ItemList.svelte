@@ -48,7 +48,7 @@
 			<li class="group rounded-md">
 				<a
 					href={'/items/' + item.id}
-					class="hover:bg-base-300 relative flex w-full flex-col items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors md:flex-row"
+					class="hover:bg-base-200 relative flex w-full flex-col items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors md:flex-row"
 				>
 					<div class="flex w-full md:w-[80%] md:shrink-0">
 						<h2
