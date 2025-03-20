@@ -2,16 +2,11 @@ package pull
 
 import (
 	"context"
-	"fmt"
-	"io"
-	"net/http"
 	"time"
 
 	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/pkg/httpx"
 	"github.com/0x2e/fusion/pkg/ptr"
-
-	"github.com/mmcdole/gofeed"
+	"github.com/0x2e/fusion/service/pull/client"
 )
 
 func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
@@ -36,31 +31,27 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 		}
 	}
 
-	fetched, err := FetchFeed(ctx, f)
+	result, err := client.NewFeedClient().FetchItems(ctx, *f.Link, f.FeedRequestOptions)
 	if err != nil {
 		p.feedRepo.Update(f.ID, &model.Feed{Failure: ptr.To(err.Error())})
 		return err
 	}
-	if fetched == nil {
-		return nil
-	}
-	isLatestBuild := f.LastBuild != nil && fetched.UpdatedParsed != nil &&
-		fetched.UpdatedParsed.Equal(*f.LastBuild)
-	if len(fetched.Items) != 0 && !isLatestBuild {
-		data := ParseGoFeedItems(fetched.Items)
+	isLatestBuild := f.LastBuild != nil && result.LastBuild != nil &&
+		result.LastBuild.Equal(*f.LastBuild)
+	if len(result.Items) != 0 && !isLatestBuild {
 
 		// Set the correct feed ID for all items.
-		for _, item := range data {
+		for _, item := range result.Items {
 			item.FeedID = f.ID
 		}
 
-		if err := p.itemRepo.Insert(data); err != nil {
+		if err := p.itemRepo.Insert(result.Items); err != nil {
 			return err
 		}
 	}
-	logger.Infof("fetched %d items", len(fetched.Items))
+	logger.Infof("fetched %d items", len(result.Items))
 	return p.feedRepo.Update(f.ID, &model.Feed{
-		LastBuild: fetched.UpdatedParsed,
+		LastBuild: result.LastBuild,
 		Failure:   ptr.To(""),
 	})
 }
@@ -98,40 +89,4 @@ func DecideFeedUpdateAction(f *model.Feed, now time.Time) (FeedUpdateAction, *Fe
 		return ActionSkipUpdate, &SkipReasonTooSoon
 	}
 	return ActionFetchUpdate, nil
-}
-
-type feedHTTPRequest func(ctx context.Context, link string, options *model.FeedRequestOptions) (*http.Response, error)
-
-// FeedClient retrieves a feed given a feed URL and parses the result.
-type FeedClient struct {
-	httpRequestFn feedHTTPRequest
-}
-
-func NewFeedClient(httpRequestFn feedHTTPRequest) FeedClient {
-	return FeedClient{
-		httpRequestFn: httpRequestFn,
-	}
-}
-
-func (c FeedClient) Fetch(ctx context.Context, feedURL string, options *model.FeedRequestOptions) (*gofeed.Feed, error) {
-	resp, err := c.httpRequestFn(ctx, feedURL, options)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("got status code %d", resp.StatusCode)
-	}
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return gofeed.NewParser().ParseString(string(data))
-}
-
-func FetchFeed(ctx context.Context, f *model.Feed) (*gofeed.Feed, error) {
-	return NewFeedClient(httpx.FusionRequest).Fetch(ctx, *f.Link, &f.FeedRequestOptions)
 }
