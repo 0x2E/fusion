@@ -47,7 +47,13 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 	isLatestBuild := f.LastBuild != nil && fetched.UpdatedParsed != nil &&
 		fetched.UpdatedParsed.Equal(*f.LastBuild)
 	if len(fetched.Items) != 0 && !isLatestBuild {
-		data := ParseGoFeedItems(fetched.Items, f.ID)
+		data := ParseGoFeedItems(fetched.Items)
+
+		// Set the correct feed ID for all items.
+		for _, item := range data {
+			item.FeedID = f.ID
+		}
+
 		if err := p.itemRepo.Insert(data); err != nil {
 			return err
 		}
