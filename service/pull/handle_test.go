@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/pkg/ptr"
 	"github.com/0x2e/fusion/service/pull"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDecideFeedUpdateAction(t *testing.T) {
