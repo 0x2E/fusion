@@ -25,7 +25,6 @@ func TestParseGoFeedItems(t *testing.T) {
 	for _, tt := range []struct {
 		description string
 		gfItems     []*gofeed.Item
-		feedID      uint
 		expected    []*model.Item
 	}{
 		{
@@ -40,7 +39,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					PublishedParsed: parseTime("2025-01-01T12:00:00Z"),
 				},
 			},
-			feedID: 42,
 			expected: []*model.Item{
 				{
 					Title:   ptr.To("Test Item"),
@@ -49,7 +47,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					Content: ptr.To("<p>This is the content</p>"),
 					PubDate: parseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
-					FeedID:  42,
 				},
 			},
 		},
@@ -65,7 +62,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					PublishedParsed: parseTime("2025-01-01T12:00:00Z"),
 				},
 			},
-			feedID: 42,
 			expected: []*model.Item{
 				{
 					Title:   ptr.To("Test Item"),
@@ -74,7 +70,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					Content: ptr.To("This is the description"), // Should use description
 					PubDate: parseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
-					FeedID:  42,
 				},
 			},
 		},
@@ -90,7 +85,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					PublishedParsed: parseTime("2025-01-01T12:00:00Z"),
 				},
 			},
-			feedID: 42,
 			expected: []*model.Item{
 				{
 					Title:   ptr.To("Test Item"),
@@ -99,7 +93,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					Content: ptr.To("<p>This is the content</p>"),
 					PubDate: parseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
-					FeedID:  42,
 				},
 			},
 		},
@@ -115,7 +108,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					PublishedParsed: parseTime("2025-01-01T12:00:00Z"),
 				},
 			},
-			feedID: 42,
 			expected: []*model.Item{
 				{
 					Title:   ptr.To("Test Item"),
@@ -124,7 +116,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					Content: ptr.To("This is the description"), // Should use description
 					PubDate: parseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
-					FeedID:  42,
 				},
 			},
 		},
@@ -148,7 +139,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					PublishedParsed: parseTime("2025-01-01T12:00:00Z"),
 				},
 			},
-			feedID: 42,
 			expected: []*model.Item{
 				{
 					Title:   ptr.To("Item 1"),
@@ -157,7 +147,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					Content: ptr.To("content1"),
 					PubDate: parseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
-					FeedID:  42,
 				},
 				{
 					Title:   ptr.To("Item 2"),
@@ -166,14 +155,12 @@ func TestParseGoFeedItems(t *testing.T) {
 					Content: ptr.To("content2"),
 					PubDate: parseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
-					FeedID:  42,
 				},
 			},
 		},
 		{
 			description: "returns empty slice for empty input",
 			gfItems:     []*gofeed.Item{},
-			feedID:      42,
 			expected:    []*model.Item{},
 		},
 		{
@@ -195,7 +182,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					PublishedParsed: parseTime("2025-01-01T12:00:00Z"),
 				},
 			},
-			feedID: 42,
 			expected: []*model.Item{
 				{
 					Title:   ptr.To("Valid Item"),
@@ -204,7 +190,6 @@ func TestParseGoFeedItems(t *testing.T) {
 					Content: ptr.To("valid content"),
 					PubDate: parseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
-					FeedID:  42,
 				},
 				{
 					Title:   ptr.To("Another Valid Item"),
@@ -213,13 +198,12 @@ func TestParseGoFeedItems(t *testing.T) {
 					Content: ptr.To("another content"),
 					PubDate: parseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
-					FeedID:  42,
 				},
 			},
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
-			result := pull.ParseGoFeedItems(tt.gfItems, tt.feedID)
+			result := pull.ParseGoFeedItems(tt.gfItems)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
