@@ -1,4 +1,4 @@
-package pull
+package client
 
 import (
 	"github.com/0x2e/fusion/model"
