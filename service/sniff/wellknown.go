@@ -3,10 +3,10 @@ package sniff
 import (
 	"bytes"
 	"context"
-	"io"
 	"net/url"
 
-	"github.com/0x2e/fusion/pkg/httpx"
+	"github.com/0x2e/fusion/model"
+	"github.com/0x2e/fusion/service/pull/client"
 	"github.com/mmcdole/gofeed"
 )
 
@@ -44,16 +44,22 @@ func tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink, error) {
 }
 
 func parseRSSUrl(ctx context.Context, url string) (FeedLink, error) {
-	resp, err := httpx.FusionRequest(ctx, url, nil)
+	feedClient := client.NewFeedClient()
+
+	title, err := feedClient.FetchTitle(ctx, url, model.FeedRequestOptions{})
 	if err != nil {
 		return FeedLink{}, err
 	}
-	defer resp.Body.Close()
-	content, err := io.ReadAll(resp.Body)
+
+	declaredLink, err := feedClient.FetchDeclaredLink(ctx, url, model.FeedRequestOptions{})
 	if err != nil {
 		return FeedLink{}, err
 	}
-	return parseRSSContent(content)
+
+	return FeedLink{
+		Title: title,
+		Link:  declaredLink,
+	}, nil
 }
 
 func parseRSSContent(content []byte) (FeedLink, error) {
