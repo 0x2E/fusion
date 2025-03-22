@@ -9,6 +9,10 @@ import (
 type FeedRequestOptions struct {
 	ReqProxy *string `gorm:"req_proxy"`
 
+	// LastBuild is the last time fusion knows that the feed server reported
+	// building the feed.
+	LastBuild *time.Time
+
 	// TODO: headers, cookie, etc.
 }
 
