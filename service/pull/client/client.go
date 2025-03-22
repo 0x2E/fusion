@@ -13,7 +13,7 @@ import (
 	"github.com/0x2e/fusion/pkg/httpx"
 )
 
-type HttpRequestFn func(ctx context.Context, link string, options *model.FeedRequestOptions) (*http.Response, error)
+type HttpRequestFn func(ctx context.Context, link string, options model.FeedRequestOptions) (*http.Response, error)
 
 // FeedClient retrieves a feed given a feed URL and parses the result.
 type FeedClient struct {
@@ -74,7 +74,7 @@ func (c FeedClient) FetchItems(ctx context.Context, feedURL string, options mode
 }
 
 func (c FeedClient) fetchFeed(ctx context.Context, feedURL string, options model.FeedRequestOptions) (*gofeed.Feed, error) {
-	resp, err := c.httpRequestFn(ctx, feedURL, &options)
+	resp, err := c.httpRequestFn(ctx, feedURL, options)
 	if err != nil {
 		return nil, err
 	}
