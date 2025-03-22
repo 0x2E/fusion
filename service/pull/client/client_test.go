@@ -62,7 +62,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
 		options            model.FeedRequestOptions
 		httpRespBody       string
 		httpStatusCode     int
-		httpErrMsg         string
+		httpErr            error
 		httpBodyReadErrMsg string
 		expectedTitle      string
 		expectedErrMsg     string
@@ -82,7 +82,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedTitle:      "Test Feed Title",
 			expectedErrMsg:     "",
@@ -102,7 +102,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedTitle:      "Test Feed Title",
 			expectedErrMsg:     "",
@@ -124,7 +124,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedTitle:      "Test Feed Title via Proxy",
 			expectedErrMsg:     "",
@@ -135,7 +135,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
 			options:            model.FeedRequestOptions{},
 			httpRespBody:       "",
 			httpStatusCode:     0, // No status code since request errors
-			httpErrMsg:         "connection refused",
+			httpErr:            errors.New("connection refused"),
 			httpBodyReadErrMsg: "",
 			expectedTitle:      "",
 			expectedErrMsg:     "connection refused",
@@ -146,7 +146,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
 			options:            model.FeedRequestOptions{},
 			httpRespBody:       "",
 			httpStatusCode:     http.StatusNotFound,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedTitle:      "",
 			expectedErrMsg:     "got status code 404",
@@ -157,7 +157,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
 			options:            model.FeedRequestOptions{},
 			httpRespBody:       "",
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "mock body read error",
 			expectedTitle:      "",
 			expectedErrMsg:     "mock body read error",
@@ -173,7 +173,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
   </malformed>
 </invalid>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedTitle:      "",
 			expectedErrMsg:     "Failed to detect feed type",
@@ -192,7 +192,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedTitle:      "",
 			expectedErrMsg:     "",
@@ -210,12 +210,7 @@ func TestFeedClientFetchTitle(t *testing.T) {
 					Status:     http.StatusText(tt.httpStatusCode),
 					Body:       body,
 				},
-				err: func() error {
-					if tt.httpErrMsg != "" {
-						return errors.New(tt.httpErrMsg)
-					}
-					return nil
-				}(),
+				err: tt.httpErr,
 			}
 
 			actualTitle, actualErr := client.NewFeedClientWithRequestFn(httpClient.Get).FetchTitle(context.Background(), tt.feedURL, tt.options)
@@ -242,7 +237,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 		options            model.FeedRequestOptions
 		httpRespBody       string
 		httpStatusCode     int
-		httpErrMsg         string
+		httpErr            error
 		httpBodyReadErrMsg string
 		expectedResult     client.FetchItemsResult
 		expectedErrMsg     string
@@ -262,7 +257,7 @@ func TestFeedClientFetchItems(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedResult: client.FetchItemsResult{
 				LastBuild: nil, // UpdatedParsed is nil in this test case
@@ -291,7 +286,7 @@ func TestFeedClientFetchItems(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedResult: client.FetchItemsResult{
 				LastBuild: mustParseTime("2025-01-01T12:00:00Z"),
@@ -318,7 +313,7 @@ func TestFeedClientFetchItems(t *testing.T) {
   </entry>
 </feed>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedResult: client.FetchItemsResult{
 				LastBuild: mustParseTime("2025-02-15T15:30:00Z"),
@@ -347,7 +342,7 @@ func TestFeedClientFetchItems(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedResult: client.FetchItemsResult{
 				LastBuild: mustParseTime("2025-01-01T12:00:00Z"), // Same time as UTC
@@ -376,7 +371,7 @@ func TestFeedClientFetchItems(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedResult: client.FetchItemsResult{
 				LastBuild: mustParseTime("2025-01-01T12:00:00Z"), // Use UTC format since gofeed normalizes to UTC
@@ -405,7 +400,7 @@ func TestFeedClientFetchItems(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedResult: client.FetchItemsResult{
 				LastBuild: mustParseTime("2025-01-01T12:00:00Z"),
@@ -436,7 +431,7 @@ func TestFeedClientFetchItems(t *testing.T) {
   </channel>
 </rss>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedResult: client.FetchItemsResult{
 				LastBuild: mustParseTime("2025-01-01T12:00:00Z"),
@@ -455,7 +450,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 			options:            model.FeedRequestOptions{},
 			httpRespBody:       "",
 			httpStatusCode:     0, // No status code since request errors
-			httpErrMsg:         "connection refused",
+			httpErr:            errors.New("connection refused"),
 			httpBodyReadErrMsg: "",
 			expectedResult:     client.FetchItemsResult{},
 			expectedErrMsg:     "connection refused",
@@ -466,7 +461,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 			options:            model.FeedRequestOptions{},
 			httpRespBody:       "",
 			httpStatusCode:     http.StatusNotFound,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedResult:     client.FetchItemsResult{},
 			expectedErrMsg:     "got status code 404",
@@ -477,7 +472,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 			options:            model.FeedRequestOptions{},
 			httpRespBody:       "",
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "mock body read error",
 			expectedResult:     client.FetchItemsResult{},
 			expectedErrMsg:     "mock body read error",
@@ -493,7 +488,7 @@ func TestFeedClientFetchItems(t *testing.T) {
   </malformed>
 </invalid>`,
 			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
+			httpErr:            nil,
 			httpBodyReadErrMsg: "",
 			expectedResult:     client.FetchItemsResult{},
 			expectedErrMsg:     "Failed to detect feed type",
@@ -511,12 +506,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 					Status:     http.StatusText(tt.httpStatusCode),
 					Body:       body,
 				},
-				err: func() error {
-					if tt.httpErrMsg != "" {
-						return errors.New(tt.httpErrMsg)
-					}
-					return nil
-				}(),
+				err: tt.httpErr,
 			}
 
 			actualResult, actualErr := client.NewFeedClientWithRequestFn(httpClient.Get).FetchItems(context.Background(), tt.feedURL, tt.options)
