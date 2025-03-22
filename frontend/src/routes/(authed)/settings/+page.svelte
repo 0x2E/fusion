@@ -5,12 +5,14 @@
 	import { onMount } from 'svelte';
 	import GlobalActionSection from './GlobalActionSection.svelte';
 	import GroupSection from './GroupSection.svelte';
+	import AppearanceSection from './AppearanceSection.svelte';
 
 	const links: {
 		label: string;
 		hash: string;
 	}[] = [
 		{ label: 'Global Actions', hash: '#global-actions' },
+		{ label: 'Appearance', hash: '#appearance' },
 		{ label: 'Groups', hash: '#groups' }
 	];
 
@@ -47,6 +49,7 @@
 			</div>
 			<div class="flex grow flex-col gap-6">
 				<GlobalActionSection />
+				<AppearanceSection />
 				<GroupSection />
 			</div>
 		</div>
