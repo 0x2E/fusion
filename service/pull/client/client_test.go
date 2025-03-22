@@ -487,11 +487,11 @@ func TestFeedClientFetchItems(t *testing.T) {
 			feedURL:     "https://example.com/feed.xml",
 			options:     model.FeedRequestOptions{},
 			httpRespBody: `<?xml version="1.0" encoding="UTF-8"?>
-<invalid>
-  <malformed>
+<not-a-real-tag>
+  <also-a-fake-tag>
     <content>This is not a valid RSS feed</content>
-  </malformed>
-</invalid>`,
+  </also-a-fake-tag>
+</not-a-real-tag>`,
 			httpStatusCode:     http.StatusOK,
 			httpErrMsg:         "",
 			httpBodyReadErrMsg: "",
