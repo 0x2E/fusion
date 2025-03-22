@@ -15,6 +15,9 @@ const config = {
 			directives: {
 				'script-src': ['self']
 			}
+		},
+		output: {
+			bundleStrategy: 'single'
 		}
 	}
 };
