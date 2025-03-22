@@ -5,9 +5,9 @@ import (
 	"time"
 )
 
-type TransportOptionFunc func(transport *http.Transport)
+type transportOptionFunc func(transport *http.Transport)
 
-func NewClient(options ...TransportOptionFunc) *http.Client {
+func newClient(options ...transportOptionFunc) *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.DisableKeepAlives = true
 	transport.ForceAttemptHTTP2 = true
