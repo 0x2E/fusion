@@ -4,6 +4,7 @@
 	import { debounce } from '$lib/utils';
 	import { Search } from 'lucide-svelte';
 	import ItemList from './ItemList.svelte';
+	import { t } from '$lib/i18n';
 
 	let modal = $state<HTMLDialogElement>();
 	let keyword = $state('');
@@ -21,7 +22,7 @@
 	<input
 		type="search"
 		class="input"
-		placeholder="Search in title and content"
+		placeholder={t('item.search.placeholder')}
 		onclick={() => modal?.showModal()}
 	/>
 	<!-- <kbd class="kbd kbd-sm">{isMac ? '⌘' : '^'}</kbd>
@@ -33,14 +34,14 @@
 		<form method="dialog">
 			<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">✕</button>
 		</form>
-		<h3 class="text-lg font-bold">Search</h3>
+		<h3 class="text-lg font-bold">{t('common.search')}</h3>
 		<div class="py-4">
 			<label class="input w-full">
 				<Search class="size-4 opacity-50" />
 				<input
 					type="search"
 					required
-					placeholder="Search in title and content"
+					placeholder={t('item.search.placeholder')}
 					bind:value={keyword}
 					oninput={handleSearch}
 					class="w-full"

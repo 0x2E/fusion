@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { updateBookmark } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
+	import { t } from '$lib/i18n';
 	import { BookmarkIcon, BookmarkXIcon } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -21,7 +22,9 @@
 		}
 	}
 	let Icon = $derived(data.bookmark ? BookmarkXIcon : BookmarkIcon);
-	let tooltip = $derived(data.bookmark ? 'Cancel Bookmark' : 'Add to Bookmark');
+	let tooltip = $derived(
+		data.bookmark ? t('item.remove_from_bookmark') : t('item.add_to_bookmark')
+	);
 </script>
 
 <div class="tooltip tooltip-bottom" data-tip={tooltip}>

@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { refreshFeeds } from '$lib/api/feed';
 	import type { Feed } from '$lib/api/model';
+	import { t } from '$lib/i18n';
 	import { RefreshCcw } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -14,7 +15,7 @@
 
 	async function handleRefresh() {
 		if (all) {
-			if (!confirm('Are you sure you want to refresh all feeds except the suspended ones?')) {
+			if (!confirm(t('feed.refresh.all.confirm'))) {
 				return;
 			}
 		}
@@ -22,9 +23,9 @@
 			success: () => {
 				invalidateAll();
 				if (all) {
-					return 'Start refreshing in the background';
+					return t('feed.refresh.all.run_in_background');
 				}
-				return 'Refresh successfully';
+				return t('state.success');
 			},
 			error: (e) => {
 				invalidateAll();
@@ -34,7 +35,7 @@
 		});
 	}
 
-	let tooltip = $derived(all ? 'Refresh Feeds' : 'Refresh Feed');
+	let tooltip = $derived(all ? t('feed.refresh.all') : t('feed.refresh'));
 </script>
 
 <div class="tooltip tooltip-bottom" data-tip={tooltip}>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { login } from '$lib/api/login';
+	import { t } from '$lib/i18n';
 	import { toast } from 'svelte-sonner';
 
 	let password = $state('');
@@ -17,18 +18,14 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Login</title>
-</svelte:head>
-
 <div class="flex h-[100vh] items-center justify-center">
 	<form
 		onsubmit={handleSubmit}
 		class="border-base-content/10 container flex max-w-[400px] -translate-y-[10vh] flex-col rounded-xl border p-8 shadow"
 	>
-		<h1 class="mb-4 text-center text-2xl font-bold">Login</h1>
+		<h1 class="mb-4 text-center text-2xl font-bold">Fusion</h1>
 		<fieldset class="fieldset">
-			<legend class="fieldset-legend">Password</legend>
+			<legend class="fieldset-legend">{t('common.password')}</legend>
 			<input
 				name="password"
 				type="password"
@@ -37,6 +34,6 @@
 				class="input w-full"
 			/>
 		</fieldset>
-		<button type="submit" class="btn btn-primary mt-4 w-full">Login</button>
+		<button type="submit" class="btn btn-primary mt-4 w-full">{t('common.login')}</button>
 	</form>
 </div>

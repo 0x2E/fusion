@@ -2,6 +2,7 @@
 	import ItemList from '$lib/components/ItemList.svelte';
 	import ItemListPlaceholder from '$lib/components/ItemListPlaceholder.svelte';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
+	import { t } from '$lib/i18n';
 	import type { PageData } from './$types';
 
 	interface Props {
@@ -12,14 +13,14 @@
 </script>
 
 <svelte:head>
-	<title>Bookmark</title>
+	<title>{t('common.bookmark')}</title>
 </svelte:head>
 
 <div class="flex flex-col">
 	<PageNavHeader showSearch={true}></PageNavHeader>
 	<div class="px-4 lg:px-8">
 		<div class="py-6">
-			<h1 class="text-3xl font-bold">Bookmark</h1>
+			<h1 class="text-3xl font-bold">{t('common.bookmark')}</h1>
 		</div>
 		{#await data.items}
 			<ItemListPlaceholder />

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { beforeNavigate } from '$app/navigation';
-	import FeedActionAdd from '$lib/components/FeedActionAdd.svelte';
+	import FeedActionImport from '$lib/components/FeedActionImport.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
 	let { children, data } = $props();
@@ -28,4 +28,4 @@
 </div>
 
 <!-- put it outside the drawer because when its inner modal is placed inside the drawer sidebar, the underlying dialog won't close properly -->
-<FeedActionAdd />
+<FeedActionImport />

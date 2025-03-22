@@ -4,6 +4,7 @@
 	import { getFavicon } from '$lib/api/favicon';
 	import { applyFilterToURL, parseURLtoFilter } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
+	import { t } from '$lib/i18n';
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionUnread from './ItemActionUnread.svelte';
 	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
@@ -86,7 +87,7 @@
 				</a>
 			</li>
 		{:else}
-			Nothing here.
+			{t('state.no_data')}
 		{/each}
 	</ul>
 

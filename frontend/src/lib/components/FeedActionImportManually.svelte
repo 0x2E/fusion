@@ -3,6 +3,7 @@
 	import { checkValidity, createFeed, type FeedCreateForm } from '$lib/api/feed';
 	import { allGroups } from '$lib/api/group';
 	import type { Group } from '$lib/api/model';
+	import { t } from '$lib/i18n';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -75,38 +76,36 @@
 {#if step === 1}
 	<form onsubmit={handleAdd} class="flex flex-col">
 		<fieldset class="fieldset">
-			<legend class="fieldset-legend">Link</legend>
+			<legend class="fieldset-legend">{t('common.link')}</legend>
 			<input type="url" class="input w-full" bind:value={form.feeds[0].link} required />
 			<p class="fieldset-label">
-				Either the RSS link or the website link. The server will automatically attempt to locate the
-				RSS feed.
+				{t('feed.import.manually.link.description')}
 			</p>
-			<p class="fieldset-label">The existing feed with the same link will be overridden.</p>
 		</fieldset>
 		<fieldset class="fieldset">
-			<legend class="fieldset-legend">Name</legend>
+			<legend class="fieldset-legend">{t('common.name')}</legend>
 			<input type="text" class="input w-full" bind:value={form.feeds[0].name} />
-			<p class="fieldset-label">Optional. Leave blank for automatic naming.</p>
+			<p class="fieldset-label">{t('feed.import.manually.name.description')}</p>
 		</fieldset>
 		<fieldset class="fieldset">
-			<legend class="fieldset-legend">Group</legend>
+			<legend class="fieldset-legend">{t('common.group')}</legend>
 			<select class="select w-full" bind:value={form.group_id} required>
 				{#each groups as group}
 					<option value={group.id}>{group.name}</option>
 				{/each}
 			</select>
 		</fieldset>
-		<button type="submit" disabled={loading} class="btn btn-primary ml-auto mt-2">
+		<button type="submit" disabled={loading} class="btn btn-primary mt-2 ml-auto">
 			{#if loading}
 				<span class="loading loading-spinner loading-sm"></span>
 			{/if}
-			<span> Submit </span>
+			<span> {t('common.submit')} </span>
 		</button>
 	</form>
 {:else}
 	<form onsubmit={handleContinue} class="flex flex-col">
 		<fieldset class="fieldset">
-			<legend class="fieldset-legend">Select a link</legend>
+			<legend class="fieldset-legend">{t('feed.import.manually.link_candidates.label')}</legend>
 			{#each linkCandidate as l, index}
 				<label class="fieldset-label">
 					<input
@@ -126,6 +125,6 @@
 				</label>
 			{/each}
 		</fieldset>
-		<button type="submit" class="btn btn-primary ml-auto mt-4">Confirm</button>
+		<button type="submit" class="btn btn-primary mt-4 ml-auto">{t('common.confirm')}</button>
 	</form>
 {/if}
