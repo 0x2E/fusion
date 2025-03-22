@@ -1,17 +1,12 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { allGroups, createGroup, deleteGroup, updateGroup } from '$lib/api/group';
-	import type { Group } from '$lib/api/model';
-	import { onMount } from 'svelte';
+	import { createGroup, deleteGroup, updateGroup } from '$lib/api/group';
+	import { globalState } from '$lib/state.svelte';
 	import { toast } from 'svelte-sonner';
 	import Section from './Section.svelte';
 
 	let newGroup = $state('');
-	let existingGroups: Group[] = $state([]);
-	onMount(async () => {
-		const resp = await allGroups();
-		existingGroups = resp;
-	});
+	const existingGroups = $derived(globalState.groups);
 
 	async function handleAddNew() {
 		try {
