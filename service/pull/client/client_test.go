@@ -235,6 +235,130 @@ func TestFeedClientFetchTitle(t *testing.T) {
 	}
 }
 
+func TestFeedClientFetchDeclaredLink(t *testing.T) {
+	for _, tt := range []struct {
+		description        string
+		httpRespBody       string
+		httpStatusCode     int
+		httpErr            error
+		httpBodyReadErrMsg string
+		expectedLink       string
+		expectedErrMsg     string
+	}{
+		{
+			description: "fetch declared link succeeds when HTTP request and RSS parse succeed",
+			httpRespBody: `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Test Feed Title</title>
+    <atom:link href="https://example.com/declared-feed.xml" rel="self" type="application/rss+xml" xmlns:atom="http://www.w3.org/2005/Atom"/>
+    <item>
+      <title>Test Item</title>
+      <link>https://example.com/item</link>
+    </item>
+  </channel>
+</rss>`,
+			httpStatusCode:     http.StatusOK,
+			httpErr:            nil,
+			httpBodyReadErrMsg: "",
+			expectedLink:       "https://example.com/declared-feed.xml",
+			expectedErrMsg:     "",
+		},
+		{
+			description: "fetch declared link from RSS 2.0 feed with standard link element",
+			httpRespBody: `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Test Feed Title</title>
+    <link>http://rss2.example.com/</link>
+    <description>A dummy RSS news feed.</description>
+    <item>
+      <title>Test Item</title>
+      <link>http://rss2.example.com/article1</link>
+    </item>
+  </channel>
+</rss>`,
+			httpStatusCode:     http.StatusOK,
+			httpErr:            nil,
+			httpBodyReadErrMsg: "",
+			expectedLink:       "http://rss2.example.com/",
+			expectedErrMsg:     "",
+		},
+		{
+			description: "fetch declared link returns empty string when feed has no link",
+			httpRespBody: `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Test Feed Title</title>
+    <item>
+      <title>Test Item</title>
+      <link>https://example.com/item</link>
+    </item>
+  </channel>
+</rss>`,
+			httpStatusCode:     http.StatusOK,
+			httpErr:            nil,
+			httpBodyReadErrMsg: "",
+			expectedLink:       "",
+			expectedErrMsg:     "",
+		},
+		{
+			description:        "fetch declared link fails when HTTP request returns connection error",
+			httpRespBody:       "",
+			httpStatusCode:     0, // No status code since request errors
+			httpErr:            errors.New("dummy connection refused error"),
+			httpBodyReadErrMsg: "",
+			expectedLink:       "",
+			expectedErrMsg:     "dummy connection refused error",
+		},
+		{
+			description:        "fetch declared link fails when HTTP response body cannot be read",
+			httpRespBody:       "",
+			httpStatusCode:     http.StatusOK,
+			httpErr:            nil,
+			httpBodyReadErrMsg: "mock body read error",
+			expectedLink:       "",
+			expectedErrMsg:     "mock body read error",
+		},
+	} {
+		t.Run(tt.description, func(t *testing.T) {
+			body := &mockReadCloser{
+				result: tt.httpRespBody,
+				errMsg: tt.httpBodyReadErrMsg,
+			}
+
+			httpClient := &mockHTTPClient{
+				resp: &http.Response{
+					StatusCode: tt.httpStatusCode,
+					Status:     http.StatusText(tt.httpStatusCode),
+					Body:       body,
+				},
+				err: tt.httpErr,
+			}
+
+			// The feedURL and options don't matter in the test because we're mocking
+			// out the HTTP functionality, but we just need to make sure the HTTP
+			// client receives the right values.
+			feedURL := "https://dummy.example.com/rss"
+			options := model.FeedRequestOptions{}
+
+			actualLink, actualErr := client.NewFeedClientWithRequestFn(httpClient.Get).FetchDeclaredLink(context.Background(), feedURL, options)
+
+			if tt.expectedErrMsg != "" {
+				require.Error(t, actualErr)
+				require.Contains(t, actualErr.Error(), tt.expectedErrMsg)
+			} else {
+				require.NoError(t, actualErr)
+			}
+
+			assert.Equal(t, tt.expectedLink, actualLink)
+
+			assert.Equal(t, feedURL, httpClient.lastFeedURL, "Incorrect feed URL used")
+			assert.Equal(t, options, *httpClient.lastOptions, "Incorrect HTTP request options")
+		})
+	}
+}
+
 func TestFeedClientFetchItems(t *testing.T) {
 	for _, tt := range []struct {
 		description        string
