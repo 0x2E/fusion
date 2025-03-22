@@ -1,4 +1,11 @@
+import de from './langs/de';
 import en from './langs/en';
+import es from './langs/es';
+import fr from './langs/fr';
+import pt from './langs/pt';
+import ptBR from './langs/pt-BR';
+import ru from './langs/ru';
+import sv from './langs/sv';
 import zhHans from './langs/zh-Hans';
 import zhHant from './langs/zh-Hant';
 
@@ -11,7 +18,14 @@ export type Translation = {
 export const languages = [
 	{ id: 'en', name: 'English', translation: en },
 	{ id: 'zh-Hans', name: '简体中文', translation: zhHans },
-	{ id: 'zh-Hant', name: '繁體中文', translation: zhHant }
+	{ id: 'zh-Hant', name: '繁體中文', translation: zhHant },
+	{ id: 'fr', name: 'Français', translation: fr },
+	{ id: 'es', name: 'Español', translation: es },
+	{ id: 'sv', name: 'Svenska', translation: sv },
+	{ id: 'ru', name: 'Русский', translation: ru },
+	{ id: 'de', name: 'Deutsch', translation: de },
+	{ id: 'pt', name: 'Português', translation: pt },
+	{ id: 'pt-BR', name: 'Português do Brasil', translation: ptBR }
 ] as const;
 
 export type Language = (typeof languages)[number]['id'];
@@ -26,9 +40,9 @@ export function getCurrentLanguage(): Language {
 	}
 
 	// get the language from the browser
+	const browserLang = navigator.language;
 
 	// Chinese
-	const browserLang = navigator.language;
 	if (browserLang.startsWith('zh')) {
 		if (browserLang.includes('Hans') || browserLang === 'zh-CN') {
 			return 'zh-Hans';
@@ -38,6 +52,39 @@ export function getCurrentLanguage(): Language {
 		}
 		// fallback
 		return 'zh-Hans';
+	}
+
+	// French
+	if (browserLang.startsWith('fr')) {
+		return 'fr';
+	}
+
+	// Spanish
+	if (browserLang.startsWith('es')) {
+		return 'es';
+	}
+
+	// Swedish
+	if (browserLang.startsWith('sv')) {
+		return 'sv';
+	}
+
+	// Russian
+	if (browserLang.startsWith('ru')) {
+		return 'ru';
+	}
+
+	// German
+	if (browserLang.startsWith('de')) {
+		return 'de';
+	}
+
+	// Portuguese
+	if (browserLang.startsWith('pt')) {
+		if (browserLang === 'pt-BR') {
+			return 'pt-BR';
+		}
+		return 'pt';
 	}
 
 	// fallback
