@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/pkg/httpx"
 	"github.com/0x2e/fusion/pkg/logx"
 	"github.com/PuerkitoBio/goquery"
@@ -15,7 +16,7 @@ import (
 func tryPageSource(ctx context.Context, link string) ([]FeedLink, error) {
 	logger := logx.LoggerFromContext(ctx)
 
-	resp, err := httpx.FusionRequest(ctx, link, nil)
+	resp, err := httpx.FusionRequest(ctx, link, model.FeedRequestOptions{})
 	if err != nil {
 		return nil, err
 	}
