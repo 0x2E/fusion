@@ -5,9 +5,10 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/mmcdole/gofeed"
+
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/service/pull/client"
-	"github.com/mmcdole/gofeed"
 )
 
 func tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink, error) {
