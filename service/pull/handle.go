@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/pkg/ptr"
 	"github.com/0x2e/fusion/service/pull/client"
 )
 
@@ -31,29 +30,12 @@ func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
 		}
 	}
 
-	result, err := client.NewFeedClient().FetchItems(ctx, *f.Link, f.FeedRequestOptions)
-	if err != nil {
-		p.feedRepo.Update(f.ID, &model.Feed{Failure: ptr.To(err.Error())})
-		return err
+	repo := defaultSingleFeedRepo{
+		feedID:   f.ID,
+		feedRepo: p.feedRepo,
+		itemRepo: p.itemRepo,
 	}
-	isLatestBuild := f.LastBuild != nil && result.LastBuild != nil &&
-		result.LastBuild.Equal(*f.LastBuild)
-	if len(result.Items) != 0 && !isLatestBuild {
-
-		// Set the correct feed ID for all items.
-		for _, item := range result.Items {
-			item.FeedID = f.ID
-		}
-
-		if err := p.itemRepo.Insert(result.Items); err != nil {
-			return err
-		}
-	}
-	logger.Infof("fetched %d items", len(result.Items))
-	return p.feedRepo.Update(f.ID, &model.Feed{
-		LastBuild: result.LastBuild,
-		Failure:   ptr.To(""),
-	})
+	return NewSingleFeedPuller(client.NewFeedClient().FetchItems, &repo).Pull(ctx, f)
 }
 
 // FeedUpdateAction represents the action to take when considering checking a
