@@ -52,7 +52,7 @@ export function getTranslation(): Translation {
 
 export function t(key: TranslationKey, params?: Record<string, any>): string {
 	const translations = getTranslation();
-	let text = translations[key];
+	let text = translations[key] ?? en[key];
 
 	if (params) {
 		Object.entries(params).forEach(([paramKey, value]) => {
