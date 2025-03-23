@@ -8,7 +8,7 @@ import (
 	"github.com/0x2e/fusion/model"
 )
 
-var globalClient = NewClient()
+var globalClient = newClient()
 
 func FusionRequest(ctx context.Context, link string, options model.FeedRequestOptions) (*http.Response, error) {
 	client := globalClient
@@ -24,7 +24,7 @@ func FusionRequest(ctx context.Context, link string, options model.FeedRequestOp
 		if err != nil {
 			return nil, err
 		}
-		client = NewClient(func(transport *http.Transport) {
+		client = newClient(func(transport *http.Transport) {
 			transport.Proxy = http.ProxyURL(proxyURL)
 		})
 	}
