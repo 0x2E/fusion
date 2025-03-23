@@ -21,6 +21,8 @@ func CalculateBackoffTime(consecutiveFailures uint) time.Duration {
 	intervalMinutes := float64(interval.Minutes())
 	backoffMinutes := intervalMinutes * math.Pow(1.8, float64(consecutiveFailures))
 
+	// floats go to Inf if the number is too large to represent in a float type,
+	// so check that it's not +/- Inf.
 	if math.IsInf(backoffMinutes, 0) || backoffMinutes > maxBackoff.Minutes() {
 		return maxBackoff
 	}
