@@ -22,19 +22,18 @@ type Feed struct {
 	Link *string `gorm:"link;not null;uniqueIndex:idx_link"`
 	// LastBuild is the last time the content of the feed changed
 	LastBuild *time.Time `gorm:"last_build"`
-	// Failure is the reason of failure. If it is not null or empty, the fetch processor
-	// should skip this feed
-	Failure   *string `gorm:"failure;default:''"`
-	Suspended *bool   `gorm:"suspended;default:false"`
+	// Failure is the error message for the last fetch.
+	Failure *string `gorm:"failure;default:''"`
+	// ConsecutiveFailures is the number of consecutive times we've failed to
+	// retrieve this feed.
+	ConsecutiveFailures uint `gorm:"consecutive_failures;default:0"`
+
+	Suspended *bool `gorm:"suspended;default:false"`
 
 	FeedRequestOptions
 
 	GroupID uint
 	Group   Group
-}
-
-func (f Feed) IsFailed() bool {
-	return f.Failure != nil && *f.Failure != ""
 }
 
 func (f Feed) IsSuspended() bool {

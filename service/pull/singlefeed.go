@@ -57,14 +57,21 @@ func (r *defaultSingleFeedRepo) InsertItems(items []*model.Item) error {
 
 func (r *defaultSingleFeedRepo) RecordSuccess(lastBuild *time.Time) error {
 	return r.feedRepo.Update(r.feedID, &model.Feed{
-		LastBuild: lastBuild,
-		Failure:   ptr.To(""),
+		LastBuild:           lastBuild,
+		Failure:             ptr.To(""),
+		ConsecutiveFailures: 0,
 	})
 }
 
 func (r *defaultSingleFeedRepo) RecordFailure(readErr error) error {
+	feed, err := r.feedRepo.Get(r.feedID)
+	if err != nil {
+		return err
+	}
+
 	return r.feedRepo.Update(r.feedID, &model.Feed{
-		Failure: ptr.To(readErr.Error()),
+		Failure:             ptr.To(readErr.Error()),
+		ConsecutiveFailures: feed.ConsecutiveFailures + 1,
 	})
 }
 

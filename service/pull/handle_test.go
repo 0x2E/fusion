@@ -1,6 +1,7 @@
 package pull_test
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -39,28 +40,6 @@ func TestDecideFeedUpdateAction(t *testing.T) {
 			expectedSkipReason: &pull.SkipReasonSuspended,
 		},
 		{
-			description: "failed feed should skip update",
-			currentTime: parseTime("2025-01-01T12:00:00Z"),
-			feed: model.Feed{
-				Failure:   ptr.To("dummy previous error"),
-				Suspended: ptr.To(false),
-				UpdatedAt: parseTime("2025-01-01T12:00:00Z"),
-			},
-			expectedAction:     pull.ActionSkipUpdate,
-			expectedSkipReason: &pull.SkipReasonLastUpdateFailed,
-		},
-		{
-			description: "recently updated feed should skip update",
-			currentTime: parseTime("2025-01-01T12:00:00Z"),
-			feed: model.Feed{
-				Failure:   ptr.To(""),
-				Suspended: ptr.To(false),
-				UpdatedAt: parseTime("2025-01-01T11:45:00Z"), // 15 minutes before current time
-			},
-			expectedAction:     pull.ActionSkipUpdate,
-			expectedSkipReason: &pull.SkipReasonTooSoon,
-		},
-		{
 			description: "feed should be updated when conditions are met",
 			currentTime: parseTime("2025-01-01T12:00:00Z"),
 			feed: model.Feed{
@@ -89,6 +68,78 @@ func TestDecideFeedUpdateAction(t *testing.T) {
 				Failure:   ptr.To(""),
 				Suspended: nil,
 				UpdatedAt: parseTime("2025-01-01T11:15:00Z"), // 45 minutes before current time
+			},
+			expectedAction:     pull.ActionFetchUpdate,
+			expectedSkipReason: nil,
+		},
+		{
+			description: "failed feed with 1 consecutive failure should skip update before 54 minutes",
+			currentTime: parseTime("2025-01-01T12:00:00Z"),
+			feed: model.Feed{
+				Failure:             ptr.To("dummy previous error"),
+				Suspended:           ptr.To(false),
+				UpdatedAt:           parseTime("2025-01-01T11:15:00Z"), // 45 minutes before current time
+				ConsecutiveFailures: 1,
+			},
+			expectedAction:     pull.ActionSkipUpdate,
+			expectedSkipReason: &pull.SkipReasonCoolingOff,
+		},
+		{
+			description: "failed feed with 1 consecutive failure should be updated after 54 minutes",
+			currentTime: parseTime("2025-01-01T12:00:00Z"),
+			feed: model.Feed{
+				Failure:             ptr.To("dummy previous error"),
+				Suspended:           ptr.To(false),
+				UpdatedAt:           parseTime("2025-01-01T11:06:00Z"), // 54 minutes before current time
+				ConsecutiveFailures: 1,
+			},
+			expectedAction:     pull.ActionFetchUpdate,
+			expectedSkipReason: nil,
+		},
+		{
+			description: "failed feed with 3 consecutive failures should skip update for 174 minutes",
+			currentTime: parseTime("2025-01-01T12:00:00Z"),
+			feed: model.Feed{
+				Failure:             ptr.To("dummy previous error"),
+				Suspended:           ptr.To(false),
+				UpdatedAt:           parseTime("2025-01-01T09:10:00Z"), // 170 minutes before current time
+				ConsecutiveFailures: 3,
+			},
+			expectedAction:     pull.ActionSkipUpdate,
+			expectedSkipReason: &pull.SkipReasonCoolingOff,
+		},
+		{
+			description: "failed feed with 3 consecutive failures should be updated after 174 minutes",
+			currentTime: parseTime("2025-01-01T12:00:00Z"),
+			feed: model.Feed{
+				Failure:             ptr.To("dummy previous error"),
+				Suspended:           ptr.To(false),
+				UpdatedAt:           parseTime("2025-01-01T09:06:00Z"), // 174 minutes before current time
+				ConsecutiveFailures: 3,
+			},
+			expectedAction:     pull.ActionFetchUpdate,
+			expectedSkipReason: nil,
+		},
+		{
+			description: "failed feed with many consecutive failures should not exceed maximum wait time of 7 days",
+			currentTime: parseTime("2025-01-01T12:00:00Z"),
+			feed: model.Feed{
+				Failure:             ptr.To("dummy previous error"),
+				Suspended:           ptr.To(false),
+				UpdatedAt:           parseTime("2024-12-30T12:00:00Z"), // 2 days before current time
+				ConsecutiveFailures: 10,
+			},
+			expectedAction:     pull.ActionSkipUpdate,
+			expectedSkipReason: &pull.SkipReasonCoolingOff,
+		},
+		{
+			description: "failed feed with many consecutive failures should be updated after maximum wait time of 7 days",
+			currentTime: parseTime("2025-01-01T12:00:00Z"),
+			feed: model.Feed{
+				Failure:             ptr.To("dummy previous error"),
+				Suspended:           ptr.To(false),
+				UpdatedAt:           parseTime("2024-12-25T12:00:00Z"), // 7 days before current time
+				ConsecutiveFailures: math.MaxUint,
 			},
 			expectedAction:     pull.ActionFetchUpdate,
 			expectedSkipReason: nil,
