@@ -43,10 +43,10 @@ type mockHTTPClient struct {
 	lastOptions *model.FeedRequestOptions
 }
 
-func (m *mockHTTPClient) Get(ctx context.Context, link string, options *model.FeedRequestOptions) (*http.Response, error) {
+func (m *mockHTTPClient) Get(ctx context.Context, link string, options model.FeedRequestOptions) (*http.Response, error) {
 	// Store the last feed URL and options for assertions.
 	m.lastFeedURL = link
-	m.lastOptions = options
+	m.lastOptions = &options
 
 	if m.err != nil {
 		return nil, m.err

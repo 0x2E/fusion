@@ -10,7 +10,7 @@ import (
 
 var globalClient = newClient()
 
-func FusionRequest(ctx context.Context, link string, options *model.FeedRequestOptions) (*http.Response, error) {
+func FusionRequest(ctx context.Context, link string, options model.FeedRequestOptions) (*http.Response, error) {
 	client := globalClient
 	req, err := http.NewRequestWithContext(ctx, "GET", link, nil)
 	if err != nil {
@@ -19,16 +19,14 @@ func FusionRequest(ctx context.Context, link string, options *model.FeedRequestO
 	req.Close = true
 	req.Header.Add("User-Agent", "fusion/1.0")
 
-	if options != nil {
-		if options.ReqProxy != nil && *options.ReqProxy != "" {
-			proxyURL, err := url.Parse(*options.ReqProxy)
-			if err != nil {
-				return nil, err
-			}
-			client = newClient(func(transport *http.Transport) {
-				transport.Proxy = http.ProxyURL(proxyURL)
-			})
+	if options.ReqProxy != nil && *options.ReqProxy != "" {
+		proxyURL, err := url.Parse(*options.ReqProxy)
+		if err != nil {
+			return nil, err
 		}
+		client = newClient(func(transport *http.Transport) {
+			transport.Proxy = http.ProxyURL(proxyURL)
+		})
 	}
 
 	return client.Do(req)
