@@ -13,8 +13,8 @@ const lang = {
 	'common.logout': 'Terminar sessão',
 
 	// common words
-	'common.unread': 'Não lido',
-	'common.bookmark': 'Favorito',
+	'common.unread': 'Não lidos',
+	'common.bookmark': 'Favoritos',
 	'common.all': 'Todos',
 	'common.feeds': 'Feeds',
 	'common.group': 'Grupo',

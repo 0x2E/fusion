@@ -114,6 +114,6 @@ export function setLanguage(langId: Language): void {
 	localStorage.setItem(LANGUAGE_STORAGE_KEY, langId);
 }
 
-export function getAvailableLanguages() {
+export function getAvailableLanguages(): { id: Language; name: string }[] {
 	return languages.map(({ id, name }) => ({ id, name }));
 }

@@ -13,8 +13,8 @@ const lang = {
 	'common.logout': 'Sair',
 
 	// common words
-	'common.unread': 'Não lido',
-	'common.bookmark': 'Favorito',
+	'common.unread': 'Não lidos',
+	'common.bookmark': 'Favoritos',
 	'common.all': 'Todos',
 	'common.feeds': 'Feeds',
 	'common.group': 'Grupo',
@@ -34,9 +34,9 @@ const lang = {
 
 	// feed
 	'feed.refresh': 'Atualizar Feed',
-	'feed.refresh.all': 'Atualizar Todos os Feeds',
+	'feed.refresh.all': 'Atualizar todos os Feeds',
 	'feed.refresh.all.confirm':
-		'Tem certeza que deseja atualizar todos os feeds exceto os suspensos?',
+		'Tem certeza que deseja atualizar todos os feeds, com exceção dos suspensos?',
 	'feed.refresh.all.run_in_background': 'Iniciar atualização em segundo plano',
 	'feed.refresh.resume': 'Retomar atualização',
 	'feed.refresh.suspend': 'Suspender atualização',
@@ -48,7 +48,8 @@ const lang = {
 	'feed.import.manually': 'Manualmente',
 	'feed.import.manually.link.description':
 		'Pode ser o link RSS ou o link do site. O servidor tentará localizar automaticamente o feed RSS. O feed existente com o mesmo link será substituído.',
-	'feed.import.manually.name.description': 'Opcional. Deixe em branco para nomeação automática.',
+	'feed.import.manually.name.description':
+		'Opcional. Deixe em branco para definir o nome automaticamente.',
 	'feed.import.manually.link_candidates.label': 'Selecione um link',
 	'feed.import.opml': 'Importar OPML',
 	'feed.import.opml.file.label': 'Escolha um arquivo OPML',
@@ -64,7 +65,7 @@ const lang = {
 		'O feed existente com o mesmo link será substituído.',
 
 	// item
-	'item.search.placeholder': 'Buscar no título e conteúdo',
+	'item.search.placeholder': 'Buscar no título e no conteúdo',
 	'item.mark_all_as_read': 'Marcar tudo como lido',
 	'item.mark_as_read': 'Marcar como lido',
 	'item.mark_as_unread': 'Marcar como não lido',

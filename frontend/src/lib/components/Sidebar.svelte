@@ -57,7 +57,6 @@
 
 		try {
 			await logout();
-			toast.success('Bye!');
 			await goto('/login');
 		} catch {
 			toast.error(t('auth.logout.failed_message'));
