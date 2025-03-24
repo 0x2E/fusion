@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { page } from '$app/state';
 	import { updateBookmark } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
 	import { t } from '$lib/i18n';
@@ -16,7 +17,7 @@
 		e.preventDefault();
 		try {
 			await updateBookmark(data.id, !data.bookmark);
-			invalidateAll();
+			invalidate('page:' + page.url.pathname);
 		} catch (e) {
 			toast.error((e as Error).message);
 		}

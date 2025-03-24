@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { listItems } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
 	import { defaultPageSize } from '$lib/consts';
@@ -76,7 +77,9 @@
 			currentItemIndex = indexBackup;
 			return;
 		}
-		goto('/items/' + next.id, { invalidateAll: true });
+		goto('/items/' + next.id, {
+			invalidate: ['page:' + page.url.pathname]
+		});
 	}
 </script>
 

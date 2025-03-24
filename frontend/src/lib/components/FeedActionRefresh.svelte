@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
 	import { refreshFeeds } from '$lib/api/feed';
 	import type { Feed } from '$lib/api/model';
 	import { t } from '$lib/i18n';
@@ -21,14 +20,12 @@
 		}
 		toast.promise(refreshFeeds({ id: feed?.id, all: all }), {
 			success: () => {
-				invalidateAll();
 				if (all) {
 					return t('feed.refresh.all.run_in_background');
 				}
 				return t('state.success');
 			},
 			error: (e) => {
-				invalidateAll();
 				console.log(e);
 				return String(e);
 			}
