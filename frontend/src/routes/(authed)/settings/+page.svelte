@@ -12,7 +12,7 @@
 		label: string;
 		hash: string;
 	}[] = [
-		{ label: t('settigns.global_actions'), hash: '#global-actions' },
+		{ label: t('settings.global_actions'), hash: '#global-actions' },
 		{ label: t('settings.appearance'), hash: '#appearance' },
 		{ label: t('common.groups'), hash: '#groups' }
 	];
