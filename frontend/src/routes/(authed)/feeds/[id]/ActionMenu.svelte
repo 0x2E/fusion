@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, invalidate, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 	import { deleteFeed, updateFeed, type FeedUpdateForm } from '$lib/api/feed';
 	import type { Feed } from '$lib/api/model';
 	import { t } from '$lib/i18n';
@@ -32,10 +33,10 @@
 				suspended: !feed.suspended
 			});
 			toast.success(t('state.success'));
+			invalidate('page:' + page.url.pathname);
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
-		invalidateAll();
 	}
 
 	async function handleDelete() {
@@ -47,7 +48,6 @@
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
-		invalidateAll();
 	}
 
 	async function handleUpdate(e: Event) {
@@ -55,12 +55,11 @@
 		toast.promise(updateFeed(feed.id, settingsForm), {
 			loading: 'Updating',
 			success: () => {
-				invalidateAll();
+				invalidate('page:' + page.url.pathname);
 				settingsModal?.close();
 				return t('state.success');
 			},
 			error: (e) => {
-				invalidateAll();
 				return (e as Error).message;
 			}
 		});

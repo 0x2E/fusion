@@ -39,7 +39,7 @@
 		filter.page = pageNumber;
 		const url = page.url;
 		applyFilterToURL(url, filter);
-		await goto(url, { invalidateAll: true });
+		await goto(url, { invalidate: ['page:' + page.url.pathname] });
 	}
 </script>
 
