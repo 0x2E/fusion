@@ -19,6 +19,7 @@
 	}
 
 	async function handleExportAllFeeds() {
+		// we don't use the gloabl state here because we need the latest data
 		const groups = await allGroups();
 		const feeds = await listFeeds();
 		const data = groups.map((g) => {

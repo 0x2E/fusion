@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { deleteFeed, updateFeed, type FeedUpdateForm } from '$lib/api/feed';
-	import { allGroups } from '$lib/api/group';
-	import type { Feed, Group } from '$lib/api/model';
+	import type { Feed } from '$lib/api/model';
 	import { t } from '$lib/i18n';
+	import { globalState } from '$lib/state.svelte';
 	import { Ellipsis, Pause, Settings2, Trash } from 'lucide-svelte';
-	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
@@ -25,11 +24,7 @@
 	});
 	let settingsModal = $state<HTMLDialogElement>();
 
-	let groups: Group[] = $state([]);
-	onMount(async () => {
-		const resp = await allGroups();
-		groups = resp;
-	});
+	const groups = $derived(globalState.groups);
 
 	async function handleToggleSuspended() {
 		try {

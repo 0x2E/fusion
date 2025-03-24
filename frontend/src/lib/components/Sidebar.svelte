@@ -19,8 +19,8 @@
 	import ThemeController from './ThemeController.svelte';
 
 	interface Props {
-		feeds: Feed[];
-		groups: Group[];
+		feeds: Promise<Feed[]>;
+		groups: Promise<Group[]>;
 	}
 
 	let { feeds, groups }: Props = $props();
@@ -104,39 +104,47 @@
 
 		<ul class="menu w-full">
 			<li class="menu-title">{t('common.feeds')}</li>
-			{#each groups as group, index}
-				<li>
-					<details open={index === 0}>
-						<summary class="overflow-hidden">
-							<span class="line-clamp-1">{group.name}</span>
-						</summary>
-						<ul>
-							{#each feeds
-								.filter((v) => v.group.id === group.id)
-								.sort((a, b) => a.name.localeCompare(b.name)) as feed}
-								{@const textColor = feed.suspended
-									? 'text-neutral-content/60'
-									: feed.failure
-										? 'text-error'
-										: ''}
-								<li>
-									<a
-										href="/feeds/{feed.id}"
-										class={isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''}
-									>
-										<div class="avatar">
-											<div class="size-4 rounded-full">
-												<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
-											</div>
-										</div>
-										<span class={`line-clamp-1  ${textColor}`}>{feed.name}</span>
-									</a>
-								</li>
-							{/each}
-						</ul>
-					</details>
-				</li>
-			{/each}
+			{#await groups}
+				<div class="skeleton bg-base-300 h-10"></div>
+			{:then data}
+				{#each data as group, index}
+					<li>
+						<details open={index === 0}>
+							<summary class="overflow-hidden">
+								<span class="line-clamp-1">{group.name}</span>
+							</summary>
+							<ul>
+								{#await feeds}
+									<div class="skeleton bg-base-300 h-10"></div>
+								{:then data}
+									{#each data
+										.filter((v) => v.group.id === group.id)
+										.sort((a, b) => a.name.localeCompare(b.name)) as feed}
+										{@const textColor = feed.suspended
+											? 'text-neutral-content/60'
+											: feed.failure
+												? 'text-error'
+												: ''}
+										<li>
+											<a
+												href="/feeds/{feed.id}"
+												class={isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''}
+											>
+												<div class="avatar">
+													<div class="size-4 rounded-full">
+														<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
+													</div>
+												</div>
+												<span class={`line-clamp-1  ${textColor}`}>{feed.name}</span>
+											</a>
+										</li>
+									{/each}
+								{/await}
+							</ul>
+						</details>
+					</li>
+				{/each}
+			{/await}
 		</ul>
 	</div>
 
