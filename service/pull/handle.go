@@ -57,16 +57,22 @@ func (r FeedSkipReason) String() string {
 }
 
 var (
-	SkipReasonSuspended        = FeedSkipReason{"user suspended feed updates"}
-	SkipReasonLastUpdateFailed = FeedSkipReason{"last update failed"}
-	SkipReasonTooSoon          = FeedSkipReason{"feed was updated too recently"}
+	SkipReasonSuspended  = FeedSkipReason{"user suspended feed updates"}
+	SkipReasonCoolingOff = FeedSkipReason{"slowing down requests due to past failures to update feed"}
+	SkipReasonTooSoon    = FeedSkipReason{"feed was updated too recently"}
 )
 
 func DecideFeedUpdateAction(f *model.Feed, now time.Time) (FeedUpdateAction, *FeedSkipReason) {
 	if f.IsSuspended() {
 		return ActionSkipUpdate, &SkipReasonSuspended
-	} else if f.IsFailed() {
-		return ActionSkipUpdate, &SkipReasonLastUpdateFailed
+	} else if f.ConsecutiveFailures > 0 {
+		backoffTime := CalculateBackoffTime(f.ConsecutiveFailures)
+		timeSinceUpdate := now.Sub(f.UpdatedAt)
+		if timeSinceUpdate < backoffTime {
+			logger := pullLogger.With("feed_id", f.ID, "feed_name", f.Name)
+			logger.Infof("%d consecutive feed update failures, so next attempt is after %v", f.ConsecutiveFailures, f.UpdatedAt.Add(backoffTime).Format(time.RFC3339))
+			return ActionSkipUpdate, &SkipReasonCoolingOff
+		}
 	} else if now.Sub(f.UpdatedAt) < interval {
 		return ActionSkipUpdate, &SkipReasonTooSoon
 	}
