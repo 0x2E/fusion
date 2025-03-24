@@ -2,6 +2,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { deleteFeed, updateFeed, type FeedUpdateForm } from '$lib/api/feed';
 	import type { Feed } from '$lib/api/model';
+	import { t } from '$lib/i18n';
 	import { globalState } from '$lib/state.svelte';
 	import { Ellipsis, Pause, Settings2, Trash } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
@@ -30,7 +31,7 @@
 			await updateFeed(feed.id, {
 				suspended: !feed.suspended
 			});
-			toast.success('Update successfully');
+			toast.success(t('state.success'));
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
@@ -38,10 +39,10 @@
 	}
 
 	async function handleDelete() {
-		if (!confirm(`Are you sure you want to delete [${feed.name}]?`)) return;
+		if (!confirm(t('feed.delete.confirm'))) return;
 		try {
 			await deleteFeed(feed.id);
-			toast.success('Feed has been deleted');
+			toast.success(t('state.success'));
 			await goto('/');
 		} catch (e) {
 			toast.error((e as Error).message);
@@ -56,7 +57,7 @@
 			success: () => {
 				invalidateAll();
 				settingsModal?.close();
-				return 'Update successfully';
+				return t('state.success');
 			},
 			error: (e) => {
 				invalidateAll();
@@ -79,14 +80,14 @@
 				}}
 			>
 				<Settings2 class="size-4" />
-				<span> Settings </span>
+				<span> {t('common.settings')} </span>
 			</button>
 		</li>
 		<li>
 			<button onclick={handleToggleSuspended}>
 				<Pause class="size-4" />
 				<span>
-					{feed.suspended ? 'Resume refreshing' : 'Suspend refreshing'}
+					{feed.suspended ? t('feed.refresh.resume') : t('feed.refresh.suspend')}
 				</span>
 			</button>
 		</li>
@@ -94,7 +95,7 @@
 		<li>
 			<button onclick={handleDelete} class="text-error">
 				<Trash class="size-4" />
-				<span> Delete feed</span>
+				<span>{t('common.delete')}</span>
 			</button>
 		</li>
 	</ul>
@@ -102,18 +103,18 @@
 
 <dialog bind:this={settingsModal} class="modal modal-bottom sm:modal-middle">
 	<div class="modal-box">
-		<h3 class="text-lg font-bold">Settings</h3>
+		<h3 class="text-lg font-bold">{t('common.settings')}</h3>
 		<form class="w-full">
 			<fieldset class="fieldset">
-				<legend class="fieldset-legend">Name</legend>
+				<legend class="fieldset-legend">{t('common.name')}</legend>
 				<input type="text" class="input w-full" bind:value={settingsForm.name} required />
 			</fieldset>
 			<fieldset class="fieldset">
-				<legend class="fieldset-legend">Link</legend>
+				<legend class="fieldset-legend">{t('common.link')}</legend>
 				<input type="url" class="input w-full" bind:value={settingsForm.link} required />
 			</fieldset>
 			<fieldset class="fieldset">
-				<legend class="fieldset-legend">Group</legend>
+				<legend class="fieldset-legend">{t('common.group')}</legend>
 				<select class="select" bind:value={settingsForm.group_id} required>
 					{#each groups as group}
 						<option value={group.id}>{group.name}</option>
@@ -122,7 +123,7 @@
 			</fieldset>
 
 			<details class="mt-2">
-				<summary>Advanced</summary>
+				<summary>{t('common.advanced')}</summary>
 				<div>
 					<fieldset class="fieldset">
 						<legend class="fieldset-legend">HTTP Proxy</legend>
@@ -133,9 +134,9 @@
 		</form>
 		<div class="modal-action">
 			<form method="dialog">
-				<button class="btn btn-ghost">Cancel</button>
+				<button class="btn btn-ghost">{t('common.cancel')}</button>
 			</form>
-			<button onclick={handleUpdate} class="btn btn-primary"> Save </button>
+			<button onclick={handleUpdate} class="btn btn-primary">{t('common.save')}</button>
 		</div>
 	</div>
 	<form method="dialog" class="modal-backdrop">

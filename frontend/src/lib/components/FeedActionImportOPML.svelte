@@ -3,6 +3,7 @@
 	import { createFeed } from '$lib/api/feed';
 	import { allGroups, createGroup } from '$lib/api/group';
 	import type { Group } from '$lib/api/model';
+	import { t } from '$lib/i18n';
 	import { parse } from '$lib/opml';
 	import { Folder } from 'lucide-svelte';
 	import { onMount } from 'svelte';
@@ -38,7 +39,7 @@
 		reader.onload = (f) => {
 			const content = f.target?.result?.toString();
 			if (!content) {
-				toast.error('Failed to load file content');
+				toast.error(t('feed.import.opml.file_read_error'));
 				return;
 			}
 			parsedGroupFeeds = parse(content).filter((v) => v.feeds.length > 0);
@@ -84,7 +85,7 @@
 		}
 		importing = false;
 		if (!importLog.find((v) => v.isError)) {
-			toast.success('Imported successfully');
+			toast.success(t('state.success'));
 			doneCallback();
 		}
 		invalidateAll();
@@ -93,7 +94,7 @@
 
 <form onsubmit={handleImportFeeds} class="flex flex-col">
 	<fieldset class="fieldset">
-		<legend class="fieldset-legend">Pick a OPML file</legend>
+		<legend class="fieldset-legend">{t('feed.import.opml.file.label')}</legend>
 		<input
 			type="file"
 			bind:files={uploadedOpmls}
@@ -102,32 +103,31 @@
 			class="file-input"
 		/>
 		<p class="fieldset-label">
-			The file should be <a
+			{@html t('feed.import.opml.file.description', {
+				opml: `<a
 				href="http://opml.org/spec2.opml"
 				target="_blank"
 				class="font-medium underline">OPML</a
-			> format. You can get one from your previous RSS reader.
+			>`
+			})}
 		</p>
 	</fieldset>
 	<details>
-		<summary class="text-base-content/60 text-sm font-medium"> How it works? </summary>
+		<summary class="text-base-content/60 text-sm font-medium">
+			{t('feed.import.opml.how_it_works.title')}
+		</summary>
 		<div class="text-base-content/60 text-sm">
 			<ul class="list-inside list-disc">
 				<li>
-					Feeds will be imported into the corresponding group, which will be created automatically
-					if it does not exist.
+					{t('feed.import.opml.how_it_works.description.1')}
 				</li>
-				<li>
-					Multidimensional group will be flattened to a one-dimensional structure, using a naming
-					convention like 'a/b/c'.
-				</li>
-				<li>The existing feed with the same link will be overridden.</li>
+				<li>{t('feed.import.opml.how_it_works.description.2')}</li>
+				<li>{t('feed.import.opml.how_it_works.description.3')}</li>
 			</ul>
 		</div>
 	</details>
 	{#if parsedGroupFeeds.length > 0}
 		<div>
-			<p class="text-success text-sm">Parsed successfully.</p>
 			<div class="bg-base-200 overflow-x-auto rounded-md p-2 text-sm text-nowrap">
 				{#each parsedGroupFeeds as group}
 					<div class="flex flex-row items-center gap-1">
@@ -156,6 +156,6 @@
 		{#if importing}
 			<span class="loading loading-spinner loading-sm"></span>
 		{/if}
-		<span>Submit</span>
+		<span>{t('common.submit')}</span>
 	</button>
 </form>

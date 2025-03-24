@@ -3,6 +3,7 @@
 	import { listItems } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
 	import { defaultPageSize } from '$lib/consts';
+	import { t } from '$lib/i18n';
 	import { fullItemFilter } from '$lib/state.svelte';
 	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { onMount } from 'svelte';
@@ -70,7 +71,7 @@
 		const indexBackup = currentItemIndex;
 		const next = await getNextItem(action);
 		if (!next) {
-			toast.error('No more items');
+			toast.error(t('state.no_more_data'));
 			Object.assign(itemFilter, filterBackup);
 			currentItemIndex = indexBackup;
 			return;

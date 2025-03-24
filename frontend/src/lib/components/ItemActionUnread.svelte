@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { updateUnread } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
+	import { t } from '$lib/i18n';
 	import { CheckIcon, UndoIcon } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -21,7 +22,7 @@
 		}
 	}
 	let Icon = $derived(data.unread ? CheckIcon : UndoIcon);
-	let tooltip = $derived(data.unread ? 'Mark as Read' : 'Mark as Unread');
+	let tooltip = $derived(data.unread ? t('item.mark_as_read') : t('item.mark_as_unread'));
 </script>
 
 <div class="tooltip tooltip-bottom" data-tip={tooltip}>
