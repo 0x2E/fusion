@@ -3,7 +3,6 @@ package client_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -42,25 +41,12 @@ type mockHTTPClient struct {
 	err         error
 	lastFeedURL string
 	lastOptions *model.FeedRequestOptions
-	lastHeaders http.Header
 }
 
 func (m *mockHTTPClient) Get(ctx context.Context, link string, options model.FeedRequestOptions) (*http.Response, error) {
 	// Store the last feed URL and options for assertions.
 	m.lastFeedURL = link
 	m.lastOptions = &options
-
-	// Create a request to capture headers that would be set
-	req, _ := http.NewRequestWithContext(ctx, "GET", link, nil)
-	req.Header.Add("User-Agent", "fusion/1.0")
-
-	// Set If-Modified-Since header if LastBuild is provided
-	if options != nil && options.LastBuild != nil {
-		req.Header.Set("If-Modified-Since", options.LastBuild.Format(time.RFC1123))
-	}
-
-	// Store the headers for assertions
-	m.lastHeaders = req.Header
 
 	if m.err != nil {
 		return nil, m.err
@@ -379,7 +365,6 @@ func TestFeedClientFetchItems(t *testing.T) {
 		httpBodyReadErrMsg string
 		expectedResult     client.FetchItemsResult
 		expectedErrMsg     string
-		expectedHeaders    map[string]string
 	}{
 		{
 			description: "fetch succeeds with no LastBuild when feed has no updated time",
@@ -407,8 +392,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 					},
 				},
 			},
-			expectedErrMsg:  "",
-			expectedHeaders: map[string]string{},
+			expectedErrMsg: "",
 		},
 		{
 			description: "fetch succeeds and populates LastBuild from RSS lastBuildDate",
@@ -437,8 +421,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 					},
 				},
 			},
-			expectedErrMsg:  "",
-			expectedHeaders: map[string]string{},
+			expectedErrMsg: "",
 		},
 		{
 			description: "fetch succeeds and populates LastBuild from Atom updated",
@@ -465,8 +448,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 					},
 				},
 			},
-			expectedErrMsg:  "",
-			expectedHeaders: map[string]string{},
+			expectedErrMsg: "",
 		},
 		{
 			description: "fetch succeeds with different timezone in lastBuildDate",
@@ -495,8 +477,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 					},
 				},
 			},
-			expectedErrMsg:  "",
-			expectedHeaders: map[string]string{},
+			expectedErrMsg: "",
 		},
 		{
 			description: "fetch succeeds with non-standard time format",
@@ -525,8 +506,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 					},
 				},
 			},
-			expectedErrMsg:  "",
-			expectedHeaders: map[string]string{},
+			expectedErrMsg: "",
 		},
 		{
 			description: "fetch succeeds with default behavior when options are nil",
@@ -555,8 +535,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 					},
 				},
 			},
-			expectedErrMsg:  "",
-			expectedHeaders: map[string]string{},
+			expectedErrMsg: "",
 		},
 		{
 			description: "fetch succeeds when using configured proxy server",
@@ -587,8 +566,7 @@ func TestFeedClientFetchItems(t *testing.T) {
 					},
 				},
 			},
-			expectedErrMsg:  "",
-			expectedHeaders: map[string]string{},
+			expectedErrMsg: "",
 		},
 		{
 			description:        "fetch fails when HTTP request returns connection error",
@@ -600,7 +578,6 @@ func TestFeedClientFetchItems(t *testing.T) {
 			httpBodyReadErrMsg: "",
 			expectedResult:     client.FetchItemsResult{},
 			expectedErrMsg:     "connection refused",
-			expectedHeaders:    map[string]string{},
 		},
 		{
 			description:        "fetch fails when HTTP response has non-200 status code",
@@ -612,7 +589,6 @@ func TestFeedClientFetchItems(t *testing.T) {
 			httpBodyReadErrMsg: "",
 			expectedResult:     client.FetchItemsResult{},
 			expectedErrMsg:     "got status code 404",
-			expectedHeaders:    map[string]string{},
 		},
 		{
 			description:        "fetch fails when HTTP response body cannot be read",
@@ -624,7 +600,6 @@ func TestFeedClientFetchItems(t *testing.T) {
 			httpBodyReadErrMsg: "mock body read error",
 			expectedResult:     client.FetchItemsResult{},
 			expectedErrMsg:     "mock body read error",
-			expectedHeaders:    map[string]string{},
 		},
 		{
 			description: "fetch fails when RSS content cannot be parsed",
@@ -641,41 +616,6 @@ func TestFeedClientFetchItems(t *testing.T) {
 			httpBodyReadErrMsg: "",
 			expectedResult:     client.FetchItemsResult{},
 			expectedErrMsg:     "Failed to detect feed type",
-			expectedHeaders:    map[string]string{},
-		},
-		{
-			description: "sets If-Modified-Since header when options.LastBuild is provided",
-			feedURL:     "https://example.com/feed.xml",
-			options: model.FeedRequestOptions{
-				LastBuild: mustParseTime("2025-03-22T15:16:17Z"),
-			},
-			httpRespBody: `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>Test Feed</title>
-    <lastBuildDate>2025-03-22T15:16:17Z</lastBuildDate>
-    <item>
-      <title>Test Item</title>
-      <link>https://example.com/item</link>
-    </item>
-  </channel>
-</rss>`,
-			httpStatusCode:     http.StatusOK,
-			httpErrMsg:         "",
-			httpBodyReadErrMsg: "",
-			expectedResult: client.FetchItemsResult{
-				LastBuild: mustParseTime("2025-03-22T15:16:17Z"),
-				Items: []*model.Item{
-					{
-						Title: ptr.To("Test Item"),
-						Link:  ptr.To("https://example.com/item"),
-					},
-				},
-			},
-			expectedErrMsg: "",
-			expectedHeaders: map[string]string{
-				"If-Modified-Since": "Sat, 22 Mar 2025 15:16:17 UTC",
-			},
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
@@ -726,9 +666,6 @@ func TestFeedClientFetchItems(t *testing.T) {
 
 			assert.Equal(t, tt.feedURL, httpClient.lastFeedURL, "Incorrect feed URL used")
 			assert.Equal(t, tt.options, *httpClient.lastOptions, "Incorrect HTTP request options")
-			for headerName, expectedValue := range tt.expectedHeaders {
-				assert.Equal(t, expectedValue, httpClient.lastHeaders.Get(headerName), fmt.Sprintf("unexpected value for HTTP header %s", headerName))
-			}
 		})
 	}
 }
