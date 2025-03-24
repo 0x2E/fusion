@@ -23,6 +23,6 @@
 		<div class="py-6">
 			<h1 class="text-3xl font-bold">{t('common.unread')}</h1>
 		</div>
-		<ItemList data={data.items} />
+		<ItemList data={data.items} highlightUnread={true} />
 	</div>
 </div>

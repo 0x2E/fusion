@@ -19,6 +19,22 @@
 	}
 	let { data, highlightUnread }: Props = $props();
 
+	let loading = $state(false);
+	// make items reactive so we can display the updates without reloading the page
+	let items = $state<Item[]>([]);
+	let total = $state(0);
+	$effect(() => {
+		loading = true;
+		data
+			.then((v) => {
+				items = v.items;
+				total = v.total;
+			})
+			.finally(() => {
+				loading = false;
+			});
+	});
+
 	function timeDiff(d: Date) {
 		d = new Date(d);
 		const now = new Date();
@@ -46,7 +62,7 @@
 </script>
 
 <div>
-	{#await data}
+	{#if loading}
 		<div class="flex flex-col gap-1">
 			<div class="skeleton h-10 w-full rounded"></div>
 			<div class="skeleton h-10 w-full rounded"></div>
@@ -54,9 +70,9 @@
 			<div class="skeleton h-10 w-full rounded"></div>
 			<div class="skeleton h-10 w-full rounded"></div>
 		</div>
-	{:then data}
+	{:else}
 		<ul data-sveltekit-preload-data="hover">
-			{#each data.items as item}
+			{#each items as item, i}
 				<li class="group rounded-md">
 					<a
 						href={'/items/' + item.id}
@@ -91,9 +107,9 @@
 						<div
 							class="invisible absolute right-1 w-fit justify-end gap-2 md:group-hover:visible md:group-hover:flex"
 						>
-							<ItemActionUnread data={item} />
-							<ItemActionBookmark data={item} />
-							<ItemActionVisitLink data={item} />
+							<ItemActionUnread bind:item={items[i]} />
+							<ItemActionBookmark bind:item={items[i]} />
+							<ItemActionVisitLink {item} />
 						</div>
 					</a>
 				</li>
@@ -106,9 +122,9 @@
 			<Pagination
 				currentPage={filter.page}
 				pageSize={filter.page_size}
-				total={data.total}
+				{total}
 				onPageChange={handleChangePage}
 			/>
 		</div>
-	{/await}
+	{/if}
 </div>

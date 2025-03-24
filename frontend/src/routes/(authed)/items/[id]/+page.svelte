@@ -11,6 +11,11 @@
 
 	let { data } = $props();
 
+	let item = $state<Item>(data);
+	$effect(() => {
+		item = data;
+	});
+
 	function sanitize(content: string, baseLink: string) {
 		function joinURL(s: string | null) {
 			if (!s) return '';
@@ -87,10 +92,10 @@
 </script>
 
 <PageNavHeader title={data.title}>
-	<ItemActionGotoFeed {data} />
-	<ItemActionUnread {data} />
-	<ItemActionBookmark {data} />
-	<ItemActionVisitLink {data} />
+	<ItemActionGotoFeed {item} />
+	<ItemActionUnread bind:item />
+	<ItemActionBookmark bind:item />
+	<ItemActionVisitLink {item} />
 </PageNavHeader>
 
 <div class="relative flex w-full grow justify-around px-4 py-6">
