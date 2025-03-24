@@ -48,6 +48,8 @@ const lang = {
 	'feed.import.manually.link.description':
 		'可以是订阅源链接或网站链接。服务器将自动尝试定位订阅源。相同链接的现有订阅源将被覆盖。',
 	'feed.import.manually.name.description': '可选。留空将自动命名。',
+	'feed.import.manually.no_valid_feed_error':
+		'找不到有效的订阅源。请检查链接，或直接提交订阅源链接。',
 	'feed.import.manually.link_candidates.label': '选择一个链接',
 	'feed.import.opml': '导入 OPML',
 	'feed.import.opml.file.label': '选择 OPML 文件',

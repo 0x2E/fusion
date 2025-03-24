@@ -49,6 +49,8 @@ const lang = {
 		'Ссылка RSS или ссылка на сайт. Сервер автоматически попытается найти RSS-ленту. Существующая лента с такой же ссылкой будет перезаписана.',
 	'feed.import.manually.name.description':
 		'Опционально. Оставьте пустым для автоматического именования.',
+	'feed.import.manually.no_valid_feed_error':
+		'Действительный канал не найден. Пожалуйста, проверьте ссылку или отправьте ссылку на канал напрямую.',
 	'feed.import.manually.link_candidates.label': 'Выберите ссылку',
 	'feed.import.opml': 'Импорт OPML',
 	'feed.import.opml.file.label': 'Выберите файл OPML',

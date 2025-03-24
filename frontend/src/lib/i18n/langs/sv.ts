@@ -49,6 +49,8 @@ const lang = {
 	'feed.import.manually.link.description':
 		'Antingen RSS-länken eller webbplatslänken. Servern kommer automatiskt att försöka hitta RSS-flödet. Befintligt flöde med samma länk kommer att ersättas.',
 	'feed.import.manually.name.description': 'Valfritt. Lämna tomt för automatisk namngivning.',
+	'feed.import.manually.no_valid_feed_error':
+		'Inget giltigt flöde hittades. Kontrollera länken eller skicka en flödeslänk direkt.',
 	'feed.import.manually.link_candidates.label': 'Välj en länk',
 	'feed.import.opml': 'Importera OPML',
 	'feed.import.opml.file.label': 'Välj en OPML-fil',
