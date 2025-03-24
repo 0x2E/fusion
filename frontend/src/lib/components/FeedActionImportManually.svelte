@@ -15,6 +15,7 @@
 
 	let step = $state(1);
 	let form = $state<FeedCreateForm>({ group_id: 1, feeds: [{ name: '', link: '' }] });
+	let formError = $state('');
 	let loading = $state(false);
 	let linkCandidate: { title: string; link: string }[] = $state([]);
 	let groups: Group[] = $state([]);
@@ -29,33 +30,29 @@
 	// ];
 
 	async function handleAdd() {
+		formError = '';
 		loading = true;
-		toast.promise(checkValidity(form.feeds[0].link), {
-			loading: 'Waiting for validating and sniffing ' + form.feeds[0].link,
-			success: (resp) => {
-				loading = false;
-				if (resp.length < 1) {
-					throw new Error(
-						`No valid links were found for the RSS. Please check the link, or submit an RSS link directly`
-					);
-				}
-				if (resp.length === 1) {
-					if (!form.feeds[0].name) {
-						form.feeds[0].name = resp[0].title;
-					}
-					form.feeds[0].link = resp[0].link;
-					handleContinue();
-				} else if (resp.length > 1) {
-					linkCandidate = resp;
-					step = 2;
-				}
-				return form.feeds[0].link + ' is valid';
-			},
-			error: (error) => {
-				loading = false;
-				return `Failed to validate ${form.feeds[0].link}: ${error}`;
+		try {
+			const resp = await checkValidity(form.feeds[0].link);
+			loading = false;
+			if (resp.length < 1) {
+				throw new Error(t('feed.import.manually.no_valid_feed_error'));
 			}
-		});
+			if (resp.length === 1) {
+				if (!form.feeds[0].name) {
+					form.feeds[0].name = resp[0].title;
+				}
+				form.feeds[0].link = resp[0].link;
+				handleContinue();
+			} else if (resp.length > 1) {
+				linkCandidate = resp;
+				step = 2;
+			}
+			return;
+		} catch (e) {
+			loading = false;
+			formError = (e as Error).message;
+		}
 	}
 
 	async function handleContinue() {
@@ -64,14 +61,34 @@
 		}
 		try {
 			await createFeed(form);
-			toast.success('Feed has been created. Refreshing is running in the background');
+			toast.success(t('state.success'));
 			doneCallback();
 		} catch (e) {
-			toast.error((e as Error).message);
+			formError = (e as Error).message;
 		}
+		loading = false;
 		invalidateAll();
 	}
 </script>
+
+{#if formError}
+	<div role="alert" class="alert alert-error">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-6 w-6 shrink-0 stroke-current"
+			fill="none"
+			viewBox="0 0 24 24"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+			/>
+		</svg>
+		<span>{formError}</span>
+	</div>
+{/if}
 
 {#if step === 1}
 	<form onsubmit={handleAdd} class="flex flex-col">
