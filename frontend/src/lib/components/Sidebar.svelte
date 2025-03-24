@@ -4,6 +4,7 @@
 	import { getFavicon } from '$lib/api/favicon';
 	import { logout } from '$lib/api/login';
 	import type { Feed, Group } from '$lib/api/model';
+	import { t } from '$lib/i18n';
 	import {
 		BookmarkCheck,
 		CirclePlus,
@@ -14,7 +15,7 @@
 		type Icon
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { toggleShow } from './FeedActionAdd.svelte';
+	import { toggleShow } from './FeedActionImport.svelte';
 	import ThemeController from './ThemeController.svelte';
 
 	interface Props {
@@ -32,10 +33,10 @@
 		icon: typeof Icon;
 	};
 	const systemLinks: SystemNavLink[] = [
-		{ label: 'Unread', url: '/', icon: Inbox },
-		{ label: 'Bookmark', url: '/bookmarks', icon: BookmarkCheck },
-		{ label: 'All', url: '/all', icon: List },
-		{ label: 'Settings', url: '/settings', icon: Settings }
+		{ label: t('common.unread'), url: '/', icon: Inbox },
+		{ label: t('common.bookmark'), url: '/bookmarks', icon: BookmarkCheck },
+		{ label: t('common.all'), url: '/all', icon: List },
+		{ label: t('common.settings'), url: '/settings', icon: Settings }
 	];
 
 	function isHighlight(url: string): boolean {
@@ -50,16 +51,15 @@
 	}
 
 	async function handleLogout() {
-		if (!confirm('Are you sure you want to log out?')) {
+		if (!confirm(t('auth.logout.confirm'))) {
 			return;
 		}
 
 		try {
 			await logout();
-			toast.success('Bye');
 			await goto('/login');
 		} catch {
-			toast.error('Failed to logout.');
+			toast.error(t('auth.logout.failed_message'));
 		}
 	}
 </script>
@@ -87,7 +87,7 @@
 					class="btn btn-sm btn-ghost bg-base-100"
 				>
 					<CirclePlus class="size-4" />
-					<span>Add Feeds</span>
+					<span>{t('feed.import.title')}</span>
 				</button>
 			</li>
 		</ul>
@@ -103,7 +103,7 @@
 		</ul>
 
 		<ul class="menu w-full">
-			<li class="menu-title">Feeds</li>
+			<li class="menu-title">{t('common.feeds')}</li>
 			{#each groups as group, index}
 				<li>
 					<details open={index === 0}>
@@ -143,7 +143,7 @@
 	<div class="mt-8">
 		<button onclick={handleLogout} class="btn btn-ghost btn-sm hover:text-error mt-auto w-full">
 			<LogOut class="size-4" />
-			Logout
+			{t('common.logout')}
 		</button>
 		<p class="text-base-content/60 text-center text-xs">
 			<span>

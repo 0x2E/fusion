@@ -6,15 +6,20 @@
 </script>
 
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import type { Component } from 'svelte';
-	import FeedActionAddOne from './FeedActionAddOne.svelte';
-	import FeedActionAddOpml from './FeedActionAddOPML.svelte';
+	import FeedActionImportManually from './FeedActionImportManually.svelte';
+	import FeedActionImportOPML from './FeedActionImportOPML.svelte';
 
 	let modal = $state<HTMLDialogElement>();
 
 	const tabs: { id: string; name: string; component: Component<any> }[] = [
-		{ id: 'manually', name: 'Manually', component: FeedActionAddOne },
-		{ id: 'import_opml', name: 'Import OPML', component: FeedActionAddOpml }
+		{ id: 'manually', name: t('feed.import.manually'), component: FeedActionImportManually },
+		{
+			id: 'import_opml',
+			name: t('feed.import.opml'),
+			component: FeedActionImportOPML
+		}
 	];
 
 	let selectedTabID = $state(tabs[0].id);
@@ -36,7 +41,7 @@
 		<form method="dialog">
 			<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">✕</button>
 		</form>
-		<h3 class="text-lg font-bold">Add Feed(s)</h3>
+		<h3 class="text-lg font-bold">{t('feed.import.title')}</h3>
 		<div class="tabs tabs-box tabs-sm mt-2 w-fit">
 			{#each tabs as tab}
 				<input
