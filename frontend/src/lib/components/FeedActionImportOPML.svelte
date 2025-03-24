@@ -14,6 +14,7 @@
 	}
 
 	let { doneCallback }: Props = $props();
+	let formError = $state('');
 	let importing = $state(false);
 	let importLog = $state<{ content: string; isError?: boolean }[]>([]);
 	let parsedGroupFeeds: { name: string; feeds: { name: string; link: string }[] }[] = $state([]);
@@ -33,19 +34,23 @@
 	});
 
 	function parseOPML(opmls: FileList) {
+		formError = '';
 		if (!opmls) return;
 
-		const reader = new FileReader();
-		reader.onload = (f) => {
-			const content = f.target?.result?.toString();
-			if (!content) {
-				toast.error(t('feed.import.opml.file_read_error'));
-				return;
-			}
-			parsedGroupFeeds = parse(content).filter((v) => v.feeds.length > 0);
-			console.log(parsedGroupFeeds);
-		};
-		reader.readAsText(opmls[0]);
+		try {
+			const reader = new FileReader();
+			reader.onload = (f) => {
+				const content = f.target?.result?.toString();
+				if (!content) {
+					throw new Error(t('feed.import.opml.file_read_error'));
+				}
+				parsedGroupFeeds = parse(content).filter((v) => v.feeds.length > 0);
+				console.log(parsedGroupFeeds);
+			};
+			reader.readAsText(opmls[0]);
+		} catch (e) {
+			formError = (e as Error).message;
+		}
 	}
 
 	async function handleImportFeeds(e: Event) {
@@ -57,14 +62,15 @@
 		});
 		for (const g of parsedGroupFeeds) {
 			let groupID = existingGroups.find((v) => v.name === g.name)?.id;
+			importLog.push({ content: `=== ${g.name} ===` });
 
 			if (groupID === undefined) {
+				importLog.push({ content: `➕ ${g.name}` });
 				try {
 					groupID = (await createGroup(g.name)).id;
-					importLog.push({ content: `Created group ${g.name}` });
 				} catch (e) {
 					importLog.push({
-						content: `Failed to create group ${g.name}. error: ${(e as Error).message}`,
+						content: (e as Error).message,
 						isError: true
 					});
 					continue;
@@ -72,14 +78,13 @@
 			}
 			try {
 				await createFeed({ group_id: groupID, feeds: g.feeds });
-				g.feeds.forEach((f) => importLog.push({ content: `Imported ${f.link}` }));
+				g.feeds.forEach((f) => importLog.push({ content: `✅ ${f.link}` }));
 			} catch (e) {
-				g.feeds.forEach((f) =>
-					importLog.push({
-						content: `Failed to import ${g.name}. error: ${(e as Error).message}`,
-						isError: true
-					})
-				);
+				importLog.push({
+					content: (e as Error).message,
+					isError: true
+				});
+				g.feeds.forEach((f) => importLog.push({ content: `❌ ${f.link}`, isError: true }));
 				continue;
 			}
 		}
@@ -91,6 +96,25 @@
 		invalidateAll();
 	}
 </script>
+
+{#if formError}
+	<div role="alert" class="alert alert-error">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-6 w-6 shrink-0 stroke-current"
+			fill="none"
+			viewBox="0 0 24 24"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+			/>
+		</svg>
+		<span>{formError}</span>
+	</div>
+{/if}
 
 <form onsubmit={handleImportFeeds} class="flex flex-col">
 	<fieldset class="fieldset">

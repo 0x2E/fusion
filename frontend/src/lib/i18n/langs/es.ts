@@ -50,6 +50,8 @@ const lang = {
 		'El enlace RSS o el enlace del sitio web. El servidor intentará localizar automáticamente el feed RSS. El feed existente con el mismo enlace será reemplazado.',
 	'feed.import.manually.name.description':
 		'Opcional. Dejar en blanco para nombrar automáticamente.',
+	'feed.import.manually.no_valid_feed_error':
+		'No se encontró ningún feed válido. Por favor, verifica el enlace o envía un enlace de feed directamente.',
 	'feed.import.manually.link_candidates.label': 'Seleccionar un enlace',
 	'feed.import.opml': 'Importar OPML',
 	'feed.import.opml.file.label': 'Seleccionar un archivo OPML',

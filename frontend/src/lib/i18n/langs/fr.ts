@@ -49,6 +49,8 @@ const lang = {
 	'feed.import.manually.link.description':
 		'Soit le lien RSS, soit le lien du site web. Le serveur tentera automatiquement de localiser le flux RSS. Le flux existant avec le même lien sera remplacé.',
 	'feed.import.manually.name.description': 'Optionnel. Laissez vide pour un nommage automatique.',
+	'feed.import.manually.no_valid_feed_error':
+		"Aucun flux valide n'a été trouvé. Veuillez vérifier le lien ou soumettre directement un lien de flux.",
 	'feed.import.manually.link_candidates.label': 'Sélectionner un lien',
 	'feed.import.opml': 'Importer OPML',
 	'feed.import.opml.file.label': 'Choisir un fichier OPML',

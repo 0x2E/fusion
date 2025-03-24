@@ -49,6 +49,8 @@ const lang = {
 	'feed.import.manually.link.description':
 		'Either the RSS link or the website link. The server will automatically attempt to locate the RSS feed. The existing feed with the same link will be overridden.',
 	'feed.import.manually.name.description': 'Optional. Leave blank for automatic naming.',
+	'feed.import.manually.no_valid_feed_error':
+		'No valid feed was found. Please check the link, or submit a feed link directly.',
 	'feed.import.manually.link_candidates.label': 'Select a link',
 	'feed.import.opml': 'Import OPML',
 	'feed.import.opml.file.label': 'Pick a OPML file',

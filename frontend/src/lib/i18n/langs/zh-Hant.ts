@@ -48,6 +48,8 @@ const lang = {
 	'feed.import.manually.link.description':
 		'可輸入 RSS 連結或網站連結。伺服器將自動嘗試定位 RSS 訂閱源。具有相同連結的現有訂閱源將被覆蓋。',
 	'feed.import.manually.name.description': '選填。留空將自動命名。',
+	'feed.import.manually.no_valid_feed_error':
+		'找不到有效的訂閱源。請檢查連結，或直接提交訂閱源連結。',
 	'feed.import.manually.link_candidates.label': '選擇一個連結',
 	'feed.import.opml': '匯入 OPML',
 	'feed.import.opml.file.label': '選擇 OPML 檔案',

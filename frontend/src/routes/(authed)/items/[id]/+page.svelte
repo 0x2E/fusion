@@ -96,12 +96,8 @@
 <div class="relative flex w-full grow justify-around px-4 py-6">
 	<ItemSwitcher itemID={data.id} action="previous" />
 	<article class="w-full max-w-prose">
-		<p class="text-base-content/60 flex flex-col text-sm md:flex-row">
-			{new Date(data.pub_date).toLocaleString()}
-		</p>
-
-		<div class="prose text-wrap break-words">
-			<h1>
+		<div class="space-y-2 pb-8">
+			<h1 class="text-4xl font-bold">
 				<a
 					href={data.link}
 					target="_blank"
@@ -113,6 +109,11 @@
 					<ExternalLink class="hidden size-5 md:block" />
 				</a>
 			</h1>
+			<a href={'/feeds/' + data.feed.id} class="text-base-content/60 text-sm hover:underline">
+				{data.feed.name} | {new Date(data.pub_date).toLocaleString()}
+			</a>
+		</div>
+		<div class="prose text-wrap break-words">
 			{@html safeContent}
 		</div>
 	</article>
