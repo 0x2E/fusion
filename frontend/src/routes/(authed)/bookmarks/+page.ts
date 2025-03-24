@@ -7,7 +7,8 @@ export const load: PageLoad = async ({ url, depends }) => {
 
 	const filter = parseURLtoFilter(url.searchParams, {
 		unread: undefined,
-		bookmark: true
+		bookmark: true,
+		feed_id: undefined
 	});
 	Object.assign(fullItemFilter, filter);
 
