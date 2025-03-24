@@ -67,10 +67,6 @@
 			<h1 class="text-3xl font-bold">{feed.name}</h1>
 			<p class="text-base-content/60 text-sm">{feed.link}</p>
 		</div>
-		{#await data.items}
-			Loading...
-		{:then items}
-			<ItemList items={items.items} total={items.total} highlightUnread={true} />
-		{/await}
+		<ItemList data={data.items} highlightUnread={true} />
 	</div>
 {/await}
