@@ -57,19 +57,58 @@ func (c FeedClient) FetchDeclaredLink(ctx context.Context, feedURL string, optio
 }
 
 type FetchItemsResult struct {
-	LastBuild *time.Time
-	Items     []*model.Item
+	LastBuild    *time.Time
+	LastModified *string
+	Items        []*model.Item
 }
 
 func (c FeedClient) FetchItems(ctx context.Context, feedURL string, options model.FeedRequestOptions) (FetchItemsResult, error) {
-	feed, err := c.fetchFeed(ctx, feedURL, options)
+	resp, err := c.httpRequestFn(ctx, feedURL, options)
+	if err != nil {
+		return FetchItemsResult{}, err
+	}
+	defer resp.Body.Close()
+
+	// Handle 304 Not Modified as success when If-Modified-Since was sent
+	if resp.StatusCode == http.StatusNotModified {
+		// For 304, we return an empty result but preserve the LastModified header
+		var lastModified *string
+		if lm := resp.Header.Get("Last-Modified"); lm != "" {
+			lastModified = &lm
+		} else if options.LastModified != nil {
+			// If server didn't send a new Last-Modified header, keep using the one we sent
+			lastModified = options.LastModified
+		}
+
+		return FetchItemsResult{
+			LastModified: lastModified,
+			Items:        []*model.Item{}, // Empty items since nothing changed
+		}, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return FetchItemsResult{}, fmt.Errorf("got status code %d", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return FetchItemsResult{}, err
 	}
 
+	feed, err := gofeed.NewParser().ParseString(string(data))
+	if err != nil {
+		return FetchItemsResult{}, err
+	}
+
+	var lastModified *string
+	if lm := resp.Header.Get("Last-Modified"); lm != "" {
+		lastModified = &lm
+	}
+
 	return FetchItemsResult{
-		LastBuild: feed.UpdatedParsed,
-		Items:     ParseGoFeedItems(feed.Items),
+		LastBuild:    feed.UpdatedParsed,
+		LastModified: lastModified,
+		Items:        ParseGoFeedItems(feed.Items),
 	}, nil
 }
 
@@ -79,6 +118,12 @@ func (c FeedClient) fetchFeed(ctx context.Context, feedURL string, options model
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	// 304 Not Modified means we can't parse the feed (empty body)
+	// This is only used for metadata functions, so we should return an error
+	if resp.StatusCode == http.StatusNotModified {
+		return nil, fmt.Errorf("feed not modified (status code 304)")
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("got status code %d", resp.StatusCode)

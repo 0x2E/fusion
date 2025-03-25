@@ -35,6 +35,7 @@ type mockSingleFeedRepo struct {
 	err          error
 	items        []*model.Item
 	lastBuild    *time.Time
+	lastModified *string
 	requestError error
 }
 
@@ -46,11 +47,12 @@ func (m *mockSingleFeedRepo) InsertItems(items []*model.Item) error {
 	return nil
 }
 
-func (m *mockSingleFeedRepo) RecordSuccess(lastBuild *time.Time) error {
+func (m *mockSingleFeedRepo) RecordSuccess(lastBuild *time.Time, lastModified *string) error {
 	if m.err != nil {
 		return m.err
 	}
 	m.lastBuild = lastBuild
+	m.lastModified = lastModified
 	m.requestError = nil
 	return nil
 }
