@@ -8,14 +8,14 @@ A lightweight RSS feed aggregator and reader.
 
 Key features include:
 
-- Group, Bookmark, Search, Sniff feeds automatically
-- Import/Export OPML file
-- Support RSS, Atom, JSON types feed
-- Responsive, Light/Dark mode, PWA
-- Lightweight, Self-hosted friendly
-  - Built with Golang and SQLite, Deploy with a single binary
+- Group, bookmark, search, automatic feed sniffing, OPML file import/export
+- Support for RSS, Atom, and JSON feed types
+- Responsive, light/dark mode, PWA
+- Lightweight and self-hosted friendly
+  - Built with Golang and SQLite, deploy with a single binary
   - Pre-built Docker image
   - Uses about 80MB of memory
+- Internationalization (i18n): English, Chinese, German, French, Spanish, Russian, Portuguese, and Swedish
 
 ## Installation
 
