@@ -43,5 +43,10 @@ func FusionRequestWithRequestSender(ctx context.Context, sendRequest SendHTTPReq
 	req.Close = true
 	req.Header.Add("User-Agent", UserAgentString)
 
+	// Add If-Modified-Since header if LastModified is provided.
+	if options.LastModified != nil {
+		req.Header.Add("If-Modified-Since", *options.LastModified)
+	}
+
 	return sendRequest(req)
 }

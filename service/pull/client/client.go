@@ -57,19 +57,41 @@ func (c FeedClient) FetchDeclaredLink(ctx context.Context, feedURL string, optio
 }
 
 type FetchItemsResult struct {
-	LastBuild *time.Time
-	Items     []*model.Item
+	LastBuild    *time.Time
+	Items        []*model.Item
+	LastModified *string
 }
 
 func (c FeedClient) FetchItems(ctx context.Context, feedURL string, options model.FeedRequestOptions) (FetchItemsResult, error) {
-	feed, err := c.fetchFeed(ctx, feedURL, options)
+	resp, err := c.httpRequestFn(ctx, feedURL, options)
+	if err != nil {
+		return FetchItemsResult{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return FetchItemsResult{}, fmt.Errorf("got status code %d", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return FetchItemsResult{}, err
 	}
 
+	feed, err := gofeed.NewParser().ParseString(string(data))
+	if err != nil {
+		return FetchItemsResult{}, err
+	}
+
+	var lastModified *string
+	if lm := resp.Header.Get("Last-Modified"); lm != "" {
+		lastModified = &lm
+	}
+
 	return FetchItemsResult{
-		LastBuild: feed.UpdatedParsed,
-		Items:     ParseGoFeedItems(feed.Items),
+		LastBuild:    feed.UpdatedParsed,
+		Items:        ParseGoFeedItems(feed.Items),
+		LastModified: lastModified,
 	}, nil
 }
 
