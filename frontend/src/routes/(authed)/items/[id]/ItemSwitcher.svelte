@@ -7,79 +7,73 @@
 	import { t } from '$lib/i18n';
 	import { fullItemFilter } from '$lib/state.svelte';
 	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
-	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		itemID: number;
+		index: number;
 		action: 'next' | 'previous';
 	}
-	let { itemID, action }: Props = $props();
+	let { itemID, index: currentItemIndex, action }: Props = $props();
 
-	const itemFilter = Object.assign({}, fullItemFilter);
-	let currentItemIndex = $state(0);
-	let disabled = $state(false);
+	async function getNextItem(): Promise<Item | null | undefined> {
+		fullItemFilter.page = fullItemFilter.page ?? 1;
+		fullItemFilter.page_size = fullItemFilter.page_size ?? defaultPageSize;
 
-	onMount(async () => {
-		const { items } = await listItems(itemFilter);
-		currentItemIndex = items.findIndex((item) => item.id == itemID);
-		disabled = currentItemIndex === -1;
-	});
-
-	async function getNextItem(action: 'next' | 'previous'): Promise<Item | null> {
-		itemFilter.page = itemFilter.page ?? 1;
-		itemFilter.page_size = itemFilter.page_size ?? defaultPageSize;
-
-		let { total, items } = await listItems(itemFilter);
+		let { total, items } = await listItems(fullItemFilter);
 		if (total === 0) {
 			return null;
 		}
 
+		let nextItemIndex = 0;
+
 		if (action === 'previous') {
-			currentItemIndex -= 1;
+			nextItemIndex = currentItemIndex - 1;
 		} else {
-			let index = items.findIndex((v) => v.id === itemID);
-			if (index === -1) {
-				// the old item has been filtered out,
+			if (itemID !== items[currentItemIndex].id) {
+				// the current item has been filtered out,
 				// and the item to its right has automatically filled the position.
+				nextItemIndex = currentItemIndex;
 			} else {
-				currentItemIndex += 1;
+				nextItemIndex += currentItemIndex + 1;
 			}
 		}
 
-		if (currentItemIndex >= itemFilter.page_size) {
-			itemFilter.page += 1;
-			currentItemIndex = 0;
-		} else if (currentItemIndex < 0) {
-			itemFilter.page -= 1;
-			if (itemFilter.page < 1) {
-				itemFilter.page = 1;
-				currentItemIndex = 0;
+		if (nextItemIndex >= 0 && nextItemIndex < defaultPageSize) {
+			return items[nextItemIndex];
+		}
+
+		// turn the page
+		if (nextItemIndex < 0) {
+			fullItemFilter.page -= 1;
+			if (fullItemFilter.page < 1) {
+				fullItemFilter.page = 1;
 				return null;
 			}
-			currentItemIndex = itemFilter.page_size - 1;
+			items = (await listItems(fullItemFilter)).items;
+			return items.at(-1);
 		}
-
-		items = (await listItems(itemFilter)).items;
-		if (items.length == 0) {
-			return null;
-		}
-		return items[currentItemIndex];
+		fullItemFilter.page += 1;
+		items = (await listItems(fullItemFilter)).items;
+		return items.at(0);
 	}
 
 	async function handleSwitchItem() {
-		const filterBackup = Object.assign({}, itemFilter);
-		const indexBackup = currentItemIndex;
-		const next = await getNextItem(action);
-		if (!next) {
-			toast.error(t('state.no_more_data'));
-			Object.assign(itemFilter, filterBackup);
-			currentItemIndex = indexBackup;
+		const filterBackup = Object.assign({}, fullItemFilter);
+		try {
+			const next = await getNextItem();
+			if (!next) {
+				toast.error(t('state.no_more_data'));
+				Object.assign(fullItemFilter, filterBackup);
+				return;
+			}
+			goto('/items/' + next.id, {
+				invalidate: ['page:' + page.url.pathname]
+			});
+		} catch (e) {
+			toast.error((e as Error).message);
 			return;
 		}
-		goto('/items/' + next.id, {
-			invalidate: ['page:' + page.url.pathname]
-		});
 	}
 </script>
 

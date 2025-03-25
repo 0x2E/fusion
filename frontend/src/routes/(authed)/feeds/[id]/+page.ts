@@ -11,6 +11,8 @@ export const load: PageLoad = async ({ depends, url, params }) => {
 	const id = parseInt(params.id);
 	const feed = getFeed(id);
 	const filter = parseURLtoFilter(url.searchParams, {
+		unread: undefined,
+		bookmark: undefined,
 		feed_id: id
 	});
 	Object.assign(fullItemFilter, filter);

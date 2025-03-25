@@ -4,14 +4,14 @@
 	import { Newspaper } from 'lucide-svelte';
 
 	interface Props {
-		data: Item;
+		item: Item;
 	}
 
-	let { data }: Props = $props();
+	let { item }: Props = $props();
 </script>
 
 <div class="tooltip tooltip-bottom" data-tip={t('item.goto_feed')}>
-	<a href={'/feeds/' + data.feed.id} class="btn btn-ghost btn-square">
+	<a href={'/feeds/' + item.feed.id} class="btn btn-ghost btn-square">
 		<Newspaper class="size-4" />
 	</a>
 </div>
