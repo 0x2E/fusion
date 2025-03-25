@@ -69,6 +69,23 @@ func (c FeedClient) FetchItems(ctx context.Context, feedURL string, options mode
 	}
 	defer resp.Body.Close()
 
+	// Handle 304 Not Modified as success when If-Modified-Since was sent
+	if resp.StatusCode == http.StatusNotModified {
+		// For 304, we return an empty result but preserve the LastModified header
+		var lastModified *string
+		if lm := resp.Header.Get("Last-Modified"); lm != "" {
+			lastModified = &lm
+		} else if options.LastModified != nil {
+			// If server didn't send a new Last-Modified header, keep using the one we sent
+			lastModified = options.LastModified
+		}
+
+		return FetchItemsResult{
+			Items:        []*model.Item{}, // Empty items since nothing changed
+			LastModified: lastModified,
+		}, nil
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		return FetchItemsResult{}, fmt.Errorf("got status code %d", resp.StatusCode)
 	}
@@ -101,6 +118,12 @@ func (c FeedClient) fetchFeed(ctx context.Context, feedURL string, options model
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	// 304 Not Modified means we can't parse the feed (empty body)
+	// This is only used for metadata functions, so we should return an error
+	if resp.StatusCode == http.StatusNotModified {
+		return nil, fmt.Errorf("feed not modified (status code 304)")
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("got status code %d", resp.StatusCode)
