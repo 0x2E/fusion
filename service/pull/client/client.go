@@ -58,8 +58,8 @@ func (c FeedClient) FetchDeclaredLink(ctx context.Context, feedURL string, optio
 
 type FetchItemsResult struct {
 	LastBuild    *time.Time
-	Items        []*model.Item
 	LastModified *string
+	Items        []*model.Item
 }
 
 func (c FeedClient) FetchItems(ctx context.Context, feedURL string, options model.FeedRequestOptions) (FetchItemsResult, error) {
@@ -81,8 +81,8 @@ func (c FeedClient) FetchItems(ctx context.Context, feedURL string, options mode
 		}
 
 		return FetchItemsResult{
-			Items:        []*model.Item{}, // Empty items since nothing changed
 			LastModified: lastModified,
+			Items:        []*model.Item{}, // Empty items since nothing changed
 		}, nil
 	}
 
@@ -107,8 +107,8 @@ func (c FeedClient) FetchItems(ctx context.Context, feedURL string, options mode
 
 	return FetchItemsResult{
 		LastBuild:    feed.UpdatedParsed,
-		Items:        ParseGoFeedItems(feed.Items),
 		LastModified: lastModified,
+		Items:        ParseGoFeedItems(feed.Items),
 	}, nil
 }
 
