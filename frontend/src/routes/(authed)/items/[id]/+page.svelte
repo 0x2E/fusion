@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { listItems } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
 	import ItemActionBookmark from '$lib/components/ItemActionBookmark.svelte';
 	import ItemActionGotoFeed from '$lib/components/ItemActionGotoFeed.svelte';
@@ -7,21 +6,12 @@
 	import ItemActionVisitLink from '$lib/components/ItemActionVisitLink.svelte';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 	import { render } from '$lib/render-item';
-	import { fullItemFilter } from '$lib/state.svelte';
 	import { ExternalLink } from 'lucide-svelte';
 	import ItemSwitcher from './ItemSwitcher.svelte';
+	import { listItems, type ListFilter } from '$lib/api/item';
+	import { afterNavigate } from '$app/navigation';
 
 	let { data } = $props();
-
-	let currentIndex = $state(-1);
-	function getIndex(id: number) {
-		listItems(fullItemFilter).then((resp) => {
-			currentIndex = resp.items.findIndex((v) => v.id === id);
-		});
-	}
-	$effect(() => {
-		getIndex(data.id);
-	});
 
 	let item = $state<Item>(data);
 	$effect(() => {
@@ -29,6 +19,38 @@
 	});
 
 	let safeContent = $derived(render(data.content, data.link));
+
+	// we prefetch a list of items as the queue for the item switcher.
+	// this is a bit hacky, but it's easier to maintain and it should work for most of use cases.
+	const queueSize = 100; // 100 is enough and the response size is about 50kb.
+	let itemsQueue = $state<number[]>([]);
+	afterNavigate(async ({ from }) => {
+		const fromPath = from?.url.pathname;
+		if (!fromPath) return;
+
+		const filter: ListFilter = { page: 1, page_size: queueSize };
+		if (fromPath.startsWith('/feeds/')) {
+			const feedMatch = fromPath.match(/\/feeds\/(\d+)/);
+			if (feedMatch) {
+				filter.feed_id = parseInt(feedMatch[1], 10);
+			}
+		} else {
+			switch (fromPath) {
+				case '/all':
+					break;
+				case '/':
+					filter.unread = true;
+					break;
+				case '/bookmarks':
+					filter.bookmark = true;
+					break;
+				default:
+					return;
+			}
+		}
+		const resp = await listItems(filter);
+		itemsQueue = resp.items.map((item) => item.id);
+	});
 </script>
 
 <PageNavHeader title={data.title}>
@@ -39,9 +61,7 @@
 </PageNavHeader>
 
 <div class="relative flex w-full grow justify-around px-4 py-6">
-	{#if currentIndex > -1}
-		<ItemSwitcher itemID={data.id} index={currentIndex} action="previous" />
-	{/if}
+	<ItemSwitcher itemID={data.id} {itemsQueue} action="previous" />
 	<article class="w-full max-w-prose">
 		<div class="space-y-2 pb-8">
 			<h1 class="text-4xl font-bold">
@@ -64,7 +84,5 @@
 			{@html safeContent}
 		</div>
 	</article>
-	{#if currentIndex > -1}
-		<ItemSwitcher itemID={data.id} index={currentIndex} action="next" />
-	{/if}
+	<ItemSwitcher itemID={data.id} {itemsQueue} action="next" />
 </div>
