@@ -10,7 +10,7 @@ Key features include:
 
 - Group, bookmark, search, automatic feed sniffing, OPML file import/export
 - Support for RSS, Atom, and JSON feed types
-- Responsive, light/dark mode, PWA
+- Responsive, light/dark mode, PWA, Keyboard shortcut support
 - Lightweight and self-hosted friendly
   - Built with Golang and SQLite, deploy with a single binary
   - Pre-built Docker image
@@ -86,3 +86,4 @@ For example:
 - Front-end is built with: [Sveltekit](https://github.com/sveltejs/kit), [daisyUI](https://github.com/saadeghi/daisyui)
 - Back-end is built with: [Echo](https://github.com/labstack/echo), [GORM](https://github.com/go-gorm/gorm)
 - Parsing feed with [gofeed](https://github.com/mmcdole/gofeed)
+- Logo by [Icons8](https://icons8.com/icon/FeQbTvGTsiN5/news)

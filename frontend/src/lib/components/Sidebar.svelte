@@ -7,7 +7,9 @@
 	import { t } from '$lib/i18n';
 	import {
 		BookmarkCheck,
+		CircleEllipsis,
 		CirclePlus,
+		Command,
 		Inbox,
 		List,
 		LogOut,
@@ -15,7 +17,12 @@
 		type Icon
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { toggleShow } from './FeedActionImport.svelte';
+	import { toggleShow as toggleShowFeedImport } from './FeedActionImport.svelte';
+	import {
+		hotkey,
+		shortcuts,
+		toggleShow as toggleShowShortcutHelpModal
+	} from './ShortcutHelpModal.svelte';
 	import ThemeController from './ThemeController.svelte';
 
 	interface Props {
@@ -82,7 +89,7 @@
 			<li>
 				<button
 					onclick={() => {
-						toggleShow();
+						toggleShowFeedImport();
 					}}
 					class="btn btn-sm btn-ghost bg-base-100"
 				>
@@ -149,23 +156,47 @@
 	</div>
 
 	<div class="mt-8">
-		<button onclick={handleLogout} class="btn btn-ghost btn-sm hover:text-error mt-auto w-full">
-			<LogOut class="size-4" />
-			{t('common.logout')}
-		</button>
-		<p class="text-base-content/60 text-center text-xs">
-			<span>
-				{version}.
-			</span>
-			<span>
-				Logo by <a
-					class="hover:underline"
-					href="https://icons8.com/icon/FeQbTvGTsiN5/news"
-					target="_blank"
-				>
-					Icons8
-				</a>
-			</span>
-		</p>
+		<div class="dropdown dropdown-top dropdown-center w-full">
+			<div tabindex="0" role="button" class="btn btn-sm w-full">
+				<CircleEllipsis class="size-4" />
+				More
+			</div>
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<div tabindex="0" class="dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+				<ul class="menu w-full p-0">
+					<li>
+						<button
+							onclick={() => toggleShowShortcutHelpModal()}
+							use:hotkey={shortcuts.showHelp.keys}
+						>
+							<Command class="size-4" />
+							Keyboard shortcuts
+						</button>
+					</li>
+					<li>
+						<button onclick={handleLogout} class="hover:text-error w-full">
+							<LogOut class="size-4" />
+							{t('common.logout')}
+						</button>
+					</li>
+				</ul>
+				<div class="bg-base-200 mt-2 p-2">
+					<p class="text-base-content/60 text-xs">
+						<span>
+							{version}.
+						</span>
+						<span>
+							Logo by <a
+								class="hover:underline"
+								href="https://icons8.com/icon/FeQbTvGTsiN5/news"
+								target="_blank"
+							>
+								Icons8
+							</a>
+						</span>
+					</p>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>

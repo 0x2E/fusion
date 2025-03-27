@@ -40,6 +40,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@github/hotkey": "^3.1.1",
 		"daisyui": "^5.0.9",
 		"dompurify": "^3.2.4",
 		"ky": "^1.7.5"

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@github/hotkey':
+        specifier: ^3.1.1
+        version: 3.1.1
       daisyui:
         specifier: ^5.0.9
         version: 5.0.9
@@ -287,6 +290,9 @@ packages:
   '@eslint/plugin-kit@0.2.7':
     resolution: {integrity: sha512-JubJ5B2pJ4k4yGxaNLdbjrnk9d/iDz6/q8wOilpIowd6PJPgaxCuHBnBszq7Ce2TyMrywm5r4PnKm6V3iiZF+g==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@github/hotkey@3.1.1':
+    resolution: {integrity: sha512-H30I6XDO3gFSgLuEuHoMBRZG9c3uCKNdAcYklL1FaZDPdU1bXfgjnpzGDPcUr0U6eGQ+T3XLY9slatwZYWL1dA==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -1555,6 +1561,8 @@ snapshots:
     dependencies:
       '@eslint/core': 0.12.0
       levn: 0.4.1
+
+  '@github/hotkey@3.1.1': {}
 
   '@humanfs/core@0.19.1': {}
 
