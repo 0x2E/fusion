@@ -52,12 +52,13 @@ func parseLink(feedURL string, linkURL string) string {
 		return linkURL
 	}
 
-	// Reduce the feed URL to just the scheme and hostname.
-	base := url.URL{
-		Scheme: baseURL.Scheme,
-		Host:   baseURL.Host,
+	pathURL, err := url.Parse(linkURL)
+	// If we can't parse the link URL, we can't repair a relative path, so just
+	// return whatever is in the link URL.
+	if err != nil {
+		return linkURL
 	}
 
 	// Combine the feed base URL with the relative path to create a full URL.
-	return base.String() + linkURL
+	return baseURL.ResolveReference(pathURL).String()
 }
