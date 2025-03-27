@@ -69,7 +69,7 @@ func (c FeedClient) FetchItems(ctx context.Context, feedURL string, options mode
 
 	return FetchItemsResult{
 		LastBuild: feed.UpdatedParsed,
-		Items:     ParseGoFeedItems(feed.Items),
+		Items:     ParseGoFeedItems(feedURL, feed.Items),
 	}, nil
 }
 
