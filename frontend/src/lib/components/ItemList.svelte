@@ -9,6 +9,7 @@
 	import ItemActionUnread from './ItemActionUnread.svelte';
 	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
 	import Pagination from './Pagination.svelte';
+	import { hotkey, shortcuts } from './ShortcutHelpModal.svelte';
 
 	interface Props {
 		data: Promise<{
@@ -59,6 +60,31 @@
 		applyFilterToURL(url, filter);
 		await goto(url, { invalidate: ['page:' + page.url.pathname] });
 	}
+
+	let selectedItemIndex = $state(-1);
+	$effect(() => {
+		if (items) {
+			selectedItemIndex = -1;
+		}
+	});
+	function moveItem(direction: 'prev' | 'next') {
+		if (items.length === 0) return;
+
+		if (direction === 'prev') {
+			selectedItemIndex -= 1;
+			if (selectedItemIndex < 0) {
+				selectedItemIndex = items.length - 1;
+			}
+		} else {
+			selectedItemIndex += 1;
+			selectedItemIndex %= items.length;
+		}
+
+		const el = document.getElementById(`item-${selectedItemIndex}`);
+		if (el) {
+			el.focus();
+		}
+	}
 </script>
 
 <div>
@@ -71,12 +97,23 @@
 			<div class="skeleton h-10 w-full rounded"></div>
 		</div>
 	{:else}
+		<!-- shortcut -->
+		<div class="hidden">
+			<button onclick={() => moveItem('next')} use:hotkey={shortcuts.nextItem.keys}
+				>{shortcuts.nextItem.desc}</button
+			>
+			<button onclick={() => moveItem('prev')} use:hotkey={shortcuts.prevItem.keys}
+				>{shortcuts.prevItem.desc}</button
+			>
+		</div>
+
 		<ul data-sveltekit-preload-data="hover">
 			{#each items as item, i}
-				<li class="group rounded-md">
+				<li class="rounded-md">
 					<a
+						id={'item-' + i}
 						href={'/items/' + item.id}
-						class="hover:bg-base-200 relative flex w-full flex-col items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors md:flex-row"
+						class="group hover:bg-base-200 relative flex w-full flex-col items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors focus:ring-2 md:flex-row"
 					>
 						<div class="flex w-full md:w-[80%] md:shrink-0">
 							<h2
@@ -87,7 +124,7 @@
 						</div>
 						<div class="flex w-full md:grow">
 							<div
-								class="text-base-content/60 flex w-full justify-between gap-2 text-xs font-normal group-hover:hidden"
+								class="text-base-content/60 flex w-full justify-between gap-2 text-xs font-normal group-hover:hidden group-focus:hidden"
 							>
 								<div class="flex grow items-center space-x-2 overflow-x-hidden">
 									<div class="avatar">
@@ -105,11 +142,11 @@
 							</div>
 						</div>
 						<div
-							class="invisible absolute right-1 w-fit justify-end gap-2 md:group-hover:visible md:group-hover:flex"
+							class="invisible absolute right-1 w-fit justify-end gap-2 md:group-hover:visible md:group-hover:flex md:group-focus:visible md:group-focus:flex"
 						>
-							<ItemActionUnread bind:item={items[i]} />
-							<ItemActionBookmark bind:item={items[i]} />
-							<ItemActionVisitLink {item} />
+							<ItemActionUnread bind:item={items[i]} enableHotkey={i === selectedItemIndex} />
+							<ItemActionBookmark bind:item={items[i]} enableHotkey={i === selectedItemIndex} />
+							<ItemActionVisitLink {item} enableHotkey={i === selectedItemIndex} />
 						</div>
 					</a>
 				</li>
