@@ -59,7 +59,7 @@ const lang = {
 	'feed.import.opml.file_read_error': 'Misslyckades med att ladda filinnehåll',
 	'feed.import.opml.how_it_works.title': 'Hur fungerar det?',
 	'feed.import.opml.how_it_works.description.1':
-		'Flöden kommer att importeras till motsvarande grupp, som skapas automatiskt om den inte finns.',
+		'Flöden kommer att importeras till motsvarande grupp. Om gruppen inte finns kommer den automatiskt att skapas.',
 	'feed.import.opml.how_it_works.description.2':
 		"Flerdimensionella grupper kommer att planas ut till en endimensionell struktur med namngivningskonvention som 'a/b/c'.",
 	'feed.import.opml.how_it_works.description.3':
