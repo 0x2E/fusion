@@ -24,6 +24,8 @@ const lang = {
 	'common.password': 'Пароль',
 	'common.link': 'Ссылка',
 	'common.advanced': 'Дополнительно',
+	'common.shortcuts': 'Горячие клавиши',
+	'common.more': 'Ещё',
 
 	// state
 	'state.success': 'Успешно',
@@ -91,7 +93,25 @@ const lang = {
 
 	// auth
 	'auth.logout.confirm': 'Вы уверены, что хотите выйти?',
-	'auth.logout.failed_message': 'Не удалось выйти. Пожалуйста, попробуйте еще раз.'
+	'auth.logout.failed_message': 'Не удалось выйти. Пожалуйста, попробуйте еще раз.',
+
+	// shortcuts
+	'shortcuts.show_help': 'Показать горячие клавиши',
+	'shortcuts.next_item': 'Следующий элемент',
+	'shortcuts.prev_item': 'Предыдущий элемент',
+	'shortcuts.toggle_unread': 'Переключить прочитано/непрочитано',
+	'shortcuts.mark_all_as_read': 'Отметить все как прочитанные',
+	'shortcuts.toggle_bookmark': 'Переключить закладку',
+	'shortcuts.view_original': 'Просмотреть оригинальную ссылку',
+	'shortcuts.next_feed': 'Следующая лента',
+	'shortcuts.prev_feed': 'Предыдущая лента',
+	'shortcuts.open_selected': 'Открыть выбранное',
+	'shortcuts.goto_search_page': 'Перейти к поиску',
+	'shortcuts.goto_unread_page': 'Перейти к непрочитанным',
+	'shortcuts.goto_bookmarks_page': 'Перейти к закладкам',
+	'shortcuts.goto_all_items_page': 'Перейти ко всем элементам',
+	'shortcuts.goto_feeds_page': 'Перейти к лентам',
+	'shortcuts.goto_settings_page': 'Перейти к настройкам'
 } as const;
 
 export default lang;
