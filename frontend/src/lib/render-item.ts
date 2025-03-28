@@ -1,19 +1,7 @@
 import DOMPurify from 'dompurify';
+import { tryAbsURL } from './utils';
 
 function sanitize(content: string, baseLink: string) {
-	function joinURL(s: string | null) {
-		if (!s) return '';
-		try {
-			// some rss's entry links are relative
-			const res = new URL(s, baseLink).href;
-			// console.debug(s + ' -> ' + res);
-			return res;
-		} catch (e) {
-			console.log(e);
-		}
-		return s;
-	}
-
 	const elements: { tag: string; attrs: string[] }[] = [
 		{ tag: 'a', attrs: ['href'] },
 		{ tag: 'img', attrs: ['src'] }, //TODO: srcset attr and base64 type img
@@ -30,7 +18,9 @@ function sanitize(content: string, baseLink: string) {
 	for (const el of elements) {
 		dom.querySelectorAll(el.tag).forEach((v) => {
 			for (const attr of el.attrs) {
-				v.setAttribute(attr, joinURL(v.getAttribute(attr)));
+				const link = v.getAttribute(attr);
+				if (!link) continue;
+				v.setAttribute(attr, tryAbsURL(link, baseLink));
 			}
 		});
 	}
@@ -68,6 +58,7 @@ function embedYouTube(content: string, link: string): string {
 }
 
 export function render(content: string, link: string): string {
+	link = tryAbsURL(link);
 	content = sanitize(content, link);
 	content = embedYouTube(content, link);
 	return content;
