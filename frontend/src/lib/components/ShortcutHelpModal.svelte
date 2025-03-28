@@ -17,13 +17,13 @@
 		viewOriginal: { keys: 'v', desc: 'View original item' },
 		nextFeed: { keys: 'Shift+J', desc: 'Next feed' },
 		prevFeed: { keys: 'Shift+K', desc: 'Previous feed' },
-		openSelected: { keys: 'enter', desc: 'Open selected item/feed' },
-		gotoSearchPage: { keys: 'g s', desc: 'Go to search page' },
+		openSelected: { keys: 'Enter', desc: 'Open selected item/feed' },
+		gotoSearchPage: { keys: 'g /,/', desc: 'Go to search page' },
 		gotoUnreadPage: { keys: 'g u', desc: 'Go to unread page' },
 		gotoBookmarksPage: { keys: 'g b', desc: 'Go to bookmarks page' },
 		gotoAllItemsPage: { keys: 'g a', desc: 'Go to all items page' },
 		gotoFeedsPage: { keys: 'g f', desc: 'Go to feeds page' },
-		gotoSettingsPage: { keys: 'g c', desc: 'Go to settings page' }
+		gotoSettingsPage: { keys: 'g s', desc: 'Go to settings page' }
 	};
 
 	export function activateHotkey(node: HTMLElement, keys: string) {
@@ -56,7 +56,12 @@
 	});
 </script>
 
-<dialog bind:this={modal} onclose={() => (show = false)} class="modal modal-bottom sm:modal-middle">
+<dialog
+	bind:this={modal}
+	open={show}
+	onclose={() => (show = false)}
+	class="modal modal-bottom sm:modal-middle"
+>
 	<div class="modal-box">
 		<form method="dialog">
 			<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">✕</button>
@@ -64,10 +69,19 @@
 
 		<h3 class="text-lg font-bold">Keyboard shortcuts</h3>
 		<ul class="space-y-2 py-4">
-			{#each Object.entries(shortcuts) as [key, { keys, desc }]}
+			{#each Object.entries(shortcuts) as [_, { keys, desc }]}
 				<li class="hover:bg-base-200 flex items-center justify-between">
 					<span class="text-sm">{desc}</span>
-					<kbd class="kbd">{keys}</kbd>
+					<span class="space-x-1">
+						{#each keys.split(',') as key, index}
+							{#if index > 0}
+								<span>{' or '}</span>
+							{/if}
+							{#each key.replaceAll('+', ' ').split(' ') as k}
+								<kbd class="kbd">{k}</kbd>
+							{/each}
+						{/each}
+					</span>
 				</li>
 			{/each}
 		</ul>

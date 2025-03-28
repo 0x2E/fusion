@@ -13,6 +13,7 @@
 		Inbox,
 		List,
 		LogOut,
+		Search,
 		Settings,
 		type Icon
 	} from 'lucide-svelte';
@@ -58,12 +59,29 @@
 		label: string;
 		url: string;
 		icon: typeof Icon;
+		hotkey: string;
 	};
 	const systemLinks: SystemNavLink[] = [
-		{ label: t('common.unread'), url: '/', icon: Inbox },
-		{ label: t('common.bookmark'), url: '/bookmarks', icon: BookmarkCheck },
-		{ label: t('common.all'), url: '/all', icon: List },
-		{ label: t('common.settings'), url: '/settings', icon: Settings }
+		{ label: t('common.unread'), url: '/', icon: Inbox, hotkey: shortcuts.gotoUnreadPage.keys },
+		{
+			label: t('common.bookmark'),
+			url: '/bookmarks',
+			icon: BookmarkCheck,
+			hotkey: shortcuts.gotoBookmarksPage.keys
+		},
+		{ label: t('common.all'), url: '/all', icon: List, hotkey: shortcuts.gotoAllItemsPage.keys },
+		{
+			label: t('common.search'),
+			url: '/search',
+			icon: Search,
+			hotkey: shortcuts.gotoSearchPage.keys
+		},
+		{
+			label: t('common.settings'),
+			url: '/settings',
+			icon: Settings,
+			hotkey: shortcuts.gotoSettingsPage.keys
+		}
 	];
 
 	function isHighlight(url: string): boolean {
@@ -167,7 +185,7 @@
 		<ul class="menu w-full font-medium">
 			{#each systemLinks as v}
 				<li>
-					<a href={v.url} class={isHighlight(v.url) ? 'menu-active' : ''}>
+					<a href={v.url} use:hotkey={v.hotkey} class={isHighlight(v.url) ? 'menu-active' : ''}>
 						<v.icon class="size-4" /><span>{v.label}</span>
 					</a>
 				</li>
