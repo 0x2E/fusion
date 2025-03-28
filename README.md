@@ -53,6 +53,8 @@ Download from [Releases](https://github.com/0x2E/fusion/releases).
 
 ### One-Click Deployment
 
+[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/7FRK0K?referralCode=rook1e404)
+
 Maintained by community:
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/XSPFK0?referralCode=milo)
