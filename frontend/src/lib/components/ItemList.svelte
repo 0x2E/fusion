@@ -9,7 +9,7 @@
 	import ItemActionUnread from './ItemActionUnread.svelte';
 	import ItemActionVisitLink from './ItemActionVisitLink.svelte';
 	import Pagination from './Pagination.svelte';
-	import { hotkey, shortcuts } from './ShortcutHelpModal.svelte';
+	import { shortcut, shortcuts } from './ShortcutHelpModal.svelte';
 
 	interface Props {
 		data: Promise<{
@@ -99,10 +99,10 @@
 	{:else}
 		<!-- shortcut -->
 		<div class="hidden">
-			<button onclick={() => moveItem('next')} use:hotkey={shortcuts.nextItem.keys}
+			<button onclick={() => moveItem('next')} use:shortcut={shortcuts.nextItem.keys}
 				>{shortcuts.nextItem.desc}</button
 			>
-			<button onclick={() => moveItem('prev')} use:hotkey={shortcuts.prevItem.keys}
+			<button onclick={() => moveItem('prev')} use:shortcut={shortcuts.prevItem.keys}
 				>{shortcuts.prevItem.desc}</button
 			>
 		</div>
@@ -144,9 +144,9 @@
 						<div
 							class="invisible absolute right-1 w-fit justify-end gap-2 md:group-hover:visible md:group-hover:flex md:group-focus:visible md:group-focus:flex"
 						>
-							<ItemActionUnread bind:item={items[i]} enableHotkey={i === selectedItemIndex} />
-							<ItemActionBookmark bind:item={items[i]} enableHotkey={i === selectedItemIndex} />
-							<ItemActionVisitLink {item} enableHotkey={i === selectedItemIndex} />
+							<ItemActionUnread bind:item={items[i]} enableShortcut={i === selectedItemIndex} />
+							<ItemActionBookmark bind:item={items[i]} enableShortcut={i === selectedItemIndex} />
+							<ItemActionVisitLink {item} enableShortcut={i === selectedItemIndex} />
 						</div>
 					</a>
 				</li>

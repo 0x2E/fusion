@@ -26,19 +26,19 @@
 		gotoSettingsPage: { keys: 'g s', desc: t('shortcuts.goto_settings_page') }
 	};
 
-	export function activateHotkey(node: HTMLElement, keys: string) {
+	export function activateShortcut(node: HTMLElement, keys: string) {
 		install(node, keys);
 	}
 
-	export function deactivateHotkey(node: HTMLElement) {
+	export function deactivateShortcut(node: HTMLElement) {
 		uninstall(node);
 	}
 
-	export const hotkey: Action<HTMLElement, string> = (node, keys) => {
+	export const shortcut: Action<HTMLElement, string> = (node, keys) => {
 		$effect(() => {
-			activateHotkey(node, keys);
+			activateShortcut(node, keys);
 			return () => {
-				deactivateHotkey(node);
+				deactivateShortcut(node);
 			};
 		});
 	};

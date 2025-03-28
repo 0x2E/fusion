@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { hotkey, shortcuts } from '$lib/components/ShortcutHelpModal.svelte';
+	import { shortcut, shortcuts } from '$lib/components/ShortcutHelpModal.svelte';
 	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 
 	interface Props {
@@ -17,7 +17,7 @@
 
 <a
 	href={'/items/' + goto}
-	use:hotkey={action === 'previous' ? shortcuts.prevItem.keys : shortcuts.nextItem.keys}
+	use:shortcut={action === 'previous' ? shortcuts.prevItem.keys : shortcuts.nextItem.keys}
 	class={`btn lg:btn-ghost btn-circle lg:btn-xl fixed bottom-1 ${action === 'previous' ? 'left-1' : 'right-1'} lg:sticky lg:top-[50%] ${goto !== itemID ? '' : 'invisible'}`}
 >
 	{#if action === 'previous'}

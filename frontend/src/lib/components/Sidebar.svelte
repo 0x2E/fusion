@@ -20,7 +20,7 @@
 	import { toast } from 'svelte-sonner';
 	import { toggleShow as toggleShowFeedImport } from './FeedActionImport.svelte';
 	import {
-		hotkey,
+		shortcut,
 		shortcuts,
 		toggleShow as toggleShowShortcutHelpModal
 	} from './ShortcutHelpModal.svelte';
@@ -59,28 +59,28 @@
 		label: string;
 		url: string;
 		icon: typeof Icon;
-		hotkey: string;
+		shortcut: string;
 	};
 	const systemLinks: SystemNavLink[] = [
-		{ label: t('common.unread'), url: '/', icon: Inbox, hotkey: shortcuts.gotoUnreadPage.keys },
+		{ label: t('common.unread'), url: '/', icon: Inbox, shortcut: shortcuts.gotoUnreadPage.keys },
 		{
 			label: t('common.bookmark'),
 			url: '/bookmarks',
 			icon: BookmarkCheck,
-			hotkey: shortcuts.gotoBookmarksPage.keys
+			shortcut: shortcuts.gotoBookmarksPage.keys
 		},
-		{ label: t('common.all'), url: '/all', icon: List, hotkey: shortcuts.gotoAllItemsPage.keys },
+		{ label: t('common.all'), url: '/all', icon: List, shortcut: shortcuts.gotoAllItemsPage.keys },
 		{
 			label: t('common.search'),
 			url: '/search',
 			icon: Search,
-			hotkey: shortcuts.gotoSearchPage.keys
+			shortcut: shortcuts.gotoSearchPage.keys
 		},
 		{
 			label: t('common.settings'),
 			url: '/settings',
 			icon: Settings,
-			hotkey: shortcuts.gotoSettingsPage.keys
+			shortcut: shortcuts.gotoSettingsPage.keys
 		}
 	];
 
@@ -146,10 +146,10 @@
 </script>
 
 <div class="hidden">
-	<button onclick={() => moveFeed('next')} use:hotkey={shortcuts.nextFeed.keys}
+	<button onclick={() => moveFeed('next')} use:shortcut={shortcuts.nextFeed.keys}
 		>{shortcuts.nextFeed.desc}</button
 	>
-	<button onclick={() => moveFeed('prev')} use:hotkey={shortcuts.prevFeed.keys}
+	<button onclick={() => moveFeed('prev')} use:shortcut={shortcuts.prevFeed.keys}
 		>{shortcuts.prevFeed.desc}</button
 	>
 </div>
@@ -185,7 +185,7 @@
 		<ul class="menu w-full font-medium">
 			{#each systemLinks as v}
 				<li>
-					<a href={v.url} use:hotkey={v.hotkey} class={isHighlight(v.url) ? 'menu-active' : ''}>
+					<a href={v.url} use:shortcut={v.shortcut} class={isHighlight(v.url) ? 'menu-active' : ''}>
 						<v.icon class="size-4" /><span>{v.label}</span>
 					</a>
 				</li>
@@ -246,7 +246,7 @@
 					<li>
 						<button
 							onclick={() => toggleShowShortcutHelpModal()}
-							use:hotkey={shortcuts.showHelp.keys}
+							use:shortcut={shortcuts.showHelp.keys}
 						>
 							<Command class="size-4" />
 							{t('common.shortcuts')}

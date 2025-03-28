@@ -16,9 +16,9 @@
 <script lang="ts">
 	import { t } from '$lib/i18n';
 	import { BookmarkIcon, BookmarkXIcon } from 'lucide-svelte';
-	import { activateHotkey, deactivateHotkey, shortcuts } from './ShortcutHelpModal.svelte';
+	import { activateShortcut, deactivateShortcut, shortcuts } from './ShortcutHelpModal.svelte';
 
-	let { item = $bindable<Item>(), enableHotkey = false } = $props();
+	let { item = $bindable<Item>(), enableShortcut = false } = $props();
 
 	let Icon = $derived(item.bookmark ? BookmarkXIcon : BookmarkIcon);
 	let tooltip = $derived(
@@ -29,10 +29,10 @@
 	$effect(() => {
 		if (!el) return;
 
-		if (enableHotkey) {
-			activateHotkey(el, shortcuts.toggleBookmark.keys);
+		if (enableShortcut) {
+			activateShortcut(el, shortcuts.toggleBookmark.keys);
 		} else {
-			deactivateHotkey(el);
+			deactivateShortcut(el);
 		}
 	});
 

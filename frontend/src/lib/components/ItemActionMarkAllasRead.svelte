@@ -6,7 +6,7 @@
 	import { t } from '$lib/i18n';
 	import { CheckCheck } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { hotkey, shortcuts } from './ShortcutHelpModal.svelte';
+	import { shortcut, shortcuts } from './ShortcutHelpModal.svelte';
 
 	type Props =
 		| {
@@ -43,7 +43,7 @@
 	<button
 		disabled={props.disabled}
 		onclick={handleMarkAllAsRead}
-		use:hotkey={shortcuts.markAllasread.keys}
+		use:shortcut={shortcuts.markAllasread.keys}
 		class="btn btn-ghost btn-square"
 	>
 		<CheckCheck class="size-4" />

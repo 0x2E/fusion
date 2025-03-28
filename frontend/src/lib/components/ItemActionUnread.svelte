@@ -16,9 +16,9 @@
 <script lang="ts">
 	import { t } from '$lib/i18n';
 	import { CheckIcon, UndoIcon } from 'lucide-svelte';
-	import { activateHotkey, deactivateHotkey, shortcuts } from './ShortcutHelpModal.svelte';
+	import { activateShortcut, deactivateShortcut, shortcuts } from './ShortcutHelpModal.svelte';
 
-	let { item = $bindable<Item>(), enableHotkey = false } = $props();
+	let { item = $bindable<Item>(), enableShortcut = false } = $props();
 
 	let Icon = $derived(item.unread ? CheckIcon : UndoIcon);
 	let tooltip = $derived(item.unread ? t('item.mark_as_read') : t('item.mark_as_unread'));
@@ -27,10 +27,10 @@
 	$effect(() => {
 		if (!el) return;
 
-		if (enableHotkey) {
-			activateHotkey(el, shortcuts.toggleUnread.keys);
+		if (enableShortcut) {
+			activateShortcut(el, shortcuts.toggleUnread.keys);
 		} else {
-			deactivateHotkey(el);
+			deactivateShortcut(el);
 		}
 	});
 
