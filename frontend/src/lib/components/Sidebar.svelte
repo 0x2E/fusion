@@ -32,6 +32,26 @@
 
 	let { feeds, groups }: Props = $props();
 
+	let feedList = $derived.by(async () => {
+		const [feedsData, groupsData] = await Promise.all([feeds, groups]);
+		const groupFeeds: { id: number; name: string; feeds: (Feed & { indexInList: number })[] }[] =
+			[];
+		let curIndexInList = 0;
+		groupsData.forEach((group) => {
+			groupFeeds.push({
+				id: group.id,
+				name: group.name,
+				feeds: feedsData
+					.filter((feed) => feed.group.id === group.id)
+					.sort((a, b) => a.name.localeCompare(b.name))
+					.map((feed) => ({
+						...feed,
+						indexInList: curIndexInList++
+					}))
+			});
+		});
+		return groupFeeds;
+	});
 	const version = import.meta.env.FUSION.version;
 
 	type SystemNavLink = {
@@ -69,7 +89,52 @@
 			toast.error(t('auth.logout.failed_message'));
 		}
 	}
+
+	let selectedFeedIndex = $state(-1);
+	let selectedFeedGroupId = $state(-1);
+	$effect(() => {
+		feeds.then(() => {
+			selectedFeedIndex = -1;
+			selectedFeedGroupId = -1;
+		});
+	});
+	async function moveFeed(direction: 'prev' | 'next') {
+		const feedList = await feeds;
+
+		if (feedList.length === 0) return;
+
+		if (direction === 'prev') {
+			selectedFeedIndex -= 1;
+			if (selectedFeedIndex < 0) {
+				selectedFeedIndex = feedList.length - 1;
+			}
+		} else {
+			selectedFeedIndex += 1;
+			selectedFeedIndex %= feedList.length;
+		}
+
+		const el = document.getElementById(`sidebar-feed-${selectedFeedIndex}`);
+		if (el) {
+			selectedFeedGroupId = parseInt(el.getAttribute('data-group-id') ?? '-1');
+			el.focus();
+			// focus twice because <details> element's opening delay blocks the focus when
+			// we open a new group (<details>)
+			setTimeout(() => {
+				if (!el) return;
+				el.focus();
+			}, 30);
+		}
+	}
 </script>
+
+<div class="hidden">
+	<button onclick={() => moveFeed('next')} use:hotkey={shortcuts.nextFeed.keys}
+		>{shortcuts.nextFeed.desc}</button
+	>
+	<button onclick={() => moveFeed('prev')} use:hotkey={shortcuts.prevFeed.keys}
+		>{shortcuts.prevFeed.desc}</button
+	>
+</div>
 
 <div class="flex h-full flex-col justify-between">
 	<div>
@@ -111,42 +176,38 @@
 
 		<ul class="menu w-full">
 			<li class="menu-title">{t('common.feeds')}</li>
-			{#await groups}
+			{#await feedList}
 				<div class="skeleton bg-base-300 h-10"></div>
-			{:then data}
-				{#each data as group, index}
+			{:then groupData}
+				{#each groupData as group, groupIndex}
 					<li>
-						<details open={index === 0}>
+						<details open={groupIndex === 0 || selectedFeedGroupId === group.id}>
 							<summary class="overflow-hidden">
 								<span class="line-clamp-1">{group.name}</span>
 							</summary>
 							<ul>
-								{#await feeds}
-									<div class="skeleton bg-base-300 h-10"></div>
-								{:then data}
-									{#each data
-										.filter((v) => v.group.id === group.id)
-										.sort((a, b) => a.name.localeCompare(b.name)) as feed}
-										{@const textColor = feed.suspended
-											? 'text-neutral-content/60'
-											: feed.failure
-												? 'text-error'
-												: ''}
-										<li>
-											<a
-												href="/feeds/{feed.id}"
-												class={isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''}
-											>
-												<div class="avatar">
-													<div class="size-4 rounded-full">
-														<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
-													</div>
+								{#each group.feeds as feed}
+									{@const textColor = feed.suspended
+										? 'text-neutral-content/60'
+										: feed.failure
+											? 'text-error'
+											: ''}
+									<li>
+										<a
+											id="sidebar-feed-{feed.indexInList}"
+											data-group-id={group.id}
+											href="/feeds/{feed.id}"
+											class={`${isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''} focus:ring-2`}
+										>
+											<div class="avatar">
+												<div class="size-4 rounded-full">
+													<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
 												</div>
-												<span class={`line-clamp-1  ${textColor}`}>{feed.name}</span>
-											</a>
-										</li>
-									{/each}
-								{/await}
+											</div>
+											<span class={`line-clamp-1  ${textColor}`}>{feed.name}</span>
+										</a>
+									</li>
+								{/each}
 							</ul>
 						</details>
 					</li>
