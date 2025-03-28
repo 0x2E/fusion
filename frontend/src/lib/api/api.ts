@@ -1,3 +1,4 @@
+import { goto } from '$app/navigation';
 import ky from 'ky';
 
 export const api = ky.create({
@@ -7,10 +8,12 @@ export const api = ky.create({
 	credentials: 'same-origin',
 	hooks: {
 		beforeError: [
-			// https://github.com/sindresorhus/ky/issues/412
 			async (error) => {
 				const { response } = error;
 				switch (response.status) {
+					case 401:
+						await goto('/login');
+						break;
 					default:
 						try {
 							const data = await response.json();
