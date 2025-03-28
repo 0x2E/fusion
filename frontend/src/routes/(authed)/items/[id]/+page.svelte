@@ -55,9 +55,9 @@
 
 <PageNavHeader title={data.title}>
 	<ItemActionGotoFeed {item} />
-	<ItemActionUnread bind:item />
-	<ItemActionBookmark bind:item />
-	<ItemActionVisitLink {item} />
+	<ItemActionUnread bind:item enableHotkey={true} />
+	<ItemActionBookmark bind:item enableHotkey={true} />
+	<ItemActionVisitLink {item} enableHotkey={true} />
 </PageNavHeader>
 
 <div class="relative flex w-full grow justify-around px-4 py-6">
