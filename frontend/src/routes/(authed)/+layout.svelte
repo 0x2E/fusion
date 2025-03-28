@@ -15,7 +15,13 @@
 	<input id="sidebar-toggle" type="checkbox" bind:checked={showSidebar} class="drawer-toggle" />
 	<div class="drawer-content bg-base-100 relative z-10 min-h-screen overflow-x-clip">
 		<div class="mx-auto flex h-full max-w-6xl flex-col pb-4">
-			{@render children()}
+			<svelte:boundary>
+				{@render children()}
+				{#snippet failed(error, reset)}
+					<p>{error}</p>
+					<button onclick={reset} class="btn w-fit">oops! try again</button>
+				{/snippet}
+			</svelte:boundary>
 		</div>
 	</div>
 	<div class="drawer-side z-10">
