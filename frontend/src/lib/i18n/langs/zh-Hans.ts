@@ -25,6 +25,7 @@ const lang = {
 	'common.link': '链接',
 	'common.advanced': '高级',
 	'common.shortcuts': '键盘快捷键',
+	'common.more': '更多',
 
 	// state
 	'state.success': '成功',

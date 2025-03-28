@@ -24,6 +24,7 @@ const lang = {
 	'common.password': 'Lösenord',
 	'common.link': 'Länk',
 	'common.advanced': 'Avancerat',
+	'common.more': 'Mer',
 
 	// state
 	'state.success': 'Lyckades',
@@ -91,7 +92,25 @@ const lang = {
 
 	// auth
 	'auth.logout.confirm': 'Är du säker på att du vill logga ut?',
-	'auth.logout.failed_message': 'Misslyckades med att logga ut. Försök igen.'
+	'auth.logout.failed_message': 'Misslyckades med att logga ut. Försök igen.',
+
+	// shortcuts
+	'shortcuts.show_help': 'Visa tangentbordsgenvägar',
+	'shortcuts.next_item': 'Nästa objekt',
+	'shortcuts.prev_item': 'Föregående objekt',
+	'shortcuts.toggle_unread': 'Växla läst/oläst',
+	'shortcuts.mark_all_as_read': 'Markera alla som lästa',
+	'shortcuts.toggle_bookmark': 'Växla bokmärke',
+	'shortcuts.view_original': 'Visa originallänk',
+	'shortcuts.next_feed': 'Nästa flöde',
+	'shortcuts.prev_feed': 'Föregående flöde',
+	'shortcuts.open_selected': 'Öppna markering',
+	'shortcuts.goto_search_page': 'Gå till sökning',
+	'shortcuts.goto_unread_page': 'Gå till olästa',
+	'shortcuts.goto_bookmarks_page': 'Gå till bokmärken',
+	'shortcuts.goto_all_items_page': 'Gå till alla objekt',
+	'shortcuts.goto_feeds_page': 'Gå till flöden',
+	'shortcuts.goto_settings_page': 'Gå till inställningar'
 } as const;
 
 export default lang;

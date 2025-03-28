@@ -25,6 +25,7 @@ const lang = {
 	'common.link': 'Link',
 	'common.advanced': 'Erweitert',
 	'common.shortcuts': 'Tastaturkürzel',
+	'common.more': 'Mehr',
 
 	// state
 	'state.success': 'Erfolg',

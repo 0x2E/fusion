@@ -238,7 +238,7 @@
 		<div class="dropdown dropdown-top dropdown-center w-full">
 			<div tabindex="0" role="button" class="btn btn-sm w-full">
 				<CircleEllipsis class="size-4" />
-				More
+				{t('common.more')}
 			</div>
 			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 			<div tabindex="0" class="dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">

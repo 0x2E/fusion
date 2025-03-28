@@ -25,6 +25,7 @@ const lang = {
 	'common.link': 'Link',
 	'common.advanced': 'Avançado',
 	'common.shortcuts': 'Atalhos de teclado',
+	'common.more': 'Mais',
 
 	// state
 	'state.success': 'Sucesso',

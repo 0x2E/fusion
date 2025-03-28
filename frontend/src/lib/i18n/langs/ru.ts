@@ -25,6 +25,7 @@ const lang = {
 	'common.link': 'Ссылка',
 	'common.advanced': 'Дополнительно',
 	'common.shortcuts': 'Горячие клавиши',
+	'common.more': 'Ещё',
 
 	// state
 	'state.success': 'Успешно',
