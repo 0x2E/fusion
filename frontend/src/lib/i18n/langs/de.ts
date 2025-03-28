@@ -24,6 +24,7 @@ const lang = {
 	'common.password': 'Passwort',
 	'common.link': 'Link',
 	'common.advanced': 'Erweitert',
+	'common.shortcuts': 'Tastaturkürzel',
 
 	// state
 	'state.success': 'Erfolg',
@@ -92,7 +93,25 @@ const lang = {
 
 	// auth
 	'auth.logout.confirm': 'Sind Sie sicher, dass Sie sich abmelden möchten?',
-	'auth.logout.failed_message': 'Abmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.'
+	'auth.logout.failed_message': 'Abmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.',
+
+	// shortcuts
+	'shortcuts.show_help': 'Tastaturkürzel anzeigen',
+	'shortcuts.next_item': 'Nächster Eintrag',
+	'shortcuts.prev_item': 'Vorheriger Eintrag',
+	'shortcuts.toggle_unread': 'Gelesen/Ungelesen umschalten',
+	'shortcuts.mark_all_as_read': 'Alle als gelesen markieren',
+	'shortcuts.toggle_bookmark': 'Lesezeichen umschalten',
+	'shortcuts.view_original': 'Originallink ansehen',
+	'shortcuts.next_feed': 'Nächster Feed',
+	'shortcuts.prev_feed': 'Vorheriger Feed',
+	'shortcuts.open_selected': 'Auswahl öffnen',
+	'shortcuts.goto_search_page': 'Zur Suche gehen',
+	'shortcuts.goto_unread_page': 'Zu Ungelesenen gehen',
+	'shortcuts.goto_bookmarks_page': 'Zu Lesezeichen gehen',
+	'shortcuts.goto_all_items_page': 'Zu allen Einträgen gehen',
+	'shortcuts.goto_feeds_page': 'Zu Feeds gehen',
+	'shortcuts.goto_settings_page': 'Zu Einstellungen gehen'
 } as const;
 
 export default lang;

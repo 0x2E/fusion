@@ -24,6 +24,7 @@ const lang = {
 	'common.password': 'Mot de passe',
 	'common.link': 'Lien',
 	'common.advanced': 'Avancé',
+	'common.shortcuts': 'Raccourcis clavier',
 
 	// state
 	'state.success': 'Succès',
@@ -91,7 +92,25 @@ const lang = {
 
 	// auth
 	'auth.logout.confirm': 'Êtes-vous sûr de vouloir vous déconnecter?',
-	'auth.logout.failed_message': 'Échec de la déconnexion. Veuillez réessayer.'
+	'auth.logout.failed_message': 'Échec de la déconnexion. Veuillez réessayer.',
+
+	// shortcuts
+	'shortcuts.show_help': 'Afficher les raccourcis clavier',
+	'shortcuts.next_item': 'Élément suivant',
+	'shortcuts.prev_item': 'Élément précédent',
+	'shortcuts.toggle_unread': 'Basculer lu/non lu',
+	'shortcuts.mark_all_as_read': 'Marquer tout comme lu',
+	'shortcuts.toggle_bookmark': 'Basculer favori',
+	'shortcuts.view_original': 'Voir le lien original',
+	'shortcuts.next_feed': 'Flux suivant',
+	'shortcuts.prev_feed': 'Flux précédent',
+	'shortcuts.open_selected': 'Ouvrir la sélection',
+	'shortcuts.goto_search_page': 'Aller à la recherche',
+	'shortcuts.goto_unread_page': 'Aller aux non lus',
+	'shortcuts.goto_bookmarks_page': 'Aller aux favoris',
+	'shortcuts.goto_all_items_page': 'Aller à tous les éléments',
+	'shortcuts.goto_feeds_page': 'Aller aux flux',
+	'shortcuts.goto_settings_page': 'Aller aux paramètres'
 } as const;
 
 export default lang;

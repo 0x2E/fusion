@@ -1,6 +1,6 @@
 <script module>
-	import type { Action } from 'svelte/action';
 	import { install, uninstall } from '@github/hotkey';
+	import type { Action } from 'svelte/action';
 
 	let show = $state(false);
 	export function toggleShow() {
@@ -8,22 +8,22 @@
 	}
 
 	export const shortcuts = {
-		showHelp: { keys: 'Shift+?', desc: 'Show keyboard shortcuts help' },
-		nextItem: { keys: 'j', desc: 'Next item' },
-		prevItem: { keys: 'k', desc: 'Previous item' },
-		toggleUnread: { keys: 'm', desc: 'Unread/read item' },
-		markAllasread: { keys: 'Shift+M', desc: 'Mark all items as read' },
-		toggleBookmark: { keys: 'b', desc: 'Add/remove bookmark' },
-		viewOriginal: { keys: 'v', desc: 'View original item' },
-		nextFeed: { keys: 'Shift+J', desc: 'Next feed' },
-		prevFeed: { keys: 'Shift+K', desc: 'Previous feed' },
-		openSelected: { keys: 'Enter', desc: 'Open selected item/feed' },
-		gotoSearchPage: { keys: 'g /,/', desc: 'Go to search page' },
-		gotoUnreadPage: { keys: 'g u', desc: 'Go to unread page' },
-		gotoBookmarksPage: { keys: 'g b', desc: 'Go to bookmarks page' },
-		gotoAllItemsPage: { keys: 'g a', desc: 'Go to all items page' },
-		gotoFeedsPage: { keys: 'g f', desc: 'Go to feeds page' },
-		gotoSettingsPage: { keys: 'g s', desc: 'Go to settings page' }
+		showHelp: { keys: 'Shift+?', desc: t('shortcuts.show_help') },
+		nextItem: { keys: 'j', desc: t('shortcuts.next_item') },
+		prevItem: { keys: 'k', desc: t('shortcuts.prev_item') },
+		toggleUnread: { keys: 'm', desc: t('shortcuts.toggle_unread') },
+		markAllasread: { keys: 'Shift+M', desc: t('shortcuts.mark_all_as_read') },
+		toggleBookmark: { keys: 'b', desc: t('shortcuts.toggle_bookmark') },
+		viewOriginal: { keys: 'v', desc: t('shortcuts.view_original') },
+		nextFeed: { keys: 'Shift+J', desc: t('shortcuts.next_feed') },
+		prevFeed: { keys: 'Shift+K', desc: t('shortcuts.prev_feed') },
+		openSelected: { keys: 'Enter', desc: t('shortcuts.open_selected') },
+		gotoSearchPage: { keys: 'g /,/', desc: t('shortcuts.goto_search_page') },
+		gotoUnreadPage: { keys: 'g u', desc: t('shortcuts.goto_unread_page') },
+		gotoBookmarksPage: { keys: 'g b', desc: t('shortcuts.goto_bookmarks_page') },
+		gotoAllItemsPage: { keys: 'g a', desc: t('shortcuts.goto_all_items_page') },
+		gotoFeedsPage: { keys: 'g f', desc: t('shortcuts.goto_feeds_page') },
+		gotoSettingsPage: { keys: 'g s', desc: t('shortcuts.goto_settings_page') }
 	};
 
 	export function activateHotkey(node: HTMLElement, keys: string) {
@@ -67,7 +67,7 @@
 			<button class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">✕</button>
 		</form>
 
-		<h3 class="text-lg font-bold">Keyboard shortcuts</h3>
+		<h3 class="text-lg font-bold">{t('common.shortcuts')}</h3>
 		<ul class="space-y-2 py-4">
 			{#each Object.entries(shortcuts) as [_, { keys, desc }]}
 				<li class="hover:bg-base-200 flex items-center justify-between">

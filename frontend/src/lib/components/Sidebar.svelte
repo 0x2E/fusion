@@ -249,7 +249,7 @@
 							use:hotkey={shortcuts.showHelp.keys}
 						>
 							<Command class="size-4" />
-							Keyboard shortcuts
+							{t('common.shortcuts')}
 						</button>
 					</li>
 					<li>

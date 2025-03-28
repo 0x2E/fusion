@@ -24,6 +24,7 @@ const lang = {
 	'common.password': '密碼',
 	'common.link': '連結',
 	'common.advanced': '進階',
+	'common.shortcuts': '鍵盤快捷鍵',
 
 	// state
 	'state.success': '成功',
@@ -87,7 +88,25 @@ const lang = {
 
 	// auth
 	'auth.logout.confirm': '您確定要登出嗎？',
-	'auth.logout.failed_message': '登出失敗。請再試一次。'
+	'auth.logout.failed_message': '登出失敗。請再試一次。',
+
+	// shortcuts
+	'shortcuts.show_help': '顯示鍵盤快捷鍵',
+	'shortcuts.next_item': '下一項',
+	'shortcuts.prev_item': '上一項',
+	'shortcuts.toggle_unread': '切換已讀/未讀',
+	'shortcuts.mark_all_as_read': '標記全部為已讀',
+	'shortcuts.toggle_bookmark': '切換書籤',
+	'shortcuts.view_original': '查看原始連結',
+	'shortcuts.next_feed': '下一個訂閱源',
+	'shortcuts.prev_feed': '上一個訂閱源',
+	'shortcuts.open_selected': '開啟選擇項',
+	'shortcuts.goto_search_page': '前往搜尋',
+	'shortcuts.goto_unread_page': '前往未讀',
+	'shortcuts.goto_bookmarks_page': '前往書籤',
+	'shortcuts.goto_all_items_page': '前往所有項目',
+	'shortcuts.goto_feeds_page': '前往訂閱源',
+	'shortcuts.goto_settings_page': '前往設定'
 } as const;
 
 export default lang;

@@ -24,6 +24,7 @@ const lang = {
 	'common.password': 'Password',
 	'common.link': 'Link',
 	'common.advanced': 'Advanced',
+	'common.shortcuts': 'Keyboard shortcuts',
 
 	// state
 	'state.success': 'Success',
@@ -87,11 +88,29 @@ const lang = {
 	'settings.groups.description': "Group's name should be unique.",
 	'settings.groups.delete.confirm':
 		'Are you sure you want to delete this group? All its feeds will be moved to the default group',
-	'settings.groups.delete.error.delete_the_default': 'Cannot delete the default group',
+	'settings.groups.delete.error.delete_the_default': 'Cannot delete default group',
 
 	// auth
 	'auth.logout.confirm': 'Are you sure you want to log out?',
-	'auth.logout.failed_message': 'Failed to log out. Please try again.'
+	'auth.logout.failed_message': 'Log out failed. Please try again.',
+
+	// shortcuts
+	'shortcuts.show_help': 'Show keyboard shortcuts',
+	'shortcuts.next_item': 'Next item',
+	'shortcuts.prev_item': 'Previous item',
+	'shortcuts.toggle_unread': 'Toggle read/unread',
+	'shortcuts.mark_all_as_read': 'Mark all as read',
+	'shortcuts.toggle_bookmark': 'Toggle bookmark',
+	'shortcuts.view_original': 'View original',
+	'shortcuts.next_feed': 'Next feed',
+	'shortcuts.prev_feed': 'Previous feed',
+	'shortcuts.open_selected': 'Open selection',
+	'shortcuts.goto_search_page': 'Go to search',
+	'shortcuts.goto_unread_page': 'Go to unread',
+	'shortcuts.goto_bookmarks_page': 'Go to bookmarks',
+	'shortcuts.goto_all_items_page': 'Go to all items',
+	'shortcuts.goto_feeds_page': 'Go to feeds',
+	'shortcuts.goto_settings_page': 'Go to settings'
 } as const;
 
 export default lang;

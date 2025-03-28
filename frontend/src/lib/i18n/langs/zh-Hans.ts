@@ -24,6 +24,7 @@ const lang = {
 	'common.password': '密码',
 	'common.link': '链接',
 	'common.advanced': '高级',
+	'common.shortcuts': '键盘快捷键',
 
 	// state
 	'state.success': '成功',
@@ -88,7 +89,25 @@ const lang = {
 
 	// auth
 	'auth.logout.confirm': '确定要退出登录吗？',
-	'auth.logout.failed_message': '退出登录失败。请重试。'
+	'auth.logout.failed_message': '退出登录失败。请重试。',
+
+	// shortcuts
+	'shortcuts.show_help': '显示键盘快捷键',
+	'shortcuts.next_item': '下一项',
+	'shortcuts.prev_item': '上一项',
+	'shortcuts.toggle_unread': '切换已读/未读',
+	'shortcuts.mark_all_as_read': '标记所有为已读',
+	'shortcuts.toggle_bookmark': '切换书签',
+	'shortcuts.view_original': '查看原始链接',
+	'shortcuts.next_feed': '下一个订阅源',
+	'shortcuts.prev_feed': '上一个订阅源',
+	'shortcuts.open_selected': '打开选择项',
+	'shortcuts.goto_search_page': '前往搜索',
+	'shortcuts.goto_unread_page': '前往未读',
+	'shortcuts.goto_bookmarks_page': '前往书签',
+	'shortcuts.goto_all_items_page': '前往所有项目',
+	'shortcuts.goto_feeds_page': '前往订阅源',
+	'shortcuts.goto_settings_page': '前往设置'
 } as const;
 
 export default lang;
