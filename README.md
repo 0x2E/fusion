@@ -53,6 +53,8 @@ Download from [Releases](https://github.com/0x2E/fusion/releases).
 
 ### One-Click Deployment
 
+[Deploy on Fly.io](./fly.toml)
+
 [![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/7FRK0K?referralCode=rook1e404)
 
 Maintained by community:
