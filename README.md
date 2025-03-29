@@ -2,9 +2,7 @@
 
 A lightweight RSS feed aggregator and reader.
 
-![screenshot light](./assets/screenshot-light.png)
-
-![screenshot dark](./assets/screenshot-dark.png)
+![screenshots](./assets/screenshots.png)
 
 Key features include:
 
