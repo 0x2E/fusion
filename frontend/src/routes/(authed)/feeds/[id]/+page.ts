@@ -1,6 +1,5 @@
 import { getFeed } from '$lib/api/feed';
 import { listItems, parseURLtoFilter } from '$lib/api/item';
-import { fullItemFilter } from '$lib/state.svelte';
 import type { PageLoad } from './$types';
 
 export const prerender = false;
@@ -11,9 +10,10 @@ export const load: PageLoad = async ({ depends, url, params }) => {
 	const id = parseInt(params.id);
 	const feed = getFeed(id);
 	const filter = parseURLtoFilter(url.searchParams, {
+		unread: undefined,
+		bookmark: undefined,
 		feed_id: id
 	});
-	Object.assign(fullItemFilter, filter);
 	const items = listItems(filter);
 	return { feed: feed, items: items };
 };

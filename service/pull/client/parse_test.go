@@ -14,11 +14,13 @@ import (
 func TestParseGoFeedItems(t *testing.T) {
 	for _, tt := range []struct {
 		description string
+		feedURL     string
 		gfItems     []*gofeed.Item
 		expected    []*model.Item
 	}{
 		{
 			description: "converts gofeed items to model items with complete data",
+			feedURL:     "https://example.com/feed",
 			gfItems: []*gofeed.Item{
 				{
 					Title:           "Test Item",
@@ -41,7 +43,32 @@ func TestParseGoFeedItems(t *testing.T) {
 			},
 		},
 		{
+			description: "converts relative path links to full URLs",
+			feedURL:     "https://example.com/feed",
+			gfItems: []*gofeed.Item{
+				{
+					Title:           "Test Item with Relative Path",
+					Link:            "/link",
+					GUID:            "guid",
+					Content:         "<p>This is the content</p>",
+					Description:     "This is the description",
+					PublishedParsed: mustParseTime("2025-01-01T12:00:00Z"),
+				},
+			},
+			expected: []*model.Item{
+				{
+					Title:   ptr.To("Test Item with Relative Path"),
+					Link:    ptr.To("https://example.com/link"),
+					GUID:    ptr.To("guid"),
+					Content: ptr.To("<p>This is the content</p>"),
+					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
+					Unread:  ptr.To(true),
+				},
+			},
+		},
+		{
 			description: "uses description when content is empty",
+			feedURL:     "https://example.com/feed",
 			gfItems: []*gofeed.Item{
 				{
 					Title:           "Test Item",
@@ -65,6 +92,7 @@ func TestParseGoFeedItems(t *testing.T) {
 		},
 		{
 			description: "uses link when GUID is empty",
+			feedURL:     "https://example.com/feed",
 			gfItems: []*gofeed.Item{
 				{
 					Title:           "Test Item",
@@ -88,6 +116,7 @@ func TestParseGoFeedItems(t *testing.T) {
 		},
 		{
 			description: "handles both empty content and empty GUID",
+			feedURL:     "https://example.com/feed",
 			gfItems: []*gofeed.Item{
 				{
 					Title:           "Test Item",
@@ -111,6 +140,7 @@ func TestParseGoFeedItems(t *testing.T) {
 		},
 		{
 			description: "handles multiple items",
+			feedURL:     "https://example.com/feed",
 			gfItems: []*gofeed.Item{
 				{
 					Title:           "Item 1",
@@ -150,11 +180,13 @@ func TestParseGoFeedItems(t *testing.T) {
 		},
 		{
 			description: "returns empty slice for empty input",
+			feedURL:     "https://example.com/feed",
 			gfItems:     []*gofeed.Item{},
 			expected:    []*model.Item{},
 		},
 		{
 			description: "skips nil items in the array",
+			feedURL:     "https://example.com/feed",
 			gfItems: []*gofeed.Item{
 				{
 					Title:           "Valid Item",
@@ -193,7 +225,7 @@ func TestParseGoFeedItems(t *testing.T) {
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
-			result := client.ParseGoFeedItems(tt.gfItems)
+			result := client.ParseGoFeedItems(tt.feedURL, tt.gfItems)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

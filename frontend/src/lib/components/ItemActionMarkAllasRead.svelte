@@ -6,6 +6,7 @@
 	import { t } from '$lib/i18n';
 	import { CheckCheck } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import { shortcut, shortcuts } from './ShortcutHelpModal.svelte';
 
 	type Props =
 		| {
@@ -39,7 +40,12 @@
 	class="tooltip tooltip-bottom"
 	data-tip={props.disabled ? undefined : t('item.mark_all_as_read')}
 >
-	<button disabled={props.disabled} onclick={handleMarkAllAsRead} class="btn btn-ghost btn-square">
+	<button
+		disabled={props.disabled}
+		onclick={handleMarkAllAsRead}
+		use:shortcut={shortcuts.markAllasread.keys}
+		class="btn btn-ghost btn-square"
+	>
 		<CheckCheck class="size-4" />
 	</button>
 </div>

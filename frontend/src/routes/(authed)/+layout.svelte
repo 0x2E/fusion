@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { beforeNavigate } from '$app/navigation';
 	import FeedActionImport from '$lib/components/FeedActionImport.svelte';
+	import ShortcutHelpModal from '$lib/components/ShortcutHelpModal.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
 	let { children, data } = $props();
@@ -14,7 +15,13 @@
 	<input id="sidebar-toggle" type="checkbox" bind:checked={showSidebar} class="drawer-toggle" />
 	<div class="drawer-content bg-base-100 relative z-10 min-h-screen overflow-x-clip">
 		<div class="mx-auto flex h-full max-w-6xl flex-col pb-4">
-			{@render children()}
+			<svelte:boundary>
+				{@render children()}
+				{#snippet failed(error, reset)}
+					<p>{error}</p>
+					<button onclick={reset} class="btn w-fit">oops! try again</button>
+				{/snippet}
+			</svelte:boundary>
 		</div>
 	</div>
 	<div class="drawer-side z-10">
@@ -27,5 +34,6 @@
 	</div>
 </div>
 
-<!-- put it outside the drawer because when its inner modal is placed inside the drawer sidebar, the underlying dialog won't close properly -->
+<!-- put these outside the drawer because when its inner modal is placed inside the drawer sidebar, the underlying dialog won't close properly -->
 <FeedActionImport />
+<ShortcutHelpModal />

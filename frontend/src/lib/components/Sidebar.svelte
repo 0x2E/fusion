@@ -7,15 +7,23 @@
 	import { t } from '$lib/i18n';
 	import {
 		BookmarkCheck,
+		CircleEllipsis,
 		CirclePlus,
+		Command,
 		Inbox,
 		List,
 		LogOut,
+		Search,
 		Settings,
 		type Icon
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { toggleShow } from './FeedActionImport.svelte';
+	import { toggleShow as toggleShowFeedImport } from './FeedActionImport.svelte';
+	import {
+		shortcut,
+		shortcuts,
+		toggleShow as toggleShowShortcutHelpModal
+	} from './ShortcutHelpModal.svelte';
 	import ThemeController from './ThemeController.svelte';
 
 	interface Props {
@@ -25,18 +33,55 @@
 
 	let { feeds, groups }: Props = $props();
 
+	let feedList = $derived.by(async () => {
+		const [feedsData, groupsData] = await Promise.all([feeds, groups]);
+		const groupFeeds: { id: number; name: string; feeds: (Feed & { indexInList: number })[] }[] =
+			[];
+		let curIndexInList = 0;
+		groupsData.forEach((group) => {
+			groupFeeds.push({
+				id: group.id,
+				name: group.name,
+				feeds: feedsData
+					.filter((feed) => feed.group.id === group.id)
+					.sort((a, b) => a.name.localeCompare(b.name))
+					.map((feed) => ({
+						...feed,
+						indexInList: curIndexInList++
+					}))
+			});
+		});
+		return groupFeeds;
+	});
 	const version = import.meta.env.FUSION.version;
 
 	type SystemNavLink = {
 		label: string;
 		url: string;
 		icon: typeof Icon;
+		shortcut: string;
 	};
 	const systemLinks: SystemNavLink[] = [
-		{ label: t('common.unread'), url: '/', icon: Inbox },
-		{ label: t('common.bookmark'), url: '/bookmarks', icon: BookmarkCheck },
-		{ label: t('common.all'), url: '/all', icon: List },
-		{ label: t('common.settings'), url: '/settings', icon: Settings }
+		{ label: t('common.unread'), url: '/', icon: Inbox, shortcut: shortcuts.gotoUnreadPage.keys },
+		{
+			label: t('common.bookmark'),
+			url: '/bookmarks',
+			icon: BookmarkCheck,
+			shortcut: shortcuts.gotoBookmarksPage.keys
+		},
+		{ label: t('common.all'), url: '/all', icon: List, shortcut: shortcuts.gotoAllItemsPage.keys },
+		{
+			label: t('common.search'),
+			url: '/search',
+			icon: Search,
+			shortcut: shortcuts.gotoSearchPage.keys
+		},
+		{
+			label: t('common.settings'),
+			url: '/settings',
+			icon: Settings,
+			shortcut: shortcuts.gotoSettingsPage.keys
+		}
 	];
 
 	function isHighlight(url: string): boolean {
@@ -62,7 +107,52 @@
 			toast.error(t('auth.logout.failed_message'));
 		}
 	}
+
+	let selectedFeedIndex = $state(-1);
+	let selectedFeedGroupId = $state(-1);
+	$effect(() => {
+		feeds.then(() => {
+			selectedFeedIndex = -1;
+			selectedFeedGroupId = -1;
+		});
+	});
+	async function moveFeed(direction: 'prev' | 'next') {
+		const feedList = await feeds;
+
+		if (feedList.length === 0) return;
+
+		if (direction === 'prev') {
+			selectedFeedIndex -= 1;
+			if (selectedFeedIndex < 0) {
+				selectedFeedIndex = feedList.length - 1;
+			}
+		} else {
+			selectedFeedIndex += 1;
+			selectedFeedIndex %= feedList.length;
+		}
+
+		const el = document.getElementById(`sidebar-feed-${selectedFeedIndex}`);
+		if (el) {
+			selectedFeedGroupId = parseInt(el.getAttribute('data-group-id') ?? '-1');
+			el.focus();
+			// focus twice because <details> element's opening delay blocks the focus when
+			// we open a new group (<details>)
+			setTimeout(() => {
+				if (!el) return;
+				el.focus();
+			}, 30);
+		}
+	}
 </script>
+
+<div class="hidden">
+	<button onclick={() => moveFeed('next')} use:shortcut={shortcuts.nextFeed.keys}
+		>{shortcuts.nextFeed.desc}</button
+	>
+	<button onclick={() => moveFeed('prev')} use:shortcut={shortcuts.prevFeed.keys}
+		>{shortcuts.prevFeed.desc}</button
+	>
+</div>
 
 <div class="flex h-full flex-col justify-between">
 	<div>
@@ -82,7 +172,7 @@
 			<li>
 				<button
 					onclick={() => {
-						toggleShow();
+						toggleShowFeedImport();
 					}}
 					class="btn btn-sm btn-ghost bg-base-100"
 				>
@@ -95,7 +185,7 @@
 		<ul class="menu w-full font-medium">
 			{#each systemLinks as v}
 				<li>
-					<a href={v.url} class={isHighlight(v.url) ? 'menu-active' : ''}>
+					<a href={v.url} use:shortcut={v.shortcut} class={isHighlight(v.url) ? 'menu-active' : ''}>
 						<v.icon class="size-4" /><span>{v.label}</span>
 					</a>
 				</li>
@@ -104,42 +194,38 @@
 
 		<ul class="menu w-full">
 			<li class="menu-title">{t('common.feeds')}</li>
-			{#await groups}
+			{#await feedList}
 				<div class="skeleton bg-base-300 h-10"></div>
-			{:then data}
-				{#each data as group, index}
+			{:then groupData}
+				{#each groupData as group, groupIndex}
 					<li>
-						<details open={index === 0}>
+						<details open={groupIndex === 0 || selectedFeedGroupId === group.id}>
 							<summary class="overflow-hidden">
 								<span class="line-clamp-1">{group.name}</span>
 							</summary>
 							<ul>
-								{#await feeds}
-									<div class="skeleton bg-base-300 h-10"></div>
-								{:then data}
-									{#each data
-										.filter((v) => v.group.id === group.id)
-										.sort((a, b) => a.name.localeCompare(b.name)) as feed}
-										{@const textColor = feed.suspended
-											? 'text-neutral-content/60'
-											: feed.failure
-												? 'text-error'
-												: ''}
-										<li>
-											<a
-												href="/feeds/{feed.id}"
-												class={isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''}
-											>
-												<div class="avatar">
-													<div class="size-4 rounded-full">
-														<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
-													</div>
+								{#each group.feeds as feed}
+									{@const textColor = feed.suspended
+										? 'text-neutral-content/60'
+										: feed.failure
+											? 'text-error'
+											: ''}
+									<li>
+										<a
+											id="sidebar-feed-{feed.indexInList}"
+											data-group-id={group.id}
+											href="/feeds/{feed.id}"
+											class={`${isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''} focus:ring-2`}
+										>
+											<div class="avatar">
+												<div class="size-4 rounded-full">
+													<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
 												</div>
-												<span class={`line-clamp-1  ${textColor}`}>{feed.name}</span>
-											</a>
-										</li>
-									{/each}
-								{/await}
+											</div>
+											<span class={`line-clamp-1  ${textColor}`}>{feed.name}</span>
+										</a>
+									</li>
+								{/each}
 							</ul>
 						</details>
 					</li>
@@ -149,23 +235,47 @@
 	</div>
 
 	<div class="mt-8">
-		<button onclick={handleLogout} class="btn btn-ghost btn-sm hover:text-error mt-auto w-full">
-			<LogOut class="size-4" />
-			{t('common.logout')}
-		</button>
-		<p class="text-base-content/60 text-center text-xs">
-			<span>
-				{version}.
-			</span>
-			<span>
-				Logo by <a
-					class="hover:underline"
-					href="https://icons8.com/icon/FeQbTvGTsiN5/news"
-					target="_blank"
-				>
-					Icons8
-				</a>
-			</span>
-		</p>
+		<div class="dropdown dropdown-top dropdown-center w-full">
+			<div tabindex="0" role="button" class="btn btn-sm w-full">
+				<CircleEllipsis class="size-4" />
+				{t('common.more')}
+			</div>
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<div tabindex="0" class="dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+				<ul class="menu w-full p-0">
+					<li>
+						<button
+							onclick={() => toggleShowShortcutHelpModal()}
+							use:shortcut={shortcuts.showHelp.keys}
+						>
+							<Command class="size-4" />
+							{t('common.shortcuts')}
+						</button>
+					</li>
+					<li>
+						<button onclick={handleLogout} class="hover:text-error w-full">
+							<LogOut class="size-4" />
+							{t('common.logout')}
+						</button>
+					</li>
+				</ul>
+				<div class="bg-base-200 mt-2 p-2">
+					<p class="text-base-content/60 text-xs">
+						<span>
+							{version}.
+						</span>
+						<span>
+							Logo by <a
+								class="hover:underline"
+								href="https://icons8.com/icon/FeQbTvGTsiN5/news"
+								target="_blank"
+							>
+								Icons8
+							</a>
+						</span>
+					</p>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>

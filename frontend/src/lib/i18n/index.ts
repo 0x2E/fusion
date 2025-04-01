@@ -107,6 +107,10 @@ export function t(key: TranslationKey, params?: Record<string, any>): string {
 		});
 	}
 
+	if (!text) {
+		text = key;
+	}
+
 	return text;
 }
 

@@ -24,6 +24,8 @@ const lang = {
 	'common.password': 'Contraseña',
 	'common.link': 'Enlace',
 	'common.advanced': 'Avanzado',
+	'common.shortcuts': 'Atajos de teclado',
+	'common.more': 'Más',
 
 	// state
 	'state.success': 'Éxito',
@@ -92,7 +94,25 @@ const lang = {
 
 	// auth
 	'auth.logout.confirm': '¿Estás seguro de que quieres cerrar sesión?',
-	'auth.logout.failed_message': 'Error al cerrar sesión. Por favor, inténtalo de nuevo.'
+	'auth.logout.failed_message': 'Error al cerrar sesión. Por favor, inténtalo de nuevo.',
+
+	// shortcuts
+	'shortcuts.show_help': 'Mostrar atajos de teclado',
+	'shortcuts.next_item': 'Siguiente elemento',
+	'shortcuts.prev_item': 'Elemento anterior',
+	'shortcuts.toggle_unread': 'Alternar leído/no leído',
+	'shortcuts.mark_all_as_read': 'Marcar todo como leído',
+	'shortcuts.toggle_bookmark': 'Alternar marcador',
+	'shortcuts.view_original': 'Ver original',
+	'shortcuts.next_feed': 'Siguiente feed',
+	'shortcuts.prev_feed': 'Feed anterior',
+	'shortcuts.open_selected': 'Abrir selección',
+	'shortcuts.goto_search_page': 'Ir a búsqueda',
+	'shortcuts.goto_unread_page': 'Ir a no leídos',
+	'shortcuts.goto_bookmarks_page': 'Ir a marcadores',
+	'shortcuts.goto_all_items_page': 'Ir a todos los elementos',
+	'shortcuts.goto_feeds_page': 'Ir a feeds',
+	'shortcuts.goto_settings_page': 'Ir a configuración'
 } as const;
 
 export default lang;

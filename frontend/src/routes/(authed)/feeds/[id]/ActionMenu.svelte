@@ -14,8 +14,15 @@
 
 	let { feed }: Props = $props();
 
-	let settingsForm: FeedUpdateForm = $derived.by(() => {
-		return {
+	let settingsForm = $state<FeedUpdateForm>({
+		name: feed.name,
+		link: feed.link,
+		suspended: feed.suspended,
+		req_proxy: feed.req_proxy,
+		group_id: feed.group.id
+	});
+	$effect(() => {
+		settingsForm = {
 			name: feed.name,
 			link: feed.link,
 			suspended: feed.suspended,
@@ -23,6 +30,7 @@
 			group_id: feed.group.id
 		};
 	});
+
 	let settingsModal = $state<HTMLDialogElement>();
 
 	const groups = $derived(globalState.groups);
@@ -53,10 +61,11 @@
 	async function handleUpdate(e: Event) {
 		e.preventDefault();
 		toast.promise(updateFeed(feed.id, settingsForm), {
-			loading: 'Updating',
 			success: () => {
-				invalidate('page:' + page.url.pathname);
 				settingsModal?.close();
+				// invalidate all as we need to refresh the feeds in the sidebar
+				// if the group has been changed
+				invalidateAll();
 				return t('state.success');
 			},
 			error: (e) => {

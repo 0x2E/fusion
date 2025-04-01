@@ -24,6 +24,8 @@ const lang = {
 	'common.password': 'Senha',
 	'common.link': 'Link',
 	'common.advanced': 'Avançado',
+	'common.shortcuts': 'Atalhos de teclado',
+	'common.more': 'Mais',
 
 	// state
 	'state.success': 'Sucesso',
@@ -92,7 +94,25 @@ const lang = {
 
 	// auth
 	'auth.logout.confirm': 'Tem certeza que deseja sair?',
-	'auth.logout.failed_message': 'Falha ao sair. Por favor, tente novamente.'
+	'auth.logout.failed_message': 'Falha ao sair. Por favor, tente novamente.',
+
+	// shortcuts
+	'shortcuts.show_help': 'Mostrar atalhos de teclado',
+	'shortcuts.next_item': 'Próximo item',
+	'shortcuts.prev_item': 'Item anterior',
+	'shortcuts.toggle_unread': 'Alternar lido/não lido',
+	'shortcuts.mark_all_as_read': 'Marcar tudo como lido',
+	'shortcuts.toggle_bookmark': 'Alternar favorito',
+	'shortcuts.view_original': 'Ver link original',
+	'shortcuts.next_feed': 'Próximo feed',
+	'shortcuts.prev_feed': 'Feed anterior',
+	'shortcuts.open_selected': 'Abrir seleção',
+	'shortcuts.goto_search_page': 'Ir para busca',
+	'shortcuts.goto_unread_page': 'Ir para não lidos',
+	'shortcuts.goto_bookmarks_page': 'Ir para favoritos',
+	'shortcuts.goto_all_items_page': 'Ir para todos os itens',
+	'shortcuts.goto_feeds_page': 'Ir para feeds',
+	'shortcuts.goto_settings_page': 'Ir para configurações'
 } as const;
 
 export default lang;

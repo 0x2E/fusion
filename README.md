@@ -2,20 +2,18 @@
 
 A lightweight RSS feed aggregator and reader.
 
-![screenshot light](./assets/screenshot-light.png)
-
-![screenshot dark](./assets/screenshot-dark.png)
+![screenshots](./assets/screenshots.png)
 
 Key features include:
 
-- Group, Bookmark, Search, Sniff feeds automatically
-- Import/Export OPML file
-- Support RSS, Atom, JSON types feed
-- Responsive, Light/Dark mode, PWA
-- Lightweight, Self-hosted friendly
-  - Built with Golang and SQLite, Deploy with a single binary
+- Group, bookmark, search, automatic feed sniffing, OPML file import/export
+- Support for RSS, Atom, and JSON feed types
+- Responsive, light/dark mode, PWA, Keyboard shortcut support
+- Lightweight and self-hosted friendly
+  - Built with Golang and SQLite, deploy with a single binary
   - Pre-built Docker image
   - Uses about 80MB of memory
+- Internationalization (i18n): English, Chinese, German, French, Spanish, Russian, Portuguese, and Swedish
 
 ## Installation
 
@@ -53,6 +51,10 @@ Download from [Releases](https://github.com/0x2E/fusion/releases).
 
 ### One-Click Deployment
 
+[Deploy on Fly.io](./fly.toml)
+
+[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/7FRK0K?referralCode=rook1e404)
+
 Maintained by community:
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/XSPFK0?referralCode=milo)
@@ -86,3 +88,4 @@ For example:
 - Front-end is built with: [Sveltekit](https://github.com/sveltejs/kit), [daisyUI](https://github.com/saadeghi/daisyui)
 - Back-end is built with: [Echo](https://github.com/labstack/echo), [GORM](https://github.com/go-gorm/gorm)
 - Parsing feed with [gofeed](https://github.com/mmcdole/gofeed)
+- Logo by [Icons8](https://icons8.com/icon/FeQbTvGTsiN5/news)

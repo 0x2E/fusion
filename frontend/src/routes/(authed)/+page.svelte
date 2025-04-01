@@ -1,7 +1,6 @@
 <script lang="ts">
 	import ItemActionMarkAllasRead from '$lib/components/ItemActionMarkAllasRead.svelte';
 	import ItemList from '$lib/components/ItemList.svelte';
-	import ItemListPlaceholder from '$lib/components/ItemListPlaceholder.svelte';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 	import { t } from '$lib/i18n/index.js';
 
@@ -24,10 +23,6 @@
 		<div class="py-6">
 			<h1 class="text-3xl font-bold">{t('common.unread')}</h1>
 		</div>
-		{#await data.items}
-			<ItemListPlaceholder />
-		{:then items}
-			<ItemList items={items.items} total={items.total} />
-		{/await}
+		<ItemList data={data.items} highlightUnread={true} />
 	</div>
 </div>

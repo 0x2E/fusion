@@ -4,15 +4,12 @@
 	import { Search } from 'lucide-svelte';
 </script>
 
-<label class="input input-sm lg:w-80">
+<button
+	onclick={async () => {
+		await goto('/search');
+	}}
+	class="input input-sm lg:w-80"
+>
 	<Search class="size-4 opacity-50" />
-	<input
-		type="search"
-		placeholder={t('item.search.placeholder')}
-		onclick={async () => {
-			await goto('/search');
-		}}
-		readonly
-		class="cursor-pointer"
-	/>
-</label>
+	<input type="search" placeholder={t('item.search.placeholder')} readonly class="cursor-pointer" />
+</button>

@@ -1,33 +1,47 @@
-<script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { page } from '$app/state';
-	import { updateUnread } from '$lib/api/item';
+<script module>
 	import type { Item } from '$lib/api/model';
-	import { t } from '$lib/i18n';
-	import { CheckIcon, UndoIcon } from 'lucide-svelte';
+	import { updateUnread } from '$lib/api/item';
 	import { toast } from 'svelte-sonner';
 
-	interface Props {
-		data: Item;
-	}
-
-	let { data }: Props = $props();
-
-	async function toggleUnread(e: Event) {
-		e.preventDefault();
+	export async function toggleUnread(item: Item) {
 		try {
-			await updateUnread([data.id], !data.unread);
-			invalidate('page:' + page.url.pathname);
+			await updateUnread([item.id], !item.unread);
+			item.unread = !item.unread;
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
 	}
-	let Icon = $derived(data.unread ? CheckIcon : UndoIcon);
-	let tooltip = $derived(data.unread ? t('item.mark_as_read') : t('item.mark_as_unread'));
+</script>
+
+<script lang="ts">
+	import { t } from '$lib/i18n';
+	import { CheckIcon, UndoIcon } from 'lucide-svelte';
+	import { activateShortcut, deactivateShortcut, shortcuts } from './ShortcutHelpModal.svelte';
+
+	let { item = $bindable<Item>(), enableShortcut = false } = $props();
+
+	let Icon = $derived(item.unread ? CheckIcon : UndoIcon);
+	let tooltip = $derived(item.unread ? t('item.mark_as_read') : t('item.mark_as_unread'));
+
+	let el = $state<HTMLElement>();
+	$effect(() => {
+		if (!el) return;
+
+		if (enableShortcut) {
+			activateShortcut(el, shortcuts.toggleUnread.keys);
+		} else {
+			deactivateShortcut(el);
+		}
+	});
+
+	function handleClick(e: Event) {
+		e.preventDefault();
+		toggleUnread(item);
+	}
 </script>
 
 <div class="tooltip tooltip-bottom" data-tip={tooltip}>
-	<button onclick={toggleUnread} class="btn btn-ghost btn-square">
+	<button onclick={handleClick} bind:this={el} class="btn btn-ghost btn-square">
 		<Icon class="size-4" />
 	</button>
 </div>
