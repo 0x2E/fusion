@@ -5,9 +5,11 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/pkg/httpx"
+	"github.com/0x2e/fusion/pkg/ptr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,13 +28,14 @@ func (m *mockSendRequestFn) Do(req *http.Request) (*http.Response, error) {
 
 func TestFusionRequestWithRequestSender(t *testing.T) {
 	for _, tt := range []struct {
-		description    string
-		link           string
-		options        model.FeedRequestOptions
-		mockResponse   *http.Response
-		mockErr        error
-		expectedErrMsg string
-		ctx            context.Context
+		description          string
+		link                 string
+		options              model.FeedRequestOptions
+		mockResponse         *http.Response
+		mockErr              error
+		expectedErrMsg       string
+		expectedExtraHeaders map[string]string
+		ctx                  context.Context
 	}{
 		{
 			description: "successful request",
@@ -45,6 +48,23 @@ func TestFusionRequestWithRequestSender(t *testing.T) {
 			mockErr:        nil,
 			expectedErrMsg: "",
 			ctx:            context.Background(),
+		},
+		{
+			description: "adds If-Modified-Since header when caller specifies a LastBuild time",
+			link:        "https://example.com/feed.xml",
+			options: model.FeedRequestOptions{
+				LastModified: ptr.To("Wed, 21 Oct 2015 07:28:00 GMT"),
+			},
+			mockResponse: &http.Response{
+				StatusCode: http.StatusNotModified,
+				Status:     http.StatusText(http.StatusNotModified),
+			},
+			mockErr:        nil,
+			expectedErrMsg: "",
+			expectedExtraHeaders: map[string]string{
+				"If-Modified-Since": "Wed, 21 Oct 2015 07:28:00 GMT",
+			},
+			ctx: context.Background(),
 		},
 		{
 			description:    "handles error from request sender",
@@ -88,7 +108,19 @@ func TestFusionRequestWithRequestSender(t *testing.T) {
 
 			assert.Equal(t, "GET", mockSender.capturedReq.Method)
 			assert.Equal(t, httpx.UserAgentString, mockSender.capturedReq.Header.Get("User-Agent"))
+			for expectedHeader, expectedHeaderValue := range tt.expectedExtraHeaders {
+				assert.Equal(t, expectedHeaderValue, mockSender.capturedReq.Header.Get(expectedHeader), "wrong value for %s HTTP header", expectedHeader)
+			}
 			assert.True(t, mockSender.capturedReq.Close)
 		})
 	}
+}
+
+// Helper function to parse ISO8601 string to time.Time.
+func mustParseTime(iso8601 string) *time.Time {
+	t, err := time.Parse(time.RFC3339, iso8601)
+	if err != nil {
+		panic(err)
+	}
+	return &t
 }
