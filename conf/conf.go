@@ -52,9 +52,13 @@ func Load() (Conf, error) {
 		fmt.Println(conf)
 	}
 
-	pwHash, err := auth.HashPassword(conf.Password)
-	if err != nil {
-		return Conf{}, err
+	pwHash := auth.HashedPassword{}
+	if conf.Password != "" {
+		var err error
+		pwHash, err = auth.HashPassword(conf.Password)
+		if err != nil {
+			return Conf{}, err
+		}
 	}
 
 	if (conf.TLSCert == "") != (conf.TLSKey == "") {
