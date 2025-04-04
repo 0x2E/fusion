@@ -3,12 +3,9 @@ package auth
 import (
 	"crypto/sha256"
 	"crypto/subtle"
-	"errors"
 
 	"golang.org/x/crypto/pbkdf2"
 )
-
-var ErrPasswordTooShort = errors.New("password must be non-empty")
 
 type HashedPassword struct {
 	hash []byte
@@ -24,7 +21,7 @@ func (hp HashedPassword) Equals(other HashedPassword) bool {
 
 func HashPassword(password string) (HashedPassword, error) {
 	if len(password) == 0 {
-		return HashedPassword{}, ErrPasswordTooShort
+		return HashedPassword{}, nil
 	}
 
 	// These bytes are chosen at random. It's insecure to use a static salt to
