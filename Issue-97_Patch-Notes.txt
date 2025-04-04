@@ -1,5 +1,5 @@
-I believe that occurrences 1 & 2 Of Issue #97(0x2E/fusion:main) are caused by the content not being html entities decoded
-before being rendered. Below is an example of what I believe to be the cause of issue #97:
+I believe that occurrences 1,2,3 Of Issue #97(0x2E/fusion:main) are caused by the content not being html entities decoded
+before being rendered. Below is an example of what I believe to be the cause of issue #97(0x2E/fusion:main):
 
 <svelte:head>
 	{#await data.feed then feed}
@@ -10,5 +10,8 @@ before being rendered. Below is an example of what I believe to be the cause of 
 Above you can see that the title is being directly using feed.name the issue with this is that if feed.name contains
 html entities that are encoded the entities will not be decoded before being rendered this is done on purpose to prevent
 things such as XXS attacks.
+
+Every occurrence of the issue shares the same root problem .name or .link are be used causing the issues mentioned above to
+occur.
 
 In order to fix the issue the content must first safely have any html entities decoded then be rendered as normal.

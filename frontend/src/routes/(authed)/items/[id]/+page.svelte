@@ -71,7 +71,7 @@
 					class="inline-flex items-center gap-2 no-underline hover:underline"
 				>
 					<span>
-						{data.title || data.link} <!-- Occurrence 2 Of Issue #97(0x2E/fusion:main) -->
+						{data.title || data.link} <!-- Occurrence 3 Of Issue #97(0x2E/fusion:main) -->
 					</span>
 					<ExternalLink class="hidden size-5 md:block" />
 				</a>

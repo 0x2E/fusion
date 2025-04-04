@@ -64,7 +64,7 @@
 
 	<div class="px-4 lg:px-8">
 		<div class="items-center py-6">
-			<h1 class="text-3xl font-bold">{feed.name}</h1>
+			<h1 class="text-3xl font-bold">{feed.name}</h1> <!-- Occurrence 2 Of Issue #97(0x2E/fusion:main) -->
 			<p class="text-base-content/60 text-sm">{feed.link}</p>
 		</div>
 		<ItemList data={data.items} highlightUnread={true} />
