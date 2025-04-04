@@ -11,7 +11,7 @@
 
 <svelte:head>
 	{#await data.feed then feed}
-		<title>{feed.name}</title>
+		<title>{feed.name}</title> <!-- Occurrence 1 Of Issue #97(0x2E/fusion:main) -->
 	{/await}
 </svelte:head>
 
