@@ -27,7 +27,7 @@ import (
 type Params struct {
 	Host            string
 	Port            int
-	PasswordHash    auth.HashedPassword
+	PasswordHash    *auth.HashedPassword
 	UseSecureCookie bool
 	TLSCert         string
 	TLSKey          string
@@ -71,7 +71,9 @@ func Run(params Params) {
 	r.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Timeout: 30 * time.Second,
 	}))
-	r.Use(session.Middleware(sessions.NewCookieStore(params.PasswordHash.Bytes())))
+	if params.PasswordHash != nil {
+		r.Use(session.Middleware(sessions.NewCookieStore(params.PasswordHash.Bytes())))
+	}
 	r.Pre(middleware.RemoveTrailingSlash())
 	r.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -88,22 +90,26 @@ func Run(params Params) {
 		Browse:     false,
 	}))
 
-	loginAPI := Session{
-		PasswordHash:    params.PasswordHash,
-		UseSecureCookie: params.UseSecureCookie,
-	}
-	r.POST("/api/sessions", loginAPI.Create)
+	authed := r.Group("/api")
 
-	authed := r.Group("/api", func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			if err := loginAPI.Check(c); err != nil {
-				return echo.NewHTTPError(http.StatusUnauthorized)
-			}
-			return next(c)
+	if params.PasswordHash != nil {
+		loginAPI := Session{
+			PasswordHash:    *params.PasswordHash,
+			UseSecureCookie: params.UseSecureCookie,
 		}
-	})
+		r.POST("/api/sessions", loginAPI.Create)
 
-	authed.DELETE("/sessions", loginAPI.Delete)
+		authed.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				if err := loginAPI.Check(c); err != nil {
+					return echo.NewHTTPError(http.StatusUnauthorized)
+				}
+				return next(c)
+			}
+		})
+
+		authed.DELETE("/sessions", loginAPI.Delete)
+	}
 
 	feeds := authed.Group("/feeds")
 	feedAPIHandler := newFeedAPI(server.NewFeed(repo.NewFeed(repo.DB)))

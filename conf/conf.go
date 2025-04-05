@@ -20,7 +20,7 @@ const (
 type Conf struct {
 	Host         string
 	Port         int
-	PasswordHash auth.HashedPassword
+	PasswordHash *auth.HashedPassword
 	DB           string
 	SecureCookie bool
 	TLSCert      string
@@ -52,9 +52,13 @@ func Load() (Conf, error) {
 		fmt.Println(conf)
 	}
 
-	pwHash, err := auth.HashPassword(conf.Password)
-	if err != nil {
-		return Conf{}, err
+	var pwHash *auth.HashedPassword
+	if conf.Password != "" {
+		hash, err := auth.HashPassword(conf.Password)
+		if err != nil {
+			return Conf{}, err
+		}
+		pwHash = &hash
 	}
 
 	if (conf.TLSCert == "") != (conf.TLSKey == "") {
