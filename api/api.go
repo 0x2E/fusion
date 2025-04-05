@@ -27,7 +27,7 @@ import (
 type Params struct {
 	Host            string
 	Port            int
-	PasswordHash    auth.HashedPassword
+	PasswordHash    *auth.HashedPassword
 	UseSecureCookie bool
 	TLSCert         string
 	TLSKey          string
@@ -71,7 +71,7 @@ func Run(params Params) {
 	r.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Timeout: 30 * time.Second,
 	}))
-	if len(params.PasswordHash.Bytes()) != 0 {
+	if params.PasswordHash != nil {
 		r.Use(session.Middleware(sessions.NewCookieStore(params.PasswordHash.Bytes())))
 	}
 	r.Pre(middleware.RemoveTrailingSlash())
@@ -92,9 +92,9 @@ func Run(params Params) {
 
 	authed := r.Group("/api")
 
-	if len(params.PasswordHash.Bytes()) != 0 {
+	if params.PasswordHash != nil {
 		loginAPI := Session{
-			PasswordHash:    params.PasswordHash,
+			PasswordHash:    *params.PasswordHash,
 			UseSecureCookie: params.UseSecureCookie,
 		}
 		r.POST("/api/sessions", loginAPI.Create)
