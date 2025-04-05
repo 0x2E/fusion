@@ -24,7 +24,7 @@ Key features include:
 ```shell
 docker run -it -d -p 8080:8080 \
   -v $(pwd)/fusion:/data \
-  -e PASSWORD="rss123456" \
+  -e PASSWORD="fusion" \
   rook1e404/fusion:latest
 ```
 
@@ -38,7 +38,7 @@ services:
     ports:
       - '127.0.0.1:8080:8080'
     environment:
-      - PASSWORD=rss123456
+      - PASSWORD=fusion
     restart: "unless-stopped"
     volumes:
       # Change `./data` to where you want the files stored
