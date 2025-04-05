@@ -10,7 +10,6 @@
 	import ItemSwitcher from './ItemSwitcher.svelte';
 	import { listItems, type ListFilter } from '$lib/api/item';
 	import { afterNavigate } from '$app/navigation';
-
 	let { data } = $props();
 
 	let item = $state<Item>(data);
@@ -51,9 +50,17 @@
 		const resp = await listItems(filter);
 		itemsQueue = resp.items.map((item) => item.id);
 	});
+
+	import DOMPurify from "dompurify"; // Block added by BirdsAreFlyingCameras to fix issue #97(0x2E/fusion:main)
+	function decodeHtml(html: string): string {
+		const txt = document.createElement("textarea");
+		txt.innerHTML = html;
+		return txt.value;
+	}
+
 </script>
 
-<PageNavHeader title={data.title}>
+<PageNavHeader title={decodeHtml(DOMPurify.sanitize(data.title))}>
 	<ItemActionGotoFeed {item} />
 	<ItemActionUnread bind:item enableShortcut={true} />
 	<ItemActionBookmark bind:item enableShortcut={true} />
@@ -64,14 +71,14 @@
 	<ItemSwitcher itemID={data.id} {itemsQueue} action="previous" />
 	<article class="w-full max-w-prose">
 		<div class="space-y-2 pb-8">
-			<h1 class="text-4xl font-bold">
+			<h1 class="text-4xl foSnt-bold">
 				<a
 					href={data.link}
 					target="_blank"
 					class="inline-flex items-center gap-2 no-underline hover:underline"
 				>
 					<span>
-						{data.title || data.link} <!-- Occurrence 3 Of Issue #97(0x2E/fusion:main) -->
+						{decodeHtml(DOMPurify.sanitize(data.title)) || decodeHtml(DOMPurify.sanitize(data.link))}
 					</span>
 					<ExternalLink class="hidden size-5 md:block" />
 				</a>

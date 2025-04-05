@@ -8,7 +8,6 @@
 		showSearch?: boolean;
 		title?: string;
 	}
-
 	let { title, children, showSearch }: Props = $props();
 </script>
 

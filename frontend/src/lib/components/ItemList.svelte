@@ -85,6 +85,14 @@
 			el.focus();
 		}
 	}
+
+	import DOMPurify from "dompurify"; // Block added by BirdsAreFlyingCameras to fix issue #97(0x2E/fusion:main)
+	function decodeHtml(html: string): string {
+		const txt = document.createElement("textarea");
+		txt.innerHTML = html;
+		return txt.value;
+	}
+
 </script>
 
 <div>
@@ -119,7 +127,7 @@
 							<h2
 								class={`line-clamp-2 w-full truncate font-medium md:line-clamp-1 ${highlightUnread && !item.unread ? 'text-base-content/60' : ''}`}
 							>
-								{item.title || item.link}
+								{decodeHtml(DOMPurify.sanitize(item.title)) || decodeHtml(DOMPurify.sanitize(item.link))}
 							</h2>
 						</div>
 						<div class="flex w-full md:grow">
