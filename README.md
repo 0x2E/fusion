@@ -61,7 +61,7 @@ Maintained by community:
 
 ### Build from source
 
-Check out the Development section.
+Check out the "Contributing" section.
 
 ## Configuration
 
@@ -72,7 +72,9 @@ Fusion can be configured in many ways:
 - System environment variables, such as those set by `export PASSWORD=123abc`.
 - Create a `.env` file in the same directory as the binary. Note that values in `.env` file can be overwritten by system environment variables.
 
-## Development
+## Contributing
+
+Contributions are welcome! Before contributing, please read the [Contributing Guidelines](./CONTRIBUTING.md).
 
 - Prepare environment: Go 1.24+, Node.js 23+ (and pnpm).
 - Check out the commands in `scripts.sh`.
