@@ -356,15 +356,16 @@ func TestFeedClientFetchDeclaredLink(t *testing.T) {
 
 func TestFeedClientFetchItems(t *testing.T) {
 	for _, tt := range []struct {
-		description        string
-		feedURL            string
-		options            model.FeedRequestOptions
-		httpRespBody       string
-		httpStatusCode     int
-		httpErr            error
-		httpBodyReadErrMsg string
-		expectedResult     client.FetchItemsResult
-		expectedErrMsg     string
+		description             string
+		feedURL                 string
+		options                 model.FeedRequestOptions
+		httpRespBody            string
+		httpStatusCode          int
+		httpErr                 error
+		httpBodyReadErrMsg      string
+		mockHTTPResponseHeaders map[string]string // Headers to add to the response
+		expectedResult          client.FetchItemsResult
+		expectedErrMsg          string
 	}{
 		{
 			description: "fetch succeeds with no LastBuild when feed has no updated time",
@@ -591,6 +592,38 @@ func TestFeedClientFetchItems(t *testing.T) {
 			expectedErrMsg:     "got status code 404",
 		},
 		{
+			description:             "fetch succeeds with 304 Not Modified when If-Modified-Since was sent",
+			feedURL:                 "https://example.com/feed.xml",
+			options:                 model.FeedRequestOptions{LastModified: ptr.To("Wed, 01 Jan 2025 12:00:00 GMT")},
+			httpRespBody:            "",
+			httpStatusCode:          http.StatusNotModified,
+			httpErr:                 nil,
+			httpBodyReadErrMsg:      "",
+			mockHTTPResponseHeaders: nil, // No additional headers
+			expectedResult: client.FetchItemsResult{
+				LastBuild:    nil,
+				Items:        []*model.Item{},
+				LastModified: ptr.To("Wed, 01 Jan 2025 12:00:00 GMT"), // Should preserve the original LastModified
+			},
+			expectedErrMsg: "",
+		},
+		{
+			description:             "fetch succeeds with 304 Not Modified and uses new LastModified header if provided",
+			feedURL:                 "https://example.com/feed.xml",
+			options:                 model.FeedRequestOptions{LastModified: ptr.To("Wed, 01 Jan 2025 12:00:00 GMT")},
+			httpRespBody:            "",
+			httpStatusCode:          http.StatusNotModified,
+			httpErr:                 nil,
+			httpBodyReadErrMsg:      "",
+			mockHTTPResponseHeaders: map[string]string{"Last-Modified": "Thu, 02 Jan 2025 12:00:00 GMT"},
+			expectedResult: client.FetchItemsResult{
+				LastBuild:    nil,
+				Items:        []*model.Item{},
+				LastModified: ptr.To("Thu, 02 Jan 2025 12:00:00 GMT"), // New LastModified from response
+			},
+			expectedErrMsg: "",
+		},
+		{
 			description:        "fetch fails when HTTP response body cannot be read",
 			feedURL:            "https://example.com/feed.xml",
 			options:            model.FeedRequestOptions{},
@@ -624,13 +657,23 @@ func TestFeedClientFetchItems(t *testing.T) {
 				errMsg: tt.httpBodyReadErrMsg,
 			}
 
+			resp := &http.Response{
+				StatusCode: tt.httpStatusCode,
+				Status:     http.StatusText(tt.httpStatusCode),
+				Body:       body,
+				Header:     make(http.Header),
+			}
+
+			// Add any response headers specified in the test case
+			if tt.mockHTTPResponseHeaders != nil {
+				for key, value := range tt.mockHTTPResponseHeaders {
+					resp.Header.Set(key, value)
+				}
+			}
+
 			httpClient := &mockHTTPClient{
-				resp: &http.Response{
-					StatusCode: tt.httpStatusCode,
-					Status:     http.StatusText(tt.httpStatusCode),
-					Body:       body,
-				},
-				err: tt.httpErr,
+				resp: resp,
+				err:  tt.httpErr,
 			}
 
 			actualResult, actualErr := client.NewFeedClientWithRequestFn(httpClient.Get).FetchItems(context.Background(), tt.feedURL, tt.options)

@@ -23,7 +23,7 @@ type UpdateFeedInStoreFn func(feedID uint, items []*model.Item, lastBuild *time.
 // SingleFeedRepo represents a datastore for storing information about a feed.
 type SingleFeedRepo interface {
 	InsertItems(items []*model.Item) error
-	RecordSuccess(lastBuild *time.Time) error
+	RecordSuccess(lastBuild *time.Time, lastModified *string) error
 	RecordFailure(readErr error) error
 }
 
@@ -55,9 +55,10 @@ func (r *defaultSingleFeedRepo) InsertItems(items []*model.Item) error {
 	return r.itemRepo.Insert(items)
 }
 
-func (r *defaultSingleFeedRepo) RecordSuccess(lastBuild *time.Time) error {
+func (r *defaultSingleFeedRepo) RecordSuccess(lastBuild *time.Time, lastModified *string) error {
 	return r.feedRepo.Update(r.feedID, &model.Feed{
 		LastBuild:           lastBuild,
+		LastModified:        lastModified,
 		Failure:             ptr.To(""),
 		ConsecutiveFailures: 0,
 	})
@@ -86,13 +87,13 @@ func (p SingleFeedPuller) Pull(ctx context.Context, feed *model.Feed) error {
 		logger.Infof("fetch failed: %v", readErr)
 	}
 
-	return p.updateFeedInStore(feed.ID, fetchResult.Items, fetchResult.LastBuild, readErr)
+	return p.updateFeedInStore(feed.ID, fetchResult.Items, fetchResult.LastBuild, fetchResult.LastModified, readErr)
 }
 
 // updateFeedInStore saves the result of a feed fetch to the data store.
 // If the fetch failed, it records that in the data store.
 // If the fetch succeeds, it stores the latest build time and adds any new feed items.
-func (p SingleFeedPuller) updateFeedInStore(feedID uint, items []*model.Item, lastBuild *time.Time, requestError error) error {
+func (p SingleFeedPuller) updateFeedInStore(feedID uint, items []*model.Item, lastBuild *time.Time, lastModified *string, requestError error) error {
 	if requestError != nil {
 		return p.repo.RecordFailure(requestError)
 	}
@@ -101,5 +102,5 @@ func (p SingleFeedPuller) updateFeedInStore(feedID uint, items []*model.Item, la
 		return err
 	}
 
-	return p.repo.RecordSuccess(lastBuild)
+	return p.repo.RecordSuccess(lastBuild, lastModified)
 }
