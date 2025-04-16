@@ -54,11 +54,18 @@
 	}
 
 	let filter = $derived(parseURLtoFilter(page.url.searchParams));
-	async function handleChangePage(pageNumber: number) {
-		filter.page = pageNumber;
+	async function refreshList() {
 		const url = page.url;
 		applyFilterToURL(url, filter);
 		await goto(url, { invalidate: ['page:' + page.url.pathname] });
+	}
+	async function handleChangePage(pageNumber: number) {
+		filter.page = pageNumber;
+		await refreshList();
+	}
+	async function handleChangePageSize() {
+		filter.page = 1;
+		await refreshList();
 	}
 
 	let selectedItemIndex = $state(-1);
@@ -155,13 +162,26 @@
 			{/each}
 		</ul>
 
-		<div class="mt-6 flex w-full justify-center">
+		<div class="mt-6 flex w-full flex-wrap justify-center gap-4">
 			<Pagination
 				currentPage={filter.page}
 				pageSize={filter.page_size}
 				{total}
 				onPageChange={handleChangePage}
 			/>
+			<div class="join">
+				<input
+					type="number"
+					bind:value={filter.page_size}
+					onchange={handleChangePageSize}
+					min="10"
+					step="10"
+					class="input join-item w-16"
+				/>
+				<span class="join-item bg-base-300 text-base-content/60 flex items-center px-2 text-sm">
+					Per page
+				</span>
+			</div>
 		</div>
 	{/if}
 </div>
