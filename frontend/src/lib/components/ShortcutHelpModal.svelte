@@ -12,7 +12,10 @@
 		nextItem: { keys: 'j', desc: t('shortcuts.next_item') },
 		prevItem: { keys: 'k', desc: t('shortcuts.prev_item') },
 		toggleUnread: { keys: 'm', desc: t('shortcuts.toggle_unread') },
-		markAllasread: { keys: 'Shift+M', desc: t('shortcuts.mark_all_as_read') },
+		markPageAsRead: {
+			keys: 'Shift+M',
+			desc: `${t('item.mark_as_read')} (${t('common.current_page')})`
+		},
 		toggleBookmark: { keys: 'b', desc: t('shortcuts.toggle_bookmark') },
 		viewOriginal: { keys: 'v', desc: t('shortcuts.view_original') },
 		nextFeed: { keys: 'Shift+J', desc: t('shortcuts.next_feed') },

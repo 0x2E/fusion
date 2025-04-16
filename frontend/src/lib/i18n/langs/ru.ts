@@ -26,6 +26,7 @@ const lang = {
 	'common.advanced': 'Дополнительно',
 	'common.shortcuts': 'Горячие клавиши',
 	'common.more': 'Ещё',
+	'common.current_page': 'Текущая страница',
 
 	// state
 	'state.success': 'Успешно',
@@ -100,7 +101,6 @@ const lang = {
 	'shortcuts.next_item': 'Следующий элемент',
 	'shortcuts.prev_item': 'Предыдущий элемент',
 	'shortcuts.toggle_unread': 'Переключить прочитано/непрочитано',
-	'shortcuts.mark_all_as_read': 'Отметить все как прочитанные',
 	'shortcuts.toggle_bookmark': 'Переключить закладку',
 	'shortcuts.view_original': 'Просмотреть оригинальную ссылку',
 	'shortcuts.next_feed': 'Следующая лента',

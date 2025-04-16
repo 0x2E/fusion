@@ -21,7 +21,7 @@ export async function listItems(options?: ListFilter) {
 		.get('items', {
 			searchParams: options
 		})
-		.json<{ total: number; items: Item[] }>();
+		.json<{ total: number; items: Omit<Item, 'content'>[] }>();
 }
 
 export function parseURLtoFilter(params: URLSearchParams, override?: ListFilter): ListFilter {

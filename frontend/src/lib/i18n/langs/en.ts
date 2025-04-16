@@ -26,6 +26,7 @@ const lang = {
 	'common.advanced': 'Advanced',
 	'common.shortcuts': 'Keyboard shortcuts',
 	'common.more': 'More',
+	'common.current_page': 'Current page',
 
 	// state
 	'state.success': 'Success',
@@ -100,7 +101,6 @@ const lang = {
 	'shortcuts.next_item': 'Next item',
 	'shortcuts.prev_item': 'Previous item',
 	'shortcuts.toggle_unread': 'Toggle read/unread',
-	'shortcuts.mark_all_as_read': 'Mark all as read',
 	'shortcuts.toggle_bookmark': 'Toggle bookmark',
 	'shortcuts.view_original': 'View original',
 	'shortcuts.next_feed': 'Next feed',
