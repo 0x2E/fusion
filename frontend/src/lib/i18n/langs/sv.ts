@@ -25,6 +25,7 @@ const lang = {
 	'common.link': 'Länk',
 	'common.advanced': 'Avancerat',
 	'common.more': 'Mer',
+	'common.current_page': 'Aktuell sida',
 
 	// state
 	'state.success': 'Lyckades',
@@ -99,7 +100,6 @@ const lang = {
 	'shortcuts.next_item': 'Nästa objekt',
 	'shortcuts.prev_item': 'Föregående objekt',
 	'shortcuts.toggle_unread': 'Växla läst/oläst',
-	'shortcuts.mark_all_as_read': 'Markera alla som lästa',
 	'shortcuts.toggle_bookmark': 'Växla bokmärke',
 	'shortcuts.view_original': 'Visa originallänk',
 	'shortcuts.next_feed': 'Nästa flöde',

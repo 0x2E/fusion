@@ -26,6 +26,7 @@ const lang = {
 	'common.advanced': '進階',
 	'common.shortcuts': '鍵盤快捷鍵',
 	'common.more': '更多',
+	'common.current_page': '當前頁面',
 
 	// state
 	'state.success': '成功',
@@ -96,7 +97,6 @@ const lang = {
 	'shortcuts.next_item': '下一項',
 	'shortcuts.prev_item': '上一項',
 	'shortcuts.toggle_unread': '切換已讀/未讀',
-	'shortcuts.mark_all_as_read': '標記全部為已讀',
 	'shortcuts.toggle_bookmark': '切換書籤',
 	'shortcuts.view_original': '查看原始連結',
 	'shortcuts.next_feed': '下一個訂閱源',

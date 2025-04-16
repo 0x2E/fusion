@@ -26,6 +26,7 @@ const lang = {
 	'common.advanced': '高级',
 	'common.shortcuts': '键盘快捷键',
 	'common.more': '更多',
+	'common.current_page': '当前页面',
 
 	// state
 	'state.success': '成功',
@@ -97,7 +98,6 @@ const lang = {
 	'shortcuts.next_item': '下一项',
 	'shortcuts.prev_item': '上一项',
 	'shortcuts.toggle_unread': '切换已读/未读',
-	'shortcuts.mark_all_as_read': '标记所有为已读',
 	'shortcuts.toggle_bookmark': '切换书签',
 	'shortcuts.view_original': '查看原始链接',
 	'shortcuts.next_feed': '下一个订阅源',

@@ -26,6 +26,7 @@ const lang = {
 	'common.advanced': 'Avanzado',
 	'common.shortcuts': 'Atajos de teclado',
 	'common.more': 'Más',
+	'common.current_page': 'Página actual',
 
 	// state
 	'state.success': 'Éxito',
@@ -101,7 +102,6 @@ const lang = {
 	'shortcuts.next_item': 'Siguiente elemento',
 	'shortcuts.prev_item': 'Elemento anterior',
 	'shortcuts.toggle_unread': 'Alternar leído/no leído',
-	'shortcuts.mark_all_as_read': 'Marcar todo como leído',
 	'shortcuts.toggle_bookmark': 'Alternar marcador',
 	'shortcuts.view_original': 'Ver original',
 	'shortcuts.next_feed': 'Siguiente feed',
