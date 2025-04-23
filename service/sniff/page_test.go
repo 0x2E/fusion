@@ -32,13 +32,14 @@ func TestParseHTMLContentMatchLink(t *testing.T) {
 	}
 
 	for _, tt := range table {
-		feed, err := parseHTMLContent(context.Background(), tt.content)
+		sniffer := Sniffer{}
+		feed, err := sniffer.parseHTMLContent(context.Background(), tt.content)
 		assert.Nil(t, err)
 		assert.ElementsMatch(t, tt.want, feed)
 	}
 }
 
-func TestParseHTMLContentMatchA(t *testing.T) {
+func TestParseHTMLContentMatchLinkElement(t *testing.T) {
 	table := []testParseHTMLContentItem{
 		// match <a>
 		{content: []byte(`
@@ -61,7 +62,8 @@ func TestParseHTMLContentMatchA(t *testing.T) {
 	}
 
 	for _, tt := range table {
-		feed, err := parseHTMLContent(context.Background(), tt.content)
+		sniffer := Sniffer{httpClient: newClient()}
+		feed, err := sniffer.parseHTMLContent(context.Background(), tt.content)
 		assert.Nil(t, err)
 		assert.ElementsMatch(t, tt.want, feed)
 	}

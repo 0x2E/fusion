@@ -3,15 +3,13 @@ package sniff
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/url"
 
 	"github.com/mmcdole/gofeed"
-
-	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/service/pull/client"
 )
 
-func tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink, error) {
+func (s *Sniffer) tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink, error) {
 	wellKnown := []string{
 		"atom.xml",
 		"feed.xml",
@@ -31,7 +29,7 @@ func tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink, error) {
 		if err != nil {
 			continue
 		}
-		feed, err := parseRSSUrl(ctx, newTarget)
+		feed, err := s.parseRSSUrl(ctx, newTarget)
 		if err != nil {
 			continue
 		}
@@ -44,23 +42,18 @@ func tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink, error) {
 	return feeds, nil
 }
 
-func parseRSSUrl(ctx context.Context, url string) (FeedLink, error) {
-	feedClient := client.NewFeedClient()
-
-	title, err := feedClient.FetchTitle(ctx, url, model.FeedRequestOptions{})
+func (s *Sniffer) parseRSSUrl(ctx context.Context, target string) (FeedLink, error) {
+	resp, err := s.httpClient.Get(target)
 	if err != nil {
 		return FeedLink{}, err
 	}
+	defer resp.Body.Close()
 
-	declaredLink, err := feedClient.FetchDeclaredLink(ctx, url, model.FeedRequestOptions{})
+	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return FeedLink{}, err
 	}
-
-	return FeedLink{
-		Title: title,
-		Link:  declaredLink,
-	}, nil
+	return parseRSSContent(content)
 }
 
 func parseRSSContent(content []byte) (FeedLink, error) {

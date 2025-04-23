@@ -2,28 +2,52 @@ package sniff
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
 	"net/url"
 	"sync"
-
-	"github.com/0x2e/fusion/pkg/logx"
 )
-
-var sniffLogger = logx.Logger.With("module", "sniffer")
 
 type FeedLink struct {
 	Title string `json:"title"`
 	Link  string `json:"link"`
 }
 
-func Sniff(ctx context.Context, target *url.URL) ([]FeedLink, error) {
-	logger := sniffLogger.With("url", target.String())
-	ctx = logx.ContextWithLogger(ctx, logger)
+type Sniffer struct {
+	target     *url.URL
+	httpClient *http.Client
+}
 
+type SniffOptions struct {
+	ReqProxy *string
+}
+
+func Sniff(ctx context.Context, target *url.URL, options SniffOptions) ([]FeedLink, error) {
+	clientTransportOps := []transportOptionFunc{}
+	if options.ReqProxy != nil && *options.ReqProxy != "" {
+		proxyURL, err := url.Parse(*options.ReqProxy)
+		if err != nil {
+			return nil, err
+		}
+		clientTransportOps = append(clientTransportOps, func(transport *http.Transport) {
+			transport.Proxy = http.ProxyURL(proxyURL)
+		})
+	}
+
+	sniffer := Sniffer{
+		target:     target,
+		httpClient: newClient(clientTransportOps...),
+	}
+	return sniffer.Run(context.Background())
+}
+
+func (s *Sniffer) Run(ctx context.Context) ([]FeedLink, error) {
 	// find in third-party service
-	sLogger := logger.With("step", "third-party service")
-	fromService, err := tryService(logx.ContextWithLogger(ctx, sLogger), target)
+	logger := slog.With("step", "third-party service")
+	fromService, err := s.tryService(ctx)
 	if err != nil {
-		sLogger.Errorln(err)
+		logger.Error(err.Error())
 	}
 	if len(fromService) != 0 {
 		return fromService, nil
@@ -38,13 +62,10 @@ func Sniff(ctx context.Context, target *url.URL) ([]FeedLink, error) {
 		defer wg.Done()
 
 		// sniff in HTML
-		pLogger := logger.With("step", "page")
-		data, err := tryPageSource(
-			logx.ContextWithLogger(ctx, pLogger),
-			target.String(),
-		)
+		logger := slog.With("step", "page")
+		data, err := s.tryPageSource(ctx)
 		if err != nil {
-			pLogger.Errorln(err)
+			logger.Error(err.Error())
 		}
 
 		mu.Lock()
@@ -59,19 +80,16 @@ func Sniff(ctx context.Context, target *url.URL) ([]FeedLink, error) {
 		defer wg.Done()
 
 		// sniff well-knowns under this url
-		wLogger := logger.With("step", "well-knowns")
-		data, err := tryWellKnown(
-			logx.ContextWithLogger(ctx, wLogger),
-			target.Scheme+"://"+target.Host+target.Path,
-		) // https://go.dev/play/p/dVt-47_XWjU
+		logger := logger.With("step", "well-knowns")
+		data, err := s.tryWellKnown(ctx, fmt.Sprintf("%s://%s%s", s.target.Scheme, s.target.Host, s.target.Path))
 		if err != nil {
-			wLogger.Errorln(err)
+			logger.Error(err.Error())
 		}
 		if len(data) == 0 {
-			// sniff well-knowns under url root
-			data, err = tryWellKnown(ctx, target.Scheme+"://"+target.Host)
+			// sniff well-knowns under root path
+			data, err = s.tryWellKnown(ctx, fmt.Sprintf("%s://%s", s.target.Scheme, s.target.Host))
 			if err != nil {
-				wLogger.Errorln(err)
+				logger.Error(err.Error())
 			}
 		}
 

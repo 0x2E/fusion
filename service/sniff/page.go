@@ -5,18 +5,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 
-	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/pkg/httpx"
-	"github.com/0x2e/fusion/pkg/logx"
 	"github.com/PuerkitoBio/goquery"
 )
 
-func tryPageSource(ctx context.Context, link string) ([]FeedLink, error) {
-	logger := logx.LoggerFromContext(ctx)
-
-	resp, err := httpx.FusionRequest(ctx, link, model.FeedRequestOptions{})
+func (s *Sniffer) tryPageSource(ctx context.Context) ([]FeedLink, error) {
+	resp, err := s.httpClient.Get(s.target.String())
 	if err != nil {
 		return nil, err
 	}
@@ -30,25 +26,25 @@ func tryPageSource(ctx context.Context, link string) ([]FeedLink, error) {
 		return nil, fmt.Errorf("bad status %d", resp.StatusCode)
 	}
 
-	feeds, err := parseHTMLContent(ctx, content)
+	feeds, err := s.parseHTMLContent(ctx, content)
 	if err != nil {
-		logger.Errorw(err.Error(), "content type", "HTML")
+		slog.Error(err.Error(), "content_type", "HTML")
 	}
 	if len(feeds) != 0 {
 		for i := range feeds {
 			f := &feeds[i]
-			f.Link = formatLinkToAbs(link, f.Link)
+			f.Link = formatLinkToAbs(s.target.String(), f.Link)
 		}
 		return feeds, nil
 	}
 
 	feed, err := parseRSSContent(content)
 	if err != nil {
-		logger.Errorw(err.Error(), "content type", "RSS")
+		slog.Error(err.Error(), "content_type", "RSS")
 	}
 	if !isEmptyFeedLink(feed) {
 		if feed.Link == "" {
-			feed.Link = link
+			feed.Link = s.target.String()
 		}
 		return []FeedLink{feed}, nil
 	}
@@ -56,7 +52,7 @@ func tryPageSource(ctx context.Context, link string) ([]FeedLink, error) {
 	return nil, nil
 }
 
-func parseHTMLContent(ctx context.Context, content []byte) ([]FeedLink, error) {
+func (s *Sniffer) parseHTMLContent(ctx context.Context, content []byte) ([]FeedLink, error) {
 	feeds := make([]FeedLink, 0)
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(content))
@@ -97,7 +93,7 @@ func parseHTMLContent(ctx context.Context, content []byte) ([]FeedLink, error) {
 		suspected[link] = struct{}{}
 	})
 	for link := range suspected {
-		feed, err := parseRSSUrl(ctx, link)
+		feed, err := s.parseRSSUrl(ctx, link)
 		if err != nil {
 			continue
 		}

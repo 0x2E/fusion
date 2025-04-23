@@ -4,24 +4,20 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
 	"regexp"
 	"strings"
-
-	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/pkg/httpx"
 )
 
-type serviceMatcher func(context.Context, *url.URL) ([]FeedLink, error)
+type serviceMatcher func(context.Context) ([]FeedLink, error)
 
-func tryService(ctx context.Context, link *url.URL) ([]FeedLink, error) {
+func (s *Sniffer) tryService(ctx context.Context) ([]FeedLink, error) {
 	matcher := []serviceMatcher{
-		githubMatcher,
-		redditMatcher,
-		youtubeMatcher,
+		s.githubMatcher,
+		s.redditMatcher,
+		s.youtubeMatcher,
 	}
 	for _, fn := range matcher {
-		feed, err := fn(ctx, link)
+		feed, err := fn(ctx)
 		if err != nil {
 			continue
 		}
@@ -38,12 +34,12 @@ var githubGlobalFeed = []FeedLink{
 }
 
 // https://docs.github.com/en/rest/activity/feeds?apiVersion=2022-11-28#get-feeds
-func githubMatcher(ctx context.Context, link *url.URL) ([]FeedLink, error) {
-	if !strings.HasSuffix(link.Hostname(), "github.com") {
+func (s Sniffer) githubMatcher(ctx context.Context) ([]FeedLink, error) {
+	if !strings.HasSuffix(s.target.Hostname(), "github.com") {
 		return nil, nil
 	}
 
-	splited := strings.SplitN(link.Path, "/", 4) // split "/user/repo/" -> []string{"", "user", "repo", ""}
+	splited := strings.SplitN(s.target.Path, "/", 4) // split "/user/repo/" -> []string{"", "user", "repo", ""}
 	splitedLen := len(splited)
 	if splitedLen < 2 {
 		return githubGlobalFeed, nil
@@ -69,7 +65,7 @@ func githubMatcher(ctx context.Context, link *url.URL) ([]FeedLink, error) {
 	}
 
 	if username != "" {
-		re, err := regexp.Compile(`^[a-zA-Z0-9][-]?[a-zA-Z0-9]{0,38}$`) // todo need improve
+		re, err := regexp.Compile(`^[a-zA-Z0-9][-]?[a-zA-Z0-9]{0,38}$`)
 		if err != nil {
 			return nil, err
 		}
@@ -100,12 +96,12 @@ var redditGlobalFeed = []FeedLink{
 }
 
 // https://www.reddit.com/wiki/rss/
-func redditMatcher(ctx context.Context, link *url.URL) ([]FeedLink, error) {
-	if !strings.HasSuffix(link.Hostname(), "reddit.com") {
+func (s Sniffer) redditMatcher(ctx context.Context) ([]FeedLink, error) {
+	if !strings.HasSuffix(s.target.Hostname(), "reddit.com") {
 		return nil, nil
 	}
 
-	splited := strings.SplitN(link.Path, "/", 4)
+	splited := strings.SplitN(s.target.Path, "/", 4)
 	splitedLen := len(splited)
 	if splitedLen < 2 {
 		return redditGlobalFeed, nil
@@ -117,7 +113,7 @@ func redditMatcher(ctx context.Context, link *url.URL) ([]FeedLink, error) {
 		if splitedLen >= 4 && strings.HasPrefix(splited[3], "comments") {
 			// "comments/{postID}/{title}"
 			// "comments/{postID}/{title}/comment/{commentID}"
-			return genRedditCommentFeed(link.String()), nil
+			return genRedditCommentFeed(s.target.String()), nil
 		}
 		return genRedditSubFeed(param), nil
 	case "user":
@@ -162,12 +158,12 @@ func genRedditDomainSubmissionFeed(domain string) []FeedLink {
 	return []FeedLink{{Title: "/domain/" + domain, Link: fmt.Sprintf("https://reddit.com/domain/%s/.rss", domain)}}
 }
 
-func youtubeMatcher(ctx context.Context, link *url.URL) ([]FeedLink, error) {
-	if !strings.HasSuffix(link.Hostname(), "youtube.com") && !strings.HasSuffix(link.Hostname(), "youtu.be") {
+func (s Sniffer) youtubeMatcher(ctx context.Context) ([]FeedLink, error) {
+	if !strings.HasSuffix(s.target.Hostname(), "youtube.com") && !strings.HasSuffix(s.target.Hostname(), "youtu.be") {
 		return nil, nil
 	}
 
-	resp, err := httpx.FusionRequest(ctx, link.String(), model.FeedRequestOptions{})
+	resp, err := s.httpClient.Get(s.target.String())
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +172,7 @@ func youtubeMatcher(ctx context.Context, link *url.URL) ([]FeedLink, error) {
 	if err != nil {
 		return nil, err
 	}
-	if strings.HasPrefix(link.Path, "/@") {
+	if strings.HasPrefix(s.target.Path, "/@") {
 		re, err := regexp.Compile(`{"key":"browse_id","value":"(.+?)"}`)
 		if err != nil {
 			return nil, err
@@ -190,8 +186,8 @@ func youtubeMatcher(ctx context.Context, link *url.URL) ([]FeedLink, error) {
 			return nil, nil
 		}
 		return []FeedLink{{Title: "Channel", Link: "https://www.youtube.com/feeds/videos.xml?channel_id=" + id}}, nil
-	} else if strings.HasPrefix(link.Path, "/playlist") {
-		id := link.Query().Get("list")
+	} else if strings.HasPrefix(s.target.Path, "/playlist") {
+		id := s.target.Query().Get("list")
 		if id == "" {
 			return nil, nil
 		}
