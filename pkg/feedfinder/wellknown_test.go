@@ -1,4 +1,4 @@
-package sniff
+package feedfinder
 
 import (
 	"testing"

@@ -23,11 +23,15 @@ export async function getFeed(id: number) {
 	return await api.get('feeds/' + id).json<Feed>();
 }
 
-export async function checkValidity(link: string) {
+export type FeedRequestOptions = {
+	proxy?: string;
+};
+
+export async function checkValidity(link: string, options: FeedRequestOptions) {
 	const resp = await api
 		.post('feeds/validation', {
-			timeout: 20000,
-			json: { link: link }
+			timeout: 10000,
+			json: { link: link, request_options: options }
 		})
 		.json<{ feed_links: { title: string; link: string }[] }>();
 	return resp.feed_links;
@@ -38,16 +42,14 @@ export type FeedCreateForm = {
 	feeds: {
 		name: string;
 		link: string;
+		request_options: FeedRequestOptions;
 	}[];
 };
 
 export async function createFeed(data: FeedCreateForm) {
-	const feeds = data.feeds.map((v) => {
-		return { name: v.name, link: v.link };
-	});
 	return await api.post('feeds', {
 		timeout: 20000,
-		json: { feeds: feeds, group_id: data.group_id }
+		json: data
 	});
 }
 

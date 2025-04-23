@@ -1,4 +1,4 @@
-package sniff
+package feedfinder
 
 import (
 	"context"
@@ -27,7 +27,10 @@ func TestGitHub(t *testing.T) {
 	}
 
 	for _, tt := range table {
-		feed, err := githubMatcher(context.Background(), tt.url)
+		finder := Finder{
+			target: tt.url,
+		}
+		feed, err := finder.githubMatcher(context.Background())
 		assert.Nil(t, err)
 		assert.ElementsMatch(t, tt.want, feed)
 	}
@@ -58,7 +61,10 @@ func TestReddit(t *testing.T) {
 	}
 
 	for _, tt := range table {
-		feed, err := redditMatcher(context.Background(), tt.url)
+		finder := Finder{
+			target: tt.url,
+		}
+		feed, err := finder.redditMatcher(context.Background())
 		assert.Nil(t, err)
 		assert.ElementsMatch(t, tt.want, feed)
 	}

@@ -8,10 +8,10 @@ import (
 	"sync"
 
 	"github.com/0x2e/fusion/model"
+	"github.com/0x2e/fusion/pkg/feedfinder"
 	"github.com/0x2e/fusion/repo"
 	"github.com/0x2e/fusion/service/pull"
 	"github.com/0x2e/fusion/service/pull/client"
-	"github.com/0x2e/fusion/service/sniff"
 )
 
 type FeedRepo interface {
@@ -82,8 +82,11 @@ func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 	feeds := make([]*model.Feed, 0, len(req.Feeds))
 	for _, r := range req.Feeds {
 		feeds = append(feeds, &model.Feed{
-			Name:    r.Name,
-			Link:    r.Link,
+			Name: r.Name,
+			Link: r.Link,
+			FeedRequestOptions: model.FeedRequestOptions{
+				ReqProxy: r.RequestOptions.Proxy,
+			},
 			GroupID: req.GroupID,
 		})
 	}
@@ -120,7 +123,7 @@ func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 }
 
 func (f Feed) CheckValidity(ctx context.Context, req *ReqFeedCheckValidity) (*RespFeedCheckValidity, error) {
-	if title, err := client.NewFeedClient().FetchTitle(ctx, req.Link, model.FeedRequestOptions{}); err == nil {
+	if title, err := client.NewFeedClient().FetchTitle(ctx, req.Link, model.FeedRequestOptions{ReqProxy: req.RequestOptions.Proxy}); err == nil {
 		return &RespFeedCheckValidity{
 			FeedLinks: []ValidityItem{
 				{
@@ -136,7 +139,9 @@ func (f Feed) CheckValidity(ctx context.Context, req *ReqFeedCheckValidity) (*Re
 	if err != nil {
 		return nil, err
 	}
-	sniffed, err := sniff.Sniff(ctx, target)
+	sniffed, err := feedfinder.Find(ctx, target, feedfinder.Options{
+		ReqProxy: req.RequestOptions.Proxy,
+	})
 	if err != nil {
 		return nil, err
 	}
