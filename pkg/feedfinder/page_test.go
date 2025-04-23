@@ -1,4 +1,4 @@
-package sniff
+package feedfinder
 
 import (
 	"context"
@@ -32,8 +32,8 @@ func TestParseHTMLContentMatchLink(t *testing.T) {
 	}
 
 	for _, tt := range table {
-		sniffer := Sniffer{}
-		feed, err := sniffer.parseHTMLContent(context.Background(), tt.content)
+		finder := Finder{}
+		feed, err := finder.parseHTMLContent(context.Background(), tt.content)
 		assert.Nil(t, err)
 		assert.ElementsMatch(t, tt.want, feed)
 	}
@@ -62,8 +62,8 @@ func TestParseHTMLContentMatchLinkElement(t *testing.T) {
 	}
 
 	for _, tt := range table {
-		sniffer := Sniffer{httpClient: newClient()}
-		feed, err := sniffer.parseHTMLContent(context.Background(), tt.content)
+		finder := Finder{httpClient: newClient()}
+		feed, err := finder.parseHTMLContent(context.Background(), tt.content)
 		assert.Nil(t, err)
 		assert.ElementsMatch(t, tt.want, feed)
 	}

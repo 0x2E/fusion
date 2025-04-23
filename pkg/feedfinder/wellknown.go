@@ -1,4 +1,4 @@
-package sniff
+package feedfinder
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-func (s *Sniffer) tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink, error) {
+func (f *Finder) tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink, error) {
 	wellKnown := []string{
 		"atom.xml",
 		"feed.xml",
@@ -29,7 +29,7 @@ func (s *Sniffer) tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink,
 		if err != nil {
 			continue
 		}
-		feed, err := s.parseRSSUrl(ctx, newTarget)
+		feed, err := f.parseRSSUrl(ctx, newTarget)
 		if err != nil {
 			continue
 		}
@@ -42,8 +42,8 @@ func (s *Sniffer) tryWellKnown(ctx context.Context, baseURL string) ([]FeedLink,
 	return feeds, nil
 }
 
-func (s *Sniffer) parseRSSUrl(ctx context.Context, target string) (FeedLink, error) {
-	resp, err := s.httpClient.Get(target)
+func (f *Finder) parseRSSUrl(ctx context.Context, target string) (FeedLink, error) {
+	resp, err := f.httpClient.Get(target)
 	if err != nil {
 		return FeedLink{}, err
 	}

@@ -1,4 +1,4 @@
-package sniff
+package feedfinder
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 
 type serviceMatcher func(context.Context) ([]FeedLink, error)
 
-func (s *Sniffer) tryService(ctx context.Context) ([]FeedLink, error) {
+func (f *Finder) tryService(ctx context.Context) ([]FeedLink, error) {
 	matcher := []serviceMatcher{
-		s.githubMatcher,
-		s.redditMatcher,
-		s.youtubeMatcher,
+		f.githubMatcher,
+		f.redditMatcher,
+		f.youtubeMatcher,
 	}
 	for _, fn := range matcher {
 		feed, err := fn(ctx)
@@ -34,7 +34,7 @@ var githubGlobalFeed = []FeedLink{
 }
 
 // https://docs.github.com/en/rest/activity/feeds?apiVersion=2022-11-28#get-feeds
-func (s Sniffer) githubMatcher(ctx context.Context) ([]FeedLink, error) {
+func (s Finder) githubMatcher(ctx context.Context) ([]FeedLink, error) {
 	if !strings.HasSuffix(s.target.Hostname(), "github.com") {
 		return nil, nil
 	}
@@ -96,7 +96,7 @@ var redditGlobalFeed = []FeedLink{
 }
 
 // https://www.reddit.com/wiki/rss/
-func (s Sniffer) redditMatcher(ctx context.Context) ([]FeedLink, error) {
+func (s Finder) redditMatcher(ctx context.Context) ([]FeedLink, error) {
 	if !strings.HasSuffix(s.target.Hostname(), "reddit.com") {
 		return nil, nil
 	}
@@ -158,7 +158,7 @@ func genRedditDomainSubmissionFeed(domain string) []FeedLink {
 	return []FeedLink{{Title: "/domain/" + domain, Link: fmt.Sprintf("https://reddit.com/domain/%s/.rss", domain)}}
 }
 
-func (s Sniffer) youtubeMatcher(ctx context.Context) ([]FeedLink, error) {
+func (s Finder) youtubeMatcher(ctx context.Context) ([]FeedLink, error) {
 	if !strings.HasSuffix(s.target.Hostname(), "youtube.com") && !strings.HasSuffix(s.target.Hostname(), "youtu.be") {
 		return nil, nil
 	}

@@ -1,4 +1,4 @@
-package sniff
+package feedfinder
 
 import (
 	"bytes"
@@ -11,8 +11,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func (s *Sniffer) tryPageSource(ctx context.Context) ([]FeedLink, error) {
-	resp, err := s.httpClient.Get(s.target.String())
+func (f *Finder) tryPageSource(ctx context.Context) ([]FeedLink, error) {
+	resp, err := f.httpClient.Get(f.target.String())
 	if err != nil {
 		return nil, err
 	}
@@ -26,14 +26,14 @@ func (s *Sniffer) tryPageSource(ctx context.Context) ([]FeedLink, error) {
 		return nil, fmt.Errorf("bad status %d", resp.StatusCode)
 	}
 
-	feeds, err := s.parseHTMLContent(ctx, content)
+	feeds, err := f.parseHTMLContent(ctx, content)
 	if err != nil {
 		slog.Error(err.Error(), "content_type", "HTML")
 	}
 	if len(feeds) != 0 {
 		for i := range feeds {
-			f := &feeds[i]
-			f.Link = formatLinkToAbs(s.target.String(), f.Link)
+			feed := &feeds[i]
+			feed.Link = formatLinkToAbs(f.target.String(), feed.Link)
 		}
 		return feeds, nil
 	}
@@ -44,7 +44,7 @@ func (s *Sniffer) tryPageSource(ctx context.Context) ([]FeedLink, error) {
 	}
 	if !isEmptyFeedLink(feed) {
 		if feed.Link == "" {
-			feed.Link = s.target.String()
+			feed.Link = f.target.String()
 		}
 		return []FeedLink{feed}, nil
 	}
@@ -52,7 +52,7 @@ func (s *Sniffer) tryPageSource(ctx context.Context) ([]FeedLink, error) {
 	return nil, nil
 }
 
-func (s *Sniffer) parseHTMLContent(ctx context.Context, content []byte) ([]FeedLink, error) {
+func (f *Finder) parseHTMLContent(ctx context.Context, content []byte) ([]FeedLink, error) {
 	feeds := make([]FeedLink, 0)
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(content))
@@ -93,7 +93,7 @@ func (s *Sniffer) parseHTMLContent(ctx context.Context, content []byte) ([]FeedL
 		suspected[link] = struct{}{}
 	})
 	for link := range suspected {
-		feed, err := s.parseRSSUrl(ctx, link)
+		feed, err := f.parseRSSUrl(ctx, link)
 		if err != nil {
 			continue
 		}
