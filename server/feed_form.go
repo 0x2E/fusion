@@ -28,8 +28,13 @@ type ReqFeedGet struct {
 
 type RespFeedGet FeedForm
 
+type FeedRequestOptions struct {
+	Proxy *string `json:"proxy"`
+}
+
 type ReqFeedCheckValidity struct {
-	Link string `json:"link" validate:"required"`
+	Link           string             `json:"link" validate:"required"`
+	RequestOptions FeedRequestOptions `json:"request_options"`
 }
 
 type ValidityItem struct {
@@ -43,8 +48,9 @@ type RespFeedCheckValidity struct {
 
 type ReqFeedCreate struct {
 	Feeds []struct {
-		Name *string `json:"name" validate:"required"`
-		Link *string `json:"link" validate:"required"`
+		Name           *string            `json:"name" validate:"required"`
+		Link           *string            `json:"link" validate:"required"`
+		RequestOptions FeedRequestOptions `json:"request_options"`
 	} `json:"feeds" validate:"required"`
 	GroupID uint `json:"group_id" validate:"required"`
 }

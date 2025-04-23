@@ -14,7 +14,10 @@
 	let { doneCallback }: Props = $props();
 
 	let step = $state(1);
-	let form = $state<FeedCreateForm>({ group_id: 1, feeds: [{ name: '', link: '' }] });
+	let form = $state<FeedCreateForm>({
+		group_id: 1,
+		feeds: [{ name: '', link: '', request_options: {} }]
+	});
 	let formError = $state('');
 	let loading = $state(false);
 	let linkCandidate: { title: string; link: string }[] = $state([]);
@@ -33,7 +36,7 @@
 		formError = '';
 		loading = true;
 		try {
-			const resp = await checkValidity(form.feeds[0].link);
+			const resp = await checkValidity(form.feeds[0].link, form.feeds[0].request_options);
 			loading = false;
 			if (resp.length < 1) {
 				throw new Error(t('feed.import.manually.no_valid_feed_error'));
@@ -112,6 +115,19 @@
 				{/each}
 			</select>
 		</fieldset>
+		<details class="mt-2">
+			<summary>{t('common.advanced')}</summary>
+			<div>
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend">Proxy</legend>
+					<input
+						type="text"
+						class="input w-full"
+						bind:value={form.feeds[0].request_options.proxy}
+					/>
+				</fieldset>
+			</div>
+		</details>
 		<button type="submit" disabled={loading} class="btn btn-primary mt-2 ml-auto">
 			{#if loading}
 				<span class="loading loading-spinner loading-sm"></span>

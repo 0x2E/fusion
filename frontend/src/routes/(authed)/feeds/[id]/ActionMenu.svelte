@@ -134,7 +134,7 @@
 				<summary>{t('common.advanced')}</summary>
 				<div>
 					<fieldset class="fieldset">
-						<legend class="fieldset-legend">HTTP Proxy</legend>
+						<legend class="fieldset-legend">Proxy</legend>
 						<input type="text" class="input w-full" bind:value={settingsForm.req_proxy} />
 					</fieldset>
 				</div>
