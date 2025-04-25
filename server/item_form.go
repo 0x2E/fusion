@@ -25,6 +25,7 @@ type ReqItemList struct {
 	Paginate
 	Keyword  *string `query:"keyword"`
 	FeedID   *uint   `query:"feed_id"`
+	GroupID  *uint   `query:"group_id"`
 	Unread   *bool   `query:"unread"`
 	Bookmark *bool   `query:"bookmark"`
 }

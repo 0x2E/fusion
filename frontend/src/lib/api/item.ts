@@ -8,6 +8,7 @@ export type ListFilter = {
 	page_size?: number;
 	keyword?: string;
 	feed_id?: number;
+	group_id?: number;
 	unread?: boolean;
 	bookmark?: boolean;
 };
@@ -21,7 +22,7 @@ export async function listItems(options?: ListFilter) {
 		.get('items', {
 			searchParams: options
 		})
-		.json<{ total: number; items: Omit<Item, 'content'>[] }>();
+		.json<{ total: number; items: Item[] }>();
 }
 
 export function parseURLtoFilter(params: URLSearchParams, override?: ListFilter): ListFilter {

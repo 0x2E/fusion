@@ -29,6 +29,7 @@ func (i Item) List(ctx context.Context, req *ReqItemList) (*RespItemList, error)
 	filter := repo.ItemFilter{
 		Keyword:  req.Keyword,
 		FeedID:   req.FeedID,
+		GroupID:  req.GroupID,
 		Unread:   req.Unread,
 		Bookmark: req.Bookmark,
 	}

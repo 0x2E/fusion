@@ -4,6 +4,7 @@
 	import { getFavicon } from '$lib/api/favicon';
 	import { applyFilterToURL, parseURLtoFilter } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
+	import { defaultPageSize } from '$lib/consts';
 	import { t } from '$lib/i18n';
 	import ItemActionBookmark from './ItemActionBookmark.svelte';
 	import ItemActionUnread from './ItemActionUnread.svelte';
@@ -162,26 +163,28 @@
 			{/each}
 		</ul>
 
-		<div class="mt-6 flex w-full flex-wrap justify-center gap-4">
-			<Pagination
-				currentPage={filter.page}
-				pageSize={filter.page_size}
-				{total}
-				onPageChange={handleChangePage}
-			/>
-			<div class="join">
-				<input
-					type="number"
-					bind:value={filter.page_size}
-					onchange={handleChangePageSize}
-					min="10"
-					step="10"
-					class="input join-item w-16"
+		{#if total / (filter.page_size ?? defaultPageSize) > 1}
+			<div class="mt-6 flex w-full flex-wrap justify-center gap-4">
+				<Pagination
+					currentPage={filter.page}
+					pageSize={filter.page_size}
+					{total}
+					onPageChange={handleChangePage}
 				/>
-				<span class="join-item bg-base-300 text-base-content/60 flex items-center px-2 text-sm">
-					Per page
-				</span>
+				<div class="join">
+					<input
+						type="number"
+						bind:value={filter.page_size}
+						onchange={handleChangePageSize}
+						min="10"
+						step="10"
+						class="input join-item w-16"
+					/>
+					<span class="join-item bg-base-300 text-base-content/60 flex items-center px-2 text-sm">
+						Per page
+					</span>
+				</div>
 			</div>
-		</div>
+		{/if}
 	{/if}
 </div>
