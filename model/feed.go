@@ -34,6 +34,8 @@ type Feed struct {
 
 	GroupID uint
 	Group   Group
+
+	UnreadCount int `gorm:"-:all"`
 }
 
 func (f Feed) IsSuspended() bool {

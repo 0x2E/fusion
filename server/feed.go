@@ -45,14 +45,15 @@ func (f Feed) List(ctx context.Context, req *ReqFeedList) (*RespFeedList, error)
 	feeds := make([]*FeedForm, 0, len(data))
 	for _, v := range data {
 		feeds = append(feeds, &FeedForm{
-			ID:        v.ID,
-			Name:      v.Name,
-			Link:      v.Link,
-			Failure:   v.Failure,
-			Suspended: v.Suspended,
-			ReqProxy:  v.ReqProxy,
-			UpdatedAt: v.UpdatedAt,
-			Group:     GroupForm{ID: v.GroupID, Name: v.Group.Name},
+			ID:          v.ID,
+			Name:        v.Name,
+			Link:        v.Link,
+			Failure:     v.Failure,
+			Suspended:   v.Suspended,
+			ReqProxy:    v.ReqProxy,
+			UpdatedAt:   v.UpdatedAt,
+			UnreadCount: v.UnreadCount,
+			Group:       GroupForm{ID: v.GroupID, Name: v.Group.Name},
 		})
 	}
 	return &RespFeedList{

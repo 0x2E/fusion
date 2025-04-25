@@ -222,7 +222,10 @@
 													<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
 												</div>
 											</div>
-											<span class={`line-clamp-1  ${textColor}`}>{feed.name}</span>
+											<span class={`line-clamp-1 grow ${textColor}`}>{feed.name}</span>
+											{#if feed.unread_count > 0}
+												<span class="text-base-content/60 text-xs">{feed.unread_count}</span>
+											{/if}
 										</a>
 									</li>
 								{/each}
