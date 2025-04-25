@@ -43,29 +43,27 @@
 	}
 </script>
 
-{#if pages.length > 1}
-	<div class="join">
-		<button
-			class="join-item btn"
-			disabled={currentPage === 1}
-			onclick={() => handlePageChange(currentPage - 1)}>«</button
-		>
-		{#each pages as page}
-			{#if typeof page === 'string'}
-				<button class="join-item btn" disabled>...</button>
-			{:else}
-				<button
-					class={`join-item btn ${page === currentPage ? 'btn-active border-b-base-content/60 border-b-2' : ''}`}
-					onclick={() => handlePageChange(page)}
-				>
-					{page}
-				</button>
-			{/if}
-		{/each}
-		<button
-			class="join-item btn"
-			disabled={currentPage === totalPages}
-			onclick={() => handlePageChange(currentPage + 1)}>»</button
-		>
-	</div>
-{/if}
+<div class="join">
+	<button
+		class="join-item btn"
+		disabled={currentPage === 1}
+		onclick={() => handlePageChange(currentPage - 1)}>«</button
+	>
+	{#each pages as page}
+		{#if typeof page === 'string'}
+			<button class="join-item btn" disabled>...</button>
+		{:else}
+			<button
+				class={`join-item btn ${page === currentPage ? 'btn-active border-b-base-content/60 border-b-2' : ''}`}
+				onclick={() => handlePageChange(page)}
+			>
+				{page}
+			</button>
+		{/if}
+	{/each}
+	<button
+		class="join-item btn"
+		disabled={currentPage === totalPages}
+		onclick={() => handlePageChange(currentPage + 1)}>»</button
+	>
+</div>

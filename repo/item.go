@@ -22,6 +22,7 @@ type Item struct {
 type ItemFilter struct {
 	Keyword  *string
 	FeedID   *uint
+	GroupID  *uint
 	Unread   *bool
 	Bookmark *bool
 }
@@ -29,13 +30,16 @@ type ItemFilter struct {
 func (i Item) List(filter ItemFilter, page, pageSize int) ([]*model.Item, int, error) {
 	var total int64
 	var res []*model.Item
-	db := i.db.Model(&model.Item{})
+	db := i.db.Model(&model.Item{}).Joins("JOIN feeds ON feeds.id = items.feed_id")
 	if filter.Keyword != nil {
 		expr := "%" + *filter.Keyword + "%"
 		db = db.Where("title LIKE ? OR content LIKE ?", expr, expr)
 	}
 	if filter.FeedID != nil {
 		db = db.Where("feed_id = ?", *filter.FeedID)
+	}
+	if filter.GroupID != nil {
+		db = db.Where("feeds.group_id = ?", *filter.GroupID)
 	}
 	if filter.Unread != nil {
 		db = db.Where("unread = ?", *filter.Unread)
@@ -48,7 +52,7 @@ func (i Item) List(filter ItemFilter, page, pageSize int) ([]*model.Item, int, e
 		return nil, 0, err
 	}
 
-	err = db.Joins("Feed").Order("items.pub_date desc, items.created_at desc").
+	err = db.Preload("Feed").Order("items.pub_date desc, items.created_at desc").
 		Offset((page - 1) * pageSize).Limit(pageSize).Find(&res).Error
 	return res, int(total), err
 }
