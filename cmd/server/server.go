@@ -1,29 +1,42 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
+
+	"log/slog"
 
 	"github.com/0x2e/fusion/api"
 	"github.com/0x2e/fusion/conf"
-	"github.com/0x2e/fusion/pkg/logx"
 	"github.com/0x2e/fusion/repo"
 	"github.com/0x2e/fusion/service/pull"
 )
 
 func main() {
-	defer logx.Logger.Sync()
+	l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(l)
 
 	if conf.Debug {
+		l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))
+		slog.SetDefault(l)
+
 		go func() {
-			logx.Logger.Infoln(http.ListenAndServe("localhost:6060", nil))
+			if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+				slog.Error("pprof server", "error", err)
+				return
+			}
 		}()
 	}
 
 	config, err := conf.Load()
 	if err != nil {
-		log.Fatalf("failed to load configuration: %v", err)
+		slog.Error("failed to load configuration", "error", err)
+		return
 	}
 	repo.Init(config.DB)
 

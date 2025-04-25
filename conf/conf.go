@@ -3,7 +3,7 @@ package conf
 import (
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/0x2e/fusion/auth"
@@ -32,9 +32,9 @@ func Load() (Conf, error) {
 		if !os.IsNotExist(err) {
 			return Conf{}, err
 		}
-		log.Printf("no configuration file found at %s", dotEnvFilename)
+		slog.Error(fmt.Sprintf("no configuration file found at %s", dotEnvFilename))
 	} else {
-		log.Printf("read configuration from %s", dotEnvFilename)
+		slog.Error(fmt.Sprintf("read configuration from %s", dotEnvFilename))
 	}
 	var conf struct {
 		Host         string `env:"HOST" envDefault:"0.0.0.0"`

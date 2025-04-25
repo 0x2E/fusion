@@ -3,17 +3,17 @@ package pull
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/pkg/logx"
+	"github.com/0x2e/fusion/pkg/ptr"
 	"github.com/0x2e/fusion/repo"
 )
 
 var (
-	interval   = 30 * time.Minute
-	pullLogger = logx.Logger.With("module", "puller")
+	interval = 30 * time.Minute
 )
 
 type FeedRepo interface {
@@ -52,7 +52,6 @@ func (p *Puller) Run() {
 }
 
 func (p *Puller) PullAll(ctx context.Context, force bool) error {
-	logger := logx.LoggerFromContext(ctx)
 	ctx, cancel := context.WithTimeout(ctx, interval/2)
 	defer cancel()
 
@@ -80,8 +79,7 @@ func (p *Puller) PullAll(ctx context.Context, force bool) error {
 			}()
 
 			if err := p.do(ctx, f, force); err != nil {
-				logger := logger.With("feed_id", f.ID)
-				logger.Errorln(err)
+				slog.Error("failed to pull feed", "error", err, "feed_id", f.ID, "feed_link", ptr.From(f.Link))
 			}
 		}(f)
 	}

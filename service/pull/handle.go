@@ -2,26 +2,29 @@ package pull
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/0x2e/fusion/model"
+	"github.com/0x2e/fusion/pkg/ptr"
 	"github.com/0x2e/fusion/service/pull/client"
 )
 
 func (p *Puller) do(ctx context.Context, f *model.Feed, force bool) error {
-	logger := pullLogger.With("feed_id", f.ID, "feed_name", f.Name)
+	logger := slog.With("feed_id", f.ID, "feed_link", ptr.From(f.Link))
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	updateAction, skipReason := DecideFeedUpdateAction(f, time.Now())
 	if skipReason == &SkipReasonSuspended {
-		logger.Infof("skip: %s", skipReason)
+		logger.Info(fmt.Sprintf("skip: %s", skipReason))
 		return nil
 	}
 	if !force {
 		switch updateAction {
 		case ActionSkipUpdate:
-			logger.Infof("skip: %s", skipReason)
+			logger.Info(fmt.Sprintf("skip: %s", skipReason))
 			return nil
 		case ActionFetchUpdate:
 			// Proceed to perform the fetch.
@@ -69,8 +72,7 @@ func DecideFeedUpdateAction(f *model.Feed, now time.Time) (FeedUpdateAction, *Fe
 		backoffTime := CalculateBackoffTime(f.ConsecutiveFailures)
 		timeSinceUpdate := now.Sub(f.UpdatedAt)
 		if timeSinceUpdate < backoffTime {
-			logger := pullLogger.With("feed_id", f.ID, "feed_name", f.Name)
-			logger.Infof("%d consecutive feed update failures, so next attempt is after %v", f.ConsecutiveFailures, f.UpdatedAt.Add(backoffTime).Format(time.RFC3339))
+			slog.Info(fmt.Sprintf("%d consecutive feed update failures, so next attempt is after %v", f.ConsecutiveFailures, f.UpdatedAt.Add(backoffTime).Format(time.RFC3339)), "feed_id", f.ID, "feed_link", ptr.From(f.Link))
 			return ActionSkipUpdate, &SkipReasonCoolingOff
 		}
 	} else if now.Sub(f.UpdatedAt) < interval {
