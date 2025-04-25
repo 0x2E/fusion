@@ -11,6 +11,7 @@ export type Feed = {
 	updated_at: Date;
 	suspended: boolean;
 	req_proxy: string;
+	unread_count: number;
 	group: Group;
 };
 

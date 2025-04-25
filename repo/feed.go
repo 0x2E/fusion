@@ -37,8 +37,41 @@ func (f Feed) List(filter *FeedListFilter) ([]*model.Feed, error) {
 				Group("feeds.id")
 		}
 	}
+
 	err := db.Find(&res).Error
-	return res, err
+	if err != nil {
+		return nil, err
+	}
+
+	// count unread items of each feed.
+	// yeah this is stupid, but I don't know how to do it in a single query using GORM.
+	ids := make([]uint, 0, len(res))
+	for _, feed := range res {
+		ids = append(ids, feed.ID)
+	}
+	var itemUnreadCount []struct {
+		FeedID uint  `gorm:"feed_id"`
+		Count  int64 `gorm:"count"`
+	}
+	err = f.db.Model(&model.Item{}).
+		Select("feed_id, count(*) as count").
+		Where("feed_id in ?", ids).
+		Where("unread = true").
+		Group("feed_id").
+		Find(&itemUnreadCount).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, feed := range res {
+		for _, count := range itemUnreadCount {
+			if feed.ID == count.FeedID {
+				feed.UnreadCount = int(count.Count)
+				break
+			}
+		}
+	}
+
+	return res, nil
 }
 
 func (f Feed) Get(id uint) (*model.Feed, error) {
