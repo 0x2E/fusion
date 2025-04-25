@@ -2,6 +2,8 @@ package pull
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/0x2e/fusion/model"
@@ -76,14 +78,14 @@ func (r *defaultSingleFeedRepo) RecordFailure(readErr error) error {
 }
 
 func (p SingleFeedPuller) Pull(ctx context.Context, feed *model.Feed) error {
-	logger := pullLogger.With("feed_id", feed.ID, "feed_name", feed.Name)
+	logger := slog.With("feed_id", feed.ID, "feed_link", ptr.From(feed.Link))
 
 	// We don't exit on error, as we want to record any error in the data store.
 	fetchResult, readErr := p.readFeed(ctx, *feed.Link, feed.FeedRequestOptions)
 	if readErr == nil {
-		logger.Infof("fetched %d items", len(fetchResult.Items))
+		logger.Info(fmt.Sprintf("fetched %d items", len(fetchResult.Items)))
 	} else {
-		logger.Infof("fetch failed: %v", readErr)
+		logger.Warn("failed to fetch feed", "error", readErr)
 	}
 
 	return p.updateFeedInStore(feed.ID, fetchResult.Items, fetchResult.LastBuild, readErr)

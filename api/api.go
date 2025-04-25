@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/0x2e/fusion/auth"
 	"github.com/0x2e/fusion/conf"
 	"github.com/0x2e/fusion/frontend"
-	"github.com/0x2e/fusion/pkg/logx"
 	"github.com/0x2e/fusion/repo"
 	"github.com/0x2e/fusion/server"
 
@@ -35,7 +35,6 @@ type Params struct {
 
 func Run(params Params) {
 	r := echo.New()
-	apiLogger := logx.Logger.With("module", "api")
 
 	if conf.Debug {
 		r.Debug = true
@@ -43,7 +42,7 @@ func Run(params Params) {
 			if len(resBody) > 500 {
 				resBody = append(resBody[:500], []byte("...")...)
 			}
-			apiLogger.Debugw("body dump", "req", reqBody, "resp", resBody)
+			slog.Debug("body dump", "req", reqBody, "resp", resBody)
 		}))
 	}
 
@@ -61,9 +60,9 @@ func Run(params Params) {
 				return nil
 			}
 			if v.Error == nil {
-				apiLogger.Infow("REQUEST", "uri", v.URI, "status", v.Status)
+				slog.Info("REQUEST", "uri", v.URI, "status", v.Status)
 			} else {
-				apiLogger.Errorw(v.Error.Error(), "uri", v.URI, "status", v.Status)
+				slog.Error(v.Error.Error(), "uri", v.URI, "status", v.Status)
 			}
 			return nil
 		},
@@ -144,7 +143,8 @@ func Run(params Params) {
 		err = r.Start(addr)
 	}
 	if err != nil {
-		apiLogger.Fatalln(err)
+		slog.Error(err.Error())
+		return
 	}
 }
 
