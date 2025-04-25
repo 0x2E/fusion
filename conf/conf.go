@@ -32,9 +32,9 @@ func Load() (Conf, error) {
 		if !os.IsNotExist(err) {
 			return Conf{}, err
 		}
-		slog.Error(fmt.Sprintf("no configuration file found at %s", dotEnvFilename))
+		slog.Warn(fmt.Sprintf("no configuration file found at %s", dotEnvFilename))
 	} else {
-		slog.Error(fmt.Sprintf("read configuration from %s", dotEnvFilename))
+		slog.Info(fmt.Sprintf("load configuration from %s", dotEnvFilename))
 	}
 	var conf struct {
 		Host         string `env:"HOST" envDefault:"0.0.0.0"`
@@ -46,11 +46,9 @@ func Load() (Conf, error) {
 		TLSKey       string `env:"TLS_KEY"`
 	}
 	if err := env.Parse(&conf); err != nil {
-		panic(err)
+		return Conf{}, err
 	}
-	if Debug {
-		fmt.Println(conf)
-	}
+	slog.Debug("configuration loaded", "conf", conf)
 
 	var pwHash *auth.HashedPassword
 	if conf.Password != "" {
