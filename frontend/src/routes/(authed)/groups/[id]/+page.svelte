@@ -14,9 +14,7 @@
 	{/await}
 </svelte:head>
 
-{#await data.group}
-	Loading...
-{:then group}
+{#await data.group then group}
 	<PageNavHeader showSearch={true}>
 		{#await data.items then items}
 			<ItemActionMarkAllasRead items={items.items} />
