@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { page } from '$app/state';
-	import { listItems, parseURLtoFilter, updateUnread } from '$lib/api/item';
+	import { invalidateAll } from '$app/navigation';
+	import { listItems, updateUnread } from '$lib/api/item';
 	import type { Item } from '$lib/api/model';
 	import { t } from '$lib/i18n';
 	import { CheckCheck } from 'lucide-svelte';
@@ -29,7 +28,7 @@
 			const ids = props.items.map((v) => v.id);
 			await updateUnread(ids, false);
 			toast.success(t('state.success'));
-			invalidate('page:' + page.url.pathname);
+			invalidateAll();
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
@@ -57,7 +56,7 @@
 				await updateUnread(ids, false);
 			}
 			toast.success(t('state.success'));
-			invalidate('page:' + page.url.pathname);
+			invalidateAll();
 		} catch (e) {
 			toast.error((e as Error).message);
 		}

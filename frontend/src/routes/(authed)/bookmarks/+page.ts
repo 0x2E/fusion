@@ -1,9 +1,7 @@
 import { listItems, parseURLtoFilter } from '$lib/api/item';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ url, depends }) => {
-	depends(`page:${url.pathname}`);
-
+export const load: PageLoad = async ({ url }) => {
 	const filter = parseURLtoFilter(url.searchParams, {
 		unread: undefined,
 		bookmark: true,

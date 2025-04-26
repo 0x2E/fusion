@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { goto, invalidate, invalidateAll } from '$app/navigation';
-	import { page } from '$app/state';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { deleteFeed, updateFeed, type FeedUpdateForm } from '$lib/api/feed';
 	import type { Feed } from '$lib/api/model';
 	import { t } from '$lib/i18n';
@@ -41,7 +40,7 @@
 				suspended: !feed.suspended
 			});
 			toast.success(t('state.success'));
-			invalidate('page:' + page.url.pathname);
+			invalidateAll();
 		} catch (e) {
 			toast.error((e as Error).message);
 		}

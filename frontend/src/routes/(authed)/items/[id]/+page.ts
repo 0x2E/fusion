@@ -4,9 +4,7 @@ import type { PageLoad } from './$types';
 
 export const prerender = false;
 
-export const load: PageLoad = ({ depends, url, params }) => {
-	depends(`page:${url.pathname}`);
-
+export const load: PageLoad = ({ params }) => {
 	const id = parseInt(params.id);
 	if (id < 1) {
 		error(404, 'wrong id');

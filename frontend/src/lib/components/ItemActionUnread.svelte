@@ -7,6 +7,8 @@
 		try {
 			await updateUnread([item.id], !item.unread);
 			item.unread = !item.unread;
+			// we don't refresh the page using invalideAll() because we want to keep the
+			// modified item in the list rather than be filtered out
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
