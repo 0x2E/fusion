@@ -15,9 +15,7 @@
 	{/await}
 </svelte:head>
 
-{#await data.feed}
-	Loading...
-{:then feed}
+{#await data.feed then feed}
 	<PageNavHeader showSearch={true}>
 		{#await data.items then items}
 			<ItemActionMarkAllasRead items={items.items} />

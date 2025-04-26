@@ -4,7 +4,7 @@
 	import ShortcutHelpModal from '$lib/components/ShortcutHelpModal.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
-	let { children, data } = $props();
+	let { children } = $props();
 	let showSidebar = $state(false);
 	beforeNavigate(() => {
 		showSidebar = false;
@@ -29,7 +29,7 @@
 		<div
 			class="text-base-content bg-base-200 z-50 h-full min-h-full w-[80%] overflow-x-hidden px-2 py-4 lg:w-72"
 		>
-			<Sidebar feeds={data.feeds} groups={data.groups} />
+			<Sidebar />
 		</div>
 	</div>
 </div>

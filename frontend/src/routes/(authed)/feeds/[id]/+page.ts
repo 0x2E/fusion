@@ -4,9 +4,7 @@ import type { PageLoad } from './$types';
 
 export const prerender = false;
 
-export const load: PageLoad = async ({ depends, url, params }) => {
-	depends(`page:${url.pathname}`);
-
+export const load: PageLoad = async ({ url, params }) => {
 	const id = parseInt(params.id);
 	const feed = getFeed(id);
 	const filter = parseURLtoFilter(url.searchParams, {
