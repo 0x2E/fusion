@@ -79,7 +79,7 @@ func (f Feed) Get(ctx context.Context, req *ReqFeedGet) (*RespFeedGet, error) {
 	}, nil
 }
 
-func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
+func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) (*RespFeedCreate, error) {
 	feeds := make([]*model.Feed, 0, len(req.Feeds))
 	for _, r := range req.Feeds {
 		feeds = append(feeds, &model.Feed{
@@ -91,16 +91,23 @@ func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 			GroupID: req.GroupID,
 		})
 	}
-	if len(feeds) == 0 {
-		return nil
-	}
 
 	if err := f.repo.Create(feeds); err != nil {
-		return err
+		return nil, err
+	}
+
+	// GORM assigns the ID to the model after Create
+	ids := make([]uint, 0, len(feeds))
+	for _, v := range feeds {
+		ids = append(ids, v.ID)
+	}
+
+	resp := &RespFeedCreate{
+		IDs: ids,
 	}
 
 	puller := pull.NewPuller(repo.NewFeed(repo.DB), repo.NewItem(repo.DB))
-	if len(feeds) >= 1 {
+	if len(feeds) > 1 {
 		go func() {
 			routinePool := make(chan struct{}, 10)
 			defer close(routinePool)
@@ -118,9 +125,9 @@ func (f Feed) Create(ctx context.Context, req *ReqFeedCreate) error {
 			}
 			wg.Wait()
 		}()
-		return nil
+		return resp, nil
 	}
-	return puller.PullOne(ctx, feeds[0].ID)
+	return resp, puller.PullOne(ctx, feeds[0].ID)
 }
 
 func (f Feed) CheckValidity(ctx context.Context, req *ReqFeedCheckValidity) (*RespFeedCheckValidity, error) {

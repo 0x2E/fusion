@@ -47,10 +47,12 @@ export type FeedCreateForm = {
 };
 
 export async function createFeed(data: FeedCreateForm) {
-	return await api.post('feeds', {
-		timeout: 20000,
-		json: data
-	});
+	return await api
+		.post('feeds', {
+			timeout: 20000,
+			json: data
+		})
+		.json<{ ids: number[] }>();
 }
 
 export type FeedUpdateForm = {

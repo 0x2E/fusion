@@ -56,6 +56,10 @@ type ReqFeedCreate struct {
 	GroupID uint `json:"group_id" validate:"required"`
 }
 
+type RespFeedCreate struct {
+	IDs []uint `json:"ids"`
+}
+
 type ReqFeedUpdate struct {
 	ID        uint    `param:"id" validate:"required"`
 	Name      *string `json:"name"`

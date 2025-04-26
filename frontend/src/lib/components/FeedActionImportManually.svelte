@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { checkValidity, createFeed, type FeedCreateForm } from '$lib/api/feed';
 	import { allGroups } from '$lib/api/group';
 	import type { Group } from '$lib/api/model';
@@ -59,18 +59,19 @@
 	}
 
 	async function handleContinue() {
+		loading = true;
 		if (!form.feeds[0].name) {
 			form.feeds[0].name = new URL(form.feeds[0].link).hostname;
 		}
 		try {
-			await createFeed(form);
-			toast.success(t('state.success'));
+			const resp = await createFeed(form);
 			doneCallback();
+			goto('/feeds/' + resp.ids[0], { invalidateAll: true });
+			toast.success(t('state.success'));
 		} catch (e) {
 			formError = (e as Error).message;
 		}
 		loading = false;
-		invalidateAll();
 	}
 </script>
 
@@ -158,6 +159,11 @@
 				</label>
 			{/each}
 		</fieldset>
-		<button type="submit" class="btn btn-primary mt-4 ml-auto">{t('common.confirm')}</button>
+		<button type="submit" disabled={loading} class="btn btn-primary mt-4 ml-auto">
+			{#if loading}
+				<span class="loading loading-spinner loading-sm"></span>
+			{/if}
+			{t('common.confirm')}
+		</button>
 	</form>
 {/if}

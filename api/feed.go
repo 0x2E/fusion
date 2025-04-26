@@ -52,11 +52,12 @@ func (f feedAPI) Create(c echo.Context) error {
 		return err
 	}
 
-	if err := f.srv.Create(c.Request().Context(), &req); err != nil {
+	resp, err := f.srv.Create(c.Request().Context(), &req)
+	if err != nil {
 		return err
 	}
 
-	return c.NoContent(http.StatusCreated)
+	return c.JSON(http.StatusCreated, resp)
 }
 
 func (f feedAPI) CheckValidity(c echo.Context) error {
