@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"sync"
 
+	"github.com/0x2E/feedfinder"
 	"github.com/0x2e/fusion/model"
-	"github.com/0x2e/fusion/pkg/feedfinder"
 	"github.com/0x2e/fusion/repo"
 	"github.com/0x2e/fusion/service/pull"
 	"github.com/0x2e/fusion/service/pull/client"
@@ -140,8 +140,8 @@ func (f Feed) CheckValidity(ctx context.Context, req *ReqFeedCheckValidity) (*Re
 	if err != nil {
 		return nil, err
 	}
-	sniffed, err := feedfinder.Find(ctx, target, feedfinder.Options{
-		ReqProxy: req.RequestOptions.Proxy,
+	sniffed, err := feedfinder.Find(ctx, target.String(), &feedfinder.Options{
+		RequestProxy: req.RequestOptions.Proxy,
 	})
 	if err != nil {
 		return nil, err
