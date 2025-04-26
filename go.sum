@@ -1,3 +1,5 @@
+github.com/0x2E/feedfinder v0.0.3 h1:B5jXpsQPelV+YcCigqAm7AXlFYml3X8A+5ug8FJ02/4=
+github.com/0x2E/feedfinder v0.0.3/go.mod h1:/+tl3hTDZetFvRLsphmRqn3081E8nVtGhp28mUOZtOk=
 github.com/PuerkitoBio/goquery v1.10.3 h1:pFYcNSqHxBD06Fpj/KsbStFRsgRATgnf3LeXiUkhzPo=
 github.com/PuerkitoBio/goquery v1.10.3/go.mod h1:tMUX0zDMHXYlAQk6p35XxQMqMweEKB7iK7iLNd4RH4Y=
 github.com/andybalholm/cascadia v1.3.3 h1:AG2YHrzJIm4BZ19iwJ/DAua6Btl3IwJX+VI4kktS1LM=

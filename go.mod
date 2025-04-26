@@ -3,7 +3,7 @@ module github.com/0x2e/fusion
 go 1.24
 
 require (
-	github.com/PuerkitoBio/goquery v1.10.3
+	github.com/0x2E/feedfinder v0.0.3
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-playground/locales v0.14.1
@@ -21,6 +21,7 @@ require (
 )
 
 require (
+	github.com/PuerkitoBio/goquery v1.10.3 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
