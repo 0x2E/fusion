@@ -30,7 +30,7 @@ export type FeedRequestOptions = {
 export async function checkValidity(link: string, options: FeedRequestOptions) {
 	const resp = await api
 		.post('feeds/validation', {
-			timeout: 10000,
+			timeout: 30000,
 			json: { link: link, request_options: options }
 		})
 		.json<{ feed_links: { title: string; link: string }[] }>();
