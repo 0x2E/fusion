@@ -1,6 +1,6 @@
 <script module>
-	import type { Item } from '$lib/api/model';
 	import { updateUnread } from '$lib/api/item';
+	import type { Item } from '$lib/api/model';
 	import { toast } from 'svelte-sonner';
 
 	export async function toggleUnread(item: Item) {
@@ -9,6 +9,7 @@
 			item.unread = !item.unread;
 			// we don't refresh the page using invalideAll() because we want to keep the
 			// modified item in the list rather than be filtered out
+			updateUnreadCount(item.feed.id, item.unread ? 1 : -1);
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
@@ -17,6 +18,7 @@
 
 <script lang="ts">
 	import { t } from '$lib/i18n';
+	import { updateUnreadCount } from '$lib/state.svelte';
 	import { CheckIcon, UndoIcon } from 'lucide-svelte';
 	import { activateShortcut, deactivateShortcut, shortcuts } from './ShortcutHelpModal.svelte';
 

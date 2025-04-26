@@ -3,8 +3,9 @@
 	import { page } from '$app/state';
 	import { getFavicon } from '$lib/api/favicon';
 	import { logout } from '$lib/api/login';
-	import type { Feed, Group } from '$lib/api/model';
+	import type { Feed } from '$lib/api/model';
 	import { t } from '$lib/i18n';
+	import { globalState } from '$lib/state.svelte';
 	import {
 		BookmarkCheck,
 		ChevronDown,
@@ -28,26 +29,17 @@
 	} from './ShortcutHelpModal.svelte';
 	import ThemeController from './ThemeController.svelte';
 
-	interface Props {
-		feeds: Promise<Feed[]>;
-		groups: Promise<Group[]>;
-	}
-
-	let { feeds, groups }: Props = $props();
-
-	// State to track open groups
 	let openGroups = $state<Record<number, boolean>>({});
 
-	let feedList = $derived.by(async () => {
-		const [feedsData, groupsData] = await Promise.all([feeds, groups]);
+	let groupList = $derived.by(() => {
 		const groupFeeds: { id: number; name: string; feeds: (Feed & { indexInList: number })[] }[] =
 			[];
 		let curIndexInList = 0;
-		groupsData.forEach((group) => {
+		globalState.groups.forEach((group) => {
 			groupFeeds.push({
 				id: group.id,
 				name: group.name,
-				feeds: feedsData
+				feeds: globalState.feeds
 					.filter((feed) => feed.group.id === group.id)
 					.sort((a, b) => a.name.localeCompare(b.name))
 					.map((feed) => ({
@@ -55,7 +47,6 @@
 						indexInList: curIndexInList++
 					}))
 			});
-			openGroups[group.id] = false;
 		});
 		return groupFeeds;
 	});
@@ -115,15 +106,8 @@
 	}
 
 	let selectedFeedIndex = $state(-1);
-	let selectedFeedGroupId = $state(-1);
-	$effect(() => {
-		feeds.then(() => {
-			selectedFeedIndex = -1;
-			selectedFeedGroupId = -1;
-		});
-	});
 	async function moveFeed(direction: 'prev' | 'next') {
-		const feedList = await feeds;
+		const feedList = globalState.feeds;
 
 		if (feedList.length === 0) return;
 
@@ -200,60 +184,59 @@
 
 		<ul class="menu w-full">
 			<li class="menu-title text-xs">{t('common.feeds')}</li>
-			{#await feedList}
-				<div class="skeleton bg-base-300 h-10"></div>
-			{:then groupData}
-				{#each groupData as group (group.id)}
-					{@const isOpen = openGroups[group.id]}
-					<li>
-						<div class="relative flex items-center pl-10">
-							<button
-								class="btn btn-ghost btn-sm btn-square absolute top-0 left-1"
-								onclick={(event) => {
-									event.preventDefault();
-									openGroups[group.id] = !isOpen;
-								}}
-							>
-								{#if isOpen}
-									<ChevronDown class="size-4" />
-								{:else}
-									<ChevronRight class="size-4" />
-								{/if}
-							</button>
-							<a href="/groups/{group.id}" class="line-clamp-1 grow text-left">
-								{group.name}
-							</a>
-						</div>
-						<ul class:hidden={!isOpen}>
-							{#each group.feeds as feed}
-								{@const textColor = feed.suspended
-									? 'text-neutral-content/60'
-									: feed.failure
-										? 'text-error'
-										: ''}
-								<li>
-									<a
-										id="sidebar-feed-{feed.indexInList}"
-										data-group-id={group.id}
-										href="/feeds/{feed.id}"
-										class={`${isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''} focus:ring-2`}
-									>
-										<div class="avatar">
-											<div class="size-4 rounded-full">
-												<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
-											</div>
+			{#each groupList as group}
+				{@const isOpen = openGroups[group.id]}
+				<li class="p-0">
+					<div class="gap-0 p-0">
+						<button
+							class="btn btn-ghost btn-sm btn-square"
+							onclick={(event) => {
+								event.preventDefault();
+								openGroups[group.id] = !isOpen;
+							}}
+						>
+							{#if isOpen}
+								<ChevronDown class="size-4" />
+							{:else}
+								<ChevronRight class="size-4" />
+							{/if}
+						</button>
+						<a
+							href="/groups/{group.id}"
+							class="line-clamp-1 block h-full grow place-content-center text-left"
+						>
+							{group.name}
+						</a>
+					</div>
+					<ul class:hidden={!isOpen}>
+						{#each group.feeds as feed}
+							{@const textColor = feed.suspended
+								? 'text-neutral-content/60'
+								: feed.failure
+									? 'text-error'
+									: ''}
+							<li>
+								<a
+									id="sidebar-feed-{feed.indexInList}"
+									data-group-id={group.id}
+									href="/feeds/{feed.id}"
+									class={`${isHighlight('/feeds/' + feed.id) ? 'menu-active' : ''} focus:ring-2`}
+								>
+									<div class="avatar">
+										<div class="size-4 rounded-full">
+											<img src={getFavicon(feed.link)} alt={feed.name} loading="lazy" />
 										</div>
-										<span class={`line-clamp-1 grow ${textColor}`}>{feed.name}</span>
-										{#if feed.unread_count > 0}
-											<span class="text-base-content/60 text-xs">{feed.unread_count}</span>
-										{/if}
-									</a>
-								</li>
-							{/each}
-						</ul>
-					</li>
-				{/each}
-			{/await}
+									</div>
+									<span class={`line-clamp-1 grow ${textColor}`}>{feed.name}</span>
+									{#if feed.unread_count > 0}
+										<span class="text-base-content/60 text-xs">{feed.unread_count}</span>
+									{/if}
+								</a>
+							</li>
+						{/each}
+					</ul>
+				</li>
+			{/each}
 		</ul>
 	</div>
 

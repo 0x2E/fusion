@@ -1,20 +1,20 @@
 import { listFeeds } from '$lib/api/feed';
 import { allGroups } from '$lib/api/group';
-import { globalState } from '$lib/state.svelte';
+import { setGlobalFeeds, setGlobalGroups } from '$lib/state.svelte';
 import type { LayoutLoad } from './$types';
 
-export const load: LayoutLoad = async () => {
-	const feeds = listFeeds().then((feeds) => {
-		globalState.feeds = feeds;
-		return feeds;
-	});
-	const groups = allGroups().then((groups) => {
-		groups.sort((a, b) => a.id - b.id);
-		globalState.groups = groups;
-		return groups;
-	});
-	return {
-		feeds,
-		groups
-	};
+export const load: LayoutLoad = async ({ depends }) => {
+	depends('app:feeds', 'app:groups');
+
+	await Promise.all([
+		allGroups().then((groups) => {
+			groups.sort((a, b) => a.id - b.id);
+			setGlobalGroups(groups);
+		}),
+		listFeeds().then((feeds) => {
+			setGlobalFeeds(feeds);
+		})
+	]);
+
+	return {};
 };
