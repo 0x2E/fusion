@@ -26,12 +26,16 @@ func ParseGoFeedItems(feedURL string, gfItems []*gofeed.Item) []*model.Item {
 		if guid == "" {
 			guid = item.Link
 		}
+		pubDate := item.PublishedParsed
+		if pubDate == nil {
+			pubDate = item.UpdatedParsed
+		}
 		items = append(items, &model.Item{
 			Title:   &item.Title,
 			GUID:    &guid,
 			Link:    ptr.To(parseLink(feedURL, item.Link)),
 			Content: &content,
-			PubDate: item.PublishedParsed,
+			PubDate: pubDate,
 			Unread:  &unread,
 		})
 	}
