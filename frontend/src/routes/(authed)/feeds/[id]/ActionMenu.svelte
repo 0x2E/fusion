@@ -51,7 +51,7 @@
 		try {
 			await deleteFeed(feed.id);
 			toast.success(t('state.success'));
-			await goto('/');
+			await goto('/', { invalidateAll: true });
 		} catch (e) {
 			toast.error((e as Error).message);
 		}
