@@ -34,13 +34,13 @@ docker run -it -d -p 8080:8080 \
 
 - Docker Compose
 
-```compose
-version: '3'
+```yaml
+version: "3"
 services:
   fusion:
     image: ghcr.io/0x2e/fusion:latest
     ports:
-      - '127.0.0.1:8080:8080'
+      - "127.0.0.1:8080:8080"
     environment:
       - PASSWORD=fusion
     restart: "unless-stopped"
