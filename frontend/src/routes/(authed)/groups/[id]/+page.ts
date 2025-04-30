@@ -5,7 +5,9 @@ import type { PageLoad } from './$types';
 
 export const prerender = false;
 
-export const load: PageLoad = async ({ url, params }) => {
+export const load: PageLoad = async ({ url, params, depends }) => {
+	depends('app:page');
+
 	const id = parseInt(params.id);
 	const group = allGroups().then((groups) => {
 		const group = groups.find((g) => g.id === id);

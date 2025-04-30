@@ -59,7 +59,7 @@
 	async function refreshList() {
 		const url = page.url;
 		applyFilterToURL(url, filter);
-		await goto(url, { invalidate: ['page:' + page.url.pathname] });
+		await goto(url, { invalidate: ['app:page'] });
 	}
 	async function handleChangePage(pageNumber: number) {
 		filter.page = pageNumber;

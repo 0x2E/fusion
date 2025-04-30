@@ -17,7 +17,7 @@
 		applyFilterToURL(url, filterForm);
 		console.log(url.toString());
 		goto(url, {
-			invalidate: ['page:' + page.url.pathname]
+			invalidate: ['app:page']
 		});
 	}
 </script>
