@@ -7,7 +7,7 @@ app = "{APP_NAME}"
 primary_region = "{REGION}"
 
 [build]
-image = 'rook1e404/fusion:latest'
+image = 'ghcr.io/0x2e/fusion:latest'
 
 [http_service]
 internal_port = 8080
