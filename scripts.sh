@@ -36,8 +36,10 @@ build_frontend() {
 }
 
 build_backend() {
-  echo "building backend"
-  CGO_ENABLED=0 go build \
+  target_os=${1:-$(go env GOOS)}
+  target_arch=${2:-$(go env GOARCH)}
+  echo "building backend for OS: ${target_os}, Arch: ${target_arch}"
+  CGO_ENABLED=0 GOOS=${target_os} GOARCH=${target_arch} go build \
     -ldflags '-extldflags "-static"' \
     -o ./build/fusion \
     ./cmd/server/*
@@ -66,7 +68,8 @@ case $1 in
   build_frontend
   ;;
 "build-backend")
-  build_backend
+  # Pass along additional arguments ($2, $3) to the function
+  build_backend "$2" "$3"
   ;;
 "build")
   build
