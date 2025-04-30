@@ -19,13 +19,17 @@ Key features include:
 
 ### Docker
 
+> Use `latest` tag for the latest release version.
+>
+> Use `main` tag for the latest development version.
+
 - Docker CLI
 
 ```shell
 docker run -it -d -p 8080:8080 \
   -v $(pwd)/fusion:/data \
   -e PASSWORD="fusion" \
-  rook1e404/fusion:latest
+  ghcr.io/0x2e/fusion:latest
 ```
 
 - Docker Compose
@@ -34,7 +38,7 @@ docker run -it -d -p 8080:8080 \
 version: '3'
 services:
   fusion:
-    image: rook1e404/fusion:latest
+    image: ghcr.io/0x2e/fusion:latest
     ports:
       - '127.0.0.1:8080:8080'
     environment:

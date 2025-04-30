@@ -3,6 +3,9 @@ name: docker
 on:
   release:
     types: [published]
+  push:
+    branches:
+      - main
 
 jobs:
   docker:
@@ -25,9 +28,10 @@ jobs:
             rook1e404/fusion
             ghcr.io/${{ env.REPOSITORY }}
           tags: |
-            type=semver,pattern={{version}}
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+            # on release: tag with version (e.g., v1.2.3)
+            type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+            # on push to main: tag with main
+            type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to Docker Hub
