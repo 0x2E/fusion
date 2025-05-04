@@ -86,6 +86,7 @@ const lang = {
 	'settings.global_actions.refresh_all_feeds': 'Uppdatera alla flöden',
 	'settings.global_actions.export_all_feeds': 'Exportera alla flöden',
 
+	'settings.groups.shuffle': 'Slumpmässigt sortera artiklar inom grupper',
 	'settings.groups.description': 'Gruppens namn måste vara unikt.',
 	'settings.groups.delete.confirm':
 		'Är du säker på att du vill ta bort denna grupp? Alla dess flöden kommer att flyttas till standardgruppen',

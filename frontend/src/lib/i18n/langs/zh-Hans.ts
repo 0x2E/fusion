@@ -85,6 +85,7 @@ const lang = {
 	'settings.global_actions.refresh_all_feeds': '刷新所有订阅源',
 	'settings.global_actions.export_all_feeds': '导出所有订阅源',
 
+	'settings.groups.shuffle': '随机化组内的文章',
 	'settings.groups.description': '分组名称必须唯一。',
 	'settings.groups.delete.confirm': '确定要删除此分组吗？其中的所有订阅源将被移至默认分组',
 	'settings.groups.delete.error.delete_the_default': '无法删除默认分组',

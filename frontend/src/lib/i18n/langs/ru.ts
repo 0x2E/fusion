@@ -87,6 +87,7 @@ const lang = {
 	'settings.global_actions.refresh_all_feeds': 'Обновить все ленты',
 	'settings.global_actions.export_all_feeds': 'Экспортировать все ленты',
 
+	'settings.groups.shuffle': 'Перемешать статьи внутри групп',
 	'settings.groups.description': 'Имя группы должно быть уникальным.',
 	'settings.groups.delete.confirm':
 		'Вы уверены, что хотите удалить эту группу? Все ее ленты будут перемещены в группу по умолчанию',

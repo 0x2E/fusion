@@ -87,6 +87,7 @@ const lang = {
 	'settings.global_actions.refresh_all_feeds': 'Refresh all feeds',
 	'settings.global_actions.export_all_feeds': 'Export all feeds',
 
+	'settings.groups.shuffle': 'Randomize articles within groups',
 	'settings.groups.description': "Group's name should be unique.",
 	'settings.groups.delete.confirm':
 		'Are you sure you want to delete this group? All its feeds will be moved to the default group',

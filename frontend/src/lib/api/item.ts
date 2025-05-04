@@ -11,6 +11,8 @@ export type ListFilter = {
 	group_id?: number;
 	unread?: boolean;
 	bookmark?: boolean;
+	shuffle?: boolean;
+	seed?: number;
 };
 
 export async function listItems(options?: ListFilter) {

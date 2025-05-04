@@ -87,6 +87,7 @@ const lang = {
 	'settings.global_actions.refresh_all_feeds': 'Alle Feeds aktualisieren',
 	'settings.global_actions.export_all_feeds': 'Alle Feeds exportieren',
 
+	'settings.groups.shuffle': 'Artikel in Gruppen zufällig anordnen',
 	'settings.groups.description': 'Der Gruppenname sollte eindeutig sein.',
 	'settings.groups.delete.confirm':
 		'Sind Sie sicher, dass Sie diese Gruppe löschen möchten? Alle ihre Feeds werden in die Standardgruppe verschoben',
