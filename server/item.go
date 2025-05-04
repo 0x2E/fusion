@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"math/rand"
 
 	"github.com/0x2e/fusion/model"
 	"github.com/0x2e/fusion/repo"
@@ -40,6 +41,13 @@ func (i Item) List(ctx context.Context, req *ReqItemList) (*RespItemList, error)
 		req.PageSize = 10
 	}
 	data, total, err := i.repo.List(filter, req.Page, req.PageSize)
+	if req.Shuffle != nil && req.Seed != nil && *req.Shuffle {
+		r := rand.New(rand.NewSource(*req.Seed))
+		r.Shuffle(
+			len(data),
+			func(i, j int) { data[i], data[j] = data[j], data[i] },
+		)
+	}
 	if err != nil {
 		return nil, err
 	}
