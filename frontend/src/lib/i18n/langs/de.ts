@@ -77,6 +77,7 @@ const lang = {
 	'item.remove_from_bookmark': 'Aus Lesezeichen entfernen',
 	'item.goto_feed': 'Zum Feed gehen',
 	'item.visit_the_original': 'Originallink besuchen',
+	'item.share': 'Teilen',
 
 	// settings
 	'settings.appearance': 'Erscheinungsbild',
@@ -104,6 +105,7 @@ const lang = {
 	'shortcuts.toggle_unread': 'Gelesen/Ungelesen umschalten',
 	'shortcuts.toggle_bookmark': 'Lesezeichen umschalten',
 	'shortcuts.view_original': 'Originallink ansehen',
+	'shortcuts.share': 'Teilen',
 	'shortcuts.next_feed': 'Nächster Feed',
 	'shortcuts.prev_feed': 'Vorheriger Feed',
 	'shortcuts.open_selected': 'Auswahl öffnen',
