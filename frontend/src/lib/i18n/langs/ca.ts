@@ -46,11 +46,11 @@ const lang = {
 	'feed.banner.suspended': 'Aquest canal ha sigut suspès',
 	'feed.banner.failed': 'Error en actualitzar el canal. Error: {error}',
 
-	'feed.import.title': 'Afegir canal',
+	'feed.import.title': 'Afegir canals',
 	'feed.import.manually': 'Manualment',
-	'feed.import.manually.link.description': "L'enllaç RSS o l'enllaç del lloc web. El servidor intentarà localitzar automàticament el canal RSS. Qualsevol canal existent amb el mateix enllaç serà reemplaçat.",
+	'feed.import.manually.link.description': "L'enllaç RSS o l'enllaç del lloc web. El servidor intentarà localitzar automàticament el canal RSS. Els canals existents amb el mateix enllaç es substituiran.",
 	'feed.import.manually.name.description': 'Opcional. Deixar en blanc per anomenar automàticament.',
-	'feed.import.manually.no_valid_feed_error': "No s'ha trobat cap canal vàlid. Si us plau, verifiqueu l'enllaç o fes servir un enllaç de canal directament.",
+	'feed.import.manually.no_valid_feed_error': "No s'ha trobat cap canal vàlid. Si us plau, verifica l'enllaç o fes servir un enllaç de canal directament.",
 	'feed.import.manually.link_candidates.label': 'Seleccionar un enllaç',
 	'feed.import.opml': 'Importar OPML',
 	'feed.import.opml.file.label': 'Seleccionar un fitxer OPML',
@@ -59,7 +59,7 @@ const lang = {
 	'feed.import.opml.how_it_works.title': 'Com funciona?',
 	'feed.import.opml.how_it_works.description.1': "Els canals s'importaran al grup corresponent, que es crearà automàticament si no existeix.",
 	'feed.import.opml.how_it_works.description.2': "Els grups multidimensionals s'aplanaran a una estructura unidimensional, utilitzant una convenció de nomenclatura com 'a/b/c'.",
-	'feed.import.opml.how_it_works.description.3': 'El canal existent amb el mateix enllaç serà reemplaçat.',
+	'feed.import.opml.how_it_works.description.3': 'Els canals existents amb el mateix enllaç es substituiran.',
 
 	// item
 	'item.search.placeholder': 'Cercar al títol i contingut',
@@ -82,22 +82,22 @@ const lang = {
 
 	'settings.groups.description': 'El nom del grup ha de ser únic.',
 	'settings.groups.delete.confirm': 'Estàs segur que vols eliminar aquest grup? Tots els seus canals es mouran al grup predeterminat',
-	'settings.groups.delete.error.delete_the_default': 'No es pot eliminar el grupo predeterminat',
+	'settings.groups.delete.error.delete_the_default': 'No es pot eliminar el grup predeterminat',
 
 	// auth
 	'auth.logout.confirm': 'Estàs segur que vols tancar la sessió?',
 	'auth.logout.failed_message': 'Error en tancar sessió. Si us plau, torna-ho a intentar.',
 
 	// shortcuts
-	'shortcuts.show_help': 'Mostrar dreceres del teclat',
+	'shortcuts.show_help': 'Mostrar les dreceres del teclat',
 	'shortcuts.next_item': 'Element següent',
 	'shortcuts.prev_item': 'Element anterior',
 	'shortcuts.toggle_unread': 'Marcar com a (no) llegit',
-	'shortcuts.toggle_bookmark': 'Afegir o treure marcador',
+	'shortcuts.toggle_bookmark': 'Afegir o treure dels marcadors',
 	'shortcuts.view_original': "Veure l'original",
 	'shortcuts.next_feed': 'Canal següent',
 	'shortcuts.prev_feed': 'Canal anterior',
-	'shortcuts.open_selected': 'Obrir selecció',
+	'shortcuts.open_selected': 'Obrir el seleccionat',
 	'shortcuts.goto_search_page': 'Anar a la cerca',
 	'shortcuts.goto_unread_page': 'Anar als no llegits',
 	'shortcuts.goto_bookmarks_page': 'Anar als marcadors',
