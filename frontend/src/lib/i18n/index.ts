@@ -1,3 +1,4 @@
+import ca from './langs/ca';
 import de from './langs/de';
 import en from './langs/en';
 import es from './langs/es';
@@ -19,11 +20,12 @@ export const languages = [
 	{ id: 'en', name: 'English', translation: en },
 	{ id: 'zh-Hans', name: '简体中文', translation: zhHans },
 	{ id: 'zh-Hant', name: '繁體中文', translation: zhHant },
-	{ id: 'fr', name: 'Français', translation: fr },
+	{ id: 'ca', name: 'Català', translation: ca },
+	{ id: 'de', name: 'Deutsch', translation: de },
 	{ id: 'es', name: 'Español', translation: es },
+	{ id: 'fr', name: 'Français', translation: fr },
 	{ id: 'sv', name: 'Svenska', translation: sv },
 	{ id: 'ru', name: 'Русский', translation: ru },
-	{ id: 'de', name: 'Deutsch', translation: de },
 	{ id: 'pt', name: 'Português', translation: pt },
 	{ id: 'pt-BR', name: 'Português do Brasil', translation: ptBR }
 ] as const;
@@ -54,6 +56,11 @@ export function getCurrentLanguage(): Language {
 		return 'zh-Hans';
 	}
 
+	// Catalan
+	if (browserLang.startsWith('ca')) {
+		return 'ca';
+	}
+	
 	// French
 	if (browserLang.startsWith('fr')) {
 		return 'fr';
