@@ -22,6 +22,14 @@ export const load: PageLoad = async ({ url, params, depends }) => {
 		feed_id: undefined,
 		group_id: id
 	});
+
+	const shuffle = localStorage.getItem("shuffleArticles") === 'true';
+	const seedString = localStorage.getItem("shuffleSeed")
+	const seed = seedString !== null ? parseInt(seedString, 10) : undefined;
+	if (shuffle === true) {
+		filter.shuffle = true;
+		filter.seed = seed;
+	}
 	const items = listItems(filter);
 	return { group, items: items };
 };

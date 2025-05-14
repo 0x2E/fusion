@@ -87,6 +87,7 @@ const lang = {
 	'settings.global_actions.refresh_all_feeds': 'Actualiser tous les flux',
 	'settings.global_actions.export_all_feeds': 'Exporter tous les flux',
 
+	'settings.groups.shuffle': 'Randomiser les éléments au sein des groupes',
 	'settings.groups.description': 'Le nom du groupe doit être unique.',
 	'settings.groups.delete.confirm':
 		'Êtes-vous sûr de vouloir supprimer ce groupe? Tous ses flux seront déplacés vers le groupe par défaut',

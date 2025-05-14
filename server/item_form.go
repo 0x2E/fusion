@@ -28,6 +28,8 @@ type ReqItemList struct {
 	GroupID  *uint   `query:"group_id"`
 	Unread   *bool   `query:"unread"`
 	Bookmark *bool   `query:"bookmark"`
+	Shuffle  *bool   `query:"shuffle"`
+	Seed     *int64  `query:"seed"`
 }
 
 type RespItemList struct {
