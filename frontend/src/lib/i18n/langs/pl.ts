@@ -39,7 +39,7 @@ const lang = {
 	'feed.refresh': 'Odśwież kanał',
 	'feed.refresh.all': 'Odśwież wszystkie kanały',
 	'feed.refresh.all.confirm':
-		'Are you sure you want to refresh all feeds except the suspended ones?',
+		'Czy na pewno chcesz odświeżyć wszystkie kanały, z wyjątkiem zawieszonych?',
 	'feed.refresh.all.run_in_background': 'Rozpocznij odświeżanie w tle',
 	'feed.refresh.resume': 'Wznów odświeżanie',
 	'feed.refresh.suspend': 'Zatzymaj odświeżanie',
