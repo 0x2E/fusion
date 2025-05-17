@@ -3,6 +3,7 @@ import de from './langs/de';
 import en from './langs/en';
 import es from './langs/es';
 import fr from './langs/fr';
+import pl from './langs/pl';
 import pt from './langs/pt';
 import ptBR from './langs/pt-BR';
 import ru from './langs/ru';
@@ -26,6 +27,7 @@ export const languages = [
 	{ id: 'fr', name: 'Français', translation: fr },
 	{ id: 'sv', name: 'Svenska', translation: sv },
 	{ id: 'ru', name: 'Русский', translation: ru },
+	{ id: 'pl', name: 'Polski', translation: pl },
 	{ id: 'pt', name: 'Português', translation: pt },
 	{ id: 'pt-BR', name: 'Português do Brasil', translation: ptBR }
 ] as const;
@@ -60,7 +62,7 @@ export function getCurrentLanguage(): Language {
 	if (browserLang.startsWith('ca')) {
 		return 'ca';
 	}
-	
+
 	// French
 	if (browserLang.startsWith('fr')) {
 		return 'fr';
@@ -84,6 +86,11 @@ export function getCurrentLanguage(): Language {
 	// German
 	if (browserLang.startsWith('de')) {
 		return 'de';
+	}
+
+	// Polish
+	if (browserLang.startsWith('pl')) {
+		return 'pl';
 	}
 
 	// Portuguese
