@@ -27,7 +27,6 @@ export const languages = [
 	{ id: 'fr', name: 'Français', translation: fr },
 	{ id: 'sv', name: 'Svenska', translation: sv },
 	{ id: 'ru', name: 'Русский', translation: ru },
-	{ id: 'de', name: 'Deutsch', translation: de },
 	{ id: 'pl', name: 'Polski', translation: pl },
 	{ id: 'pt', name: 'Português', translation: pt },
 	{ id: 'pt-BR', name: 'Português do Brasil', translation: ptBR }
