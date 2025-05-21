@@ -84,6 +84,7 @@ const lang = {
 	'settings.global_actions.refresh_all_feeds': '重新整理所有訂閱源',
 	'settings.global_actions.export_all_feeds': '匯出所有訂閱源',
 
+	'settings.groups.shuffle': '隨機化組內的文章',
 	'settings.groups.description': '群組名稱必須是唯一的。',
 	'settings.groups.delete.confirm': '您確定要刪除此群組嗎？所有訂閱源將被移動到預設群組',
 	'settings.groups.delete.error.delete_the_default': '無法刪除預設群組',
