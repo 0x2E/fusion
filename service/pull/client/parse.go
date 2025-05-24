@@ -30,10 +30,15 @@ func ParseGoFeedItems(feedURL string, gfItems []*gofeed.Item) []*model.Item {
 		if pubDate == nil {
 			pubDate = item.UpdatedParsed
 		}
+		imageURL := ""
+		if item.Image != nil {
+			imageURL = item.Image.URL
+		}
 		items = append(items, &model.Item{
 			Title:   &item.Title,
 			GUID:    &guid,
 			Link:    ptr.To(parseLink(feedURL, item.Link)),
+			Image:   ptr.To(parseLink(feedURL, imageURL)),
 			Content: &content,
 			PubDate: pubDate,
 			Unread:  &unread,

@@ -80,6 +80,11 @@
 				{data.feed.name} | {new Date(data.pub_date).toLocaleString()}
 			</a>
 		</div>
+		{#if data.image !== ""}
+			<div class="items-center">
+				<img class="rounded-md" src={data.image} alt="item image" />
+			</div>
+		{/if}
 		<div class="prose text-wrap break-words">
 			{@html safeContent}
 		</div>

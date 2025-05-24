@@ -11,6 +11,7 @@ type ItemFeed struct {
 type ItemForm struct {
 	ID        uint       `json:"id"`
 	Title     *string    `json:"title"`
+	Image     *string    `json:"image"`
 	Link      *string    `json:"link"`
 	GUID      *string    `json:"guid"`
 	Content   *string    `json:"content"`

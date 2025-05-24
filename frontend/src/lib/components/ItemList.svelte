@@ -122,9 +122,14 @@
 					<a
 						id={'item-' + i}
 						href={'/items/' + item.id}
-						class="group hover:bg-base-200 relative flex w-full flex-col items-center justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors focus:ring-2 md:flex-row"
+						class="group hover:bg-base-200 relative flex w-full flex-col items-start justify-between space-y-1 space-x-2 rounded-md px-2 py-2 transition-colors focus:ring-2 md:flex-row"
 					>
-						<div class="flex w-full md:w-[80%] md:shrink-0">
+						<div class="flex w-full md:w-[80%] md:shrink-0 flex-col space-y-2 md:flex-row md:space-x-2">
+							{#if item.image !== ""}
+								<div class="w-full md:w-[30%]">
+									<img class="w-full rounded-md" src={item.image} alt="item image" />
+								</div>
+							{/if}
 							<h2
 								class={`line-clamp-2 w-full truncate font-medium md:line-clamp-1 ${highlightUnread && !item.unread ? 'text-base-content/60' : ''}`}
 							>
