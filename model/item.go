@@ -15,6 +15,7 @@ type Item struct {
 	Title    *string    `gorm:"title"`
 	GUID     *string    `gorm:"guid;uniqueIndex:idx_guid"`
 	Link     *string    `gorm:"link"`
+	Image    *string    `gorm:"image"`
 	Content  *string    `gorm:"content"`
 	PubDate  *time.Time `gorm:"pub_date"`
 	Unread   *bool      `gorm:"unread;default:true;index"`

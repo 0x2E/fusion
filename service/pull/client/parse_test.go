@@ -26,6 +26,9 @@ func TestParseGoFeedItems(t *testing.T) {
 					Title:           "Test Item",
 					GUID:            "https://example.com/guid",
 					Link:            "https://example.com/link",
+					Image:           &gofeed.Image{
+						URL: "https://example.com/image.png",
+					},
 					Content:         "<p>This is the content</p>",
 					Description:     "This is the description",
 					PublishedParsed: mustParseTime("2025-01-01T12:00:00Z"),
@@ -36,6 +39,7 @@ func TestParseGoFeedItems(t *testing.T) {
 					Title:   ptr.To("Test Item"),
 					GUID:    ptr.To("https://example.com/guid"),
 					Link:    ptr.To("https://example.com/link"),
+					Image:   ptr.To("https://example.com/image.png"),
 					Content: ptr.To("<p>This is the content</p>"),
 					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
@@ -49,6 +53,9 @@ func TestParseGoFeedItems(t *testing.T) {
 				{
 					Title:           "Test Item with Relative Path",
 					Link:            "/link",
+					Image:           &gofeed.Image{
+						URL: "/image.png",
+					},
 					GUID:            "guid",
 					Content:         "<p>This is the content</p>",
 					Description:     "This is the description",
@@ -59,6 +66,7 @@ func TestParseGoFeedItems(t *testing.T) {
 				{
 					Title:   ptr.To("Test Item with Relative Path"),
 					Link:    ptr.To("https://example.com/link"),
+					Image:   ptr.To("https://example.com/image.png"),
 					GUID:    ptr.To("guid"),
 					Content: ptr.To("<p>This is the content</p>"),
 					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
@@ -84,6 +92,7 @@ func TestParseGoFeedItems(t *testing.T) {
 					Title:   ptr.To("Test Item"),
 					GUID:    ptr.To("https://example.com/guid"),
 					Link:    ptr.To("https://example.com/link"),
+					Image:   ptr.To(""),
 					Content: ptr.To("This is the description"), // Should use description
 					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
@@ -108,6 +117,7 @@ func TestParseGoFeedItems(t *testing.T) {
 					Title:   ptr.To("Test Item"),
 					GUID:    ptr.To("https://example.com/link"), // Should use link
 					Link:    ptr.To("https://example.com/link"),
+					Image:   ptr.To(""),
 					Content: ptr.To("<p>This is the content</p>"),
 					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
@@ -132,6 +142,7 @@ func TestParseGoFeedItems(t *testing.T) {
 					Title:   ptr.To("Test Item"),
 					GUID:    ptr.To("https://example.com/link"), // Should use link
 					Link:    ptr.To("https://example.com/link"),
+					Image:   ptr.To(""),
 					Content: ptr.To("This is the description"), // Should use description
 					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
@@ -164,6 +175,7 @@ func TestParseGoFeedItems(t *testing.T) {
 					Title:   ptr.To("Item 1"),
 					GUID:    ptr.To("guid1"),
 					Link:    ptr.To("link1"),
+					Image:   ptr.To(""),
 					Content: ptr.To("content1"),
 					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
@@ -172,6 +184,7 @@ func TestParseGoFeedItems(t *testing.T) {
 					Title:   ptr.To("Item 2"),
 					GUID:    ptr.To("guid2"),
 					Link:    ptr.To("link2"),
+					Image:   ptr.To(""),
 					Content: ptr.To("content2"),
 					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
@@ -209,6 +222,7 @@ func TestParseGoFeedItems(t *testing.T) {
 					Title:   ptr.To("Valid Item"),
 					GUID:    ptr.To("valid-guid"),
 					Link:    ptr.To("https://example.com/valid"),
+					Image:   ptr.To(""),
 					Content: ptr.To("valid content"),
 					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
@@ -217,6 +231,7 @@ func TestParseGoFeedItems(t *testing.T) {
 					Title:   ptr.To("Another Valid Item"),
 					GUID:    ptr.To("another-guid"),
 					Link:    ptr.To("https://example.com/another"),
+					Image:   ptr.To(""),
 					Content: ptr.To("another content"),
 					PubDate: mustParseTime("2025-01-01T12:00:00Z"),
 					Unread:  ptr.To(true),
