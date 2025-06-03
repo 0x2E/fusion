@@ -18,7 +18,6 @@
 		},
 		toggleBookmark: { keys: 'b', desc: t('shortcuts.toggle_bookmark') },
 		viewOriginal: { keys: 'v', desc: t('shortcuts.view_original') },
-		shareItem: { keys: 's', desc: t('shortcuts.share') },
 		nextFeed: { keys: 'Shift+J', desc: t('shortcuts.next_feed') },
 		prevFeed: { keys: 'Shift+K', desc: t('shortcuts.prev_feed') },
 		openSelected: { keys: 'Enter', desc: t('shortcuts.open_selected') },
