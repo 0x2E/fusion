@@ -76,6 +76,7 @@ const lang = {
 	'item.remove_from_bookmark': 'Ta bort från bokmärken',
 	'item.goto_feed': 'Gå till flöde',
 	'item.visit_the_original': 'Besök originallänk',
+	'item.share': 'dela',
 
 	// settings
 	'settings.appearance': 'Utseende',

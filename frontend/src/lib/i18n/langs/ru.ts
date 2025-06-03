@@ -77,6 +77,7 @@ const lang = {
 	'item.remove_from_bookmark': 'Удалить из закладок',
 	'item.goto_feed': 'Перейти к ленте',
 	'item.visit_the_original': 'Посетить оригинальную ссылку',
+	'item.share': 'Предоставить общий доступ',
 
 	// settings
 	'settings.appearance': 'Внешний вид',

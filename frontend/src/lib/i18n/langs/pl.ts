@@ -78,6 +78,7 @@ const lang = {
 	'item.remove_from_bookmark': 'Usuń z zakładek',
 	'item.goto_feed': 'Idź do kanału',
 	'item.visit_the_original': 'Odwiedź link źródłowy',
+	'item.share': 'Udostępnij',
 
 	// settings
 	'settings.appearance': 'Wygląd',
