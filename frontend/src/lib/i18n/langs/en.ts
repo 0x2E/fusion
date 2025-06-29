@@ -77,6 +77,7 @@ const lang = {
 	'item.remove_from_bookmark': 'Remove from bookmark',
 	'item.goto_feed': 'Go to feed',
 	'item.visit_the_original': 'Visit original link',
+	'item.share': 'Share',
 
 	// settings
 	'settings.appearance': 'Appearance',
@@ -103,6 +104,7 @@ const lang = {
 	'shortcuts.toggle_unread': 'Toggle read/unread',
 	'shortcuts.toggle_bookmark': 'Toggle bookmark',
 	'shortcuts.view_original': 'View original',
+	'shortcuts.share': 'Share',
 	'shortcuts.next_feed': 'Next feed',
 	'shortcuts.prev_feed': 'Previous feed',
 	'shortcuts.open_selected': 'Open selection',

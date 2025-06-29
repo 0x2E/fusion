@@ -4,6 +4,7 @@
 	import ItemActionGotoFeed from '$lib/components/ItemActionGotoFeed.svelte';
 	import ItemActionUnread from '$lib/components/ItemActionUnread.svelte';
 	import ItemActionVisitLink from '$lib/components/ItemActionVisitLink.svelte';
+	import ItemActionShareLink from '$lib/components/ItemActionShareLink.svelte';
 	import PageNavHeader from '$lib/components/PageNavHeader.svelte';
 	import { render } from '$lib/render-item';
 	import { ExternalLink } from 'lucide-svelte';
@@ -58,6 +59,7 @@
 	<ItemActionUnread bind:item enableShortcut={true} />
 	<ItemActionBookmark bind:item enableShortcut={true} />
 	<ItemActionVisitLink {item} enableShortcut={true} />
+	<ItemActionShareLink {item} />
 </PageNavHeader>
 
 <div class="relative flex w-full grow justify-around px-4 py-6">
