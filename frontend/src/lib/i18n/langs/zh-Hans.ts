@@ -75,7 +75,7 @@ const lang = {
 	'item.remove_from_bookmark': '从书签中移除',
 	'item.goto_feed': '前往订阅源',
 	'item.visit_the_original': '访问原始链接',
-	'item.share': '共享',
+	'item.share': '分享',
 
 	// settings
 	'settings.appearance': '外观',

@@ -24,6 +24,7 @@ const lang = {
 	'common.password': 'Lösenord',
 	'common.link': 'Länk',
 	'common.advanced': 'Avancerat',
+	'common.shortcuts': 'Tangentbordsgenvägar',
 	'common.more': 'Mer',
 	'common.current_page': 'Aktuell sida',
 

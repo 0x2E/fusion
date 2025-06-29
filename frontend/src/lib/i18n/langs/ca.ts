@@ -38,7 +38,8 @@ const lang = {
 	// feed
 	'feed.refresh': 'Actualitzar el canal',
 	'feed.refresh.all': 'Actualitzar tots els canals',
-	'feed.refresh.all.confirm': 'Estàs segur que vols actualitzar tots els canals excepte els suspesos?',
+	'feed.refresh.all.confirm':
+		'Estàs segur que vols actualitzar tots els canals excepte els suspesos?',
 	'feed.refresh.all.run_in_background': "Iniciar l'actualització en segon pla",
 	'feed.refresh.resume': "Reprendre l'actualització",
 	'feed.refresh.suspend': "Suspendre l'actualització",
@@ -48,18 +49,24 @@ const lang = {
 
 	'feed.import.title': 'Afegir canals',
 	'feed.import.manually': 'Manualment',
-	'feed.import.manually.link.description': "L'enllaç RSS o l'enllaç del lloc web. El servidor intentarà localitzar automàticament el canal RSS. Els canals existents amb el mateix enllaç es substituiran.",
+	'feed.import.manually.link.description':
+		"L'enllaç RSS o l'enllaç del lloc web. El servidor intentarà localitzar automàticament el canal RSS. Els canals existents amb el mateix enllaç es substituiran.",
 	'feed.import.manually.name.description': 'Opcional. Deixar en blanc per anomenar automàticament.',
-	'feed.import.manually.no_valid_feed_error': "No s'ha trobat cap canal vàlid. Si us plau, verifica l'enllaç o fes servir un enllaç de canal directament.",
+	'feed.import.manually.no_valid_feed_error':
+		"No s'ha trobat cap canal vàlid. Si us plau, verifica l'enllaç o fes servir un enllaç de canal directament.",
 	'feed.import.manually.link_candidates.label': 'Seleccionar un enllaç',
 	'feed.import.opml': 'Importar OPML',
 	'feed.import.opml.file.label': 'Seleccionar un fitxer OPML',
-	'feed.import.opml.file.description': "El fitxer ha d'estar en format {opml}. Pots obtenir un del teu lector RSS anterior.",
+	'feed.import.opml.file.description':
+		"El fitxer ha d'estar en format {opml}. Pots obtenir un del teu lector RSS anterior.",
 	'feed.import.opml.file_read_error': 'Error en carregar el contingut del fitxer',
 	'feed.import.opml.how_it_works.title': 'Com funciona?',
-	'feed.import.opml.how_it_works.description.1': "Els canals s'importaran al grup corresponent, que es crearà automàticament si no existeix.",
-	'feed.import.opml.how_it_works.description.2': "Els grups multidimensionals s'aplanaran a una estructura unidimensional, utilitzant una convenció de nomenclatura com 'a/b/c'.",
-	'feed.import.opml.how_it_works.description.3': 'Els canals existents amb el mateix enllaç es substituiran.',
+	'feed.import.opml.how_it_works.description.1':
+		"Els canals s'importaran al grup corresponent, que es crearà automàticament si no existeix.",
+	'feed.import.opml.how_it_works.description.2':
+		"Els grups multidimensionals s'aplanaran a una estructura unidimensional, utilitzant una convenció de nomenclatura com 'a/b/c'.",
+	'feed.import.opml.how_it_works.description.3':
+		'Els canals existents amb el mateix enllaç es substituiran.',
 
 	// item
 	'item.search.placeholder': 'Cercar al títol i contingut',
@@ -82,7 +89,8 @@ const lang = {
 	'settings.global_actions.export_all_feeds': 'Exportar tots els canals',
 
 	'settings.groups.description': 'El nom del grup ha de ser únic.',
-	'settings.groups.delete.confirm': 'Estàs segur que vols eliminar aquest grup? Tots els seus canals es mouran al grup predeterminat',
+	'settings.groups.delete.confirm':
+		'Estàs segur que vols eliminar aquest grup? Tots els seus canals es mouran al grup predeterminat',
 	'settings.groups.delete.error.delete_the_default': 'No es pot eliminar el grup predeterminat',
 
 	// auth

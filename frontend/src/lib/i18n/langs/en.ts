@@ -104,7 +104,6 @@ const lang = {
 	'shortcuts.toggle_unread': 'Toggle read/unread',
 	'shortcuts.toggle_bookmark': 'Toggle bookmark',
 	'shortcuts.view_original': 'View original',
-	'shortcuts.share': 'Share',
 	'shortcuts.next_feed': 'Next feed',
 	'shortcuts.prev_feed': 'Previous feed',
 	'shortcuts.open_selected': 'Open selection',
