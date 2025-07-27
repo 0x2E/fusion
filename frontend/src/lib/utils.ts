@@ -23,13 +23,18 @@ export function debounce(func: Function, wait: number): EventListener {
 export function tryAbsURL(url: string, base?: string): string {
 	if (!url) return url;
 
-	let parsed = URL.parse(url, base);
-	if (!parsed) {
+	try {
+		const parsed = new URL(url, base);
+		return parsed.href;
+	} catch {
 		if (url.startsWith('//')) {
-			url = 'https:' + url;
+			try {
+				const parsed = new URL('https:' + url, base);
+				return parsed.href;
+			} catch {
+				return url;
+			}
 		}
-		parsed = URL.parse(url, base);
+		return url;
 	}
-
-	return parsed?.href || url;
 }
