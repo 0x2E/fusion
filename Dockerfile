@@ -1,5 +1,5 @@
 # build frontend
-FROM node:23 AS fe
+FROM node:24 AS fe
 WORKDIR /src
 RUN npm i -g pnpm
 COPY .git .git/

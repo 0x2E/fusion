@@ -80,7 +80,7 @@ Fusion can be configured in many ways:
 
 Contributions are welcome! Before contributing, please read the [Contributing Guidelines](./CONTRIBUTING.md).
 
-- Prepare environment: Go 1.24+, Node.js 23+ (and pnpm).
+- Prepare environment: Go 1.24+, Node.js 24+ (and pnpm).
 - Check out the commands in `scripts.sh`.
 
 For example:
