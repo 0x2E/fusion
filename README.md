@@ -1,23 +1,30 @@
-# Fusion
-
-A lightweight RSS feed aggregator and reader.
+<h1 align="center">Fusion</h1>
+<p align="center">A lightweight RSS feed aggregator and reader.</p>
+<p align="center">
+  <a href="https://news.ycombinator.com/item?id=40522244">
+    <img
+      alt="Featured on Hacker News"
+      src="https://hackerbadge.vercel.app/api?id=40522244"
+    />
+  </a>
+</p>
 
 ![screenshots](./assets/screenshots.png)
 
-Key features include:
+## Features
 
 - Group, bookmark, search, automatic feed sniffing, OPML file import/export
-- Support for RSS, Atom, and JSON feed types
-- Responsive, light/dark mode, PWA, Keyboard shortcut support
+- Supports RSS, Atom, and JSON feed types
+- Responsive, dark mode, PWA, keyboard shortcuts
 - Lightweight and self-hosted friendly
-  - Built with Golang and SQLite, deploy with a single binary
-  - Pre-built Docker image
+  - Built with Golang and SQLite; deploys with a single binary or a Docker container
   - Uses about 80MB of memory
 - Internationalization (i18n): English, Chinese, German, French, Spanish, Russian, Portuguese, and Swedish
 
 ## Installation
 
-### Docker
+<details>
+<summary>Docker</summary>
 
 > Use `latest` tag for the latest release version.
 >
@@ -49,11 +56,16 @@ services:
       - ./data:/data
 ```
 
-### Pre-built binary
+</details>
+
+<details>
+<summary>Pre-built binary</summary>
 
 Download from [Releases](https://github.com/0x2E/fusion/releases).
+</details>
 
-### One-Click Deployment
+<details>
+  <summary>One-Click Deployment</summary>
 
 [Deploy on Fly.io](./fly.toml)
 
@@ -63,13 +75,17 @@ Maintained by community:
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/XSPFK0?referralCode=milo)
 
-### Build from source
+</details>
 
-Check out the "Contributing" section.
+<details>
+  <summary>Build from source</summary>
+
+  Check out the "Contributing" section.
+</details>
 
 ## Configuration
 
-All configuration items can be found [here](./.env.example).
+All configuration items can be found in [`.env.example`](./.env.example).
 
 Fusion can be configured in many ways:
 
