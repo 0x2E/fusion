@@ -50,6 +50,8 @@ services:
       - "127.0.0.1:8080:8080"
     environment:
       - PASSWORD=fusion
+      # Set log level if desired (DEBUG, INFO, WARN, ERROR)
+      # - LOG_LEVEL=INFO
     restart: "unless-stopped"
     volumes:
       # Change `./data` to where you want the files stored
