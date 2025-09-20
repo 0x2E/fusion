@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/0x2e/fusion/auth"
 	"github.com/caarlos0/env/v11"
@@ -25,6 +26,7 @@ type Conf struct {
 	SecureCookie bool
 	TLSCert      string
 	TLSKey       string
+	LogLevel     slog.Level
 }
 
 func Load() (Conf, error) {
@@ -44,6 +46,7 @@ func Load() (Conf, error) {
 		SecureCookie bool   `env:"SECURE_COOKIE" envDefault:"false"`
 		TLSCert      string `env:"TLS_CERT"`
 		TLSKey       string `env:"TLS_KEY"`
+		LogLevel     string `env:"LOG_LEVEL" envDefault:"INFO"`
 	}
 	if err := env.Parse(&conf); err != nil {
 		return Conf{}, err
@@ -66,6 +69,13 @@ func Load() (Conf, error) {
 		conf.SecureCookie = true
 	}
 
+	// Parse log level; default to INFO on error
+	level, err := ParseLogLevel(conf.LogLevel)
+	if err != nil {
+		slog.Warn(fmt.Sprintf("invalid LOG_LEVEL '%s', defaulting to INFO", conf.LogLevel))
+		level = slog.LevelInfo
+	}
+
 	return Conf{
 		Host:         conf.Host,
 		Port:         conf.Port,
@@ -74,5 +84,25 @@ func Load() (Conf, error) {
 		SecureCookie: conf.SecureCookie,
 		TLSCert:      conf.TLSCert,
 		TLSKey:       conf.TLSKey,
+		LogLevel:     level,
 	}, nil
+}
+
+// ParseLogLevel validates and converts a string log level to slog.Level.
+// Accepted values (case-insensitive): DEBUG, INFO, WARN, WARNING, ERROR.
+// Returns an error for invalid values.
+func ParseLogLevel(level string) (slog.Level, error) {
+	normalized := strings.ToUpper(strings.TrimSpace(level))
+	switch normalized {
+	case "DEBUG":
+		return slog.LevelDebug, nil
+	case "", "INFO":
+		return slog.LevelInfo, nil
+	case "WARN", "WARNING":
+		return slog.LevelWarn, nil
+	case "ERROR":
+		return slog.LevelError, nil
+	default:
+		return slog.LevelInfo, fmt.Errorf("invalid log level: %s", level)
+	}
 }
