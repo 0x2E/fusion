@@ -62,6 +62,7 @@ services:
 <summary>Pre-built binary</summary>
 
 Download from [Releases](https://github.com/0x2E/fusion/releases).
+
 </details>
 
 <details>
@@ -80,7 +81,8 @@ Maintained by community:
 <details>
   <summary>Build from source</summary>
 
-  Check out the "Contributing" section.
+Check out the "Contributing" section.
+
 </details>
 
 ## Configuration
@@ -107,7 +109,4 @@ For example:
 
 ## Credits
 
-- Front-end is built with: [Sveltekit](https://github.com/sveltejs/kit), [daisyUI](https://github.com/saadeghi/daisyui)
-- Back-end is built with: [Echo](https://github.com/labstack/echo), [GORM](https://github.com/go-gorm/gorm)
 - Parsing feed with [gofeed](https://github.com/mmcdole/gofeed)
-- Logo by [Icons8](https://icons8.com/icon/FeQbTvGTsiN5/news)
