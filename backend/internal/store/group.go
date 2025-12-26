@@ -1,0 +1,90 @@
+package store
+
+import (
+	"database/sql"
+	"fmt"
+
+	"github.com/0x2E/fusion/internal/model"
+)
+
+func (s *Store) ListGroups() ([]*model.Group, error) {
+	rows, err := s.db.Query(`
+		SELECT id, name, created_at, updated_at
+		FROM groups
+		ORDER BY id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var groups []*model.Group
+	for rows.Next() {
+		g := &model.Group{}
+		if err := rows.Scan(&g.ID, &g.Name, &g.CreatedAt, &g.UpdatedAt); err != nil {
+			return nil, err
+		}
+		groups = append(groups, g)
+	}
+	return groups, rows.Err()
+}
+
+func (s *Store) GetGroup(id int64) (*model.Group, error) {
+	g := &model.Group{}
+	err := s.db.QueryRow(`
+		SELECT id, name, created_at, updated_at
+		FROM groups
+		WHERE id = :id
+	`, sql.Named("id", id)).Scan(&g.ID, &g.Name, &g.CreatedAt, &g.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("group not found")
+	}
+	return g, err
+}
+
+func (s *Store) CreateGroup(name string) (*model.Group, error) {
+	result, err := s.db.Exec(`
+		INSERT INTO groups (name) VALUES (:name)
+	`, sql.Named("name", name))
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	return s.GetGroup(id)
+}
+
+func (s *Store) UpdateGroup(id int64, name string) error {
+	_, err := s.db.Exec(`
+		UPDATE groups
+		SET name = :name, updated_at = unixepoch()
+		WHERE id = :id
+	`, sql.Named("name", name), sql.Named("id", id))
+	return err
+}
+
+func (s *Store) DeleteGroup(id int64) error {
+	if id == 1 {
+		return fmt.Errorf("cannot delete default group")
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`UPDATE feeds SET group_id = 1 WHERE group_id = :id`, sql.Named("id", id)); err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM groups WHERE id = :id`, sql.Named("id", id)); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}

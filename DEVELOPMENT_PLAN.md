@@ -1,11 +1,9 @@
-# Fusion 重构计划
+# Fusion 开发计划
 
 ## 概述
 
-将 Fusion RSS 阅读器从现有技术栈重构到新技术栈：
-
-- **前端**: SvelteKit → React 19 + TanStack Router + shadcn/ui + Zustand
-- **后端**: Echo + GORM → Gin + 纯 SQL (modernc.org/sqlite)
+- **前端**: React 19 + TanStack Router + shadcn/ui + Zustand
+- **后端**: Gin + 纯 SQL (modernc.org/sqlite)
 - **架构**: 扁平化分层 (handler → store → model)
 
 ## 设计文档
@@ -27,27 +25,25 @@
 | 数据库   | SQLite (modernc.org/sqlite) |
 | ORM      | 纯 SQL                      |
 | 后端分层 | handler → store → model     |
-| 多语言   | 暂时移除，仅英文            |
+| 多语言   | 仅英文                      |
 
 ## 实施步骤
 
-### 阶段 1: 后端重构
+### 阶段 1: 后端开发
 
 详细设计见 `/docs/backend-design.md`
 
-#### 1.1 创建新目录结构
+#### 1.1 实现 model 层
 
-- [ ] 创建 `backend/` 目录
-- [ ] 初始化 go.mod
-- [ ] 设置基础配置
+- [x] `model/model.go` - 数据结构
 
 #### 1.2 实现 store 层 (纯 SQL)
 
-- [ ] `store/store.go` - 数据库初始化和迁移
-- [ ] `store/group.go` - Group CRUD
-- [ ] `store/feed.go` - Feed CRUD
-- [ ] `store/item.go` - Item CRUD
-- [ ] `store/bookmark.go` - Bookmark CRUD
+- [x] `store/store.go`
+- [x] `store/group.go` - Group CRUD
+- [x] `store/feed.go` - Feed CRUD
+- [x] `store/item.go` - Item CRUD
+- [x] `store/bookmark.go` - Bookmark CRUD
 
 #### 1.3 实现 handler 层 (Gin)
 
@@ -76,7 +72,7 @@
 - [ ] `pull/backoff_test.go`
 - [ ] `store/store_test.go` (内存 SQLite)
 
-### 阶段 2: 前端重构
+### 阶段 2: 前端开发
 
 详细设计见 `/docs/frontend-design.md`
 
