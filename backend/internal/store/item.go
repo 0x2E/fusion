@@ -8,6 +8,11 @@ import (
 	"github.com/0x2E/fusion/internal/model"
 )
 
+// ListItemsParams specifies filtering and pagination for item queries.
+//
+// Pointer fields (FeedID, Unread) are optional filters - nil means "no filter".
+// OrderBy accepts "pub_date" (default) or "created_at".
+// Limit/Offset = 0 means no limit/offset.
 type ListItemsParams struct {
 	FeedID  *int64
 	Unread  *bool
@@ -20,7 +25,7 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	query := `
 		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at
 		FROM items
-		WHERE 1=1
+		WHERE 1=1  -- Simplifies dynamic query building with optional AND clauses
 	`
 	args := []interface{}{}
 
@@ -37,6 +42,7 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 		args = append(args, sql.Named("unread", unread))
 	}
 
+	// ORDER BY cannot use named parameters, validated via allowlist instead
 	orderBy := "pub_date DESC"
 	if params.OrderBy == "created_at" {
 		orderBy = "created_at DESC"
@@ -114,6 +120,8 @@ func (s *Store) UpdateItemUnread(id int64, unread bool) error {
 	return err
 }
 
+// BatchUpdateItemsUnread marks multiple items as read/unread in a single query.
+// Dynamically builds IN clause with named parameters (:id0, :id1, ...) for safety.
 func (s *Store) BatchUpdateItemsUnread(ids []int64, unread bool) error {
 	if len(ids) == 0 {
 		return nil
@@ -138,6 +146,8 @@ func (s *Store) BatchUpdateItemsUnread(ids []int64, unread bool) error {
 	return err
 }
 
+// MarkAllAsRead marks items as read. If feedID is nil, marks ALL items across all feeds.
+// If feedID is non-nil, only marks items from that specific feed.
 func (s *Store) MarkAllAsRead(feedID *int64) error {
 	if feedID != nil {
 		_, err := s.db.Exec(`UPDATE items SET unread = 0 WHERE feed_id = :feed_id`, sql.Named("feed_id", *feedID))
@@ -147,6 +157,8 @@ func (s *Store) MarkAllAsRead(feedID *int64) error {
 	return err
 }
 
+// DeleteItem removes an item while preserving bookmarks.
+// Sets bookmark.item_id to NULL to maintain the content snapshot.
 func (s *Store) DeleteItem(id int64) error {
 	tx, err := s.db.Begin()
 	if err != nil {

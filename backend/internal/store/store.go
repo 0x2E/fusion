@@ -1,3 +1,8 @@
+// Package store provides data access layer for Fusion RSS reader.
+//
+// All timestamps are stored as Unix epoch seconds (INTEGER in SQLite).
+// Boolean fields are stored as INTEGER (0/1) and converted to/from Go bool.
+// Named SQL parameters (:param_name) are used throughout for safety.
 package store
 
 import (

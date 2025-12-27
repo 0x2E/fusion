@@ -67,6 +67,8 @@ func (s *Store) UpdateGroup(id int64, name string) error {
 	return err
 }
 
+// DeleteGroup removes a group and moves all its feeds to the default group (ID=1).
+// The default group itself cannot be deleted to ensure all feeds have a valid group.
 func (s *Store) DeleteGroup(id int64) error {
 	if id == 1 {
 		return fmt.Errorf("cannot delete default group")

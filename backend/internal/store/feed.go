@@ -64,6 +64,8 @@ func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string) (*m
 	return s.GetFeed(id)
 }
 
+// UpdateFeedParams supports partial updates. Only non-nil fields will be updated.
+// Pointer fields distinguish between "not set" (nil) and "set to zero value" (e.g., &false).
 type UpdateFeedParams struct {
 	GroupID   *int64
 	Name      *string
@@ -72,7 +74,9 @@ type UpdateFeedParams struct {
 	Proxy     *string
 }
 
-// FIX build sql based on params instead of multiple executions
+// UpdateFeed performs partial update of feed fields.
+// Current implementation uses multiple UPDATE statements for simplicity.
+// TODO: Optimize by building single dynamic UPDATE query with SET clause construction.
 func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -118,6 +122,9 @@ func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 	return tx.Commit()
 }
 
+// DeleteFeed removes a feed and all its items in a transaction.
+// Bookmarks are preserved by setting their item_id to NULL, maintaining
+// the snapshot of content even after original items are deleted.
 func (s *Store) DeleteFeed(id int64) error {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -143,6 +150,8 @@ func (s *Store) DeleteFeed(id int64) error {
 	return tx.Commit()
 }
 
+// UpdateFeedLastBuild records successful feed fetch and resets failure counters.
+// This allows feeds to auto-recover from temporary network issues.
 func (s *Store) UpdateFeedLastBuild(id int64, lastBuild int64) error {
 	_, err := s.db.Exec(`
 		UPDATE feeds

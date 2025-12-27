@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+// Migration files must follow naming convention: NNN_description.sql
+// where NNN is a zero-padded version number (e.g., 001_initial.sql).
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
@@ -83,6 +85,9 @@ func (s *Store) getAppliedVersions() (map[int]bool, error) {
 	return applied, rows.Err()
 }
 
+// applyMigration executes a migration file within a transaction.
+// Both the migration SQL and version record are committed atomically,
+// ensuring consistent migration state even if the process crashes.
 func (s *Store) applyMigration(version int, filename string) error {
 	content, err := migrationFiles.ReadFile("migrations/" + filename)
 	if err != nil {

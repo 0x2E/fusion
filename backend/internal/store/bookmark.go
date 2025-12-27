@@ -54,6 +54,8 @@ func (s *Store) GetBookmark(id int64) (*model.Bookmark, error) {
 	return b, err
 }
 
+// CreateBookmark saves a snapshot of content. itemID may be nil if the
+// original item was deleted, in which case the bookmark preserves the content.
 func (s *Store) CreateBookmark(itemID *int64, link, title, content string, pubDate int64, feedName string) (*model.Bookmark, error) {
 	result, err := s.db.Exec(`
 		INSERT INTO bookmarks (item_id, link, title, content, pub_date, feed_name)
