@@ -11,6 +11,7 @@ import (
 
 // Migration files must follow naming convention: NNN_description.sql
 // where NNN is a zero-padded version number (e.g., 001_initial.sql).
+//
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 

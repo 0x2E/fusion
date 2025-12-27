@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"sync"
 
 	"github.com/0x2E/fusion/internal/config"
@@ -9,16 +10,22 @@ import (
 )
 
 type Handler struct {
-	store    *store.Store
-	config   *config.Config
+	store  *store.Store
+	config *config.Config
+	puller interface {
+		RefreshFeed(ctx context.Context, feedID int64) error
+	}
 	sessions map[string]bool // sessionID -> valid, in-memory session store
 	mu       sync.RWMutex    // protects sessions map
 }
 
-func New(store *store.Store, config *config.Config) *Handler {
+func New(store *store.Store, config *config.Config, puller interface {
+	RefreshFeed(ctx context.Context, feedID int64) error
+}) *Handler {
 	return &Handler{
 		store:    store,
 		config:   config,
+		puller:   puller,
 		sessions: make(map[string]bool),
 	}
 }

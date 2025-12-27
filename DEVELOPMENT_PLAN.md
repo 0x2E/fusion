@@ -56,21 +56,21 @@
 
 #### 1.4 实现 pull 服务
 
-- [ ] `pull/puller.go` - 定时拉取
-- [ ] `pull/client.go` - HTTP 客户端
-- [ ] `pull/backoff.go` - 退避算法
+- [x] `pull/puller.go` - 定时拉取
+- [x] `pull/parser.go` - RSS 解析
+- [x] `pull/backoff.go` - 退避算法
 
 #### 1.5 实现辅助模块
 
 - [x] `config/config.go` - 配置加载
 - [x] `auth/password.go` - 密码哈希
-- [ ] `pkg/httpx/` - HTTP 工具
+- [x] `pkg/httpc/` - HTTP 工具
 
 #### 1.6 核心测试
 
-- [ ] `auth/password_test.go`
-- [ ] `pull/backoff_test.go`
-- [ ] `store/store_test.go` (内存 SQLite)
+- [x] `auth/password_test.go`
+- [x] `pull/backoff_test.go`
+- [x] `store/store_test.go` (内存 SQLite)
 
 ### 阶段 2: 前端开发
 

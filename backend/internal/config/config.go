@@ -10,6 +10,11 @@ type Config struct {
 	Password string
 	Host     string // TODO parse and use
 	Port     int
+
+	PullInterval    int // Pull interval in seconds (default: 1800 = 30 min)
+	PullTimeout     int // Request timeout in seconds (default: 30)
+	PullConcurrency int // Max concurrent pulls (default: 10)
+	PullMaxBackoff  int // Max backoff time in seconds (default: 604800 = 7 days)
 }
 
 func Load() *Config {
@@ -33,8 +38,24 @@ func Load() *Config {
 	}
 
 	return &Config{
-		DBPath:   dbPath,
-		Password: password,
-		Port:     parsedPort,
+		DBPath:          dbPath,
+		Password:        password,
+		Port:            parsedPort,
+		PullInterval:    getEnvInt("FUSION_PULL_INTERVAL", 1800),
+		PullTimeout:     getEnvInt("FUSION_PULL_TIMEOUT", 30),
+		PullConcurrency: getEnvInt("FUSION_PULL_CONCURRENCY", 10),
+		PullMaxBackoff:  getEnvInt("FUSION_PULL_MAX_BACKOFF", 604800),
 	}
+}
+
+func getEnvInt(key string, defaultVal int) int {
+	val := os.Getenv(key)
+	if val == "" {
+		return defaultVal
+	}
+	parsed, err := strconv.Atoi(val)
+	if err != nil {
+		return defaultVal
+	}
+	return parsed
 }

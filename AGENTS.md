@@ -23,7 +23,8 @@
 
 ## Go Development
 
-- After modifying Go code, verify compilation: `go build -o /dev/null /path/to/file_or_dir`.
+- After modifying Go code, format with `goimports -w .` before verification.
+- Verify compilation: `go build -o /dev/null /path/to/file_or_dir`.
 - Run related tests to ensure they pass.
 - Use named parameters in SQL queries (e.g., `:param_name` or `@param_name`).
 

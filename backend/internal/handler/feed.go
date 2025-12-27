@@ -147,6 +147,8 @@ func (h *Handler) refreshFeed(c *gin.Context) {
 		return
 	}
 
-	// TODO trigger feed refresh in pull service
+	// Trigger refresh in background
+	go h.puller.RefreshFeed(c.Request.Context(), id)
+
 	dataResponse(c, gin.H{"message": "refresh triggered"})
 }
