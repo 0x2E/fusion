@@ -47,23 +47,23 @@
 
 #### 1.3 实现 handler 层 (Gin)
 
-- [ ] `handler/handler.go` - 路由注册、中间件
-- [ ] `handler/session.go` - 认证
-- [ ] `handler/group.go` - Group API
-- [ ] `handler/feed.go` - Feed API
-- [ ] `handler/item.go` - Item API
-- [ ] `handler/bookmark.go` - Bookmark API
+- [x] `handler/handler.go` - 路由注册、中间件
+- [x] `handler/session.go` - 认证
+- [x] `handler/group.go` - Group API
+- [x] `handler/feed.go` - Feed API
+- [x] `handler/item.go` - Item API
+- [x] `handler/bookmark.go` - Bookmark API
 
-#### 1.4 迁移 pull 服务
+#### 1.4 实现 pull 服务
 
 - [ ] `pull/puller.go` - 定时拉取
 - [ ] `pull/client.go` - HTTP 客户端
 - [ ] `pull/backoff.go` - 退避算法
 
-#### 1.5 迁移辅助模块
+#### 1.5 实现辅助模块
 
-- [ ] `config/config.go` - 配置加载
-- [ ] `auth/password.go` - 密码哈希
+- [x] `config/config.go` - 配置加载
+- [x] `auth/password.go` - 密码哈希
 - [ ] `pkg/httpx/` - HTTP 工具
 
 #### 1.6 核心测试
