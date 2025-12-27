@@ -26,3 +26,8 @@
 - After modifying Go code, verify compilation: `go build -o /dev/null /path/to/file_or_dir`.
 - Run related tests to ensure they pass.
 - Use named parameters in SQL queries (e.g., `:param_name` or `@param_name`).
+
+## Frontend Development
+
+- After editing TypeScript/TSX code, run type checking: `npx tsc --noEmit`.
+- DO NOT modify shadcn component source files directly.

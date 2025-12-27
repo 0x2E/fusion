@@ -78,10 +78,10 @@
 
 #### 2.1 初始化项目
 
-- [ ] 创建 React 19 + TypeScript + Vite 项目
-- [ ] 配置 TanStack Router
-- [ ] 配置 Tailwind CSS + shadcn/ui
-- [ ] 配置 Zustand
+- [x] 创建 React 19 + TypeScript + Vite 项目
+- [x] 配置 TanStack Router
+- [x] 配置 Tailwind CSS + shadcn/ui
+- [x] 配置 Zustand
 
 #### 2.2 实现基础设施
 
