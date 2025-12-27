@@ -15,6 +15,9 @@ type Config struct {
 	PullTimeout     int // Request timeout in seconds (default: 30)
 	PullConcurrency int // Max concurrent pulls (default: 10)
 	PullMaxBackoff  int // Max backoff time in seconds (default: 604800 = 7 days)
+
+	LogLevel  string // Log level: DEBUG, INFO, WARN, ERROR (default: INFO)
+	LogFormat string // Log format: text, json, auto (default: auto)
 }
 
 func Load() *Config {
@@ -37,6 +40,16 @@ func Load() *Config {
 		panic(err)
 	}
 
+	logLevel := os.Getenv("FUSION_LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "INFO"
+	}
+
+	logFormat := os.Getenv("FUSION_LOG_FORMAT")
+	if logFormat == "" {
+		logFormat = "auto"
+	}
+
 	return &Config{
 		DBPath:          dbPath,
 		Password:        password,
@@ -45,6 +58,8 @@ func Load() *Config {
 		PullTimeout:     getEnvInt("FUSION_PULL_TIMEOUT", 30),
 		PullConcurrency: getEnvInt("FUSION_PULL_CONCURRENCY", 10),
 		PullMaxBackoff:  getEnvInt("FUSION_PULL_MAX_BACKOFF", 604800),
+		LogLevel:        logLevel,
+		LogFormat:       logFormat,
 	}
 }
 

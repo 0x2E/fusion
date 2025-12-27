@@ -3,7 +3,7 @@ package pull
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/0x2E/fusion/internal/config"
@@ -15,6 +15,7 @@ import (
 type Puller struct {
 	store       *store.Store
 	config      *config.Config
+	logger      *slog.Logger
 	interval    time.Duration
 	timeout     time.Duration
 	maxBackoff  time.Duration
@@ -25,6 +26,7 @@ func New(st *store.Store, cfg *config.Config) *Puller {
 	return &Puller{
 		store:       st,
 		config:      cfg,
+		logger:      slog.Default(),
 		interval:    time.Duration(cfg.PullInterval) * time.Second,
 		timeout:     time.Duration(cfg.PullTimeout) * time.Second,
 		maxBackoff:  time.Duration(cfg.PullMaxBackoff) * time.Second,
@@ -34,8 +36,7 @@ func New(st *store.Store, cfg *config.Config) *Puller {
 
 // Start begins periodic feed pulling. Blocks until context is cancelled.
 func (p *Puller) Start(ctx context.Context) error {
-	log.Printf("pull service started (interval: %v, timeout: %v, concurrency: %d)",
-		p.interval, p.timeout, p.config.PullConcurrency)
+	p.logger.Info("pull service started", "interval", p.interval, "timeout", p.timeout, "concurrency", p.config.PullConcurrency)
 
 	// Run immediately on startup
 	p.pullAll(ctx)
@@ -46,7 +47,7 @@ func (p *Puller) Start(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("pull service stopping...")
+			p.logger.Info("pull service stopping")
 			return ctx.Err()
 		case <-ticker.C:
 			p.pullAll(ctx)
@@ -58,7 +59,7 @@ func (p *Puller) Start(ctx context.Context) error {
 func (p *Puller) pullAll(ctx context.Context) {
 	feeds, err := p.store.ListFeeds()
 	if err != nil {
-		log.Printf("failed to list feeds: %v", err)
+		p.logger.Error("failed to list feeds", "error", err)
 		return
 	}
 
@@ -81,13 +82,13 @@ func (p *Puller) pullAll(ctx context.Context) {
 
 // pullFeed fetches single feed and saves new items.
 func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
-	log.Printf("pulling feed: %s (id=%d)", feed.Name, feed.ID)
+	p.logger.Debug("pulling feed", "feed_id", feed.ID, "feed_name", feed.Name)
 
 	items, err := FetchAndParse(ctx, feed, p.timeout)
 	if err != nil {
-		log.Printf("failed to fetch feed %s: %v", feed.Name, err)
+		p.logger.Warn("failed to fetch feed", "feed_id", feed.ID, "feed_name", feed.Name, "error", err)
 		if err := p.store.UpdateFeedFailure(feed.ID, err.Error()); err != nil {
-			log.Printf("failed to record failure: %v", err)
+			p.logger.Error("failed to record failure", "feed_id", feed.ID, "error", err)
 		}
 		return
 	}
@@ -96,7 +97,7 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 	for _, item := range items {
 		exists, err := p.store.ItemExists(feed.ID, item.GUID)
 		if err != nil {
-			log.Printf("failed to check item existence: %v", err)
+			p.logger.Error("failed to check item existence", "feed_id", feed.ID, "error", err)
 			continue
 		}
 		if exists {
@@ -105,18 +106,18 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 
 		_, err = p.store.CreateItem(feed.ID, item.GUID, item.Title, item.Link, item.Content, item.PubDate)
 		if err != nil {
-			log.Printf("failed to create item: %v", err)
+			p.logger.Error("failed to create item", "feed_id", feed.ID, "error", err)
 			continue
 		}
 		newCount++
 	}
 
 	if err := p.store.UpdateFeedLastBuild(feed.ID, time.Now().Unix()); err != nil {
-		log.Printf("failed to update last_build: %v", err)
+		p.logger.Error("failed to update last_build", "feed_id", feed.ID, "error", err)
 		return
 	}
 
-	log.Printf("feed %s pulled successfully (%d new items)", feed.Name, newCount)
+	p.logger.Info("feed pulled successfully", "feed_id", feed.ID, "feed_name", feed.Name, "new_items", newCount)
 }
 
 // RefreshFeed manually triggers refresh for specific feed (bypasses skip logic).

@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strconv"
@@ -12,14 +12,17 @@ import (
 	"github.com/0x2E/fusion/internal/handler"
 	"github.com/0x2E/fusion/internal/pull"
 	"github.com/0x2E/fusion/internal/store"
+	"github.com/mattn/go-isatty"
 )
 
 func main() {
 	cfg := config.Load()
+	setupLogger(cfg)
 
 	st, err := store.New(cfg.DBPath)
 	if err != nil {
-		log.Fatalf("failed to initialize store: %v", err)
+		slog.Error("failed to initialize store", "error", err)
+		os.Exit(1)
 	}
 	defer st.Close()
 
@@ -30,7 +33,7 @@ func main() {
 	puller := pull.New(st, cfg)
 	go func() {
 		if err := puller.Start(ctx); err != nil && err != context.Canceled {
-			log.Printf("pull service error: %v", err)
+			slog.Error("pull service error", "error", err)
 		}
 	}()
 
@@ -43,13 +46,57 @@ func main() {
 
 	go func() {
 		addr := ":" + strconv.Itoa(cfg.Port)
-		log.Printf("starting server on %s", addr)
+		slog.Info("starting server", "address", addr)
 		if err := r.Run(addr); err != nil {
-			log.Fatalf("failed to start server: %v", err)
+			slog.Error("failed to start server", "error", err)
+			os.Exit(1)
 		}
 	}()
 
 	<-quit
-	log.Println("shutting down gracefully...")
+	slog.Info("shutting down gracefully")
 	cancel()
+}
+
+func setupLogger(cfg *config.Config) {
+	var level slog.Level
+	switch cfg.LogLevel {
+	case "DEBUG":
+		level = slog.LevelDebug
+	case "INFO":
+		level = slog.LevelInfo
+	case "WARN":
+		level = slog.LevelWarn
+	case "ERROR":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+
+	opts := &slog.HandlerOptions{
+		Level: level,
+	}
+
+	var handler slog.Handler
+	switch cfg.LogFormat {
+	case "json":
+		handler = slog.NewJSONHandler(os.Stdout, opts)
+	case "text":
+		handler = slog.NewTextHandler(os.Stdout, opts)
+	case "auto":
+		if isatty.IsTerminal(os.Stdout.Fd()) {
+			handler = slog.NewTextHandler(os.Stdout, opts)
+		} else {
+			handler = slog.NewJSONHandler(os.Stdout, opts)
+		}
+	default:
+		if isatty.IsTerminal(os.Stdout.Fd()) {
+			handler = slog.NewTextHandler(os.Stdout, opts)
+		} else {
+			handler = slog.NewJSONHandler(os.Stdout, opts)
+		}
+	}
+
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
 }
