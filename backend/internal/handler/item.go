@@ -17,16 +17,25 @@ func (h *Handler) listItems(c *gin.Context) {
 	if feedID := c.Query("feed_id"); feedID != "" {
 		id, err := strconv.ParseInt(feedID, 10, 64)
 		if err != nil {
-			errorResponse(c, 400, "invalid feed_id")
+			badRequestError(c, "invalid feed_id")
 			return
 		}
 		params.FeedID = &id
 	}
 
+	if groupID := c.Query("group_id"); groupID != "" {
+		id, err := strconv.ParseInt(groupID, 10, 64)
+		if err != nil {
+			badRequestError(c, "invalid group_id")
+			return
+		}
+		params.GroupID = &id
+	}
+
 	if unread := c.Query("unread"); unread != "" {
 		val, err := strconv.ParseBool(unread)
 		if err != nil {
-			errorResponse(c, 400, "invalid unread")
+			badRequestError(c, "invalid unread")
 			return
 		}
 		params.Unread = &val
@@ -35,7 +44,7 @@ func (h *Handler) listItems(c *gin.Context) {
 	if limit := c.Query("limit"); limit != "" {
 		val, err := strconv.Atoi(limit)
 		if err != nil {
-			errorResponse(c, 400, "invalid limit")
+			badRequestError(c, "invalid limit")
 			return
 		}
 		params.Limit = val
@@ -46,7 +55,7 @@ func (h *Handler) listItems(c *gin.Context) {
 	if offset := c.Query("offset"); offset != "" {
 		val, err := strconv.Atoi(offset)
 		if err != nil {
-			errorResponse(c, 400, "invalid offset")
+			badRequestError(c, "invalid offset")
 			return
 		}
 		params.Offset = val
@@ -60,7 +69,7 @@ func (h *Handler) listItems(c *gin.Context) {
 
 	items, err := h.store.ListItems(params)
 	if err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "list items")
 		return
 	}
 
@@ -70,13 +79,13 @@ func (h *Handler) listItems(c *gin.Context) {
 func (h *Handler) getItem(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	item, err := h.store.GetItem(id)
 	if err != nil {
-		errorResponse(c, 404, "item not found")
+		notFoundError(c, "item")
 		return
 	}
 
@@ -86,14 +95,29 @@ func (h *Handler) getItem(c *gin.Context) {
 func (h *Handler) markItemsRead(c *gin.Context) {
 	var req markItemsReadRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		errorResponse(c, 400, "invalid request")
+		badRequestError(c, "invalid request")
 		return
 	}
 
 	if err := h.store.BatchUpdateItemsUnread(req.IDs, false); err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "mark items as read")
 		return
 	}
 
 	dataResponse(c, gin.H{"message": "items marked as read"})
+}
+
+func (h *Handler) markItemsUnread(c *gin.Context) {
+	var req markItemsReadRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequestError(c, "invalid request")
+		return
+	}
+
+	if err := h.store.BatchUpdateItemsUnread(req.IDs, true); err != nil {
+		internalError(c, err, "mark items as unread")
+		return
+	}
+
+	dataResponse(c, gin.H{"message": "items marked as unread"})
 }

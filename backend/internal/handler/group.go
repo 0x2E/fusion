@@ -13,7 +13,7 @@ type groupRequest struct {
 func (h *Handler) listGroups(c *gin.Context) {
 	groups, err := h.store.ListGroups()
 	if err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "list groups")
 		return
 	}
 
@@ -23,13 +23,13 @@ func (h *Handler) listGroups(c *gin.Context) {
 func (h *Handler) getGroup(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	group, err := h.store.GetGroup(id)
 	if err != nil {
-		errorResponse(c, 404, "group not found")
+		notFoundError(c, "group")
 		return
 	}
 
@@ -39,13 +39,13 @@ func (h *Handler) getGroup(c *gin.Context) {
 func (h *Handler) createGroup(c *gin.Context) {
 	var req groupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		errorResponse(c, 400, "invalid request")
+		badRequestError(c, "invalid request")
 		return
 	}
 
 	group, err := h.store.CreateGroup(req.Name)
 	if err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "create group")
 		return
 	}
 
@@ -55,24 +55,24 @@ func (h *Handler) createGroup(c *gin.Context) {
 func (h *Handler) updateGroup(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	var req groupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		errorResponse(c, 400, "invalid request")
+		badRequestError(c, "invalid request")
 		return
 	}
 
 	if err := h.store.UpdateGroup(id, req.Name); err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "update group")
 		return
 	}
 
 	group, err := h.store.GetGroup(id)
 	if err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "get group after update")
 		return
 	}
 
@@ -82,12 +82,12 @@ func (h *Handler) updateGroup(c *gin.Context) {
 func (h *Handler) deleteGroup(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	if err := h.store.DeleteGroup(id); err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "delete group")
 		return
 	}
 

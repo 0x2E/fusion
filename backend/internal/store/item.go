@@ -10,11 +10,12 @@ import (
 
 // ListItemsParams specifies filtering and pagination for item queries.
 //
-// Pointer fields (FeedID, Unread) are optional filters - nil means "no filter".
+// Pointer fields (FeedID, GroupID, Unread) are optional filters - nil means "no filter".
 // OrderBy accepts "pub_date" (default) or "created_at".
 // Limit/Offset = 0 means no limit/offset.
 type ListItemsParams struct {
 	FeedID  *int64
+	GroupID *int64
 	Unread  *bool
 	Limit   int
 	Offset  int
@@ -23,29 +24,35 @@ type ListItemsParams struct {
 
 func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	query := `
-		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at
+		SELECT items.id, items.feed_id, items.guid, items.title, items.link, items.content, items.pub_date, items.unread, items.created_at
 		FROM items
-		WHERE 1=1  -- Simplifies dynamic query building with optional AND clauses
 	`
 	args := []interface{}{}
 
+	// Join feeds table if filtering by GroupID
+	if params.GroupID != nil {
+		query += ` INNER JOIN feeds ON items.feed_id = feeds.id`
+	}
+
+	query += ` WHERE 1=1`
+
 	if params.FeedID != nil {
-		query += ` AND feed_id = :feed_id`
+		query += ` AND items.feed_id = :feed_id`
 		args = append(args, sql.Named("feed_id", *params.FeedID))
 	}
+	if params.GroupID != nil {
+		query += ` AND feeds.group_id = :group_id`
+		args = append(args, sql.Named("group_id", *params.GroupID))
+	}
 	if params.Unread != nil {
-		unread := 0
-		if *params.Unread {
-			unread = 1
-		}
-		query += ` AND unread = :unread`
-		args = append(args, sql.Named("unread", unread))
+		query += ` AND items.unread = :unread`
+		args = append(args, sql.Named("unread", boolToInt(*params.Unread)))
 	}
 
 	// ORDER BY cannot use named parameters, validated via allowlist instead
-	orderBy := "pub_date DESC"
+	orderBy := "items.pub_date DESC"
 	if params.OrderBy == "created_at" {
-		orderBy = "created_at DESC"
+		orderBy = "items.created_at DESC"
 	}
 	query += ` ORDER BY ` + orderBy
 
@@ -64,14 +71,14 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	}
 	defer rows.Close()
 
-	var items []*model.Item
+	items := []*model.Item{}
 	for rows.Next() {
 		i := &model.Item{}
 		var unread int
 		if err := rows.Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &i.CreatedAt); err != nil {
 			return nil, err
 		}
-		i.Unread = unread != 0
+		i.Unread = intToBool(unread)
 		items = append(items, i)
 	}
 	return items, rows.Err()
@@ -88,7 +95,7 @@ func (s *Store) GetItem(id int64) (*model.Item, error) {
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("item not found")
 	}
-	i.Unread = unread != 0
+	i.Unread = intToBool(unread)
 	return i, err
 }
 
@@ -111,12 +118,8 @@ func (s *Store) CreateItem(feedID int64, guid, title, link, content string, pubD
 }
 
 func (s *Store) UpdateItemUnread(id int64, unread bool) error {
-	u := 0
-	if unread {
-		u = 1
-	}
 	_, err := s.db.Exec(`UPDATE items SET unread = :unread WHERE id = :id`,
-		sql.Named("unread", u), sql.Named("id", id))
+		sql.Named("unread", boolToInt(unread)), sql.Named("id", id))
 	return err
 }
 
@@ -127,14 +130,9 @@ func (s *Store) BatchUpdateItemsUnread(ids []int64, unread bool) error {
 		return nil
 	}
 
-	u := 0
-	if unread {
-		u = 1
-	}
-
 	placeholders := make([]string, len(ids))
 	args := make([]interface{}, 0, len(ids)+1)
-	args = append(args, sql.Named("unread", u))
+	args = append(args, sql.Named("unread", boolToInt(unread)))
 	for i, id := range ids {
 		paramName := fmt.Sprintf("id%d", i)
 		placeholders[i] = ":" + paramName

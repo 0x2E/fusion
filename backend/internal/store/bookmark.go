@@ -30,7 +30,7 @@ func (s *Store) ListBookmarks(limit, offset int) ([]*model.Bookmark, error) {
 	}
 	defer rows.Close()
 
-	var bookmarks []*model.Bookmark
+	bookmarks := []*model.Bookmark{}
 	for rows.Next() {
 		b := &model.Bookmark{}
 		if err := rows.Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.CreatedAt); err != nil {

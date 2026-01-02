@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/0x2E/fusion/internal/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -12,12 +13,12 @@ type loginRequest struct {
 func (h *Handler) login(c *gin.Context) {
 	var req loginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		errorResponse(c, 400, "invalid request")
+		badRequestError(c, "invalid request")
 		return
 	}
 
-	if req.Password != h.config.Password {
-		errorResponse(c, 401, "invalid password")
+	if err := auth.CheckPassword(h.passwordHash, req.Password); err != nil {
+		unauthorizedError(c)
 		return
 	}
 

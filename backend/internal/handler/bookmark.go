@@ -22,7 +22,7 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 	if limitStr := c.Query("limit"); limitStr != "" {
 		val, err := strconv.Atoi(limitStr)
 		if err != nil {
-			errorResponse(c, 400, "invalid limit")
+			badRequestError(c, "invalid limit")
 			return
 		}
 		limit = val
@@ -31,7 +31,7 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 	if offsetStr := c.Query("offset"); offsetStr != "" {
 		val, err := strconv.Atoi(offsetStr)
 		if err != nil {
-			errorResponse(c, 400, "invalid offset")
+			badRequestError(c, "invalid offset")
 			return
 		}
 		offset = val
@@ -39,7 +39,7 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 
 	bookmarks, err := h.store.ListBookmarks(limit, offset)
 	if err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "list bookmarks")
 		return
 	}
 
@@ -49,13 +49,13 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 func (h *Handler) getBookmark(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	bookmark, err := h.store.GetBookmark(id)
 	if err != nil {
-		errorResponse(c, 404, "bookmark not found")
+		notFoundError(c, "bookmark")
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *Handler) getBookmark(c *gin.Context) {
 func (h *Handler) createBookmark(c *gin.Context) {
 	var req createBookmarkRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		errorResponse(c, 400, "invalid request")
+		badRequestError(c, "invalid request")
 		return
 	}
 
@@ -76,13 +76,13 @@ func (h *Handler) createBookmark(c *gin.Context) {
 	if req.ItemID != nil {
 		item, err := h.store.GetItem(*req.ItemID)
 		if err != nil {
-			errorResponse(c, 404, "item not found")
+			notFoundError(c, "item")
 			return
 		}
 
 		feed, err := h.store.GetFeed(item.FeedID)
 		if err != nil {
-			errorResponse(c, 500, err.Error())
+			internalError(c, err, "get feed for bookmark")
 			return
 		}
 
@@ -93,7 +93,7 @@ func (h *Handler) createBookmark(c *gin.Context) {
 		feedName = feed.Name
 	} else {
 		if req.Link == "" || req.Title == "" || req.Content == "" || req.FeedName == "" {
-			errorResponse(c, 400, "missing required fields")
+			badRequestError(c, "missing required fields")
 			return
 		}
 		link = req.Link
@@ -105,7 +105,7 @@ func (h *Handler) createBookmark(c *gin.Context) {
 
 	bookmark, err := h.store.CreateBookmark(req.ItemID, link, title, content, pubDate, feedName)
 	if err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "create bookmark")
 		return
 	}
 
@@ -115,12 +115,12 @@ func (h *Handler) createBookmark(c *gin.Context) {
 func (h *Handler) deleteBookmark(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	if err := h.store.DeleteBookmark(id); err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "delete bookmark")
 		return
 	}
 

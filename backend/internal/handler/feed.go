@@ -29,7 +29,7 @@ type validateFeedRequest struct {
 func (h *Handler) listFeeds(c *gin.Context) {
 	feeds, err := h.store.ListFeeds()
 	if err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "list feeds")
 		return
 	}
 
@@ -39,13 +39,13 @@ func (h *Handler) listFeeds(c *gin.Context) {
 func (h *Handler) getFeed(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	feed, err := h.store.GetFeed(id)
 	if err != nil {
-		errorResponse(c, 404, "feed not found")
+		notFoundError(c, "feed")
 		return
 	}
 
@@ -55,13 +55,13 @@ func (h *Handler) getFeed(c *gin.Context) {
 func (h *Handler) createFeed(c *gin.Context) {
 	var req createFeedRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		errorResponse(c, 400, "invalid request")
+		badRequestError(c, "invalid request")
 		return
 	}
 
 	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy)
 	if err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "create feed")
 		return
 	}
 
@@ -71,13 +71,13 @@ func (h *Handler) createFeed(c *gin.Context) {
 func (h *Handler) updateFeed(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	var req updateFeedRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		errorResponse(c, 400, "invalid request")
+		badRequestError(c, "invalid request")
 		return
 	}
 
@@ -96,13 +96,13 @@ func (h *Handler) updateFeed(c *gin.Context) {
 	}
 
 	if err := h.store.UpdateFeed(id, params); err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "update feed")
 		return
 	}
 
 	feed, err := h.store.GetFeed(id)
 	if err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "get updated feed")
 		return
 	}
 
@@ -112,12 +112,12 @@ func (h *Handler) updateFeed(c *gin.Context) {
 func (h *Handler) deleteFeed(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	if err := h.store.DeleteFeed(id); err != nil {
-		errorResponse(c, 500, err.Error())
+		internalError(c, err, "delete feed")
 		return
 	}
 
@@ -127,7 +127,7 @@ func (h *Handler) deleteFeed(c *gin.Context) {
 func (h *Handler) validateFeed(c *gin.Context) {
 	var req validateFeedRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		errorResponse(c, 400, "invalid request")
+		badRequestError(c, "invalid request")
 		return
 	}
 
@@ -138,12 +138,12 @@ func (h *Handler) validateFeed(c *gin.Context) {
 func (h *Handler) refreshFeed(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		errorResponse(c, 400, "invalid id")
+		badRequestError(c, "invalid id")
 		return
 	}
 
 	if _, err := h.store.GetFeed(id); err != nil {
-		errorResponse(c, 404, "feed not found")
+		notFoundError(c, "feed")
 		return
 	}
 

@@ -7,7 +7,7 @@ import (
 
 type Config struct {
 	DBPath   string
-	Password string
+	Password string // Plaintext password from env
 	Host     string // TODO parse and use
 	Port     int
 

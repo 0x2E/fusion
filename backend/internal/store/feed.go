@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/0x2E/fusion/internal/model"
 )
@@ -18,14 +19,14 @@ func (s *Store) ListFeeds() ([]*model.Feed, error) {
 	}
 	defer rows.Close()
 
-	var feeds []*model.Feed
+	feeds := []*model.Feed{}
 	for rows.Next() {
 		f := &model.Feed{}
 		var suspended int
 		if err := rows.Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt); err != nil {
 			return nil, err
 		}
-		f.Suspended = suspended != 0
+		f.Suspended = intToBool(suspended)
 		feeds = append(feeds, f)
 	}
 	return feeds, rows.Err()
@@ -42,7 +43,7 @@ func (s *Store) GetFeed(id int64) (*model.Feed, error) {
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("feed not found")
 	}
-	f.Suspended = suspended != 0
+	f.Suspended = intToBool(suspended)
 	return f, err
 }
 
@@ -74,52 +75,40 @@ type UpdateFeedParams struct {
 	Proxy     *string
 }
 
-// UpdateFeed performs partial update of feed fields.
-// Current implementation uses multiple UPDATE statements for simplicity.
-// TODO: Optimize by building single dynamic UPDATE query with SET clause construction.
+// UpdateFeed performs partial update of feed fields using a single dynamic UPDATE query.
 func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+	setClauses := []string{}
+	args := []interface{}{sql.Named("id", id)}
 
 	if params.GroupID != nil {
-		if _, err := tx.Exec(`UPDATE feeds SET group_id = :group_id, updated_at = unixepoch() WHERE id = :id`,
-			sql.Named("group_id", *params.GroupID), sql.Named("id", id)); err != nil {
-			return err
-		}
+		setClauses = append(setClauses, "group_id = :group_id")
+		args = append(args, sql.Named("group_id", *params.GroupID))
 	}
 	if params.Name != nil {
-		if _, err := tx.Exec(`UPDATE feeds SET name = :name, updated_at = unixepoch() WHERE id = :id`,
-			sql.Named("name", *params.Name), sql.Named("id", id)); err != nil {
-			return err
-		}
+		setClauses = append(setClauses, "name = :name")
+		args = append(args, sql.Named("name", *params.Name))
 	}
 	if params.SiteURL != nil {
-		if _, err := tx.Exec(`UPDATE feeds SET site_url = :site_url, updated_at = unixepoch() WHERE id = :id`,
-			sql.Named("site_url", *params.SiteURL), sql.Named("id", id)); err != nil {
-			return err
-		}
+		setClauses = append(setClauses, "site_url = :site_url")
+		args = append(args, sql.Named("site_url", *params.SiteURL))
 	}
 	if params.Suspended != nil {
-		suspended := 0
-		if *params.Suspended {
-			suspended = 1
-		}
-		if _, err := tx.Exec(`UPDATE feeds SET suspended = :suspended, updated_at = unixepoch() WHERE id = :id`,
-			sql.Named("suspended", suspended), sql.Named("id", id)); err != nil {
-			return err
-		}
+		setClauses = append(setClauses, "suspended = :suspended")
+		args = append(args, sql.Named("suspended", boolToInt(*params.Suspended)))
 	}
 	if params.Proxy != nil {
-		if _, err := tx.Exec(`UPDATE feeds SET proxy = :proxy, updated_at = unixepoch() WHERE id = :id`,
-			sql.Named("proxy", *params.Proxy), sql.Named("id", id)); err != nil {
-			return err
-		}
+		setClauses = append(setClauses, "proxy = :proxy")
+		args = append(args, sql.Named("proxy", *params.Proxy))
 	}
 
-	return tx.Commit()
+	if len(setClauses) == 0 {
+		return nil
+	}
+
+	setClauses = append(setClauses, "updated_at = unixepoch()")
+	query := fmt.Sprintf("UPDATE feeds SET %s WHERE id = :id", strings.Join(setClauses, ", "))
+	_, err := s.db.Exec(query, args...)
+	return err
 }
 
 // DeleteFeed removes a feed and all its items in a transaction.

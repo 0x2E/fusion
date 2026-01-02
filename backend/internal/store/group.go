@@ -18,7 +18,7 @@ func (s *Store) ListGroups() ([]*model.Group, error) {
 	}
 	defer rows.Close()
 
-	var groups []*model.Group
+	groups := []*model.Group{}
 	for rows.Next() {
 		g := &model.Group{}
 		if err := rows.Scan(&g.ID, &g.Name, &g.CreatedAt, &g.UpdatedAt); err != nil {
