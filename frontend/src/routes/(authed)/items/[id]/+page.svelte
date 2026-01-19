@@ -10,7 +10,8 @@
 	import { ExternalLink } from 'lucide-svelte';
 	import ItemSwitcher from './ItemSwitcher.svelte';
 	import { listItems, type ListFilter } from '$lib/api/item';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
+	import { swipe } from '$lib/swipe';
 
 	let { data } = $props();
 
@@ -52,6 +53,22 @@
 		const resp = await listItems(filter);
 		itemsQueue = resp.items.map((item) => item.id);
 	});
+
+	let currentIndex = $derived(itemsQueue.findIndex((id) => id === data.id));
+	let prevID = $derived(itemsQueue[currentIndex - 1] ?? itemsQueue[0]);
+	let nextID = $derived(itemsQueue[currentIndex + 1] ?? itemsQueue.at(-1));
+
+	function handleSwipeLeft() {
+		if (nextID && nextID !== data.id) {
+			goto(`/items/${nextID}`);
+		}
+	}
+
+	function handleSwipeRight() {
+		if (prevID && prevID !== data.id) {
+			goto(`/items/${prevID}`);
+		}
+	}
 </script>
 
 <PageNavHeader title={data.title}>
@@ -62,7 +79,10 @@
 	<ItemActionShareLink {item} />
 </PageNavHeader>
 
-<div class="relative flex w-full grow justify-around px-4 py-6">
+<div
+	class="relative flex w-full grow justify-around px-4 py-6"
+	use:swipe={{ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight }}
+>
 	<ItemSwitcher itemID={data.id} {itemsQueue} action="previous" />
 	<article class="w-full max-w-prose">
 		<div class="space-y-2 pb-8">
