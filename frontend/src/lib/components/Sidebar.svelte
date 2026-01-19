@@ -18,6 +18,8 @@
 		LogOut,
 		Search,
 		Settings,
+		CopyPlus,
+		CopyMinus,
 		type Icon
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
@@ -133,6 +135,18 @@
 			}, 30);
 		}
 	}
+
+	let allGroupsOpened = $derived(
+		groupList.length > 0 && groupList.every((group) => openGroups[group.id] === true)
+	);
+	function handleToggleAllGroup(event: MouseEvent) {
+		event.preventDefault();
+
+		const shouldOpen = !allGroupsOpened;
+		groupList.forEach((group) => {
+			openGroups[group.id] = shouldOpen;
+		});
+	}
 </script>
 
 <div class="hidden">
@@ -183,7 +197,20 @@
 		</ul>
 
 		<ul class="menu w-full">
-			<li class="menu-title text-xs">{t('common.feeds')}</li>
+			<li class="menu-title text-xs">
+				<div
+					class="flex flex-row items-center justify-between [&]:active:!bg-transparent [&]:active:!text-inherit"
+				>
+					{t('common.feeds')}
+					<button onclick={handleToggleAllGroup} class="btn btn-ghost btn-xs btn-square">
+						{#if allGroupsOpened}
+							<CopyMinus />
+						{:else}
+							<CopyPlus />
+						{/if}
+					</button>
+				</div>
+			</li>
 			{#each groupList as group}
 				{@const isOpen = openGroups[group.id]}
 				<li class="p-0">
