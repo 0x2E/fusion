@@ -19,6 +19,13 @@ func main() {
 	}))
 	slog.SetDefault(l)
 
+	config, err := conf.Load()
+	if err != nil {
+		slog.Error("failed to load configuration", "error", err)
+		return
+	}
+
+	// Reconfigure logger based on configured LOG_LEVEL.
 	if conf.Debug {
 		l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelDebug,
@@ -31,12 +38,11 @@ func main() {
 				return
 			}
 		}()
-	}
-
-	config, err := conf.Load()
-	if err != nil {
-		slog.Error("failed to load configuration", "error", err)
-		return
+	} else {
+		l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: config.LogLevel,
+		}))
+		slog.SetDefault(l)
 	}
 	repo.Init(config.DB)
 
