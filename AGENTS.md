@@ -30,5 +30,5 @@
 
 ## Frontend Development
 
-- After editing TypeScript/TSX code, run type checking: `npx tsc --noEmit`.
+- Verify TypeScript/TSX compilation: `npx tsc -b --noEmit`.
 - DO NOT modify shadcn component source files directly.

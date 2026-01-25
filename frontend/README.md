@@ -26,30 +26,3 @@ pnpm build
 # Preview production build
 pnpm preview
 ```
-
-## Project Structure
-
-```
-src/
-├── components/
-│   ├── ui/           # shadcn/ui components
-│   ├── layout/       # Layout components
-│   ├── feed/         # Feed-related components
-│   ├── item/         # Item-related components
-│   └── settings/     # Settings components
-├── routes/           # TanStack Router routes
-│   ├── __root.tsx    # Root layout
-│   └── index.tsx     # Main view
-├── lib/
-│   ├── api/          # API client
-│   └── utils.ts      # Utility functions
-├── store/
-│   └── app.ts        # Zustand store
-└── main.tsx          # Application entry point
-```
-
-## Development Status
-
-Phase 2.1 (Project Initialization) - ✅ Complete
-
-Next steps: Implement base infrastructure (Phase 2.2)

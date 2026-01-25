@@ -1,11 +1,9 @@
-import { setUnauthorizedCallback } from "../lib/api";
-import { useAuthStore } from "./auth";
+import { setUnauthorizedCallback } from "@/lib/api";
 
-// Initialize 401 handler
-setUnauthorizedCallback(() => {
-  useAuthStore.getState().setUnauthenticated();
-});
-
-export { useAuthStore } from "./auth";
+export { useUIStore, type ArticleFilter } from "./ui";
 export { useDataStore } from "./data";
-export { useUIStore } from "./ui";
+
+// Setup 401 handler - redirect to login on unauthorized
+setUnauthorizedCallback(() => {
+  window.location.href = "/login";
+});
