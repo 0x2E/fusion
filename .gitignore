@@ -1,6 +1,6 @@
 .DS_*
 *.db
-*.paw
+.claude
 tmp/
 build/
 dist/
