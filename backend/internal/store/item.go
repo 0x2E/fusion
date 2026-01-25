@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -92,11 +93,15 @@ func (s *Store) GetItem(id int64) (*model.Item, error) {
 		FROM items
 		WHERE id = :id
 	`, sql.Named("id", id)).Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &i.CreatedAt)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("item not found")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: item", ErrNotFound)
+		}
+		return nil, fmt.Errorf("get item: %w", err)
 	}
+
 	i.Unread = intToBool(unread)
-	return i, err
+	return i, nil
 }
 
 func (s *Store) CreateItem(feedID int64, guid, title, link, content string, pubDate int64) (*model.Item, error) {
@@ -118,9 +123,19 @@ func (s *Store) CreateItem(feedID int64, guid, title, link, content string, pubD
 }
 
 func (s *Store) UpdateItemUnread(id int64, unread bool) error {
-	_, err := s.db.Exec(`UPDATE items SET unread = :unread WHERE id = :id`,
+	result, err := s.db.Exec(`UPDATE items SET unread = :unread WHERE id = :id`,
 		sql.Named("unread", boolToInt(unread)), sql.Named("id", id))
-	return err
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: item", ErrNotFound)
+	}
+	return nil
 }
 
 // BatchUpdateItemsUnread marks multiple items as read/unread in a single query.
@@ -168,8 +183,16 @@ func (s *Store) DeleteItem(id int64) error {
 		return err
 	}
 
-	if _, err := tx.Exec(`DELETE FROM items WHERE id = :id`, sql.Named("id", id)); err != nil {
+	result, err := tx.Exec(`DELETE FROM items WHERE id = :id`, sql.Named("id", id))
+	if err != nil {
 		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: item", ErrNotFound)
 	}
 
 	return tx.Commit()

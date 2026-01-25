@@ -2,60 +2,84 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/0x2E/fusion/internal/config"
 	"github.com/0x2E/fusion/internal/handler"
 	"github.com/0x2E/fusion/internal/pull"
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/mattn/go-isatty"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
+	if err := run(); err != nil {
+		slog.Error("fatal", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	cfg := config.Load()
 	setupLogger(cfg)
 
 	st, err := store.New(cfg.DBPath)
 	if err != nil {
-		slog.Error("failed to initialize store", "error", err)
-		os.Exit(1)
+		return err
 	}
 	defer st.Close()
 
-	// Start pull service in background
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	puller := pull.New(st, cfg)
-	go func() {
-		if err := puller.Start(ctx); err != nil && err != context.Canceled {
-			slog.Error("pull service error", "error", err)
-		}
-	}()
-
-	h := handler.New(st, cfg, puller)
+	h, err := handler.New(st, cfg, puller)
+	if err != nil {
+		return err
+	}
 	r := h.SetupRouter()
 
-	// Graceful shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	addr := ":" + strconv.Itoa(cfg.Port)
+	srv := &http.Server{Addr: addr, Handler: r}
 
-	go func() {
-		addr := ":" + strconv.Itoa(cfg.Port)
+	sigCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	g, ctx := errgroup.WithContext(sigCtx)
+
+	g.Go(func() error {
 		slog.Info("starting server", "address", addr)
-		if err := r.Run(addr); err != nil {
-			slog.Error("failed to start server", "error", err)
-			os.Exit(1)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
 		}
-	}()
+		return nil
+	})
 
-	<-quit
-	slog.Info("shutting down gracefully")
-	cancel()
+	g.Go(func() error {
+		if err := puller.Start(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			return err
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		<-ctx.Done()
+		slog.Info("shutting down")
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		if err := srv.Shutdown(shutdownCtx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("failed to shutdown server", "error", err)
+		}
+
+		return nil
+	})
+
+	return g.Wait()
 }
 
 func setupLogger(cfg *config.Config) {

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/0x2E/fusion/internal/auth"
@@ -23,11 +24,11 @@ type Handler struct {
 
 func New(store *store.Store, config *config.Config, puller interface {
 	RefreshFeed(ctx context.Context, feedID int64) error
-}) *Handler {
+}) (*Handler, error) {
 	// Hash password at startup for later verification
 	passwordHash, err := auth.HashPassword(config.Password)
 	if err != nil {
-		panic("failed to hash password: " + err.Error())
+		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
 	return &Handler{
@@ -36,7 +37,7 @@ func New(store *store.Store, config *config.Config, puller interface {
 		passwordHash: passwordHash,
 		puller:       puller,
 		sessions:     make(map[string]bool),
-	}
+	}, nil
 }
 
 func (h *Handler) SetupRouter() *gin.Engine {
@@ -83,8 +84,15 @@ func (h *Handler) SetupRouter() *gin.Engine {
 
 func (h *Handler) corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		origin := c.Request.Header.Get("Origin")
+		if origin != "" {
+			// Cookie-based auth needs a concrete origin ("*" + credentials is rejected by browsers).
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Vary", "Origin")
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		} else {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, PATCH, DELETE")
 

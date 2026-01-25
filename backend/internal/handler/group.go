@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
 
+	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,7 +31,11 @@ func (h *Handler) getGroup(c *gin.Context) {
 
 	group, err := h.store.GetGroup(id)
 	if err != nil {
-		notFoundError(c, "group")
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "group")
+			return
+		}
+		internalError(c, err, "get group")
 		return
 	}
 
@@ -66,12 +72,20 @@ func (h *Handler) updateGroup(c *gin.Context) {
 	}
 
 	if err := h.store.UpdateGroup(id, req.Name); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "group")
+			return
+		}
 		internalError(c, err, "update group")
 		return
 	}
 
 	group, err := h.store.GetGroup(id)
 	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "group")
+			return
+		}
 		internalError(c, err, "get group after update")
 		return
 	}
@@ -87,6 +101,14 @@ func (h *Handler) deleteGroup(c *gin.Context) {
 	}
 
 	if err := h.store.DeleteGroup(id); err != nil {
+		if errors.Is(err, store.ErrInvalid) {
+			badRequestError(c, err.Error())
+			return
+		}
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "group")
+			return
+		}
 		internalError(c, err, "delete group")
 		return
 	}

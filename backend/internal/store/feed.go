@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -40,11 +41,15 @@ func (s *Store) GetFeed(id int64) (*model.Feed, error) {
 		FROM feeds
 		WHERE id = :id
 	`, sql.Named("id", id)).Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("feed not found")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: feed", ErrNotFound)
+		}
+		return nil, fmt.Errorf("get feed: %w", err)
 	}
+
 	f.Suspended = intToBool(suspended)
-	return f, err
+	return f, nil
 }
 
 func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string) (*model.Feed, error) {
@@ -107,8 +112,18 @@ func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 
 	setClauses = append(setClauses, "updated_at = unixepoch()")
 	query := fmt.Sprintf("UPDATE feeds SET %s WHERE id = :id", strings.Join(setClauses, ", "))
-	_, err := s.db.Exec(query, args...)
-	return err
+	result, err := s.db.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: feed", ErrNotFound)
+	}
+	return nil
 }
 
 // DeleteFeed removes a feed and all its items in a transaction.
@@ -132,8 +147,16 @@ func (s *Store) DeleteFeed(id int64) error {
 		return err
 	}
 
-	if _, err := tx.Exec(`DELETE FROM feeds WHERE id = :id`, sql.Named("id", id)); err != nil {
+	result, err := tx.Exec(`DELETE FROM feeds WHERE id = :id`, sql.Named("id", id))
+	if err != nil {
 		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: feed", ErrNotFound)
 	}
 
 	return tx.Commit()

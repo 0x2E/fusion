@@ -1,10 +1,19 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/0x2E/fusion/internal/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+func isSecureRequest(r *http.Request) bool {
+	if r.TLS != nil {
+		return true
+	}
+	return r.Header.Get("X-Forwarded-Proto") == "https"
+}
 
 type loginRequest struct {
 	Password string `json:"password" binding:"required"`
@@ -28,8 +37,17 @@ func (h *Handler) login(c *gin.Context) {
 	h.sessions[sessionID] = true
 	h.mu.Unlock()
 
-	// Set HttpOnly cookie, expires in 30 days
-	c.SetCookie("session", sessionID, 3600*24*30, "/", "", false, true)
+	// Set HttpOnly cookie, expires in 30 days.
+	// SameSite=Lax keeps it usable for same-site SPA dev setups while mitigating CSRF.
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session",
+		Value:    sessionID,
+		Path:     "/",
+		MaxAge:   3600 * 24 * 30,
+		HttpOnly: true,
+		Secure:   isSecureRequest(c.Request),
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	dataResponse(c, gin.H{"message": "logged in"})
 }
@@ -42,7 +60,15 @@ func (h *Handler) logout(c *gin.Context) {
 		h.mu.Unlock()
 	}
 
-	c.SetCookie("session", "", -1, "/", "", false, true)
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   isSecureRequest(c.Request),
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	dataResponse(c, gin.H{"message": "logged out"})
 }

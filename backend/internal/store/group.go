@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/0x2E/fusion/internal/model"
@@ -36,10 +37,13 @@ func (s *Store) GetGroup(id int64) (*model.Group, error) {
 		FROM groups
 		WHERE id = :id
 	`, sql.Named("id", id)).Scan(&g.ID, &g.Name, &g.CreatedAt, &g.UpdatedAt)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("group not found")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: group", ErrNotFound)
+		}
+		return nil, fmt.Errorf("get group: %w", err)
 	}
-	return g, err
+	return g, nil
 }
 
 func (s *Store) CreateGroup(name string) (*model.Group, error) {
@@ -59,19 +63,29 @@ func (s *Store) CreateGroup(name string) (*model.Group, error) {
 }
 
 func (s *Store) UpdateGroup(id int64, name string) error {
-	_, err := s.db.Exec(`
+	result, err := s.db.Exec(`
 		UPDATE groups
 		SET name = :name, updated_at = unixepoch()
 		WHERE id = :id
 	`, sql.Named("name", name), sql.Named("id", id))
-	return err
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: group", ErrNotFound)
+	}
+	return nil
 }
 
 // DeleteGroup removes a group and moves all its feeds to the default group (ID=1).
 // The default group itself cannot be deleted to ensure all feeds have a valid group.
 func (s *Store) DeleteGroup(id int64) error {
 	if id == 1 {
-		return fmt.Errorf("cannot delete default group")
+		return fmt.Errorf("%w: cannot delete default group", ErrInvalid)
 	}
 
 	tx, err := s.db.Begin()
@@ -84,8 +98,16 @@ func (s *Store) DeleteGroup(id int64) error {
 		return err
 	}
 
-	if _, err := tx.Exec(`DELETE FROM groups WHERE id = :id`, sql.Named("id", id)); err != nil {
+	result, err := tx.Exec(`DELETE FROM groups WHERE id = :id`, sql.Named("id", id))
+	if err != nil {
 		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: group", ErrNotFound)
 	}
 
 	return tx.Commit()

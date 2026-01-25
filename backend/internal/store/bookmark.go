@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/0x2E/fusion/internal/model"
@@ -48,10 +49,13 @@ func (s *Store) GetBookmark(id int64) (*model.Bookmark, error) {
 		FROM bookmarks
 		WHERE id = :id
 	`, sql.Named("id", id)).Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.CreatedAt)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("bookmark not found")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: bookmark", ErrNotFound)
+		}
+		return nil, fmt.Errorf("get bookmark: %w", err)
 	}
-	return b, err
+	return b, nil
 }
 
 // CreateBookmark saves a snapshot of content. itemID may be nil if the
@@ -75,8 +79,18 @@ func (s *Store) CreateBookmark(itemID *int64, link, title, content string, pubDa
 }
 
 func (s *Store) DeleteBookmark(id int64) error {
-	_, err := s.db.Exec(`DELETE FROM bookmarks WHERE id = :id`, sql.Named("id", id))
-	return err
+	result, err := s.db.Exec(`DELETE FROM bookmarks WHERE id = :id`, sql.Named("id", id))
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: bookmark", ErrNotFound)
+	}
+	return nil
 }
 
 func (s *Store) BookmarkExists(link string) (bool, error) {

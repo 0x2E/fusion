@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"context"
+	"errors"
+	"log/slog"
 	"strconv"
+	"time"
 
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
@@ -45,7 +49,11 @@ func (h *Handler) getFeed(c *gin.Context) {
 
 	feed, err := h.store.GetFeed(id)
 	if err != nil {
-		notFoundError(c, "feed")
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "feed")
+			return
+		}
+		internalError(c, err, "get feed")
 		return
 	}
 
@@ -96,12 +104,20 @@ func (h *Handler) updateFeed(c *gin.Context) {
 	}
 
 	if err := h.store.UpdateFeed(id, params); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "feed")
+			return
+		}
 		internalError(c, err, "update feed")
 		return
 	}
 
 	feed, err := h.store.GetFeed(id)
 	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "feed")
+			return
+		}
 		internalError(c, err, "get updated feed")
 		return
 	}
@@ -117,6 +133,10 @@ func (h *Handler) deleteFeed(c *gin.Context) {
 	}
 
 	if err := h.store.DeleteFeed(id); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "feed")
+			return
+		}
 		internalError(c, err, "delete feed")
 		return
 	}
@@ -143,12 +163,24 @@ func (h *Handler) refreshFeed(c *gin.Context) {
 	}
 
 	if _, err := h.store.GetFeed(id); err != nil {
-		notFoundError(c, "feed")
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "feed")
+			return
+		}
+		internalError(c, err, "get feed for refresh")
 		return
 	}
 
-	// Trigger refresh in background
-	go h.puller.RefreshFeed(c.Request.Context(), id)
+	// Trigger refresh in background.
+	// Do not use the request context here: once the handler returns, it may be cancelled.
+	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
+	go func(feedID int64) {
+		ctx, cancel := context.WithTimeout(context.Background(), refreshTimeout)
+		defer cancel()
+		if err := h.puller.RefreshFeed(ctx, feedID); err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+			slog.Warn("refresh feed failed", "feed_id", feedID, "error", err)
+		}
+	}(id)
 
 	dataResponse(c, gin.H{"message": "refresh triggered"})
 }

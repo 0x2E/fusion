@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/0x2E/fusion/internal/store"
@@ -85,7 +86,11 @@ func (h *Handler) getItem(c *gin.Context) {
 
 	item, err := h.store.GetItem(id)
 	if err != nil {
-		notFoundError(c, "item")
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "item")
+			return
+		}
+		internalError(c, err, "get item")
 		return
 	}
 

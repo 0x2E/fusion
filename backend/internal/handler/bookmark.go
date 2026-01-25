@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
 
+	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
 )
 
@@ -55,7 +57,11 @@ func (h *Handler) getBookmark(c *gin.Context) {
 
 	bookmark, err := h.store.GetBookmark(id)
 	if err != nil {
-		notFoundError(c, "bookmark")
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "bookmark")
+			return
+		}
+		internalError(c, err, "get bookmark")
 		return
 	}
 
@@ -76,7 +82,11 @@ func (h *Handler) createBookmark(c *gin.Context) {
 	if req.ItemID != nil {
 		item, err := h.store.GetItem(*req.ItemID)
 		if err != nil {
-			notFoundError(c, "item")
+			if errors.Is(err, store.ErrNotFound) {
+				notFoundError(c, "item")
+				return
+			}
+			internalError(c, err, "get item for bookmark")
 			return
 		}
 
@@ -120,6 +130,10 @@ func (h *Handler) deleteBookmark(c *gin.Context) {
 	}
 
 	if err := h.store.DeleteBookmark(id); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "bookmark")
+			return
+		}
 		internalError(c, err, "delete bookmark")
 		return
 	}
