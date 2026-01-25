@@ -21,17 +21,30 @@ type Config struct {
 }
 
 func Load() *Config {
+	// Backward compatible env vars:
+	// - DB (legacy) -> FUSION_DB_PATH
+	// - PASSWORD (legacy) -> FUSION_PASSWORD
+	// - PORT (legacy) -> FUSION_PORT
 	dbPath := os.Getenv("FUSION_DB_PATH")
+	if dbPath == "" {
+		dbPath = os.Getenv("DB")
+	}
 	if dbPath == "" {
 		dbPath = "fusion.db"
 	}
 
 	password := os.Getenv("FUSION_PASSWORD")
 	if password == "" {
+		password = os.Getenv("PASSWORD")
+	}
+	if password == "" {
 		password = "admin" // TODO allow empty password
 	}
 
 	port := os.Getenv("FUSION_PORT")
+	if port == "" {
+		port = os.Getenv("PORT")
+	}
 	if port == "" {
 		port = "8080"
 	}
