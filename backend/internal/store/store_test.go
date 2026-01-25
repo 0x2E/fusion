@@ -1,17 +1,22 @@
 package store
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 )
 
-// setupTestDB creates a test database in the system temp directory
+func closeStore(t *testing.T, store *Store) {
+	t.Helper()
+	if err := store.Close(); err != nil {
+		t.Errorf("failed to close database: %v", err)
+	}
+}
+
 func setupTestDB(t *testing.T) (*Store, string) {
 	t.Helper()
 
-	dbPath := filepath.Join(os.TempDir(), fmt.Sprintf("fusion_test_%d.db", os.Getpid()))
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "test.db")
 
 	store, err := New(dbPath)
 	if err != nil {
@@ -21,28 +26,14 @@ func setupTestDB(t *testing.T) (*Store, string) {
 	return store, dbPath
 }
 
-// teardownTestDB closes the database and removes the test file
-func teardownTestDB(t *testing.T, store *Store, dbPath string) {
-	t.Helper()
-
-	if err := store.Close(); err != nil {
-		t.Errorf("failed to close database: %v", err)
-	}
-
-	if err := os.Remove(dbPath); err != nil {
-		t.Errorf("failed to remove test database: %v", err)
-	}
-}
-
 func TestNew(t *testing.T) {
-	dbPath := filepath.Join(os.TempDir(), fmt.Sprintf("fusion_test_new_%d.db", os.Getpid()))
-	defer os.Remove(dbPath)
+	dbPath := filepath.Join(t.TempDir(), "test.db")
 
 	store, err := New(dbPath)
 	if err != nil {
 		t.Fatalf("New() failed: %v", err)
 	}
-	defer store.Close()
+	defer closeStore(t, store)
 
 	// Verify database connection is alive
 	if err := store.db.Ping(); err != nil {
@@ -62,8 +53,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer os.Remove(dbPath)
+	store, _ := setupTestDB(t)
 
 	if err := store.Close(); err != nil {
 		t.Fatalf("Close() failed: %v", err)

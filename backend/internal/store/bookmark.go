@@ -12,7 +12,7 @@ func (s *Store) ListBookmarks(limit, offset int) ([]*model.Bookmark, error) {
 	query := `
 		SELECT id, item_id, link, title, content, pub_date, feed_name, created_at
 		FROM bookmarks
-		ORDER BY created_at DESC
+		ORDER BY created_at DESC, id DESC
 	`
 	args := []interface{}{}
 

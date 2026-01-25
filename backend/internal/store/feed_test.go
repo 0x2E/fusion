@@ -1,13 +1,15 @@
 package store
 
 import (
+	"database/sql"
+	"errors"
 	"testing"
 	"time"
 )
 
 func TestListFeeds(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	// Create a group
 	group, err := store.CreateGroup("Test Group")
@@ -45,7 +47,6 @@ func TestListFeeds(t *testing.T) {
 		t.Fatalf("expected 2 feeds, got %d", len(feeds))
 	}
 
-	// Verify suspended is bool (INT to bool conversion)
 	if feeds[0].ID != f1.ID || feeds[1].ID != f2.ID {
 		t.Error("feed IDs don't match")
 	}
@@ -56,8 +57,8 @@ func TestListFeeds(t *testing.T) {
 }
 
 func TestGetFeed(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	group, err := store.CreateGroup("Test Group")
 	if err != nil {
@@ -81,14 +82,14 @@ func TestGetFeed(t *testing.T) {
 
 	// Get non-existent feed
 	_, err = store.GetFeed(99999)
-	if err == nil {
-		t.Error("expected error for non-existent feed, got nil")
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound for non-existent feed, got %v", err)
 	}
 }
 
 func TestCreateFeed(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	group, err := store.CreateGroup("Test Group")
 	if err != nil {
@@ -129,8 +130,8 @@ func TestCreateFeed(t *testing.T) {
 }
 
 func TestUpdateFeed(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	group1, err := store.CreateGroup("Group 1")
 	if err != nil {
@@ -163,7 +164,6 @@ func TestUpdateFeed(t *testing.T) {
 		t.Fatalf("UpdateFeed() failed: %v", err)
 	}
 
-	// Verify update
 	updated, err := store.GetFeed(feed.ID)
 	if err != nil {
 		t.Fatalf("GetFeed() failed: %v", err)
@@ -187,9 +187,7 @@ func TestUpdateFeed(t *testing.T) {
 
 	// Test updating only one field (others should remain unchanged)
 	anotherName := "Another Name"
-	params2 := UpdateFeedParams{
-		Name: &anotherName,
-	}
+	params2 := UpdateFeedParams{Name: &anotherName}
 
 	if err := store.UpdateFeed(feed.ID, params2); err != nil {
 		t.Fatalf("UpdateFeed() failed: %v", err)
@@ -210,8 +208,8 @@ func TestUpdateFeed(t *testing.T) {
 }
 
 func TestDeleteFeed(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	group, err := store.CreateGroup("Test Group")
 	if err != nil {
@@ -223,36 +221,30 @@ func TestDeleteFeed(t *testing.T) {
 		t.Fatalf("CreateFeed() failed: %v", err)
 	}
 
-	// Create items
 	item, err := store.CreateItem(feed.ID, "guid-1", "Item 1", "https://example.com/item1", "Content 1", time.Now().Unix())
 	if err != nil {
 		t.Fatalf("CreateItem() failed: %v", err)
 	}
 
-	// Create bookmark with item_id
 	bookmark, err := store.CreateBookmark(&item.ID, "https://example.com/item1", "Item 1", "Content 1", item.PubDate, "Test Feed")
 	if err != nil {
 		t.Fatalf("CreateBookmark() failed: %v", err)
 	}
 
-	// Delete feed
 	if err := store.DeleteFeed(feed.ID); err != nil {
 		t.Fatalf("DeleteFeed() failed: %v", err)
 	}
 
-	// Verify feed is deleted
 	_, err = store.GetFeed(feed.ID)
-	if err == nil {
-		t.Error("expected error after deletion, got nil")
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound after deletion, got %v", err)
 	}
 
-	// Verify items are deleted
 	_, err = store.GetItem(item.ID)
-	if err == nil {
-		t.Error("expected items to be deleted with feed")
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound for item after feed deletion, got %v", err)
 	}
 
-	// Verify bookmark's item_id is set to NULL
 	updatedBookmark, err := store.GetBookmark(bookmark.ID)
 	if err != nil {
 		t.Fatalf("GetBookmark() failed: %v", err)
@@ -264,8 +256,8 @@ func TestDeleteFeed(t *testing.T) {
 }
 
 func TestUpdateFeedLastBuild(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	group, err := store.CreateGroup("Test Group")
 	if err != nil {
@@ -277,7 +269,6 @@ func TestUpdateFeedLastBuild(t *testing.T) {
 		t.Fatalf("CreateFeed() failed: %v", err)
 	}
 
-	// Set some failure data
 	if err := store.UpdateFeedFailure(feed.ID, "test error"); err != nil {
 		t.Fatalf("UpdateFeedFailure() failed: %v", err)
 	}
@@ -287,7 +278,6 @@ func TestUpdateFeedLastBuild(t *testing.T) {
 		t.Fatalf("UpdateFeedLastBuild() failed: %v", err)
 	}
 
-	// Verify update
 	updated, err := store.GetFeed(feed.ID)
 	if err != nil {
 		t.Fatalf("GetFeed() failed: %v", err)
@@ -297,7 +287,6 @@ func TestUpdateFeedLastBuild(t *testing.T) {
 		t.Errorf("expected last_build %d, got %d", lastBuild, updated.LastBuild)
 	}
 
-	// Verify failure fields are cleared
 	if updated.Failure != "" {
 		t.Error("expected failure to be cleared")
 	}
@@ -308,8 +297,8 @@ func TestUpdateFeedLastBuild(t *testing.T) {
 }
 
 func TestUpdateFeedFailure(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	group, err := store.CreateGroup("Test Group")
 	if err != nil {
@@ -321,7 +310,6 @@ func TestUpdateFeedFailure(t *testing.T) {
 		t.Fatalf("CreateFeed() failed: %v", err)
 	}
 
-	// First failure
 	errorMsg1 := "first error"
 	if err := store.UpdateFeedFailure(feed.ID, errorMsg1); err != nil {
 		t.Fatalf("UpdateFeedFailure() failed: %v", err)
@@ -340,7 +328,6 @@ func TestUpdateFeedFailure(t *testing.T) {
 		t.Errorf("expected failures count to be 1, got %d", updated1.Failures)
 	}
 
-	// Second failure
 	errorMsg2 := "second error"
 	if err := store.UpdateFeedFailure(feed.ID, errorMsg2); err != nil {
 		t.Fatalf("UpdateFeedFailure() failed: %v", err)
@@ -357,5 +344,52 @@ func TestUpdateFeedFailure(t *testing.T) {
 
 	if updated2.Failures != 2 {
 		t.Errorf("expected failures count to be 2, got %d", updated2.Failures)
+	}
+}
+
+func TestUpdateFeedNoParamsDoesNothing(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group, err := store.CreateGroup("Test Group")
+	if err != nil {
+		t.Fatalf("CreateGroup() failed: %v", err)
+	}
+
+	feed, err := store.CreateFeed(group.ID, "Original Feed", "https://example.com/feed", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed() failed: %v", err)
+	}
+
+	if _, err := store.db.Exec(
+		`UPDATE feeds SET updated_at = :updated_at WHERE id = :id`,
+		sql.Named("updated_at", int64(1)),
+		sql.Named("id", feed.ID),
+	); err != nil {
+		t.Fatalf("failed to force updated_at for test: %v", err)
+	}
+
+	if err := store.UpdateFeed(feed.ID, UpdateFeedParams{}); err != nil {
+		t.Fatalf("UpdateFeed() failed: %v", err)
+	}
+
+	updated, err := store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+
+	if updated.UpdatedAt != 1 {
+		t.Errorf("expected updated_at to be unchanged, got %d", updated.UpdatedAt)
+	}
+}
+
+func TestUpdateFeedNotFound(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	name := "Updated"
+	err := store.UpdateFeed(99999, UpdateFeedParams{Name: &name})
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
 }

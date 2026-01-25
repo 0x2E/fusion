@@ -23,11 +23,13 @@ func New(dbPath string) (*Store, error) {
 	}
 
 	if err := db.Ping(); err != nil {
+		_ = db.Close()
 		return nil, fmt.Errorf("ping database: %w", err)
 	}
 
 	s := &Store{db: db}
 	if err := s.migrate(); err != nil {
+		_ = db.Close()
 		return nil, fmt.Errorf("migrate database: %w", err)
 	}
 

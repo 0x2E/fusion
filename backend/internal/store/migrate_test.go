@@ -5,8 +5,8 @@ import (
 )
 
 func TestMigrate(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	// Verify all expected tables exist
 	tables := []string{"groups", "feeds", "items", "bookmarks", "schema_migrations"}
@@ -25,8 +25,8 @@ func TestMigrate(t *testing.T) {
 }
 
 func TestMigrationVersionTracking(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	// Check that schema_migrations table has entries
 	var count int
@@ -52,8 +52,8 @@ func TestMigrationVersionTracking(t *testing.T) {
 }
 
 func TestMigrateIdempotent(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	// Get initial migration count
 	var initialCount int

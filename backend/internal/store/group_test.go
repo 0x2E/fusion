@@ -1,13 +1,14 @@
 package store
 
 import (
+	"database/sql"
+	"errors"
 	"testing"
-	"time"
 )
 
 func TestListGroups(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	// Test database with default group (id=1 created by migration)
 	groups, err := store.ListGroups()
@@ -46,8 +47,8 @@ func TestListGroups(t *testing.T) {
 }
 
 func TestGetGroup(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	// Create a group
 	created, err := store.CreateGroup("Test Group")
@@ -67,14 +68,14 @@ func TestGetGroup(t *testing.T) {
 
 	// Get non-existent group
 	_, err = store.GetGroup(99999)
-	if err == nil {
-		t.Error("expected error for non-existent group, got nil")
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound for non-existent group, got %v", err)
 	}
 }
 
 func TestCreateGroup(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	name := "New Group"
 	group, err := store.CreateGroup(name)
@@ -106,8 +107,8 @@ func TestCreateGroup(t *testing.T) {
 }
 
 func TestUpdateGroup(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	// Create a group
 	group, err := store.CreateGroup("Original Name")
@@ -115,10 +116,13 @@ func TestUpdateGroup(t *testing.T) {
 		t.Fatalf("CreateGroup() failed: %v", err)
 	}
 
-	originalUpdatedAt := group.UpdatedAt
-
-	// Wait a bit to ensure updated_at will be different (unixepoch() has 1-second resolution)
-	time.Sleep(1100 * time.Millisecond)
+	if _, err := store.db.Exec(
+		`UPDATE groups SET updated_at = :updated_at WHERE id = :id`,
+		sql.Named("updated_at", int64(1)),
+		sql.Named("id", group.ID),
+	); err != nil {
+		t.Fatalf("failed to force updated_at for test: %v", err)
+	}
 
 	// Update the group
 	newName := "Updated Name"
@@ -136,14 +140,14 @@ func TestUpdateGroup(t *testing.T) {
 		t.Errorf("expected name %q, got %q", newName, updated.Name)
 	}
 
-	if updated.UpdatedAt <= originalUpdatedAt {
-		t.Errorf("expected UpdatedAt to be updated: original=%d, updated=%d", originalUpdatedAt, updated.UpdatedAt)
+	if updated.UpdatedAt <= 1 {
+		t.Errorf("expected UpdatedAt to be updated: updated=%d", updated.UpdatedAt)
 	}
 }
 
 func TestDeleteGroup(t *testing.T) {
-	store, dbPath := setupTestDB(t)
-	defer teardownTestDB(t, store, dbPath)
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
 
 	t.Run("delete normal group", func(t *testing.T) {
 		group, err := store.CreateGroup("Test Group")
@@ -157,15 +161,15 @@ func TestDeleteGroup(t *testing.T) {
 
 		// Verify deletion
 		_, err = store.GetGroup(group.ID)
-		if err == nil {
-			t.Error("expected error after deletion, got nil")
+		if !errors.Is(err, ErrNotFound) {
+			t.Fatalf("expected ErrNotFound after deletion, got %v", err)
 		}
 	})
 
 	t.Run("cannot delete default group", func(t *testing.T) {
 		err := store.DeleteGroup(1)
-		if err == nil {
-			t.Error("expected error when deleting default group (id=1), got nil")
+		if !errors.Is(err, ErrInvalid) {
+			t.Fatalf("expected ErrInvalid when deleting default group, got %v", err)
 		}
 	})
 

@@ -51,9 +51,9 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	}
 
 	// ORDER BY cannot use named parameters, validated via allowlist instead
-	orderBy := "items.pub_date DESC"
+	orderBy := "items.pub_date DESC, items.id DESC"
 	if params.OrderBy == "created_at" {
-		orderBy = "items.created_at DESC"
+		orderBy = "items.created_at DESC, items.id DESC"
 	}
 	query += ` ORDER BY ` + orderBy
 
