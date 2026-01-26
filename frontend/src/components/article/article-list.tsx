@@ -9,8 +9,9 @@ import { useUIStore, useDataStore, type ArticleFilter } from "@/store";
 
 export function ArticleList() {
   const { articles, isLoading, markAllAsRead } = useArticles();
-  const { articleFilter, setArticleFilter, selectedFeedId, selectedGroupId } = useUIStore();
-  const { getFeedById, getGroupById } = useDataStore();
+  const { articleFilter, setArticleFilter, selectedFeedId, selectedGroupId } =
+    useUIStore();
+  const { items, getFeedById, getGroupById } = useDataStore();
 
   // Setup keyboard navigation
   const articleIds = articles.map((a) => a.id);
@@ -31,10 +32,10 @@ export function ArticleList() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b px-4 py-3">
+      <div className="flex items-center justify-between border-b px-6 py-3">
         <h2 className="text-lg font-semibold">{title}</h2>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={markAllAsRead}
           disabled={unreadCount === 0}
@@ -45,46 +46,54 @@ export function ArticleList() {
         </Button>
       </div>
 
-      {/* Filter tabs */}
-      <div className="border-b px-4 py-2">
-        <Tabs
-          value={articleFilter}
-          onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
-        >
-          <TabsList className="h-8">
-            <TabsTrigger value="all" className="text-xs">
-              All
-            </TabsTrigger>
-            <TabsTrigger value="unread" className="text-xs">
-              Unread
-            </TabsTrigger>
-            <TabsTrigger value="starred" className="text-xs">
-              Starred
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+      {/* Article area with filter tabs */}
+      <div className="flex flex-1 flex-col gap-4 overflow-hidden px-6 py-4">
+        {/* Filter tabs - hidden when no articles exist */}
+        {items.length > 0 && (
+          <Tabs
+            value={articleFilter}
+            onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
+          >
+            <TabsList className="h-8">
+              <TabsTrigger value="all" className="text-xs">
+                All
+              </TabsTrigger>
+              <TabsTrigger value="unread" className="text-xs">
+                Unread
+              </TabsTrigger>
+              <TabsTrigger value="starred" className="text-xs">
+                Starred
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
 
-      {/* Article list */}
-      <ScrollArea className="flex-1">
-        <div className="space-y-1 p-2">
-          {isLoading && articles.length === 0 ? (
-            <div className="space-y-2 p-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-24 animate-pulse rounded-md bg-accent" />
-              ))}
-            </div>
-          ) : articles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-sm text-muted-foreground">No articles found</p>
-            </div>
-          ) : (
-            articles.map((article) => (
-              <ArticleItem key={article.id} article={article} />
-            ))
-          )}
-        </div>
-      </ScrollArea>
+        {/* Article list */}
+        <ScrollArea className="flex-1">
+          <div className="space-y-1">
+            {isLoading && articles.length === 0 ? (
+              <div className="space-y-2 p-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="h-24 animate-pulse rounded-md bg-accent"
+                  />
+                ))}
+              </div>
+            ) : articles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No articles found
+                </p>
+              </div>
+            ) : (
+              articles.map((article) => (
+                <ArticleItem key={article.id} article={article} />
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
     </div>
   );
 }

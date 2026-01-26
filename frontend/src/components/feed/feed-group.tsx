@@ -34,7 +34,7 @@ export function FeedGroup({ name, feeds, unreadCount, getUnreadCount }: FeedGrou
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-accent/50">
+      <CollapsibleTrigger className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-accent/50">
         <ChevronRight
           className={cn(
             "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
