@@ -1,9 +1,16 @@
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFeeds } from "@/hooks/use-feeds";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store";
-import { FolderPlus, Layers, Plus } from "lucide-react";
+import { FolderPlus, Inbox, Plus, Settings, Upload } from "lucide-react";
 import { FeedGroup } from "./feed-group";
 
 export function FeedList() {
@@ -16,8 +23,15 @@ export function FeedList() {
     getGroupUnreadCount,
     getTotalUnreadCount,
   } = useFeeds();
-  const { selectedFeedId, selectedGroupId, selectAll, setGroupManagementOpen } =
-    useUIStore();
+  const {
+    selectedFeedId,
+    selectedGroupId,
+    selectAll,
+    setGroupManagementOpen,
+    setAddFeedOpen,
+    setFeedManagementOpen,
+    setImportOpmlOpen,
+  } = useUIStore();
 
   const isAllSelected = selectedFeedId === null && selectedGroupId === null;
   const totalUnread = getTotalUnreadCount();
@@ -51,9 +65,28 @@ export function FeedList() {
             >
               <FolderPlus className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-5 w-5">
-              <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-5 w-5">
+                  <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuItem onSelect={() => setAddFeedOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Add Feed
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setImportOpmlOpen(true)}>
+                  <Upload className="h-4 w-4" />
+                  Import OPML
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setFeedManagementOpen(true)}>
+                  <Settings className="h-4 w-4" />
+                  Manage Feeds...
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -67,7 +100,7 @@ export function FeedList() {
               : "hover:bg-accent/50",
           )}
         >
-          <Layers className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <Inbox className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="flex-1">All</span>
           {totalUnread > 0 && (
             <span className="text-xs text-muted-foreground">{totalUnread}</span>

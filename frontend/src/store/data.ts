@@ -51,6 +51,9 @@ interface DataState {
   removeGroup: (groupId: number) => void;
 
   // Feed mutations
+  addFeed: (feed: Feed) => void;
+  updateFeed: (feedId: number, updates: Partial<Feed>) => void;
+  removeFeed: (feedId: number) => void;
   updateFeedGroup: (feedId: number, groupId: number) => void;
   moveFeedsToGroup: (fromGroupId: number, toGroupId: number) => void;
 
@@ -136,6 +139,20 @@ export const useDataStore = create<DataState>((set, get) => ({
   removeGroup: (groupId) =>
     set((state) => ({
       groups: state.groups.filter((g) => g.id !== groupId),
+    })),
+
+  addFeed: (feed) => set((state) => ({ feeds: [...state.feeds, feed] })),
+
+  updateFeed: (feedId, updates) =>
+    set((state) => ({
+      feeds: state.feeds.map((f) =>
+        f.id === feedId ? { ...f, ...updates } : f
+      ),
+    })),
+
+  removeFeed: (feedId) =>
+    set((state) => ({
+      feeds: state.feeds.filter((f) => f.id !== feedId),
     })),
 
   updateFeedGroup: (feedId, groupId) =>

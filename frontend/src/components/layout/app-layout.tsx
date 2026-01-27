@@ -6,6 +6,9 @@ import { ArticleDrawer } from "@/components/article/article-drawer";
 import { SearchDialog } from "@/components/search/search-dialog";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
 import { GroupManagementDialog } from "@/components/group/group-management-dialog";
+import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
+import { FeedManagementDialog } from "@/components/feed/feed-management-dialog";
+import { ImportOpmlDialog } from "@/components/feed/import-opml-dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -51,6 +54,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       <SearchDialog />
       <SettingsDialog />
       <GroupManagementDialog />
+      <AddFeedDialog />
+      <FeedManagementDialog />
+      <ImportOpmlDialog />
     </div>
   );
 }

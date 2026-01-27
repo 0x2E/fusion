@@ -15,6 +15,7 @@ import type {
   CreateBookmarkRequest,
   MarkItemsReadRequest,
   ListItemsParams,
+  ImportOpmlResponse,
 } from "./types";
 
 // Session APIs
@@ -110,6 +111,31 @@ export const bookmarkAPI = {
 
   delete: (id: number) =>
     api.delete<APIResponse<{ message: string }>>(`/bookmarks/${id}`),
+};
+
+// OPML APIs
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+
+export const opmlAPI = {
+  import: async (file: File): Promise<APIResponse<ImportOpmlResponse>> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_BASE}/opml/import`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Unknown error" }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  },
 };
 
 export * from "./types";

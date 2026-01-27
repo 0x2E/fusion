@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTheme } from "next-themes";
-import { Github, Info, Palette, Rss } from "lucide-react";
+import { Github, Info, Palette } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Select,
@@ -12,7 +12,7 @@ import {
 import { useUIStore } from "@/store";
 import { cn } from "@/lib/utils";
 
-type SettingsTab = "appearance" | "feeds" | "about";
+type SettingsTab = "appearance" | "about";
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -85,14 +85,6 @@ function AppearanceContent() {
   );
 }
 
-function FeedsContent() {
-  return (
-    <div className="text-sm text-muted-foreground">
-      Feed management settings will be available here.
-    </div>
-  );
-}
-
 function AboutContent() {
   return (
     <div className="flex flex-col items-center gap-4">
@@ -118,7 +110,6 @@ function AboutContent() {
 
 const tabTitles: Record<SettingsTab, string> = {
   appearance: "Appearance",
-  feeds: "Feed Management",
   about: "About",
 };
 
@@ -140,12 +131,6 @@ export function SettingsDialog() {
               onClick={() => setActiveTab("appearance")}
             />
             <NavItem
-              icon={<Rss className="h-4 w-4" />}
-              label="Feed Management"
-              active={activeTab === "feeds"}
-              onClick={() => setActiveTab("feeds")}
-            />
-            <NavItem
               icon={<Info className="h-4 w-4" />}
               label="About"
               active={activeTab === "about"}
@@ -156,11 +141,12 @@ export function SettingsDialog() {
 
         {/* Content */}
         <div className="flex flex-1 flex-col overflow-hidden p-6">
-          <h2 className="mb-6 shrink-0 text-lg font-semibold">{tabTitles[activeTab]}</h2>
+          <h2 className="mb-6 shrink-0 text-lg font-semibold">
+            {tabTitles[activeTab]}
+          </h2>
 
           <div className="flex-1 overflow-y-auto">
             {activeTab === "appearance" && <AppearanceContent />}
-            {activeTab === "feeds" && <FeedsContent />}
             {activeTab === "about" && <AboutContent />}
           </div>
         </div>

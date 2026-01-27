@@ -108,3 +108,9 @@ export interface ListItemsParams {
   offset?: number;
   order_by?: string;
 }
+
+export interface ImportOpmlResponse {
+  imported: number;
+  failed: number;
+  errors?: string[];
+}
