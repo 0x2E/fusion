@@ -5,6 +5,7 @@ import { Sidebar } from "./sidebar";
 import { ArticleDrawer } from "@/components/article/article-drawer";
 import { SearchDialog } from "@/components/search/search-dialog";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
+import { GroupManagementDialog } from "@/components/group/group-management-dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -49,6 +50,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <ArticleDrawer />
       <SearchDialog />
       <SettingsDialog />
+      <GroupManagementDialog />
     </div>
   );
 }

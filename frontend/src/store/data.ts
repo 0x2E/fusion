@@ -45,6 +45,15 @@ interface DataState {
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (bookmarkId: number) => void;
 
+  // Group mutations
+  addGroup: (group: Group) => void;
+  updateGroup: (groupId: number, name: string) => void;
+  removeGroup: (groupId: number) => void;
+
+  // Feed mutations
+  updateFeedGroup: (feedId: number, groupId: number) => void;
+  moveFeedsToGroup: (fromGroupId: number, toGroupId: number) => void;
+
   // Helpers
   getFeedById: (feedId: number) => Feed | undefined;
   getGroupById: (groupId: number) => Group | undefined;
@@ -112,6 +121,35 @@ export const useDataStore = create<DataState>((set, get) => ({
   removeBookmark: (bookmarkId) =>
     set((state) => ({
       bookmarks: state.bookmarks.filter((b) => b.id !== bookmarkId),
+    })),
+
+  addGroup: (group) =>
+    set((state) => ({ groups: [...state.groups, group] })),
+
+  updateGroup: (groupId, name) =>
+    set((state) => ({
+      groups: state.groups.map((g) =>
+        g.id === groupId ? { ...g, name } : g
+      ),
+    })),
+
+  removeGroup: (groupId) =>
+    set((state) => ({
+      groups: state.groups.filter((g) => g.id !== groupId),
+    })),
+
+  updateFeedGroup: (feedId, groupId) =>
+    set((state) => ({
+      feeds: state.feeds.map((f) =>
+        f.id === feedId ? { ...f, group_id: groupId } : f
+      ),
+    })),
+
+  moveFeedsToGroup: (fromGroupId, toGroupId) =>
+    set((state) => ({
+      feeds: state.feeds.map((f) =>
+        f.group_id === fromGroupId ? { ...f, group_id: toGroupId } : f
+      ),
     })),
 
   getFeedById: (feedId) => get().feeds.find((f) => f.id === feedId),

@@ -16,7 +16,8 @@ export function FeedList() {
     getGroupUnreadCount,
     getTotalUnreadCount,
   } = useFeeds();
-  const { selectedFeedId, selectedGroupId, selectAll } = useUIStore();
+  const { selectedFeedId, selectedGroupId, selectAll, setGroupManagementOpen } =
+    useUIStore();
 
   const isAllSelected = selectedFeedId === null && selectedGroupId === null;
   const totalUnread = getTotalUnreadCount();
@@ -42,7 +43,12 @@ export function FeedList() {
             Feeds
           </span>
           <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon" className="h-5 w-5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={() => setGroupManagementOpen(true)}
+            >
               <FolderPlus className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
             <Button variant="ghost" size="icon" className="h-5 w-5">

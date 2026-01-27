@@ -16,6 +16,7 @@ interface UIState {
   // Modals
   isSearchOpen: boolean;
   isSettingsOpen: boolean;
+  isGroupManagementOpen: boolean;
 
   // Actions
   setSelectedGroup: (groupId: number | null) => void;
@@ -24,6 +25,7 @@ interface UIState {
   setArticleFilter: (filter: ArticleFilter) => void;
   setSearchOpen: (open: boolean) => void;
   setSettingsOpen: (open: boolean) => void;
+  setGroupManagementOpen: (open: boolean) => void;
   selectAll: () => void;
 }
 
@@ -34,6 +36,7 @@ export const useUIStore = create<UIState>((set) => ({
   articleFilter: "all",
   isSearchOpen: false,
   isSettingsOpen: false,
+  isGroupManagementOpen: false,
 
   setSelectedGroup: (groupId) =>
     set({ selectedGroupId: groupId, selectedFeedId: null }),
@@ -48,6 +51,8 @@ export const useUIStore = create<UIState>((set) => ({
   setSearchOpen: (open) => set({ isSearchOpen: open }),
 
   setSettingsOpen: (open) => set({ isSettingsOpen: open }),
+
+  setGroupManagementOpen: (open) => set({ isGroupManagementOpen: open }),
 
   selectAll: () => set({ selectedGroupId: null, selectedFeedId: null }),
 }));
