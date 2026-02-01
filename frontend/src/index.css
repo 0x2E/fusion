@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 
@@ -122,5 +123,37 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Article content prose styles */
+.prose {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+
+  pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-x: auto;
+  }
+
+  code {
+    word-break: break-all;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  a {
+    word-break: break-all;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
   }
 }

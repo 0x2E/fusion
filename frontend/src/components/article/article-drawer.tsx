@@ -14,6 +14,7 @@ import { useArticles } from "@/hooks/use-articles";
 import { useStarred } from "@/hooks/use-starred";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { formatDate, sanitizeHTML } from "@/lib/utils";
+import { getFaviconUrl } from "@/lib/api/favicon";
 
 export function ArticleDrawer() {
   const { selectedArticleId, setSelectedArticle } = useUIStore();
@@ -67,6 +68,7 @@ export function ArticleDrawer() {
       <SheetContent
         side="right"
         className="w-full max-w-[720px] p-0 sm:max-w-[720px]"
+        showCloseButton={false}
       >
         {article && (
           <div className="flex h-full flex-col">
@@ -117,14 +119,22 @@ export function ArticleDrawer() {
             </div>
 
             {/* Content */}
-            <ScrollArea className="flex-1">
+            <ScrollArea className="min-h-0 flex-1">
               <article className="px-12 py-8">
                 <div className="space-y-3">
                   <h1 className="text-[28px] font-bold leading-[1.3]">
                     {article.title}
                   </h1>
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                    <span className="flex items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                      {feed && (
+                        <img
+                          src={getFaviconUrl(feed.link, feed.site_url)}
+                          alt=""
+                          className="h-3.5 w-3.5 shrink-0 rounded-sm"
+                          loading="lazy"
+                        />
+                      )}
                       {feed?.name ?? "Unknown"}
                     </span>
                     <span className="text-muted-foreground/70">·</span>
@@ -144,7 +154,7 @@ export function ArticleDrawer() {
                 </div>
 
                 <div
-                  className="prose prose-base mt-6 max-w-none leading-[1.7] dark:prose-invert"
+                  className="prose prose-neutral mt-6 max-w-none break-words dark:prose-invert"
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHTML(article.content),
                   }}

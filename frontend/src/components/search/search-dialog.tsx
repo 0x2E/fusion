@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { FileText, Rss, Search } from "lucide-react";
+import { FileText, Search } from "lucide-react";
+import { getFaviconUrl } from "@/lib/api/favicon";
 import {
   CommandDialog,
   CommandEmpty,
@@ -13,7 +14,8 @@ import { useUIStore, useDataStore } from "@/store";
 import { formatDate } from "@/lib/utils";
 
 export function SearchDialog() {
-  const { isSearchOpen, setSearchOpen, setSelectedFeed, setSelectedArticle } = useUIStore();
+  const { isSearchOpen, setSearchOpen, setSelectedFeed, setSelectedArticle } =
+    useUIStore();
   const { feeds, items, getFeedById } = useDataStore();
   const [query, setQuery] = useState("");
 
@@ -27,7 +29,7 @@ export function SearchDialog() {
   // Filter feeds by query
   const filteredFeeds = query
     ? feeds.filter((feed) =>
-        feed.name.toLowerCase().includes(query.toLowerCase())
+        feed.name.toLowerCase().includes(query.toLowerCase()),
       )
     : [];
 
@@ -35,7 +37,7 @@ export function SearchDialog() {
   const filteredArticles = query
     ? items
         .filter((item) =>
-          item.title.toLowerCase().includes(query.toLowerCase())
+          item.title.toLowerCase().includes(query.toLowerCase()),
         )
         .slice(0, 10)
     : [];
@@ -69,7 +71,12 @@ export function SearchDialog() {
                 onSelect={() => handleSelectFeed(feed.id)}
                 className="gap-2"
               >
-                <Rss className="h-4 w-4 text-muted-foreground" />
+                <img
+                  src={getFaviconUrl(feed.link, feed.site_url)}
+                  alt=""
+                  className="h-4 w-4 shrink-0 rounded-sm"
+                  loading="lazy"
+                />
                 <span>{feed.name}</span>
               </CommandItem>
             ))}

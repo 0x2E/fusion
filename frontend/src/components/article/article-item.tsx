@@ -2,6 +2,7 @@ import { Circle, Star, ExternalLink } from "lucide-react";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
 import { useUIStore, useDataStore } from "@/store";
 import { itemAPI, bookmarkAPI, type Item } from "@/lib/api";
+import { getFaviconUrl } from "@/lib/api/favicon";
 
 interface ArticleItemProps {
   article: Item;
@@ -75,8 +76,8 @@ export function ArticleItem({ article }: ArticleItemProps) {
     <button
       onClick={() => setSelectedArticle(article.id)}
       className={cn(
-        "group flex w-full items-start gap-4 border-b border-[#F1F1EF] py-4 text-left transition-colors",
-        isSelected && "bg-accent/50",
+        "group flex w-full items-start gap-4 border-b border-[#F1F1EF] px-4 py-4 text-left transition-colors hover:bg-accent/50",
+        isSelected && "bg-accent",
       )}
     >
       {/* Article Content */}
@@ -93,6 +94,14 @@ export function ArticleItem({ article }: ArticleItemProps) {
           {extractSummary(article.content, 150)}
         </p>
         <div className="flex items-center gap-2 text-xs">
+          {feed && (
+            <img
+              src={getFaviconUrl(feed.link, feed.site_url)}
+              alt=""
+              className="h-3.5 w-3.5 shrink-0 rounded-sm"
+              loading="lazy"
+            />
+          )}
           <span className="truncate font-medium text-[#91918E]">
             {feed?.name ?? "Unknown"}
           </span>

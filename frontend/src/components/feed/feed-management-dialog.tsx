@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Download, Pencil, Search, Trash2, X } from "lucide-react";
+import { getFaviconUrl } from "@/lib/api/favicon";
 import {
   Dialog,
   DialogContent,
@@ -141,9 +142,11 @@ export function FeedManagementDialog() {
                   className="flex items-center justify-between rounded-md px-2 py-2.5 hover:bg-accent/50"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <div
+                    <img
+                      src={getFaviconUrl(feed.link, feed.site_url)}
+                      alt=""
                       className="h-[18px] w-[18px] shrink-0 rounded"
-                      style={{ backgroundColor: getFeedColor(feed.id) }}
+                      loading="lazy"
                     />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
@@ -194,19 +197,4 @@ export function FeedManagementDialog() {
       </DialogContent>
     </Dialog>
   );
-}
-
-// Generate a consistent color based on feed ID
-function getFeedColor(id: number): string {
-  const colors = [
-    "#FF6600",
-    "#1DA1F2",
-    "#5865F2",
-    "#EB5757",
-    "#2D9CDB",
-    "#27AE60",
-    "#9B51E0",
-    "#F2994A",
-  ];
-  return colors[id % colors.length];
 }
