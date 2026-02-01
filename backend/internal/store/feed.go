@@ -181,3 +181,86 @@ func (s *Store) UpdateFeedFailure(id int64, failure string) error {
 	`, sql.Named("failure", failure), sql.Named("id", id))
 	return err
 }
+
+// BatchCreateFeedsInput holds input for batch feed creation.
+type BatchCreateFeedsInput struct {
+	GroupID int64
+	Name    string
+	Link    string
+}
+
+// BatchCreateFeedsResult holds the result of batch feed creation.
+type BatchCreateFeedsResult struct {
+	Created int
+	Errors  []string
+}
+
+// BatchCreateFeeds creates multiple feeds in a single transaction.
+// It skips feeds with duplicate links and returns statistics.
+func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFeedsResult, error) {
+	result := &BatchCreateFeedsResult{}
+
+	if len(inputs) == 0 {
+		return result, nil
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Check existing links to avoid duplicates
+	existingLinks := make(map[string]bool)
+	rows, err := tx.Query(`SELECT link FROM feeds`)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var link string
+		if err := rows.Scan(&link); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		existingLinks[link] = true
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare(`
+		INSERT INTO feeds (group_id, name, link, site_url, proxy)
+		VALUES (:group_id, :name, :link, '', '')
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	for _, input := range inputs {
+		if existingLinks[input.Link] {
+			result.Errors = append(result.Errors, fmt.Sprintf("duplicate feed: %s", input.Link))
+			continue
+		}
+
+		_, err := stmt.Exec(
+			sql.Named("group_id", input.GroupID),
+			sql.Named("name", input.Name),
+			sql.Named("link", input.Link),
+		)
+		if err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("failed to create %s: %v", input.Link, err))
+			continue
+		}
+
+		existingLinks[input.Link] = true
+		result.Created++
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

@@ -293,6 +293,57 @@ Optional fields: `name`, `proxy`
 }
 ```
 
+### Batch Create Feeds
+
+```
+POST /api/feeds/batch
+```
+
+Creates multiple feeds in a single transaction. Skips feeds with duplicate links.
+
+**Request Body**
+
+```json
+{
+  "feeds": [
+    {
+      "group_id": 1,
+      "name": "Feed One",
+      "link": "https://example.com/feed1.xml"
+    },
+    {
+      "group_id": 2,
+      "name": "Feed Two",
+      "link": "https://example.com/feed2.xml"
+    }
+  ]
+}
+```
+
+**Response** `200 OK`
+
+```json
+{
+  "data": {
+    "created": 2,
+    "failed": 0,
+    "errors": []
+  }
+}
+```
+
+If some feeds fail (e.g., duplicate links):
+
+```json
+{
+  "data": {
+    "created": 1,
+    "failed": 1,
+    "errors": ["duplicate feed: https://example.com/feed1.xml"]
+  }
+}
+```
+
 ### Validate Feed URL
 
 ```

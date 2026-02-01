@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUIStore, useDataStore } from "@/store";
-import { feedAPI, type Feed } from "@/lib/api";
+import { feedAPI, groupAPI, type Feed } from "@/lib/api";
 import { toast } from "sonner";
+import { generateOPML, downloadFile } from "@/lib/opml";
 
 export function FeedManagementDialog() {
   const { isFeedManagementOpen, setFeedManagementOpen } = useUIStore();
@@ -26,7 +27,7 @@ export function FeedManagementDialog() {
     return feeds.filter(
       (feed) =>
         feed.name.toLowerCase().includes(query) ||
-        feed.link.toLowerCase().includes(query)
+        feed.link.toLowerCase().includes(query),
     );
   }, [feeds, searchQuery]);
 
@@ -35,9 +36,24 @@ export function FeedManagementDialog() {
     setSearchQuery("");
   };
 
-  const handleExport = () => {
-    // TODO: Implement OPML export
-    toast.info("OPML export coming soon");
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const [groupsRes, feedsRes] = await Promise.all([
+        groupAPI.list(),
+        feedAPI.list(),
+      ]);
+
+      const opml = generateOPML(groupsRes.data, feedsRes.data);
+      downloadFile(opml, "fusion-subscriptions.opml", "application/xml");
+      toast.success("OPML exported successfully");
+    } catch {
+      toast.error("Failed to export OPML");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleDelete = async (feed: Feed) => {
@@ -83,9 +99,10 @@ export function FeedManagementDialog() {
               size="sm"
               className="gap-1.5"
               onClick={handleExport}
+              disabled={isExporting}
             >
               <Download className="h-3.5 w-3.5" />
-              Export OPML
+              {isExporting ? "Exporting..." : "Export OPML"}
             </Button>
             <Button
               variant="ghost"
@@ -129,7 +146,9 @@ export function FeedManagementDialog() {
                       style={{ backgroundColor: getFeedColor(feed.id) }}
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{feed.name}</p>
+                      <p className="truncate text-sm font-medium">
+                        {feed.name}
+                      </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {getDomain(feed.link)}
                       </p>

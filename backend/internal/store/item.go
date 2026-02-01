@@ -170,34 +170,6 @@ func (s *Store) MarkAllAsRead(feedID *int64) error {
 	return err
 }
 
-// DeleteItem removes an item while preserving bookmarks.
-// Sets bookmark.item_id to NULL to maintain the content snapshot.
-func (s *Store) DeleteItem(id int64) error {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.Exec(`UPDATE bookmarks SET item_id = NULL WHERE item_id = :id`, sql.Named("id", id)); err != nil {
-		return err
-	}
-
-	result, err := tx.Exec(`DELETE FROM items WHERE id = :id`, sql.Named("id", id))
-	if err != nil {
-		return err
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return fmt.Errorf("%w: item", ErrNotFound)
-	}
-
-	return tx.Commit()
-}
-
 func (s *Store) ItemExists(feedID int64, guid string) (bool, error) {
 	var exists bool
 	err := s.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM items WHERE feed_id = :feed_id AND guid = :guid)`,

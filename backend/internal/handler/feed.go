@@ -30,6 +30,16 @@ type validateFeedRequest struct {
 	URL string `json:"url" binding:"required"`
 }
 
+type batchCreateFeedsRequest struct {
+	Feeds []batchCreateFeedItem `json:"feeds" binding:"required"`
+}
+
+type batchCreateFeedItem struct {
+	GroupID int64  `json:"group_id" binding:"required"`
+	Name    string `json:"name" binding:"required"`
+	Link    string `json:"link" binding:"required"`
+}
+
 func (h *Handler) listFeeds(c *gin.Context) {
 	feeds, err := h.store.ListFeeds()
 	if err != nil {
@@ -183,4 +193,33 @@ func (h *Handler) refreshFeed(c *gin.Context) {
 	}(id)
 
 	dataResponse(c, gin.H{"message": "refresh triggered"})
+}
+
+func (h *Handler) batchCreateFeeds(c *gin.Context) {
+	var req batchCreateFeedsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequestError(c, "invalid request")
+		return
+	}
+
+	inputs := make([]store.BatchCreateFeedsInput, len(req.Feeds))
+	for i, f := range req.Feeds {
+		inputs[i] = store.BatchCreateFeedsInput{
+			GroupID: f.GroupID,
+			Name:    f.Name,
+			Link:    f.Link,
+		}
+	}
+
+	result, err := h.store.BatchCreateFeeds(inputs)
+	if err != nil {
+		internalError(c, err, "batch create feeds")
+		return
+	}
+
+	dataResponse(c, gin.H{
+		"created": result.Created,
+		"failed":  len(result.Errors),
+		"errors":  result.Errors,
+	})
 }

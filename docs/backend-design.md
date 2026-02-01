@@ -89,9 +89,6 @@ UPDATE bookmarks SET item_id = NULL WHERE item_id IN (SELECT id FROM items WHERE
 DELETE FROM items WHERE feed_id = ?
 DELETE FROM feeds WHERE id = ?
 
-// Delete Item: preserve bookmark snapshot
-UPDATE bookmarks SET item_id = NULL WHERE item_id = ?
-DELETE FROM items WHERE id = ?
 ```
 
 ## 4. API Endpoints
@@ -107,6 +104,7 @@ DELETE FROM items WHERE id = ?
 | GET    | /api/feeds            | List feeds               |
 | GET    | /api/feeds/:id        | Get feed                 |
 | POST   | /api/feeds            | Create feed              |
+| POST   | /api/feeds/batch      | Batch create feeds       |
 | POST   | /api/feeds/validation | Validate feed URL        |
 | PATCH  | /api/feeds/:id        | Update feed              |
 | DELETE | /api/feeds/:id        | Delete feed              |
@@ -114,7 +112,6 @@ DELETE FROM items WHERE id = ?
 | GET    | /api/items            | List items               |
 | GET    | /api/items/:id        | Get item                 |
 | PATCH  | /api/items/-/unread   | Batch update read status |
-| DELETE | /api/items/:id        | Delete item              |
 | GET    | /api/bookmarks        | List bookmarks           |
 | POST   | /api/bookmarks        | Add bookmark             |
 | DELETE | /api/bookmarks/:id    | Delete bookmark          |

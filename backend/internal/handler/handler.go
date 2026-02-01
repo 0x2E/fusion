@@ -61,6 +61,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 
 			auth.GET("/feeds", h.listFeeds)
 			auth.POST("/feeds", h.createFeed)
+			auth.POST("/feeds/batch", h.batchCreateFeeds)
 			auth.GET("/feeds/:id", h.getFeed)
 			auth.PATCH("/feeds/:id", h.updateFeed)
 			auth.DELETE("/feeds/:id", h.deleteFeed)

@@ -16,6 +16,8 @@ import type {
   MarkItemsReadRequest,
   ListItemsParams,
   ImportOpmlResponse,
+  BatchCreateFeedsRequest,
+  BatchCreateFeedsResponse,
 } from "./types";
 
 // Session APIs
@@ -62,6 +64,9 @@ export const feedAPI = {
 
   refresh: () =>
     api.post<APIResponse<{ message: string }>>("/feeds/refresh", {}),
+
+  batchCreate: (data: BatchCreateFeedsRequest) =>
+    api.post<APIResponse<BatchCreateFeedsResponse>>("/feeds/batch", data),
 };
 
 // Item APIs
@@ -78,7 +83,7 @@ export const itemAPI = {
 
     const queryString = query.toString();
     return api.get<ListAPIResponse<Item>>(
-      `/items${queryString ? `?${queryString}` : ""}`
+      `/items${queryString ? `?${queryString}` : ""}`,
     );
   },
 
@@ -89,9 +94,6 @@ export const itemAPI = {
 
   markUnread: (data: MarkItemsReadRequest) =>
     api.patch<APIResponse<{ message: string }>>("/items/-/unread", data),
-
-  delete: (id: number) =>
-    api.delete<APIResponse<{ message: string }>>(`/items/${id}`),
 };
 
 // Bookmark APIs

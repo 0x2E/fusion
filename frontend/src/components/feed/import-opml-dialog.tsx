@@ -8,9 +8,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useUIStore, useDataStore } from "@/store";
-import { opmlAPI, groupAPI, feedAPI } from "@/lib/api";
+import { groupAPI, feedAPI } from "@/lib/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { parseOPML } from "@/lib/opml";
 
 export function ImportOpmlDialog() {
   const { isImportOpmlOpen, setImportOpmlOpen } = useUIStore();
@@ -75,20 +76,73 @@ export function ImportOpmlDialog() {
 
     setIsImporting(true);
     try {
-      const response = await opmlAPI.import(file);
+      const content = await file.text();
+      const parsedFeeds = parseOPML(content);
+
+      if (parsedFeeds.length === 0) {
+        toast.info("No feeds found in OPML file");
+        return;
+      }
+
+      // Get existing groups
+      const groupsRes = await groupAPI.list();
+      const existingGroups = groupsRes.data;
+      const groupNameToId = new Map(existingGroups.map((g) => [g.name, g.id]));
+
+      // Collect unique group names that need to be created
+      const newGroupNames = new Set<string>();
+      parsedFeeds.forEach((feed) => {
+        if (feed.groupName && !groupNameToId.has(feed.groupName)) {
+          newGroupNames.add(feed.groupName);
+        }
+      });
+
+      // Create missing groups
+      for (const name of newGroupNames) {
+        const res = await groupAPI.create({ name });
+        if (res.data) {
+          groupNameToId.set(name, res.data.id);
+        }
+      }
+
+      // Use default group for feeds without a group
+      let defaultGroupId: number | undefined = groupNameToId
+        .values()
+        .next().value;
+      if (defaultGroupId === undefined) {
+        const res = await groupAPI.create({ name: "Imported Without Group" });
+        if (res.data) {
+          defaultGroupId = res.data.id;
+          groupNameToId.set("Imported Without Group", res.data.id);
+        }
+      }
+
+      // Prepare batch create request
+      const feedsToCreate = parsedFeeds.map((feed) => {
+        const groupId = feed.groupName
+          ? (groupNameToId.get(feed.groupName) ?? defaultGroupId!)
+          : defaultGroupId!;
+        return {
+          group_id: groupId,
+          name: feed.name,
+          link: feed.link,
+        };
+      });
+
+      const response = await feedAPI.batchCreate({ feeds: feedsToCreate });
       if (response.data) {
-        const { imported, failed, errors } = response.data;
+        const { created, failed, errors } = response.data;
 
-        if (imported > 0) {
-          // Refresh groups and feeds after successful import
-          const [groupsRes, feedsRes] = await Promise.all([
-            groupAPI.list(),
-            feedAPI.list(),
-          ]);
-          setGroups(groupsRes.data);
-          setFeeds(feedsRes.data);
+        // Refresh groups and feeds after import
+        const [newGroupsRes, feedsRes] = await Promise.all([
+          groupAPI.list(),
+          feedAPI.list(),
+        ]);
+        setGroups(newGroupsRes.data);
+        setFeeds(feedsRes.data);
 
-          toast.success(`Imported ${imported} feed${imported > 1 ? "s" : ""}`);
+        if (created > 0) {
+          toast.success(`Imported ${created} feed${created > 1 ? "s" : ""}`);
         }
 
         if (failed > 0) {
@@ -98,7 +152,7 @@ export function ImportOpmlDialog() {
           );
         }
 
-        if (imported === 0 && failed === 0) {
+        if (created === 0 && failed === 0) {
           toast.info("No new feeds found in OPML file");
         }
 

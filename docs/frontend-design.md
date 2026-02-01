@@ -33,11 +33,11 @@
 
 ### 2.2 Responsive Breakpoints
 
-| Breakpoint      | Layout            | Description                        |
-| --------------- | ----------------- | ---------------------------------- |
-| lg (≥1024px)    | Full two-column   | Sidebar + Main content both shown  |
+| Breakpoint      | Layout            | Description                               |
+| --------------- | ----------------- | ----------------------------------------- |
+| lg (≥1024px)    | Full two-column   | Sidebar + Main content both shown         |
 | md (768-1023px) | Collapsed sidebar | Sidebar as icons, main content full width |
-| sm (<768px)     | Mobile drawer     | Sidebar as drawer, single column   |
+| sm (<768px)     | Mobile drawer     | Sidebar as drawer, single column          |
 
 ### 2.3 Responsive Behavior
 
@@ -230,31 +230,34 @@ All state is managed via URL search parameters:
 
 ### 5.2 Keyboard Shortcuts
 
-| Key            | Action                              |
-| -------------- | ----------------------------------- |
-| `j`            | Next article in list                |
-| `k`            | Previous article in list            |
-| `o` or `Enter` | Open selected article               |
-| `u`            | Toggle read/unread                  |
-| `b`            | Toggle bookmark                     |
-| `v`            | Open original link                  |
-| `←` / `→`      | Previous/Next article (in drawer)   |
-| `Esc`          | Close article drawer                |
-| `Cmd/Ctrl + K` | Open search                         |
-| `?`            | Show shortcuts help                 |
+| Key            | Action                            |
+| -------------- | --------------------------------- |
+| `j`            | Next article in list              |
+| `k`            | Previous article in list          |
+| `o` or `Enter` | Open selected article             |
+| `u`            | Toggle read/unread                |
+| `b`            | Toggle bookmark                   |
+| `v`            | Open original link                |
+| `←` / `→`      | Previous/Next article (in drawer) |
+| `Esc`          | Close article drawer              |
+| `Cmd/Ctrl + K` | Open search                       |
+| `?`            | Show shortcuts help               |
 
 ### 5.3 Hover Interactions
 
 **Article Card Hover**:
+
 - Quick action buttons appear on right side
 - Buttons: Mark read/unread, Bookmark, Open link
 - Icon-only buttons with tooltips
 
 **Feed Item Hover**:
+
 - Context menu button (three dots) appears
 - Right-click also shows context menu
 
 **Group Header Hover**:
+
 - "Add Feed" button appears
 - Context menu button appears
 - Right-click also shows context menu
@@ -282,6 +285,7 @@ When clicking a feed in the sidebar:
 ### 6.1 Design Philosophy
 
 **Notion-inspired Design**:
+
 - Clean, minimal interface
 - Generous white space and breathing room
 - Subtle borders and shadows
@@ -292,6 +296,7 @@ When clicking a feed in the sidebar:
 ### 6.2 Color Scheme
 
 **Light Mode (Default)**:
+
 - **Background**: Warm whites (#FFFFFF, #FAFAFA) - Notion-like warmth
 - **Text**: Dark grays (#1F1F1F, #37352F) - High contrast for readability
 - **Accents**: Subtle blues/grays (#0F62FE, #8E8E8E)
@@ -299,6 +304,7 @@ When clicking a feed in the sidebar:
 - **Hover States**: Soft gray backgrounds (#F7F6F3)
 
 **Dark Mode**:
+
 - **Background**: Dark grays (#191919, #2F2F2F) - Not pure black for reduced eye strain
 - **Text**: Light grays (#E3E2E0, #CBCAC8)
 - **Accents**: Muted colors (#5B9EFF, #ABABAB)
@@ -320,14 +326,17 @@ Feed and Group management is **contextual** rather than centralized in settings.
 ### 7.1 Create Group
 
 **Trigger**:
+
 - "Create Group" button at feed list title
 
 **Interaction**:
+
 1. Click button opens Dialog
 2. Enter group name in input field
 3. Confirm to create, cancel to dismiss
 
 **UI Components**:
+
 - Dialog with title "Create New Group"
 - Text input for group name
 - Cancel and Create buttons
@@ -335,15 +344,18 @@ Feed and Group management is **contextual** rather than centralized in settings.
 ### 7.2 Add Feed to Group
 
 **Trigger Methods**:
+
 - Hover over group header → "Add Feed" button appears
 - Click button opens "Add Feed" dialog
 
 **Interaction**:
+
 1. Enter feed URL in input field
 2. Optionally select target group (defaults to current group)
 3. Confirm to add feed
 
 **UI Components**:
+
 - Dialog with title "Add Feed"
 - URL input field
 - Group selector (optional)
@@ -370,69 +382,49 @@ Feed and Group management is **contextual** rather than centralized in settings.
 - Rename
 - Delete (with confirmation, cannot delete "All" group)
 
-### 7.6 Additional Actions
+### 7.6 OPML Import/Export
 
-**Global Feed Actions** (future):
-- Import OPML (in settings or toolbar)
-- Export OPML (in settings or toolbar)
+**Import OPML**:
+
+- Trigger: "Import OPML" button in sidebar header
+- Opens dialog for file upload (drag & drop or click to browse)
+- Parses OPML file client-side
+- Creates groups for OPML categories
+- Batch creates feeds via `POST /api/feeds/batch`
+- Shows success/failure summary with toast notifications
+
+**Export OPML**:
+
+- Trigger: "Export OPML" button in Feed Management dialog
+- Fetches latest groups and feeds from API
+- Generates OPML XML client-side
+- Downloads as `fusion-subscriptions.opml`
 
 ## 8. Settings
 
 Settings presented as a **Dialog** (modal window), triggered from sidebar footer settings button.
 
-### 8.1 Current Implementation
-
-**Status**: Placeholder
-
-Display a simple message or basic structure indicating settings are under development.
-
-**Example UI**:
-- Dialog title: "Settings"
-- Placeholder message: "Settings coming soon..."
-- Or basic tab structure: Appearance / Account / About
-
-### 8.2 Future Sections (Planned)
-
-**Appearance**:
-- Theme selection (Light/Dark/System)
-- Font size adjustment
-- Density options (Compact/Comfortable)
-
-**Data**:
-- Import OPML
-- Export OPML
-- Clear cache/data
-
-**Account**:
-- User information
-- Logout button
-
-**About**:
-- App version
-- License information
-- Links to documentation/support
-
 ## 9. Component Library
 
 Using shadcn/ui components:
 
-| Component      | Usage                                         |
-| -------------- | --------------------------------------------- |
-| Button         | Actions, navigation, quick actions            |
-| Input          | Forms, search, feed URL input                 |
-| Tabs           | Article list filtering (All/Unread/Bookmarked)|
-| Dialog         | Settings, create group, add feed, search      |
-| **Sheet**      | **Article detail drawer (slide from right)**  |
-| DropdownMenu   | Feed/group action menus                       |
-| ContextMenu    | Right-click menus for feed/group              |
-| ScrollArea     | Scrollable lists (sidebar, article list)      |
-| Separator      | Visual dividers                               |
-| Command        | Global search (inside Dialog)                 |
-| Sonner (Toast) | Notifications (success, error messages)       |
-| Badge          | Unread count badges on feeds                  |
-| Avatar         | Feed logos/icons                              |
-| Collapsible    | Collapsible feed groups in sidebar            |
-| Tooltip        | Hover tooltips for icon buttons               |
+| Component      | Usage                                          |
+| -------------- | ---------------------------------------------- |
+| Button         | Actions, navigation, quick actions             |
+| Input          | Forms, search, feed URL input                  |
+| Tabs           | Article list filtering (All/Unread/Bookmarked) |
+| Dialog         | Settings, create group, add feed, search       |
+| **Sheet**      | **Article detail drawer (slide from right)**   |
+| DropdownMenu   | Feed/group action menus                        |
+| ContextMenu    | Right-click menus for feed/group               |
+| ScrollArea     | Scrollable lists (sidebar, article list)       |
+| Separator      | Visual dividers                                |
+| Command        | Global search (inside Dialog)                  |
+| Sonner (Toast) | Notifications (success, error messages)        |
+| Badge          | Unread count badges on feeds                   |
+| Avatar         | Feed logos/icons                               |
+| Collapsible    | Collapsible feed groups in sidebar             |
+| Tooltip        | Hover tooltips for icon buttons                |
 
 ## 10. State Management
 
@@ -470,12 +462,14 @@ interface AppState {
 - **Local updates**: Optimistic updates for better UX, rollback on error
 
 **URL Parameters** (primary UI state):
+
 - `tab`: Current filter (all/unread/bookmarked)
 - `feed`: Selected feed ID
 - `group`: Selected group ID
 - `item`: Currently viewed article ID (opens drawer when present)
 
 **Benefits**:
+
 - Shareable URLs with exact app state
 - Browser back/forward navigation works naturally
 - Deep linking to specific articles

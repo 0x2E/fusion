@@ -114,3 +114,17 @@ export interface ImportOpmlResponse {
   failed: number;
   errors?: string[];
 }
+
+export interface BatchCreateFeedsRequest {
+  feeds: Array<{
+    group_id: number;
+    name: string;
+    link: string;
+  }>;
+}
+
+export interface BatchCreateFeedsResponse {
+  created: number;
+  failed: number;
+  errors?: string[];
+}

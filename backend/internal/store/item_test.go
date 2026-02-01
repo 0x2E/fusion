@@ -491,46 +491,6 @@ func TestMarkAllAsRead(t *testing.T) {
 	})
 }
 
-func TestDeleteItem(t *testing.T) {
-	store, _ := setupTestDB(t)
-	defer closeStore(t, store)
-
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-	feed, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
-	item, err := store.CreateItem(feed.ID, "guid-1", "Test Item", "https://example.com/1", "Content", 123)
-	if err != nil {
-		t.Fatalf("CreateItem() failed: %v", err)
-	}
-
-	bookmark, err := store.CreateBookmark(&item.ID, "https://example.com/1", "Test Item", "Content", item.PubDate, "Test Feed")
-	if err != nil {
-		t.Fatalf("CreateBookmark() failed: %v", err)
-	}
-
-	if err := store.DeleteItem(item.ID); err != nil {
-		t.Fatalf("DeleteItem() failed: %v", err)
-	}
-
-	_, err = store.GetItem(item.ID)
-	if !errors.Is(err, ErrNotFound) {
-		t.Fatalf("expected ErrNotFound after deletion, got %v", err)
-	}
-
-	updatedBookmark, err := store.GetBookmark(bookmark.ID)
-	if err != nil {
-		t.Fatalf("GetBookmark() failed: %v", err)
-	}
-	if updatedBookmark.ItemID != nil {
-		t.Error("expected bookmark's item_id to be NULL after item deletion")
-	}
-}
-
 func TestItemExists(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
