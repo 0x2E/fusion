@@ -18,26 +18,36 @@ export function SearchDialog() {
     useUIStore();
   const { feeds, items, getFeedById } = useDataStore();
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   // Reset query when dialog closes
   useEffect(() => {
     if (!isSearchOpen) {
       setQuery("");
+      setDebouncedQuery("");
     }
   }, [isSearchOpen]);
 
-  // Filter feeds by query
-  const filteredFeeds = query
+  // Filter feeds by debounced query
+  const filteredFeeds = debouncedQuery
     ? feeds.filter((feed) =>
-        feed.name.toLowerCase().includes(query.toLowerCase()),
+        feed.name.toLowerCase().includes(debouncedQuery.toLowerCase()),
       )
     : [];
 
-  // Filter articles by query
-  const filteredArticles = query
+  // Filter articles by debounced query
+  const filteredArticles = debouncedQuery
     ? items
         .filter((item) =>
-          item.title.toLowerCase().includes(query.toLowerCase()),
+          item.title.toLowerCase().includes(debouncedQuery.toLowerCase()),
         )
         .slice(0, 10)
     : [];
@@ -113,7 +123,7 @@ export function SearchDialog() {
           </CommandGroup>
         )}
 
-        {!query && (
+        {!debouncedQuery && (
           <CommandGroup heading="Quick Actions">
             <CommandItem className="gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
