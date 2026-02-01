@@ -1,5 +1,6 @@
 import {
-  CheckCircle,
+  Circle,
+  CircleCheck,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -81,7 +82,11 @@ export function ArticleDrawer() {
                   onClick={handleToggleRead}
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
-                  <CheckCircle className="h-4 w-4" />
+                  {article.unread ? (
+                    <Circle className="h-4 w-4 text-[#787774]" />
+                  ) : (
+                    <CircleCheck className="h-4 w-4 text-primary" />
+                  )}
                   {article.unread ? "Mark as read" : "Mark as unread"}
                 </Button>
                 <Button

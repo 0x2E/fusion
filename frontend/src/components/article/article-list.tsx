@@ -61,16 +61,10 @@ export function ArticleList() {
             value={articleFilter}
             onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
           >
-            <TabsList className="h-8">
-              <TabsTrigger value="all" className="text-xs">
-                All
-              </TabsTrigger>
-              <TabsTrigger value="unread" className="text-xs">
-                Unread
-              </TabsTrigger>
-              <TabsTrigger value="starred" className="text-xs">
-                Starred
-              </TabsTrigger>
+            <TabsList>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="unread">Unread</TabsTrigger>
+              <TabsTrigger value="starred">Starred</TabsTrigger>
             </TabsList>
           </Tabs>
         )}

@@ -1,4 +1,4 @@
-import { Circle, Star, ExternalLink } from "lucide-react";
+import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
 import { useUIStore, useDataStore } from "@/store";
 import { itemAPI, bookmarkAPI, type Item } from "@/lib/api";
@@ -84,8 +84,8 @@ export function ArticleItem({ article }: ArticleItemProps) {
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <h3
           className={cn(
-            "line-clamp-2 text-[15px] leading-snug",
-            article.unread ? "font-medium text-[#37352F]" : "text-[#787774]",
+            "line-clamp-2 text-[15px] leading-snug font-medium",
+            article.unread ? "text-foreground" : "text-muted-foreground",
           )}
         >
           {article.title}
@@ -122,12 +122,11 @@ export function ArticleItem({ article }: ArticleItemProps) {
           )}
           title={article.unread ? "Mark as read" : "Mark as unread"}
         >
-          <Circle
-            className={cn(
-              "h-4 w-4",
-              article.unread ? "text-[#787774]" : "fill-primary text-primary",
-            )}
-          />
+          {article.unread ? (
+            <Circle className="h-4 w-4 text-[#787774]" />
+          ) : (
+            <CircleCheck className="h-4 w-4 text-primary" />
+          )}
         </button>
         <button
           onClick={handleToggleStar}

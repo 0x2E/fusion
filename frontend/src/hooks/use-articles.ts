@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useState } from "react";
-import { itemAPI, type ListItemsParams } from "@/lib/api";
+import { itemAPI, type ListItemsParams, type Item } from "@/lib/api";
 import { useDataStore, useUIStore } from "@/store";
 
 const PAGE_SIZE = 50;
@@ -20,6 +20,8 @@ export function useArticles() {
     markItemsRead,
     getFeedById,
     isItemStarred,
+    bookmarks,
+    feeds,
   } = useDataStore();
 
   const { selectedFeedId, selectedGroupId, articleFilter } = useUIStore();
@@ -87,7 +89,8 @@ export function useArticles() {
     setItemsTotal,
   ]);
 
-  const hasMore = items.length < itemsTotal;
+  // In starred mode, all bookmarks are loaded at once, so no pagination needed
+  const hasMore = articleFilter === "starred" ? false : items.length < itemsTotal;
 
   useEffect(() => {
     const params: ListItemsParams = {};
@@ -98,14 +101,44 @@ export function useArticles() {
   }, [selectedFeedId, selectedGroupId, articleFilter, fetchArticles]);
 
   const filteredArticles = useMemo(() => {
-    let result = items;
-
     if (articleFilter === "starred") {
-      result = result.filter((item) => isItemStarred(item.id));
+      // For starred filter, use bookmarks data directly
+      // This ensures all starred items are shown, not just those in current items page
+      let filteredBookmarks = bookmarks;
+
+      // If a specific feed is selected, filter by feed
+      if (selectedFeedId) {
+        const feed = getFeedById(selectedFeedId);
+        if (feed) {
+          filteredBookmarks = bookmarks.filter((b) => b.feed_name === feed.name);
+        }
+      }
+
+      // If a group is selected, filter by feeds in that group
+      if (selectedGroupId) {
+        const groupFeeds = feeds.filter((f) => f.group_id === selectedGroupId);
+        const feedNames = new Set(groupFeeds.map((f) => f.name));
+        filteredBookmarks = bookmarks.filter((b) => feedNames.has(b.feed_name));
+      }
+
+      // Convert bookmarks to Item-like objects
+      return filteredBookmarks.map(
+        (b): Item => ({
+          id: b.item_id ?? -b.id, // Use negative bookmark id if item_id is null
+          feed_id: feeds.find((f) => f.name === b.feed_name)?.id ?? 0,
+          guid: b.link,
+          title: b.title,
+          link: b.link,
+          content: b.content,
+          pub_date: b.pub_date,
+          unread: false, // Starred items displayed as read
+          created_at: b.created_at,
+        })
+      );
     }
 
-    return result;
-  }, [items, articleFilter, isItemStarred]);
+    return items;
+  }, [items, articleFilter, bookmarks, selectedFeedId, selectedGroupId, getFeedById, feeds]);
 
   const markAsRead = useCallback(
     async (itemId: number) => {
@@ -145,7 +178,14 @@ export function useArticles() {
 
   const getArticleWithMeta = useCallback(
     (itemId: number) => {
-      const item = items.find((i) => i.id === itemId);
+      // First try to find in items
+      let item = items.find((i) => i.id === itemId);
+
+      // If not found and in starred mode, look in filteredArticles (from bookmarks)
+      if (!item && articleFilter === "starred") {
+        item = filteredArticles.find((i) => i.id === itemId);
+      }
+
       if (!item) return null;
 
       const feed = getFeedById(item.feed_id);
@@ -155,7 +195,7 @@ export function useArticles() {
         isStarred: isItemStarred(item.id),
       };
     },
-    [items, getFeedById, isItemStarred]
+    [items, filteredArticles, articleFilter, getFeedById, isItemStarred]
   );
 
   return {
