@@ -1,6 +1,7 @@
+import { Circle, Star, ExternalLink } from "lucide-react";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
 import { useUIStore, useDataStore } from "@/store";
-import type { Item } from "@/lib/api";
+import { itemAPI, bookmarkAPI, type Item } from "@/lib/api";
 
 interface ArticleItemProps {
   article: Item;
@@ -8,37 +9,140 @@ interface ArticleItemProps {
 
 export function ArticleItem({ article }: ArticleItemProps) {
   const { selectedArticleId, setSelectedArticle } = useUIStore();
-  const { getFeedById } = useDataStore();
+  const {
+    getFeedById,
+    markItemRead,
+    markItemUnread,
+    isItemStarred,
+    getBookmarkByItemId,
+    addBookmark,
+    removeBookmark,
+  } = useDataStore();
   const isSelected = selectedArticleId === article.id;
   const feed = getFeedById(article.feed_id);
+  const isStarred = isItemStarred(article.id);
+
+  const handleToggleRead = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      if (article.unread) {
+        await itemAPI.markRead({ ids: [article.id] });
+        markItemRead(article.id);
+      } else {
+        await itemAPI.markUnread({ ids: [article.id] });
+        markItemUnread(article.id);
+      }
+    } catch (error) {
+      console.error("Failed to toggle read status:", error);
+    }
+  };
+
+  const handleToggleStar = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      if (isStarred) {
+        const bookmark = getBookmarkByItemId(article.id);
+        if (bookmark) {
+          await bookmarkAPI.delete(bookmark.id);
+          removeBookmark(bookmark.id);
+        }
+      } else {
+        const response = await bookmarkAPI.create({
+          item_id: article.id,
+          link: article.link,
+          title: article.title,
+          content: article.content,
+          pub_date: article.pub_date,
+          feed_name: feed?.name ?? "Unknown",
+        });
+        if (response.data) {
+          addBookmark(response.data);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to toggle star:", error);
+    }
+  };
+
+  const handleOpenExternal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (article.link) {
+      window.open(article.link, "_blank", "noopener,noreferrer");
+    }
+  };
 
   return (
     <button
       onClick={() => setSelectedArticle(article.id)}
       className={cn(
-        "flex w-full flex-col gap-1 rounded-md border p-3 text-left transition-colors",
-        isSelected
-          ? "border-primary bg-accent"
-          : "border-transparent hover:bg-accent/50",
-        article.unread && "border-l-2 border-l-primary"
+        "group flex w-full items-start gap-4 border-b border-[#F1F1EF] py-4 text-left transition-colors",
+        isSelected && "bg-accent/50",
       )}
     >
-      <h3
-        className={cn(
-          "line-clamp-2 text-sm",
-          article.unread ? "font-medium" : "text-muted-foreground"
-        )}
-      >
-        {article.title}
-      </h3>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span className="truncate">{feed?.name ?? "Unknown"}</span>
-        <span>·</span>
-        <span className="shrink-0">{formatDate(article.pub_date)}</span>
+      {/* Article Content */}
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <h3
+          className={cn(
+            "line-clamp-2 text-[15px] leading-snug",
+            article.unread ? "font-medium text-[#37352F]" : "text-[#787774]",
+          )}
+        >
+          {article.title}
+        </h3>
+        <p className="line-clamp-2 text-sm text-[#787774]">
+          {extractSummary(article.content, 150)}
+        </p>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="truncate font-medium text-[#91918E]">
+            {feed?.name ?? "Unknown"}
+          </span>
+          <span className="text-[#91918E]">·</span>
+          <span className="shrink-0 text-[#91918E]">
+            {formatDate(article.pub_date)}
+          </span>
+        </div>
       </div>
-      <p className="line-clamp-2 text-xs text-muted-foreground">
-        {extractSummary(article.content, 100)}
-      </p>
+
+      {/* Article Actions */}
+      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <button
+          onClick={handleToggleRead}
+          className={cn(
+            "rounded-md p-1.5 transition-colors hover:bg-[#E5E5E3]",
+            article.unread ? "bg-[#F7F7F5]" : "bg-primary/10",
+          )}
+          title={article.unread ? "Mark as read" : "Mark as unread"}
+        >
+          <Circle
+            className={cn(
+              "h-4 w-4",
+              article.unread ? "text-[#787774]" : "fill-primary text-primary",
+            )}
+          />
+        </button>
+        <button
+          onClick={handleToggleStar}
+          className={cn(
+            "rounded-md p-1.5 transition-colors hover:bg-[#E5E5E3]",
+            isStarred ? "bg-amber-50" : "bg-[#F7F7F5]",
+          )}
+          title={isStarred ? "Unstar" : "Star"}
+        >
+          <Star
+            className={cn(
+              "h-4 w-4",
+              isStarred ? "fill-amber-500 text-amber-500" : "text-[#787774]",
+            )}
+          />
+        </button>
+        <button
+          onClick={handleOpenExternal}
+          className="rounded-md bg-[#F7F7F5] p-1.5 transition-colors hover:bg-[#E5E5E3]"
+          title="Open in browser"
+        >
+          <ExternalLink className="h-4 w-4 text-[#787774]" />
+        </button>
+      </div>
     </button>
   );
 }

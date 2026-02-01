@@ -70,7 +70,7 @@ export function ArticleList() {
 
         {/* Article list */}
         <ScrollArea className="flex-1">
-          <div className="space-y-1">
+          <div>
             {isLoading && articles.length === 0 ? (
               <div className="space-y-2 p-2">
                 {[1, 2, 3, 4, 5].map((i) => (
