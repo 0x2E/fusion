@@ -1,4 +1,4 @@
-import { CheckCheck } from "lucide-react";
+import { CheckCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +8,14 @@ import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useUIStore, useDataStore, type ArticleFilter } from "@/store";
 
 export function ArticleList() {
-  const { articles, isLoading, markAllAsRead } = useArticles();
+  const {
+    articles,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+    markAllAsRead,
+  } = useArticles();
   const { articleFilter, setArticleFilter, selectedFeedId, selectedGroupId } =
     useUIStore();
   const { items, getFeedById, getGroupById } = useDataStore();
@@ -47,7 +54,7 @@ export function ArticleList() {
       </div>
 
       {/* Article area with filter tabs */}
-      <div className="flex flex-1 flex-col gap-4 overflow-hidden px-6 py-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-6 py-4">
         {/* Filter tabs - hidden when no articles exist */}
         {items.length > 0 && (
           <Tabs
@@ -69,7 +76,7 @@ export function ArticleList() {
         )}
 
         {/* Article list */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="min-h-0 flex-1">
           <div>
             {isLoading && articles.length === 0 ? (
               <div className="space-y-2 p-2">
@@ -87,9 +94,27 @@ export function ArticleList() {
                 </p>
               </div>
             ) : (
-              articles.map((article) => (
-                <ArticleItem key={article.id} article={article} />
-              ))
+              <>
+                {articles.map((article) => (
+                  <ArticleItem key={article.id} article={article} />
+                ))}
+                {hasMore && (
+                  <div className="flex justify-center py-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={loadMore}
+                      disabled={isLoadingMore}
+                      className="gap-2"
+                    >
+                      {isLoadingMore && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                      {isLoadingMore ? "Loading..." : "Load more"}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </ScrollArea>

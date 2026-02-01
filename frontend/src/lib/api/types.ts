@@ -19,6 +19,7 @@ export interface Feed {
   proxy?: string;
   created_at: number;
   updated_at: number;
+  unread_count: number;
 }
 
 export interface Item {

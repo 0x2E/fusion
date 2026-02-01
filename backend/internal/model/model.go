@@ -22,6 +22,8 @@ type Feed struct {
 	Proxy     string `json:"proxy,omitempty"`
 	CreatedAt int64  `json:"created_at"`
 	UpdatedAt int64  `json:"updated_at"`
+
+	UnreadCount int64 `json:"unread_count"`
 }
 
 // Item represents a feed item.

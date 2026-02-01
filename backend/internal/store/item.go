@@ -176,3 +176,32 @@ func (s *Store) ItemExists(feedID int64, guid string) (bool, error) {
 		sql.Named("feed_id", feedID), sql.Named("guid", guid)).Scan(&exists)
 	return exists, err
 }
+
+// CountItems returns the total count of items matching the filter criteria.
+func (s *Store) CountItems(params ListItemsParams) (int, error) {
+	query := `SELECT COUNT(*) FROM items`
+	args := []interface{}{}
+
+	if params.GroupID != nil {
+		query += ` INNER JOIN feeds ON items.feed_id = feeds.id`
+	}
+
+	query += ` WHERE 1=1`
+
+	if params.FeedID != nil {
+		query += ` AND items.feed_id = :feed_id`
+		args = append(args, sql.Named("feed_id", *params.FeedID))
+	}
+	if params.GroupID != nil {
+		query += ` AND feeds.group_id = :group_id`
+		args = append(args, sql.Named("group_id", *params.GroupID))
+	}
+	if params.Unread != nil {
+		query += ` AND items.unread = :unread`
+		args = append(args, sql.Named("unread", boolToInt(*params.Unread)))
+	}
+
+	var count int
+	err := s.db.QueryRow(query, args...).Scan(&count)
+	return count, err
+}

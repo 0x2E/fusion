@@ -11,9 +11,11 @@ import (
 
 func (s *Store) ListFeeds() ([]*model.Feed, error) {
 	rows, err := s.db.Query(`
-		SELECT id, group_id, name, link, site_url, last_build, failure, failures, suspended, proxy, created_at, updated_at
-		FROM feeds
-		ORDER BY id
+		SELECT f.id, f.group_id, f.name, f.link, f.site_url, f.last_build,
+		       f.failure, f.failures, f.suspended, f.proxy, f.created_at, f.updated_at,
+		       (SELECT COUNT(*) FROM items WHERE feed_id = f.id AND unread = 1) AS unread_count
+		FROM feeds f
+		ORDER BY f.id
 	`)
 	if err != nil {
 		return nil, err
@@ -24,7 +26,7 @@ func (s *Store) ListFeeds() ([]*model.Feed, error) {
 	for rows.Next() {
 		f := &model.Feed{}
 		var suspended int
-		if err := rows.Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt); err != nil {
+		if err := rows.Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt, &f.UnreadCount); err != nil {
 			return nil, err
 		}
 		f.Suspended = intToBool(suspended)

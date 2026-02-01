@@ -66,25 +66,25 @@ export function useFeeds() {
 
   const getUnreadCount = useCallback(
     (feedId: number) => {
-      const { items } = useDataStore.getState();
-      return items.filter((item) => item.feed_id === feedId && item.unread).length;
+      const feed = feeds.find((f) => f.id === feedId);
+      return feed?.unread_count ?? 0;
     },
-    []
+    [feeds]
   );
 
   const getGroupUnreadCount = useCallback(
     (groupId: number) => {
-      const feedIds = getFeedsByGroup(groupId).map((f) => f.id);
-      const { items } = useDataStore.getState();
-      return items.filter((item) => feedIds.includes(item.feed_id) && item.unread).length;
+      return getFeedsByGroup(groupId).reduce(
+        (sum, f) => sum + (f.unread_count ?? 0),
+        0
+      );
     },
     [getFeedsByGroup]
   );
 
   const getTotalUnreadCount = useCallback(() => {
-    const { items } = useDataStore.getState();
-    return items.filter((item) => item.unread).length;
-  }, []);
+    return feeds.reduce((sum, f) => sum + (f.unread_count ?? 0), 0);
+  }, [feeds]);
 
   return {
     groups,

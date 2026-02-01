@@ -1,13 +1,18 @@
-import { useEffect, useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo, useState } from "react";
 import { itemAPI, type ListItemsParams } from "@/lib/api";
 import { useDataStore, useUIStore } from "@/store";
+
+const PAGE_SIZE = 50;
 
 export function useArticles() {
   const {
     items,
+    itemsTotal,
     isLoadingItems,
     itemsError,
     setItems,
+    appendItems,
+    setItemsTotal,
     setLoadingItems,
     setItemsError,
     markItemRead,
@@ -18,6 +23,7 @@ export function useArticles() {
   } = useDataStore();
 
   const { selectedFeedId, selectedGroupId, articleFilter } = useUIStore();
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const fetchArticles = useCallback(
     async (params?: ListItemsParams) => {
@@ -25,18 +31,19 @@ export function useArticles() {
       setItemsError(null);
       try {
         const response = await itemAPI.list({
-          limit: 100,
+          limit: PAGE_SIZE,
           order_by: "pub_date:desc",
           ...params,
         });
         setItems(response.data);
+        setItemsTotal(response.total);
       } catch (error) {
         setItemsError(error instanceof Error ? error.message : "Failed to load articles");
       } finally {
         setLoadingItems(false);
       }
     },
-    [setItems, setLoadingItems, setItemsError]
+    [setItems, setItemsTotal, setLoadingItems, setItemsError]
   );
 
   const refresh = useCallback(async () => {
@@ -46,6 +53,41 @@ export function useArticles() {
     if (articleFilter === "unread") params.unread = true;
     await fetchArticles(params);
   }, [fetchArticles, selectedFeedId, selectedGroupId, articleFilter]);
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || items.length >= itemsTotal) return;
+
+    setIsLoadingMore(true);
+    try {
+      const params: ListItemsParams = {
+        limit: PAGE_SIZE,
+        offset: items.length,
+        order_by: "pub_date:desc",
+      };
+      if (selectedFeedId) params.feed_id = selectedFeedId;
+      if (selectedGroupId) params.group_id = selectedGroupId;
+      if (articleFilter === "unread") params.unread = true;
+
+      const response = await itemAPI.list(params);
+      appendItems(response.data);
+      setItemsTotal(response.total);
+    } catch (error) {
+      console.error("Failed to load more articles:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [
+    isLoadingMore,
+    items.length,
+    itemsTotal,
+    selectedFeedId,
+    selectedGroupId,
+    articleFilter,
+    appendItems,
+    setItemsTotal,
+  ]);
+
+  const hasMore = items.length < itemsTotal;
 
   useEffect(() => {
     const params: ListItemsParams = {};
@@ -119,8 +161,11 @@ export function useArticles() {
   return {
     articles: filteredArticles,
     isLoading: isLoadingItems,
+    isLoadingMore,
+    hasMore,
     error: itemsError,
     refresh,
+    loadMore,
     markAsRead,
     markAsUnread,
     markAllAsRead,

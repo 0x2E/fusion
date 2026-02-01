@@ -6,7 +6,7 @@ export function Sidebar() {
   const { setSearchOpen, setSettingsOpen } = useUIStore();
 
   return (
-    <aside className="flex h-full w-[260px] shrink-0 flex-col border-r bg-sidebar">
+    <aside className="flex h-full w-75 flex-none flex-col overflow-hidden border-r bg-sidebar">
       {/* Header */}
       <div className="flex items-center gap-2 border-b px-4 py-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">

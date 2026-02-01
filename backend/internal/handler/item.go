@@ -74,7 +74,13 @@ func (h *Handler) listItems(c *gin.Context) {
 		return
 	}
 
-	listResponse(c, items, len(items))
+	total, err := h.store.CountItems(params)
+	if err != nil {
+		internalError(c, err, "count items")
+		return
+	}
+
+	listResponse(c, items, total)
 }
 
 func (h *Handler) getItem(c *gin.Context) {

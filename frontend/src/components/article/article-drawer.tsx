@@ -1,23 +1,14 @@
 import {
-  BookmarkPlus,
-  BookmarkCheck,
-  Check,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Star,
   X,
-  Circle,
 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUIStore, useDataStore } from "@/store";
 import { useArticles } from "@/hooks/use-articles";
 import { useStarred } from "@/hooks/use-starred";
@@ -63,6 +54,14 @@ export function ArticleDrawer() {
     window.open(article.link, "_blank", "noopener,noreferrer");
   };
 
+  const getLinkDomain = (url: string) => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return url;
+    }
+  };
+
   return (
     <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>
       <SheetContent
@@ -72,63 +71,37 @@ export function ArticleDrawer() {
         {article && (
           <div className="flex h-full flex-col">
             {/* Header */}
-            <SheetHeader className="flex flex-row items-center justify-between border-b px-4 py-3">
-              <div className="flex items-center gap-1">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleToggleRead}
-                        className="h-8 w-8"
-                      >
-                        {article.unread ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Circle className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {article.unread ? "Mark as read" : "Mark as unread"}
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleToggleStar}
-                        className="h-8 w-8"
-                      >
-                        {starred ? (
-                          <BookmarkCheck className="h-4 w-4 text-primary" />
-                        ) : (
-                          <BookmarkPlus className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {starred ? "Remove star" : "Star article"}
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleOpenOriginal}
-                        className="h-8 w-8"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Open original</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+            <div className="flex items-center justify-between border-b px-6 py-3">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleToggleRead}
+                  className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  {article.unread ? "Mark as read" : "Mark as unread"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleToggleStar}
+                  className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  <Star
+                    className={`h-4 w-4 ${starred ? "fill-current text-yellow-500" : ""}`}
+                  />
+                  Star
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenOriginal}
+                  className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Original
+                </Button>
               </div>
 
               <SheetTitle className="sr-only">{article.title}</SheetTitle>
@@ -137,28 +110,41 @@ export function ArticleDrawer() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setSelectedArticle(null)}
-                className="h-8 w-8"
+                className="h-[30px] w-[30px] rounded-md"
               >
-                <X className="h-4 w-4" />
+                <X className="h-[18px] w-[18px] text-muted-foreground" />
               </Button>
-            </SheetHeader>
+            </div>
 
             {/* Content */}
             <ScrollArea className="flex-1">
-              <article className="p-6">
-                <h1 className="text-2xl font-bold leading-tight">
-                  {article.title}
-                </h1>
-                <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>{feed?.name ?? "Unknown"}</span>
-                  <span>·</span>
-                  <span>{formatDate(article.pub_date)}</span>
+              <article className="px-12 py-8">
+                <div className="space-y-3">
+                  <h1 className="text-[28px] font-bold leading-[1.3]">
+                    {article.title}
+                  </h1>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                      {feed?.name ?? "Unknown"}
+                    </span>
+                    <span className="text-muted-foreground/70">·</span>
+                    <span className="text-muted-foreground">
+                      {formatDate(article.pub_date)}
+                    </span>
+                    <span className="text-muted-foreground/70">·</span>
+                    <a
+                      href={article.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      {getLinkDomain(article.link)}
+                    </a>
+                  </div>
                 </div>
 
-                <Separator className="my-6" />
-
                 <div
-                  className="prose prose-sm max-w-none dark:prose-invert"
+                  className="prose prose-base mt-6 max-w-none leading-[1.7] dark:prose-invert"
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHTML(article.content),
                   }}
@@ -167,23 +153,23 @@ export function ArticleDrawer() {
             </ScrollArea>
 
             {/* Footer - Navigation */}
-            <div className="flex items-center justify-between border-t px-4 py-3">
+            <div className="flex items-center justify-between border-t px-6 py-3">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={goToPrevious}
                 disabled={!hasPrevious()}
-                className="gap-1"
+                className="h-auto gap-1.5 px-3 py-2 text-[13px] font-medium text-muted-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={goToNext}
                 disabled={!hasNext()}
-                className="gap-1"
+                className="h-auto gap-1.5 px-3 py-2 text-[13px] font-medium text-muted-foreground"
               >
                 Next
                 <ChevronRight className="h-4 w-4" />

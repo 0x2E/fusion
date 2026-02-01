@@ -12,34 +12,26 @@ import type { Feed } from "@/lib/api";
 interface FeedGroupProps {
   name: string;
   feeds: Feed[];
-  unreadCount: number;
-  getUnreadCount: (feedId: number) => number;
 }
 
-export function FeedGroup({
-  name,
-  feeds,
-  unreadCount,
-  getUnreadCount,
-}: FeedGroupProps) {
+export function FeedGroup({ name, feeds }: FeedGroupProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-accent/50">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full min-w-0">
+      <CollapsibleTrigger className="flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm hover:bg-accent/50">
         <ChevronRight
           className={cn(
-            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform",
             isOpen && "rotate-90",
           )}
         />
-        <span className="flex-1 truncate text-left">{name}</span>
-        {unreadCount > 0 && (
-          <span className="text-xs text-muted-foreground">{unreadCount}</span>
-        )}
+        <span className="block min-w-0 max-w-full flex-1 truncate text-left font-medium">
+          {name}
+        </span>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="ml-3 mt-0.5 space-y-0.5 border-l pl-2">
+        <div className="w-full min-w-0 pl-5">
           {feeds.map((feed) => (
             <FeedItem
               key={feed.id}
@@ -47,7 +39,7 @@ export function FeedGroup({
               name={feed.name}
               feedLink={feed.link}
               siteUrl={feed.site_url}
-              unreadCount={getUnreadCount(feed.id)}
+              unreadCount={feed.unread_count}
             />
           ))}
         </div>

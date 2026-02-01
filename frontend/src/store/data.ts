@@ -6,6 +6,7 @@ interface DataState {
   groups: Group[];
   feeds: Feed[];
   items: Item[];
+  itemsTotal: number;
   bookmarks: Bookmark[];
 
   // Loading states
@@ -24,6 +25,8 @@ interface DataState {
   setGroups: (groups: Group[]) => void;
   setFeeds: (feeds: Feed[]) => void;
   setItems: (items: Item[]) => void;
+  appendItems: (items: Item[]) => void;
+  setItemsTotal: (total: number) => void;
   setBookmarks: (bookmarks: Bookmark[]) => void;
 
   setLoadingGroups: (loading: boolean) => void;
@@ -40,6 +43,11 @@ interface DataState {
   markItemRead: (itemId: number) => void;
   markItemUnread: (itemId: number) => void;
   markItemsRead: (itemIds: number[]) => void;
+
+  // Feed unread count mutations
+  decrementFeedUnreadCount: (feedId: number) => void;
+  incrementFeedUnreadCount: (feedId: number) => void;
+  decrementFeedUnreadCounts: (feedCounts: Map<number, number>) => void;
 
   // Bookmark mutations
   addBookmark: (bookmark: Bookmark) => void;
@@ -70,6 +78,7 @@ export const useDataStore = create<DataState>((set, get) => ({
   groups: [],
   feeds: [],
   items: [],
+  itemsTotal: 0,
   bookmarks: [],
 
   isLoadingGroups: false,
@@ -85,6 +94,9 @@ export const useDataStore = create<DataState>((set, get) => ({
   setGroups: (groups) => set({ groups }),
   setFeeds: (feeds) => set({ feeds }),
   setItems: (items) => set({ items }),
+  appendItems: (items) =>
+    set((state) => ({ items: [...state.items, ...items] })),
+  setItemsTotal: (total) => set({ itemsTotal: total }),
   setBookmarks: (bookmarks) => set({ bookmarks }),
 
   setLoadingGroups: (loading) => set({ isLoadingGroups: loading }),
@@ -98,24 +110,80 @@ export const useDataStore = create<DataState>((set, get) => ({
   setBookmarksError: (error) => set({ bookmarksError: error }),
 
   markItemRead: (itemId) =>
-    set((state) => ({
-      items: state.items.map((item) =>
-        item.id === itemId ? { ...item, unread: false } : item
-      ),
-    })),
+    set((state) => {
+      const item = state.items.find((i) => i.id === itemId);
+      if (!item || !item.unread) return state;
+      return {
+        items: state.items.map((i) =>
+          i.id === itemId ? { ...i, unread: false } : i
+        ),
+        feeds: state.feeds.map((f) =>
+          f.id === item.feed_id
+            ? { ...f, unread_count: Math.max(0, f.unread_count - 1) }
+            : f
+        ),
+      };
+    }),
 
   markItemUnread: (itemId) =>
+    set((state) => {
+      const item = state.items.find((i) => i.id === itemId);
+      if (!item || item.unread) return state;
+      return {
+        items: state.items.map((i) =>
+          i.id === itemId ? { ...i, unread: true } : i
+        ),
+        feeds: state.feeds.map((f) =>
+          f.id === item.feed_id ? { ...f, unread_count: f.unread_count + 1 } : f
+        ),
+      };
+    }),
+
+  markItemsRead: (itemIds) =>
+    set((state) => {
+      const feedCounts = new Map<number, number>();
+      for (const item of state.items) {
+        if (itemIds.includes(item.id) && item.unread) {
+          feedCounts.set(item.feed_id, (feedCounts.get(item.feed_id) || 0) + 1);
+        }
+      }
+      return {
+        items: state.items.map((item) =>
+          itemIds.includes(item.id) ? { ...item, unread: false } : item
+        ),
+        feeds: state.feeds.map((f) => {
+          const count = feedCounts.get(f.id);
+          return count
+            ? { ...f, unread_count: Math.max(0, f.unread_count - count) }
+            : f;
+        }),
+      };
+    }),
+
+  decrementFeedUnreadCount: (feedId) =>
     set((state) => ({
-      items: state.items.map((item) =>
-        item.id === itemId ? { ...item, unread: true } : item
+      feeds: state.feeds.map((f) =>
+        f.id === feedId
+          ? { ...f, unread_count: Math.max(0, f.unread_count - 1) }
+          : f
       ),
     })),
 
-  markItemsRead: (itemIds) =>
+  incrementFeedUnreadCount: (feedId) =>
     set((state) => ({
-      items: state.items.map((item) =>
-        itemIds.includes(item.id) ? { ...item, unread: false } : item
+      feeds: state.feeds.map((f) =>
+        f.id === feedId ? { ...f, unread_count: f.unread_count + 1 } : f
       ),
+    })),
+
+  decrementFeedUnreadCounts: (feedCounts) =>
+    set((state) => ({
+      feeds: state.feeds.map((f) => {
+        const count = feedCounts.get(f.id);
+        return count
+          ? { ...f, unread_count: Math.max(0, f.unread_count - count) }
+          : f;
+      }),
     })),
 
   addBookmark: (bookmark) =>

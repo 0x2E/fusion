@@ -12,17 +12,11 @@ import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store";
 import { FolderPlus, Inbox, Plus, Settings, Upload } from "lucide-react";
 import { FeedGroup } from "./feed-group";
+import { FeedItem } from "./feed-item";
 
 export function FeedList() {
-  const {
-    groups,
-    feeds,
-    isLoading,
-    getFeedsByGroup,
-    getUnreadCount,
-    getGroupUnreadCount,
-    getTotalUnreadCount,
-  } = useFeeds();
+  const { groups, feeds, isLoading, getFeedsByGroup, getTotalUnreadCount } =
+    useFeeds();
   const {
     selectedFeedId,
     selectedGroupId,
@@ -49,8 +43,8 @@ export function FeedList() {
   }
 
   return (
-    <ScrollArea className="flex-1">
-      <div className="p-2 space-y-0.5">
+    <ScrollArea className="flex-1 w-full min-w-0 overflow-hidden [&_[data-slot=scroll-area-viewport]>div]:!block">
+      <div className="w-full min-w-0 p-2 space-y-0.5">
         {/* Feeds header */}
         <div className="flex items-center justify-between px-2 py-1">
           <span className="text-xs font-medium text-muted-foreground">
@@ -94,32 +88,26 @@ export function FeedList() {
         <button
           onClick={selectAll}
           className={cn(
-            "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+            "flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
             isAllSelected
               ? "bg-accent text-accent-foreground"
               : "hover:bg-accent/50",
           )}
         >
-          <Inbox className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="flex-1">All</span>
-          {totalUnread > 0 && (
-            <span className="text-xs text-muted-foreground">{totalUnread}</span>
-          )}
+          <Inbox className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1 font-medium">All</span>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {totalUnread}
+          </span>
         </button>
 
         {/* Feed groups */}
-        <div className="mt-2 space-y-1">
+        <div className="mt-2 w-full min-w-0 space-y-1">
           {groups.map((group) => {
             const groupFeeds = getFeedsByGroup(group.id);
 
             return (
-              <FeedGroup
-                key={group.id}
-                name={group.name}
-                feeds={groupFeeds}
-                unreadCount={getGroupUnreadCount(group.id)}
-                getUnreadCount={getUnreadCount}
-              />
+              <FeedGroup key={group.id} name={group.name} feeds={groupFeeds} />
             );
           })}
 
@@ -127,28 +115,14 @@ export function FeedList() {
           {feeds
             .filter((f) => f.group_id === 0)
             .map((feed) => (
-              <div key={feed.id} className="pl-5">
-                <button
-                  onClick={() => useUIStore.getState().setSelectedFeed(feed.id)}
-                  className={cn(
-                    "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                    selectedFeedId === feed.id
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-accent/50",
-                  )}
-                >
-                  <div
-                    className="h-4 w-4 shrink-0 rounded"
-                    style={{ backgroundColor: "#EB5757" }}
-                  />
-                  <span className="flex-1 truncate">{feed.name}</span>
-                  {getUnreadCount(feed.id) > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {getUnreadCount(feed.id)}
-                    </span>
-                  )}
-                </button>
-              </div>
+              <FeedItem
+                key={feed.id}
+                id={feed.id}
+                name={feed.name}
+                feedLink={feed.link}
+                siteUrl={feed.site_url}
+                unreadCount={feed.unread_count}
+              />
             ))}
         </div>
       </div>
