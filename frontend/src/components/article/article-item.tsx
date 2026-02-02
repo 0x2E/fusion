@@ -74,10 +74,18 @@ export function ArticleItem({ article }: ArticleItemProps) {
   };
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => setSelectedArticle(article.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setSelectedArticle(article.id);
+        }
+      }}
       className={cn(
-        "group flex w-full items-start gap-4 border-b border-[#F1F1EF] px-4 py-4 text-left transition-colors hover:bg-accent/50",
+        "group flex w-full cursor-pointer items-start gap-4 border-b border-[#F1F1EF] px-4 py-4 text-left transition-colors hover:bg-accent/50",
         isSelected && "bg-accent",
       )}
     >
@@ -152,6 +160,6 @@ export function ArticleItem({ article }: ArticleItemProps) {
           <ExternalLink className="h-4 w-4 text-[#787774]" />
         </button>
       </div>
-    </button>
+    </div>
   );
 }
