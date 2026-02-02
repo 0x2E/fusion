@@ -106,7 +106,12 @@ export function FeedList() {
             const groupFeeds = getFeedsByGroup(group.id);
 
             return (
-              <FeedGroup key={group.id} name={group.name} feeds={groupFeeds} />
+              <FeedGroup
+                key={group.id}
+                groupId={group.id}
+                name={group.name}
+                feeds={groupFeeds}
+              />
             );
           })}
 
