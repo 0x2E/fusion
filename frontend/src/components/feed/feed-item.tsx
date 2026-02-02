@@ -38,7 +38,7 @@ export function FeedItem({ feed }: FeedItemProps) {
       <span className="block min-w-0 max-w-full flex-1 truncate">
         {feed.name}
       </span>
-      <span className="ml-2 shrink-0 text-xs text-muted-foreground group-hover:hidden">
+      <span className="ml-2 shrink-0 text-xs text-muted-foreground/60 group-hover:hidden">
         {feed.unread_count > 0 ? feed.unread_count : ""}
       </span>
       <Settings
