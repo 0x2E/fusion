@@ -50,7 +50,7 @@ func (h *Handler) listItems(c *gin.Context) {
 		}
 		params.Limit = val
 	} else {
-		params.Limit = 50
+		params.Limit = 10
 	}
 
 	if offset := c.Query("offset"); offset != "" {

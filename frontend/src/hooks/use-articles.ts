@@ -3,7 +3,7 @@ import { itemAPI, type ListItemsParams, type Item } from "@/lib/api";
 import { useDataStore } from "@/store";
 import { useUrlState } from "./use-url-state";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 10;
 
 export function useArticles() {
   const {
@@ -41,12 +41,14 @@ export function useArticles() {
         setItems(response.data);
         setItemsTotal(response.total);
       } catch (error) {
-        setItemsError(error instanceof Error ? error.message : "Failed to load articles");
+        setItemsError(
+          error instanceof Error ? error.message : "Failed to load articles",
+        );
       } finally {
         setLoadingItems(false);
       }
     },
-    [setItems, setItemsTotal, setLoadingItems, setItemsError]
+    [setItems, setItemsTotal, setLoadingItems, setItemsError],
   );
 
   const refresh = useCallback(async () => {
@@ -91,7 +93,8 @@ export function useArticles() {
   ]);
 
   // In starred mode, all bookmarks are loaded at once, so no pagination needed
-  const hasMore = articleFilter === "starred" ? false : items.length < itemsTotal;
+  const hasMore =
+    articleFilter === "starred" ? false : items.length < itemsTotal;
 
   useEffect(() => {
     const params: ListItemsParams = {};
@@ -111,7 +114,9 @@ export function useArticles() {
       if (selectedFeedId) {
         const feed = getFeedById(selectedFeedId);
         if (feed) {
-          filteredBookmarks = bookmarks.filter((b) => b.feed_name === feed.name);
+          filteredBookmarks = bookmarks.filter(
+            (b) => b.feed_name === feed.name,
+          );
         }
       }
 
@@ -134,12 +139,20 @@ export function useArticles() {
           pub_date: b.pub_date,
           unread: false, // Starred items displayed as read
           created_at: b.created_at,
-        })
+        }),
       );
     }
 
     return items;
-  }, [items, articleFilter, bookmarks, selectedFeedId, selectedGroupId, getFeedById, feeds]);
+  }, [
+    items,
+    articleFilter,
+    bookmarks,
+    selectedFeedId,
+    selectedGroupId,
+    getFeedById,
+    feeds,
+  ]);
 
   const markAsRead = useCallback(
     async (itemId: number) => {
@@ -150,7 +163,7 @@ export function useArticles() {
         console.error("Failed to mark as read:", error);
       }
     },
-    [markItemRead]
+    [markItemRead],
   );
 
   const markAsUnread = useCallback(
@@ -162,7 +175,7 @@ export function useArticles() {
         console.error("Failed to mark as unread:", error);
       }
     },
-    [markItemUnread]
+    [markItemUnread],
   );
 
   const markAllAsRead = useCallback(async () => {
@@ -196,7 +209,7 @@ export function useArticles() {
         isStarred: isItemStarred(item.id),
       };
     },
-    [items, filteredArticles, articleFilter, getFeedById, isItemStarred]
+    [items, filteredArticles, articleFilter, getFeedById, isItemStarred],
   );
 
   return {

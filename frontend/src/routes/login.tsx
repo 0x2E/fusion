@@ -25,7 +25,6 @@ function LoginPage() {
     setIsLoading(true);
     try {
       await sessionAPI.login({ password });
-      toast.success("Welcome back!");
       navigate({ to: "/" });
     } catch (error) {
       toast.error("Invalid password");

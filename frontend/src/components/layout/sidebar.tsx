@@ -18,14 +18,14 @@ export function Sidebar() {
       {/* Search button */}
       <div className="px-2 pt-3">
         <button
-          className="flex w-full items-center justify-between rounded-md bg-[#F1F1EF] px-3 py-2 text-muted-foreground transition-colors hover:bg-[#E5E5E3]"
+          className="flex w-full items-center justify-between rounded-md bg-muted px-3 py-2 text-muted-foreground transition-colors hover:bg-accent"
           onClick={() => setSearchOpen(true)}
         >
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4" />
             <span className="text-sm">Search</span>
           </div>
-          <kbd className="rounded bg-[#E5E5E3] px-1.5 py-0.5 font-mono text-[11px] font-medium">
+          <kbd className="rounded bg-accent px-1.5 py-0.5 font-mono text-[11px] font-medium">
             ⌘K
           </kbd>
         </button>

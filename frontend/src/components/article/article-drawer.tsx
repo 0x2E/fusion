@@ -84,7 +84,7 @@ export function ArticleDrawer() {
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
                   {article.unread ? (
-                    <Circle className="h-4 w-4 text-[#787774]" />
+                    <Circle className="h-4 w-4 text-muted-foreground" />
                   ) : (
                     <CircleCheck className="h-4 w-4 text-primary" />
                   )}
@@ -97,7 +97,7 @@ export function ArticleDrawer() {
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
                   <Star
-                    className={`h-4 w-4 ${starred ? "fill-current text-yellow-500" : ""}`}
+                    className={`h-4 w-4 ${starred ? "fill-current text-amber-500" : ""}`}
                   />
                   Star
                 </Button>
@@ -152,7 +152,7 @@ export function ArticleDrawer() {
                       href={article.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {getLinkDomain(article.link)}
                     </a>
