@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 import { useUIStore } from "@/store";
+import { useUrlState } from "./use-url-state";
 
 export function useKeyboardShortcuts() {
-  const { setSearchOpen, setSettingsOpen, isSearchOpen, isSettingsOpen, selectedArticleId, setSelectedArticle } =
+  const { setSearchOpen, setSettingsOpen, isSearchOpen, isSettingsOpen } =
     useUIStore();
+  const { selectedArticleId, setSelectedArticle } = useUrlState();
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -37,7 +39,7 @@ export function useKeyboardShortcuts() {
 }
 
 export function useArticleNavigation(articleIds: number[]) {
-  const { selectedArticleId, setSelectedArticle } = useUIStore();
+  const { selectedArticleId, setSelectedArticle } = useUrlState();
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {

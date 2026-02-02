@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFeeds } from "@/hooks/use-feeds";
+import { useUrlState } from "@/hooks/use-url-state";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store";
 import { FolderPlus, Inbox, Plus, Settings, Upload } from "lucide-react";
@@ -17,10 +18,8 @@ import { FeedItem } from "./feed-item";
 export function FeedList() {
   const { groups, feeds, isLoading, getFeedsByGroup, getTotalUnreadCount } =
     useFeeds();
+  const { selectedFeedId, selectedGroupId, selectAll } = useUrlState();
   const {
-    selectedFeedId,
-    selectedGroupId,
-    selectAll,
     setGroupManagementOpen,
     setAddFeedOpen,
     setFeedManagementOpen,

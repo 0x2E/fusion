@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useMemo, useState } from "react";
 import { itemAPI, type ListItemsParams, type Item } from "@/lib/api";
-import { useDataStore, useUIStore } from "@/store";
+import { useDataStore } from "@/store";
+import { useUrlState } from "./use-url-state";
 
 const PAGE_SIZE = 50;
 
@@ -24,7 +25,7 @@ export function useArticles() {
     feeds,
   } = useDataStore();
 
-  const { selectedFeedId, selectedGroupId, articleFilter } = useUIStore();
+  const { selectedFeedId, selectedGroupId, articleFilter } = useUrlState();
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const fetchArticles = useCallback(

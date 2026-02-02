@@ -10,7 +10,8 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useUIStore, useDataStore } from "@/store";
+import { useUrlState } from "@/hooks/use-url-state";
+import { useDataStore } from "@/store";
 import { useArticles } from "@/hooks/use-articles";
 import { useStarred } from "@/hooks/use-starred";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
@@ -18,7 +19,7 @@ import { formatDate, sanitizeHTML } from "@/lib/utils";
 import { getFaviconUrl } from "@/lib/api/favicon";
 
 export function ArticleDrawer() {
-  const { selectedArticleId, setSelectedArticle } = useUIStore();
+  const { selectedArticleId, setSelectedArticle } = useUrlState();
   const { getItemById, getFeedById } = useDataStore();
   const { articles, markAsRead, markAsUnread } = useArticles();
   const { toggleStar, isStarred } = useStarred();

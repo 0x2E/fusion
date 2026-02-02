@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useUIStore } from "@/store";
+import { useUrlState } from "@/hooks/use-url-state";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { Settings } from "lucide-react";
 
@@ -18,7 +18,7 @@ export function FeedItem({
   siteUrl,
   unreadCount,
 }: FeedItemProps) {
-  const { selectedFeedId, setSelectedFeed } = useUIStore();
+  const { selectedFeedId, setSelectedFeed } = useUrlState();
   const isSelected = selectedFeedId === id;
   const faviconUrl = getFaviconUrl(feedLink, siteUrl);
 

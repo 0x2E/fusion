@@ -1,6 +1,7 @@
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
-import { useUIStore, useDataStore } from "@/store";
+import { useUrlState } from "@/hooks/use-url-state";
+import { useDataStore } from "@/store";
 import { itemAPI, bookmarkAPI, type Item } from "@/lib/api";
 import { getFaviconUrl } from "@/lib/api/favicon";
 
@@ -9,7 +10,7 @@ interface ArticleItemProps {
 }
 
 export function ArticleItem({ article }: ArticleItemProps) {
-  const { selectedArticleId, setSelectedArticle } = useUIStore();
+  const { selectedArticleId, setSelectedArticle } = useUrlState();
   const {
     getFeedById,
     markItemRead,

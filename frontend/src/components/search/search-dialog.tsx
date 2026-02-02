@@ -11,11 +11,12 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { useUIStore, useDataStore } from "@/store";
+import { useUrlState } from "@/hooks/use-url-state";
 import { formatDate } from "@/lib/utils";
 
 export function SearchDialog() {
-  const { isSearchOpen, setSearchOpen, setSelectedFeed, setSelectedArticle } =
-    useUIStore();
+  const { isSearchOpen, setSearchOpen } = useUIStore();
+  const { setSelectedFeed, setSelectedArticle } = useUrlState();
   const { feeds, items, getFeedById } = useDataStore();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");

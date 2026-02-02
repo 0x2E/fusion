@@ -5,7 +5,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArticleItem } from "./article-item";
 import { useArticles } from "@/hooks/use-articles";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
-import { useUIStore, useDataStore, type ArticleFilter } from "@/store";
+import { useUrlState, type ArticleFilter } from "@/hooks/use-url-state";
+import { useDataStore } from "@/store";
 
 export function ArticleList() {
   const {
@@ -17,7 +18,7 @@ export function ArticleList() {
     markAllAsRead,
   } = useArticles();
   const { articleFilter, setArticleFilter, selectedFeedId, selectedGroupId } =
-    useUIStore();
+    useUrlState();
   const { items, getFeedById, getGroupById } = useDataStore();
 
   // Setup keyboard navigation
