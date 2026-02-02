@@ -33,14 +33,7 @@ export function FeedGroup({ name, feeds }: FeedGroupProps) {
       <CollapsibleContent>
         <div className="w-full min-w-0 pl-5">
           {feeds.map((feed) => (
-            <FeedItem
-              key={feed.id}
-              id={feed.id}
-              name={feed.name}
-              feedLink={feed.link}
-              siteUrl={feed.site_url}
-              unreadCount={feed.unread_count}
-            />
+            <FeedItem key={feed.id} feed={feed} />
           ))}
         </div>
       </CollapsibleContent>

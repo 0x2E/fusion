@@ -7,6 +7,7 @@ import { SearchDialog } from "@/components/search/search-dialog";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
 import { GroupManagementDialog } from "@/components/group/group-management-dialog";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
+import { EditFeedDialog } from "@/components/feed/edit-feed-dialog";
 import { FeedManagementDialog } from "@/components/feed/feed-management-dialog";
 import { ImportOpmlDialog } from "@/components/feed/import-opml-dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard";
@@ -55,6 +56,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <SettingsDialog />
       <GroupManagementDialog />
       <AddFeedDialog />
+      <EditFeedDialog />
       <FeedManagementDialog />
       <ImportOpmlDialog />
     </div>

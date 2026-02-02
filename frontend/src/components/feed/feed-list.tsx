@@ -114,14 +114,7 @@ export function FeedList() {
           {feeds
             .filter((f) => f.group_id === 0)
             .map((feed) => (
-              <FeedItem
-                key={feed.id}
-                id={feed.id}
-                name={feed.name}
-                feedLink={feed.link}
-                siteUrl={feed.site_url}
-                unreadCount={feed.unread_count}
-              />
+              <FeedItem key={feed.id} feed={feed} />
             ))}
         </div>
       </div>

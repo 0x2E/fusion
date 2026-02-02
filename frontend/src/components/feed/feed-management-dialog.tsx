@@ -16,7 +16,8 @@ import { toast } from "sonner";
 import { generateOPML, downloadFile } from "@/lib/opml";
 
 export function FeedManagementDialog() {
-  const { isFeedManagementOpen, setFeedManagementOpen } = useUIStore();
+  const { isFeedManagementOpen, setFeedManagementOpen, setEditFeedOpen } =
+    useUIStore();
   const { feeds, removeFeed, getGroupById } = useDataStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -166,10 +167,7 @@ export function FeedManagementDialog() {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        onClick={() => {
-                          // TODO: Open feed settings modal
-                          toast.info("Feed settings coming soon");
-                        }}
+                        onClick={() => setEditFeedOpen(true, feed)}
                       >
                         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>

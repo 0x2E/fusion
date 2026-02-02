@@ -80,6 +80,7 @@ export interface CreateFeedRequest {
 export interface UpdateFeedRequest {
   group_id?: number;
   name?: string;
+  link?: string;
   site_url?: string;
   proxy?: string;
 }
