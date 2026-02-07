@@ -73,6 +73,8 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.PATCH("/items/-/read", h.markItemsRead)
 			auth.PATCH("/items/-/unread", h.markItemsUnread)
 
+			auth.GET("/search", h.search)
+
 			auth.GET("/bookmarks", h.listBookmarks)
 			auth.POST("/bookmarks", h.createBookmark)
 			auth.GET("/bookmarks/:id", h.getBookmark)

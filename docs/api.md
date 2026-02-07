@@ -582,6 +582,50 @@ Or mark all items:
 }
 ```
 
+## Search
+
+### Search Feeds and Items
+
+```
+GET /api/search
+```
+
+Search across feeds (by name) and items (by title and content) using substring matching.
+
+**Query Parameters**
+
+| Parameter | Type   | Default | Description                   |
+| --------- | ------ | ------- | ----------------------------- |
+| q         | string | -       | Search query (**required**)   |
+| limit     | number | 10      | Max number of items to return |
+
+**Response** `200 OK`
+
+```json
+{
+  "data": {
+    "feeds": [
+      {
+        "id": 1,
+        "name": "Hacker News",
+        "link": "https://news.ycombinator.com/rss",
+        "site_url": "https://news.ycombinator.com"
+      }
+    ],
+    "items": [
+      {
+        "id": 1,
+        "feed_id": 1,
+        "title": "Article Title",
+        "pub_date": 1703001600
+      }
+    ]
+  }
+}
+```
+
+Returns empty arrays when no matches are found. Missing `q` parameter returns `400 Bad Request`.
+
 ## Bookmarks
 
 Bookmarks store a snapshot of item content, surviving feed/item deletion.

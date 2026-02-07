@@ -177,6 +177,37 @@ func (s *Store) ItemExists(feedID int64, guid string) (bool, error) {
 	return exists, err
 }
 
+type SearchItemResult struct {
+	ID      int64  `json:"id"`
+	FeedID  int64  `json:"feed_id"`
+	Title   string `json:"title"`
+	PubDate int64  `json:"pub_date"`
+}
+
+func (s *Store) SearchItems(query string, limit int) ([]*SearchItemResult, error) {
+	rows, err := s.db.Query(`
+		SELECT id, feed_id, title, pub_date
+		FROM items
+		WHERE title LIKE :query OR content LIKE :query
+		ORDER BY pub_date DESC
+		LIMIT :limit
+	`, sql.Named("query", "%"+query+"%"), sql.Named("limit", limit))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := []*SearchItemResult{}
+	for rows.Next() {
+		i := &SearchItemResult{}
+		if err := rows.Scan(&i.ID, &i.FeedID, &i.Title, &i.PubDate); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	return items, rows.Err()
+}
+
 // CountItems returns the total count of items matching the filter criteria.
 func (s *Store) CountItems(params ListItemsParams) (int, error) {
 	query := `SELECT COUNT(*) FROM items`

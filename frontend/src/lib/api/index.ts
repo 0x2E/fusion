@@ -18,6 +18,7 @@ import type {
   ImportOpmlResponse,
   BatchCreateFeedsRequest,
   BatchCreateFeedsResponse,
+  SearchResponse,
 } from "./types";
 
 // Session APIs
@@ -113,6 +114,14 @@ export const bookmarkAPI = {
 
   delete: (id: number) =>
     api.delete<APIResponse<{ message: string }>>(`/bookmarks/${id}`),
+};
+
+// Search APIs
+export const searchAPI = {
+  search: (q: string, limit = 10) =>
+    api.get<APIResponse<SearchResponse>>(
+      `/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+    ),
 };
 
 // OPML APIs

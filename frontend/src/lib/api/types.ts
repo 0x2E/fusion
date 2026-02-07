@@ -125,6 +125,25 @@ export interface BatchCreateFeedsRequest {
   }>;
 }
 
+export interface SearchFeed {
+  id: number;
+  name: string;
+  link: string;
+  site_url: string;
+}
+
+export interface SearchItem {
+  id: number;
+  feed_id: number;
+  title: string;
+  pub_date: number;
+}
+
+export interface SearchResponse {
+  feeds: SearchFeed[];
+  items: SearchItem[];
+}
+
 export interface BatchCreateFeedsResponse {
   created: number;
   failed: number;

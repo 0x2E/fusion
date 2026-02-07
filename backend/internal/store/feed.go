@@ -72,6 +72,36 @@ func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string) (*m
 	return s.GetFeed(id)
 }
 
+type SearchFeedResult struct {
+	ID      int64  `json:"id"`
+	Name    string `json:"name"`
+	Link    string `json:"link"`
+	SiteURL string `json:"site_url"`
+}
+
+func (s *Store) SearchFeeds(query string) ([]*SearchFeedResult, error) {
+	rows, err := s.db.Query(`
+		SELECT id, name, link, site_url
+		FROM feeds
+		WHERE name LIKE :query
+		ORDER BY id
+	`, sql.Named("query", "%"+query+"%"))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	feeds := []*SearchFeedResult{}
+	for rows.Next() {
+		f := &SearchFeedResult{}
+		if err := rows.Scan(&f.ID, &f.Name, &f.Link, &f.SiteURL); err != nil {
+			return nil, err
+		}
+		feeds = append(feeds, f)
+	}
+	return feeds, rows.Err()
+}
+
 // UpdateFeedParams supports partial updates. Only non-nil fields will be updated.
 // Pointer fields distinguish between "not set" (nil) and "set to zero value" (e.g., &false).
 type UpdateFeedParams struct {
