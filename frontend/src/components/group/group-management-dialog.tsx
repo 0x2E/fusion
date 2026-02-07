@@ -239,9 +239,9 @@ export function GroupManagementDialog() {
           <DialogHeader>
             <DialogTitle>Delete Group</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deletingGroup?.name}"?
+              Are you sure you want to delete <span className="font-semibold">{deletingGroup?.name}</span>?
               {getFeedCount(deletingGroup?.id ?? 0) > 0
-                ? ` All ${getFeedCount(deletingGroup?.id ?? 0)} feed(s) in this group will be moved to "${targetGroup?.name ?? "Default"}".`
+                ? <> All {getFeedCount(deletingGroup?.id ?? 0)} feed(s) in this group will be moved to <span className="font-semibold">{targetGroup?.name ?? "Default"}</span>.</>
                 : ""}
             </DialogDescription>
           </DialogHeader>

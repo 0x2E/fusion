@@ -6,6 +6,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +23,8 @@ export function FeedManagementDialog() {
   const { feeds, removeFeed, getGroupById } = useDataStore();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [deletingFeedId, setDeletingFeedId] = useState<number | null>(null);
+  const [deletingFeed, setDeletingFeed] = useState<Feed | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredFeeds = useMemo(() => {
     if (!searchQuery.trim()) return feeds;
@@ -58,16 +61,19 @@ export function FeedManagementDialog() {
     }
   };
 
-  const handleDelete = async (feed: Feed) => {
-    setDeletingFeedId(feed.id);
+  const confirmDelete = async () => {
+    if (!deletingFeed) return;
+
+    setIsDeleting(true);
     try {
-      await feedAPI.delete(feed.id);
-      removeFeed(feed.id);
-      toast.success(`Unsubscribed from "${feed.name}"`);
+      await feedAPI.delete(deletingFeed.id);
+      removeFeed(deletingFeed.id);
+      toast.success(`Unsubscribed from "${deletingFeed.name}"`);
+      setDeletingFeed(null);
     } catch {
       toast.error("Failed to unsubscribe from feed");
     } finally {
-      setDeletingFeedId(null);
+      setIsDeleting(false);
     }
   };
 
@@ -85,6 +91,7 @@ export function FeedManagementDialog() {
   };
 
   return (
+    <>
     <Dialog open={isFeedManagementOpen} onOpenChange={setFeedManagementOpen}>
       <DialogContent
         className="flex max-h-[85vh] w-[560px] flex-col gap-0 overflow-hidden p-0"
@@ -175,8 +182,7 @@ export function FeedManagementDialog() {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        onClick={() => handleDelete(feed)}
-                        disabled={deletingFeedId === feed.id}
+                        onClick={() => setDeletingFeed(feed)}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
@@ -194,5 +200,37 @@ export function FeedManagementDialog() {
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Delete Confirmation Dialog */}
+    <Dialog
+      open={deletingFeed !== null}
+      onOpenChange={(open) => !open && setDeletingFeed(null)}
+    >
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Unsubscribe Feed</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to unsubscribe from <span className="font-semibold">{deletingFeed?.name}</span>?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setDeletingFeed(null)}
+            disabled={isDeleting}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={confirmDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Deleting..." : "Unsubscribe"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
