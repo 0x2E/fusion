@@ -127,6 +127,34 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 	p.logger.Info("feed pulled successfully", "feed_id", feed.ID, "feed_name", feed.Name, "new_items", newCount)
 }
 
+// RefreshAll triggers refresh for all non-suspended feeds, bypassing backoff/interval skip logic.
+// Concurrency is controlled by the same semaphore as periodic pulls.
+func (p *Puller) RefreshAll(ctx context.Context) (int, error) {
+	feeds, err := p.store.ListFeeds()
+	if err != nil {
+		return 0, fmt.Errorf("list feeds: %w", err)
+	}
+
+	count := 0
+	for _, feed := range feeds {
+		if feed.Suspended {
+			continue
+		}
+		count++
+
+		if err := p.concurrency.Acquire(ctx, 1); err != nil {
+			return count, err
+		}
+
+		go func(f *model.Feed) {
+			defer p.concurrency.Release(1)
+			p.pullFeed(ctx, f)
+		}(feed)
+	}
+
+	return count, nil
+}
+
 // RefreshFeed manually triggers refresh for specific feed (bypasses skip logic).
 // Used by HTTP handler for manual refresh requests.
 func (p *Puller) RefreshFeed(ctx context.Context, feedID int64) error {

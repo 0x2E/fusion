@@ -1,14 +1,18 @@
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { ArticleDrawer } from "@/components/article/article-drawer";
 import { SearchDialog } from "@/components/search/search-dialog";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
-import { GroupManagementDialog } from "@/components/group/group-management-dialog";
+import { AddGroupDialog } from "@/components/group/add-group-dialog";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { EditFeedDialog } from "@/components/feed/edit-feed-dialog";
-import { FeedManagementDialog } from "@/components/feed/feed-management-dialog";
 import { ImportOpmlDialog } from "@/components/feed/import-opml-dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -54,10 +58,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       <ArticleDrawer />
       <SearchDialog />
       <SettingsDialog />
-      <GroupManagementDialog />
+      <AddGroupDialog />
       <AddFeedDialog />
       <EditFeedDialog />
-      <FeedManagementDialog />
       <ImportOpmlDialog />
     </div>
   );

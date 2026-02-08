@@ -13,7 +13,8 @@ func (s *Store) ListFeeds() ([]*model.Feed, error) {
 	rows, err := s.db.Query(`
 		SELECT f.id, f.group_id, f.name, f.link, f.site_url, f.last_build,
 		       f.failure, f.failures, f.suspended, f.proxy, f.created_at, f.updated_at,
-		       (SELECT COUNT(*) FROM items WHERE feed_id = f.id AND unread = 1) AS unread_count
+		       (SELECT COUNT(*) FROM items WHERE feed_id = f.id AND unread = 1) AS unread_count,
+		       (SELECT COUNT(*) FROM items WHERE feed_id = f.id) AS item_count
 		FROM feeds f
 		ORDER BY f.id
 	`)
@@ -26,7 +27,7 @@ func (s *Store) ListFeeds() ([]*model.Feed, error) {
 	for rows.Next() {
 		f := &model.Feed{}
 		var suspended int
-		if err := rows.Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt, &f.UnreadCount); err != nil {
+		if err := rows.Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt, &f.UnreadCount, &f.ItemCount); err != nil {
 			return nil, err
 		}
 		f.Suspended = intToBool(suspended)
@@ -107,6 +108,7 @@ func (s *Store) SearchFeeds(query string) ([]*SearchFeedResult, error) {
 type UpdateFeedParams struct {
 	GroupID   *int64
 	Name      *string
+	Link      *string
 	SiteURL   *string
 	Suspended *bool
 	Proxy     *string
@@ -124,6 +126,10 @@ func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 	if params.Name != nil {
 		setClauses = append(setClauses, "name = :name")
 		args = append(args, sql.Named("name", *params.Name))
+	}
+	if params.Link != nil {
+		setClauses = append(setClauses, "link = :link")
+		args = append(args, sql.Named("link", *params.Link))
 	}
 	if params.SiteURL != nil {
 		setClauses = append(setClauses, "site_url = :site_url")

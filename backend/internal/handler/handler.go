@@ -18,6 +18,7 @@ type Handler struct {
 	passwordHash string // bcrypt hash computed at startup
 	puller       interface {
 		RefreshFeed(ctx context.Context, feedID int64) error
+		RefreshAll(ctx context.Context) (int, error)
 	}
 	sessions map[string]bool         // sessionID -> valid, in-memory session store
 	mu       sync.RWMutex            // protects sessions map
@@ -26,6 +27,7 @@ type Handler struct {
 
 func New(store *store.Store, config *config.Config, puller interface {
 	RefreshFeed(ctx context.Context, feedID int64) error
+	RefreshAll(ctx context.Context) (int, error)
 }) (*Handler, error) {
 	// Hash password at startup for later verification
 	passwordHash, err := auth.HashPassword(config.Password)
@@ -91,6 +93,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.GET("/feeds", h.listFeeds)
 			auth.POST("/feeds", h.createFeed)
 			auth.POST("/feeds/batch", h.batchCreateFeeds)
+			auth.POST("/feeds/refresh", h.refreshAllFeeds)
 			auth.GET("/feeds/:id", h.getFeed)
 			auth.PATCH("/feeds/:id", h.updateFeed)
 			auth.DELETE("/feeds/:id", h.deleteFeed)

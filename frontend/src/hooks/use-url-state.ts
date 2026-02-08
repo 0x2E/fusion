@@ -6,7 +6,7 @@ export type ArticleFilter = "all" | "unread" | "starred";
 
 export function useUrlState() {
   const navigate = useNavigate();
-  const search = useSearch({ from: "/" });
+  const search = useSearch({ strict: false }) as Partial<SearchParams>;
 
   const selectedFeedId = search.feed ?? null;
   const selectedGroupId = search.group ?? null;
@@ -25,7 +25,7 @@ export function useUrlState() {
         replace: true,
       });
     },
-    [navigate]
+    [navigate],
   );
 
   const setSelectedGroup = useCallback(
@@ -40,7 +40,7 @@ export function useUrlState() {
         replace: true,
       });
     },
-    [navigate]
+    [navigate],
   );
 
   const setSelectedArticle = useCallback(
@@ -54,7 +54,7 @@ export function useUrlState() {
         replace: true,
       });
     },
-    [navigate]
+    [navigate],
   );
 
   const setArticleFilter = useCallback(
@@ -68,7 +68,7 @@ export function useUrlState() {
         replace: true,
       });
     },
-    [navigate]
+    [navigate],
   );
 
   const selectAll = useCallback(() => {

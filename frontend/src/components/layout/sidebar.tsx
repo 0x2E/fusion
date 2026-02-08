@@ -1,9 +1,14 @@
-import { Search, Settings } from "lucide-react";
+import { Search, Settings, Rss } from "lucide-react";
+import { useNavigate, useMatchRoute } from "@tanstack/react-router";
 import { FeedList } from "@/components/feed/feed-list";
+import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store";
 
 export function Sidebar() {
   const { setSearchOpen, setSettingsOpen } = useUIStore();
+  const navigate = useNavigate();
+  const matchRoute = useMatchRoute();
+  const isFeedsPage = !!matchRoute({ to: "/feeds" });
 
   return (
     <aside className="flex h-full w-75 flex-none flex-col overflow-hidden border-r bg-sidebar">
@@ -36,6 +41,18 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-2">
+        <button
+          className={cn(
+            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+            isFeedsPage
+              ? "bg-accent text-accent-foreground"
+              : "hover:bg-accent/50",
+          )}
+          onClick={() => navigate({ to: "/feeds" })}
+        >
+          <Rss className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span>Manage Feeds</span>
+        </button>
         <button
           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent/50"
           onClick={() => setSettingsOpen(true)}

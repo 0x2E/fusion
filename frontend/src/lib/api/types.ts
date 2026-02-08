@@ -20,6 +20,7 @@ export interface Feed {
   created_at: number;
   updated_at: number;
   unread_count: number;
+  item_count: number;
 }
 
 export interface Item {
@@ -82,6 +83,7 @@ export interface UpdateFeedRequest {
   name?: string;
   link?: string;
   site_url?: string;
+  suspended?: boolean;
   proxy?: string;
 }
 

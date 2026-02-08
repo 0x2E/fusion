@@ -24,6 +24,7 @@ type Feed struct {
 	UpdatedAt int64  `json:"updated_at"`
 
 	UnreadCount int64 `json:"unread_count"`
+	ItemCount   int64 `json:"item_count"`
 }
 
 // Item represents a feed item.

@@ -26,7 +26,7 @@ export function FeedItem({ feed }: FeedItemProps) {
     <button
       onClick={() => setSelectedFeed(feed.id)}
       className={cn(
-        "group flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+        "group flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
         isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
       )}
     >

@@ -24,10 +24,12 @@ type createFeedRequest struct {
 }
 
 type updateFeedRequest struct {
-	GroupID *int64  `json:"group_id"`
-	Name    *string `json:"name"`
-	SiteURL *string `json:"site_url"`
-	Proxy   *string `json:"proxy"` // Empty string clears proxy
+	GroupID   *int64  `json:"group_id"`
+	Name      *string `json:"name"`
+	Link      *string `json:"link"`
+	SiteURL   *string `json:"site_url"`
+	Suspended *bool   `json:"suspended"`
+	Proxy     *string `json:"proxy"` // Empty string clears proxy
 }
 
 type validateFeedRequest struct {
@@ -130,8 +132,14 @@ func (h *Handler) updateFeed(c *gin.Context) {
 	if req.Name != nil {
 		params.Name = req.Name
 	}
+	if req.Link != nil {
+		params.Link = req.Link
+	}
 	if req.SiteURL != nil {
 		params.SiteURL = req.SiteURL
+	}
+	if req.Suspended != nil {
+		params.Suspended = req.Suspended
 	}
 	if req.Proxy != nil {
 		params.Proxy = req.Proxy
@@ -265,6 +273,18 @@ func (h *Handler) refreshFeed(c *gin.Context) {
 			slog.Warn("refresh feed failed", "feed_id", feedID, "error", err)
 		}
 	}(id)
+
+	dataResponse(c, gin.H{"message": "refresh triggered"})
+}
+
+func (h *Handler) refreshAllFeeds(c *gin.Context) {
+	// Run in background so the HTTP response returns immediately.
+	go func() {
+		ctx := context.Background()
+		if count, err := h.puller.RefreshAll(ctx); err != nil {
+			slog.Warn("refresh all feeds failed", "refreshed", count, "error", err)
+		}
+	}()
 
 	dataResponse(c, gin.H{"message": "refresh triggered"})
 }
