@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTheme } from "next-themes";
-import { Github, Info, Palette } from "lucide-react";
+import { Bug, Github, Info, Palette } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,20 +88,42 @@ function AppearanceContent() {
 
 function AboutContent() {
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex h-full flex-col items-center justify-center gap-4 pb-8">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
         <span className="text-2xl font-bold text-primary-foreground">F</span>
       </div>
       <div className="text-center">
         <h3 className="text-xl font-semibold">Fusion</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Version 0.1.0</p>
+        <p className="mt-1 text-xs text-muted-foreground">{__APP_VERSION__}</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          A lightweight RSS feed aggregator and reader.
+        </p>
       </div>
-      <Button variant="outline" asChild className="mt-2">
-        <a href="https://github.com/0x2e/fusion" target="_blank" rel="noopener noreferrer">
-          <Github className="h-4 w-4" />
-          GitHub
-        </a>
-      </Button>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <a
+            href="https://github.com/0x2e/fusion"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Github className="h-4 w-4" />
+            GitHub
+          </a>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <a
+            href="https://github.com/0x2e/fusion/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Bug className="h-4 w-4" />
+            Report Issue
+          </a>
+        </Button>
+      </div>
+      <p className="mt-auto text-xs text-muted-foreground">
+        MIT License &copy; 2024 Rook1e
+      </p>
     </div>
   );
 }
