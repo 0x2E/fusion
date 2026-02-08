@@ -138,6 +138,7 @@ export function SearchDialog() {
                 {feeds.map((feed) => (
                   <CommandItem
                     key={`feed-${feed.id}`}
+                    value={`feed-${feed.id}`}
                     onSelect={() => handleSelectFeed(feed.id)}
                     className="group gap-2"
                   >
@@ -165,10 +166,11 @@ export function SearchDialog() {
             {items.length > 0 && (
               <CommandGroup heading="Articles">
                 {items.map((article) => {
-                  const feed = feeds.find((f) => f.id === article.feed_id);
+                  const feed = getFeedById(article.feed_id);
                   return (
                     <CommandItem
                       key={`article-${article.id}`}
+                      value={`article-${article.id}`}
                       onSelect={() => handleSelectArticle(article.id)}
                       className="flex-col items-start gap-1"
                     >
@@ -177,7 +179,7 @@ export function SearchDialog() {
                         <span className="flex-1 truncate">{article.title}</span>
                       </div>
                       <div className="flex w-full items-center gap-2 pl-6 text-xs text-muted-foreground">
-                        <span>{feed?.name ?? "Unknown"}</span>
+                        <span>{feed?.name ?? "Unknown feed"}</span>
                         <span>·</span>
                         <span>{formatDate(article.pub_date)}</span>
                       </div>

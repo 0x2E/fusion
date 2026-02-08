@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Circle,
   CircleCheck,
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUrlState } from "@/hooks/use-url-state";
 import { useDataStore } from "@/store";
+import { itemAPI, type Item } from "@/lib/api";
 import { useArticles } from "@/hooks/use-articles";
 import { useStarred } from "@/hooks/use-starred";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
@@ -29,7 +31,32 @@ export function ArticleDrawer() {
   const { goToNext, goToPrevious, hasNext, hasPrevious } =
     useArticleNavigation(articleIds);
 
-  const article = selectedArticleId ? getItemById(selectedArticleId) : null;
+  // Fetch article from API if not found in store (e.g. opened from search)
+  const [fetchedArticle, setFetchedArticle] = useState<Item | null>(null);
+  const storeArticle = selectedArticleId
+    ? getItemById(selectedArticleId)
+    : null;
+
+  useEffect(() => {
+    if (!selectedArticleId || storeArticle) {
+      setFetchedArticle(null);
+      return;
+    }
+    let cancelled = false;
+    itemAPI
+      .get(selectedArticleId)
+      .then((res) => {
+        if (!cancelled && res.data) {
+          setFetchedArticle(res.data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedArticleId, storeArticle]);
+
+  const article = storeArticle ?? fetchedArticle;
   const feed = article ? getFeedById(article.feed_id) : null;
   const starred = article ? isStarred(article.id) : false;
 
