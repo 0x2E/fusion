@@ -33,6 +33,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AppLayout } from "@/components/layout/app-layout";
+import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useFeeds } from "@/hooks/use-feeds";
 import { useUIStore, useDataStore } from "@/store";
 import { feedAPI, groupAPI } from "@/lib/api";
@@ -209,8 +210,11 @@ function FeedsPage() {
     <AppLayout>
       <div className="flex h-full flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between border-b px-6 py-4">
-          <h1 className="text-lg font-semibold">Manage Feeds</h1>
+        <header className="flex items-center justify-between border-b px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-1">
+            <SidebarTrigger />
+            <h1 className="text-lg font-semibold">Manage Feeds</h1>
+          </div>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Rss className="h-4 w-4" />
             <span className="font-medium">
@@ -220,22 +224,28 @@ function FeedsPage() {
         </header>
 
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-3 px-6 py-3">
+        <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-2">
-            <div className="relative">
+            <div className="relative flex-1 sm:flex-initial">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search feeds..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 w-[280px] pl-9"
+                className="h-9 w-full pl-9 sm:w-[280px]"
               />
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1.5"
+                >
                   <ListFilter className="h-3.5 w-3.5" />
-                  {statusFilterLabels[statusFilter]}
+                  <span className="hidden sm:inline">
+                    {statusFilterLabels[statusFilter]}
+                  </span>
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
@@ -281,19 +291,19 @@ function FeedsPage() {
             >
               <RefreshCw
                 className={cn(
-                  "mr-1.5 h-3.5 w-3.5",
+                  "h-3.5 w-3.5 sm:mr-1.5",
                   isRefreshing && "animate-spin",
                 )}
               />
-              Refresh All
+              <span className="hidden sm:inline">Refresh All</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setImportOpmlOpen(true)}
             >
-              <Upload className="mr-1.5 h-3.5 w-3.5" />
-              Import
+              <Upload className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Import</span>
             </Button>
             <Button
               variant="outline"
@@ -301,15 +311,17 @@ function FeedsPage() {
               onClick={handleExport}
               disabled={isExporting}
             >
-              <Download className="mr-1.5 h-3.5 w-3.5" />
-              {isExporting ? "Exporting..." : "Export"}
+              <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">
+                {isExporting ? "Exporting..." : "Export"}
+              </span>
             </Button>
           </div>
         </div>
 
         {/* Collapsible Groups */}
         <ScrollArea className="flex-1">
-          <div className="space-y-2 p-6">
+          <div className="space-y-2 p-4 sm:p-6">
             {visibleGroups.map(({ group, feeds: groupFeeds }) => {
               const isCollapsed = collapsedGroups.has(group.id);
               const isEditing = editingGroupId === group.id;
@@ -375,7 +387,7 @@ function FeedsPage() {
                         {groupFeeds.length}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/header:opacity-100">
+                    <div className="flex items-center gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover/header:opacity-100">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -418,7 +430,7 @@ function FeedsPage() {
                         <div
                           key={feed.id}
                           className={cn(
-                            "flex items-center justify-between py-2.5 pl-11 pr-3.5 transition-colors hover:bg-accent/30",
+                            "flex items-center justify-between py-2.5 pl-8 pr-3.5 transition-colors hover:bg-accent/30 sm:pl-11",
                             index < groupFeeds.length - 1 &&
                               "border-b border-border/50",
                           )}
@@ -439,24 +451,14 @@ function FeedsPage() {
                               </p>
                             </div>
                           </div>
-                          <div className="flex shrink-0 items-center gap-2.5">
+                          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
                             {feed.failure && (
-                              <div className="flex items-center gap-1">
-                                <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                                <span className="text-[11px] font-medium text-destructive">
-                                  Error
-                                </span>
-                              </div>
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
                             )}
                             {feed.suspended && (
-                              <div className="flex items-center gap-1">
-                                <Pause className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="text-[11px] font-medium text-muted-foreground">
-                                  Paused
-                                </span>
-                              </div>
+                              <Pause className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                             )}
-                            <span className="text-xs text-muted-foreground">
+                            <span className="hidden text-xs text-muted-foreground sm:inline">
                               {feed.item_count} articles
                             </span>
                             <button

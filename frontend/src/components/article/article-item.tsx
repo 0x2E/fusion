@@ -86,7 +86,7 @@ export function ArticleItem({ article }: ArticleItemProps) {
         }
       }}
       className={cn(
-        "group flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 text-left transition-colors hover:bg-accent/50",
+        "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 text-left transition-colors hover:bg-accent/50",
         isSelected && "bg-accent",
       )}
     >
@@ -123,7 +123,7 @@ export function ArticleItem({ article }: ArticleItemProps) {
       </div>
 
       {/* Article Actions */}
-      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute right-2 top-2 hidden items-center gap-1 group-hover:flex">
         <Button
           variant="ghost"
           size="icon-sm"

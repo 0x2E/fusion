@@ -11,6 +11,9 @@ interface UIState {
   editingFeed: Feed | null;
   isImportOpmlOpen: boolean;
 
+  // Mobile sidebar
+  isSidebarOpen: boolean;
+
   // Actions
   setSearchOpen: (open: boolean) => void;
   setSettingsOpen: (open: boolean) => void;
@@ -18,6 +21,7 @@ interface UIState {
   setAddFeedOpen: (open: boolean) => void;
   setEditFeedOpen: (open: boolean, feed?: Feed) => void;
   setImportOpmlOpen: (open: boolean) => void;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -28,6 +32,7 @@ export const useUIStore = create<UIState>((set) => ({
   isEditFeedOpen: false,
   editingFeed: null,
   isImportOpmlOpen: false,
+  isSidebarOpen: false,
 
   setSearchOpen: (open) => set({ isSearchOpen: open }),
 
@@ -41,4 +46,6 @@ export const useUIStore = create<UIState>((set) => ({
     set({ isEditFeedOpen: open, editingFeed: open ? (feed ?? null) : null }),
 
   setImportOpmlOpen: (open) => set({ isImportOpmlOpen: open }),
+
+  setSidebarOpen: (open) => set({ isSidebarOpen: open }),
 }));

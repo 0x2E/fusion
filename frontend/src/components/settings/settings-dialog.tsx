@@ -27,7 +27,7 @@ function NavItem({ icon, label, active, onClick }: NavItemProps) {
     <button
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors",
+        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors sm:w-full sm:gap-2.5 sm:px-2",
         active
           ? "bg-accent font-medium text-foreground"
           : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
@@ -139,11 +139,13 @@ export function SettingsDialog() {
 
   return (
     <Dialog open={isSettingsOpen} onOpenChange={setSettingsOpen}>
-      <DialogContent className="flex max-h-[85vh] h-auto sm:h-[560px] sm:max-w-4xl gap-0 overflow-hidden p-0">
-        {/* Sidebar */}
-        <div className="flex w-[200px] shrink-0 flex-col border-r border-border bg-muted/30 p-3 pt-4">
-          <h2 className="px-2 text-sm font-semibold">Settings</h2>
-          <nav className="mt-2 space-y-0.5">
+      <DialogContent className="flex max-h-[85vh] flex-col sm:flex-row h-auto sm:h-[560px] sm:max-w-4xl gap-0 overflow-hidden p-0">
+        {/* Sidebar (desktop) / Tab bar (mobile) */}
+        <div className="flex shrink-0 flex-row border-b border-border bg-muted/30 px-3 pt-3 sm:w-[200px] sm:flex-col sm:border-b-0 sm:border-r sm:pt-4">
+          <h2 className="hidden px-2 text-sm font-semibold sm:block">
+            Settings
+          </h2>
+          <nav className="flex gap-0.5 sm:mt-2 sm:flex-col">
             <NavItem
               icon={<Palette className="h-4 w-4" />}
               label="Appearance"
@@ -160,8 +162,8 @@ export function SettingsDialog() {
         </div>
 
         {/* Content */}
-        <div className="flex flex-1 flex-col overflow-hidden p-6">
-          <h2 className="mb-6 shrink-0 text-lg font-semibold">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-5 sm:p-6">
+          <h2 className="mb-4 shrink-0 text-lg font-semibold sm:mb-6">
             {tabTitles[activeTab]}
           </h2>
 

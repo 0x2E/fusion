@@ -261,7 +261,7 @@ export function EditFeedDialog() {
                 disabled={isSubmitting || !url.trim() || !name.trim()}
               >
                 <Save className="mr-1.5 h-4 w-4" />
-                Save Changes
+                Save
               </Button>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArticleItem } from "./article-item";
+import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useArticles } from "@/hooks/use-articles";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useUrlState, type ArticleFilter } from "@/hooks/use-url-state";
@@ -41,7 +42,10 @@ export function ArticleList() {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="flex min-w-0 items-center gap-1">
+          <SidebarTrigger />
+          <h2 className="truncate text-lg font-semibold">{title}</h2>
+        </div>
         <Button
           variant="outline"
           size="sm"

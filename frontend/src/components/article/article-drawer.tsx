@@ -131,8 +131,8 @@ export function ArticleDrawer() {
                   <h1 className="text-[28px] font-bold leading-[1.3]">
                     {article.title}
                   </h1>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="flex items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                    <span className="flex max-w-48 items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
                       {feed && (
                         <img
                           src={getFaviconUrl(feed.link, feed.site_url)}
@@ -141,18 +141,18 @@ export function ArticleDrawer() {
                           loading="lazy"
                         />
                       )}
-                      {feed?.name ?? "Unknown"}
+                      <span className="truncate">
+                        {feed?.name ?? "Unknown"}
+                      </span>
                     </span>
-                    <span className="text-muted-foreground/70">·</span>
                     <span className="text-muted-foreground">
                       {formatDate(article.pub_date)}
                     </span>
-                    <span className="text-muted-foreground/70">·</span>
                     <a
                       href={article.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline"
+                      className="truncate text-primary hover:underline"
                     >
                       {getLinkDomain(article.link)}
                     </a>
