@@ -3,6 +3,7 @@ import type { Group, Feed } from "./api/types";
 export interface ParsedFeed {
   name: string;
   link: string;
+  siteUrl?: string;
   groupName?: string;
 }
 
@@ -25,6 +26,7 @@ export function parseOPML(content: string): ParsedFeed[] {
 
   const processOutline = (outline: Element, groupName?: string) => {
     const xmlUrl = outline.getAttribute("xmlUrl");
+    const htmlUrl = outline.getAttribute("htmlUrl");
     const title =
       outline.getAttribute("title") || outline.getAttribute("text") || "";
 
@@ -33,6 +35,7 @@ export function parseOPML(content: string): ParsedFeed[] {
       feeds.push({
         name: title || xmlUrl,
         link: xmlUrl,
+        siteUrl: htmlUrl?.trim() || undefined,
         groupName,
       });
     } else {

@@ -347,6 +347,88 @@ func TestUpdateFeedFailure(t *testing.T) {
 	}
 }
 
+func TestUpdateFeedSiteURLIfEmpty(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group, err := store.CreateGroup("Test Group")
+	if err != nil {
+		t.Fatalf("CreateGroup() failed: %v", err)
+	}
+
+	feed, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "", "")
+	if err != nil {
+		t.Fatalf("CreateFeed() failed: %v", err)
+	}
+
+	firstSiteURL := "https://example.com"
+	if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, firstSiteURL); err != nil {
+		t.Fatalf("UpdateFeedSiteURLIfEmpty() failed: %v", err)
+	}
+
+	updated, err := store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+	if updated.SiteURL != firstSiteURL {
+		t.Fatalf("expected site_url %q, got %q", firstSiteURL, updated.SiteURL)
+	}
+
+	secondSiteURL := "https://should-not-overwrite.example.com"
+	if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, secondSiteURL); err != nil {
+		t.Fatalf("UpdateFeedSiteURLIfEmpty() second call failed: %v", err)
+	}
+
+	updated, err = store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+	if updated.SiteURL != firstSiteURL {
+		t.Fatalf("site_url should remain %q, got %q", firstSiteURL, updated.SiteURL)
+	}
+}
+
+func TestUpdateFeedSiteURLIfEmptyTreatsWhitespaceAsEmpty(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group, err := store.CreateGroup("Test Group")
+	if err != nil {
+		t.Fatalf("CreateGroup() failed: %v", err)
+	}
+
+	feed, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "   ", "")
+	if err != nil {
+		t.Fatalf("CreateFeed() failed: %v", err)
+	}
+
+	firstSiteURL := "https://example.com"
+	if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, firstSiteURL); err != nil {
+		t.Fatalf("UpdateFeedSiteURLIfEmpty() failed: %v", err)
+	}
+
+	updated, err := store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+	if updated.SiteURL != firstSiteURL {
+		t.Fatalf("expected site_url %q, got %q", firstSiteURL, updated.SiteURL)
+	}
+
+	secondSiteURL := "https://should-not-overwrite.example.com"
+	if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, secondSiteURL); err != nil {
+		t.Fatalf("UpdateFeedSiteURLIfEmpty() second call failed: %v", err)
+	}
+
+	updated, err = store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+	if updated.SiteURL != firstSiteURL {
+		t.Fatalf("site_url should remain %q, got %q", firstSiteURL, updated.SiteURL)
+	}
+}
+
 func TestUpdateFeedNoParamsDoesNothing(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)

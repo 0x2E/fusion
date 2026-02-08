@@ -126,6 +126,7 @@ export function ImportOpmlDialog() {
           group_id: groupId,
           name: feed.name,
           link: feed.link,
+          ...(feed.siteUrl ? { site_url: feed.siteUrl } : {}),
         };
       });
 

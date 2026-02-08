@@ -214,11 +214,26 @@ func (s *Store) UpdateFeedFailure(id int64, failure string) error {
 	return err
 }
 
+func (s *Store) UpdateFeedSiteURLIfEmpty(id int64, siteURL string) error {
+	siteURL = strings.TrimSpace(siteURL)
+	if siteURL == "" {
+		return nil
+	}
+
+	_, err := s.db.Exec(`
+		UPDATE feeds
+		SET site_url = :site_url, updated_at = unixepoch()
+		WHERE id = :id AND (site_url IS NULL OR TRIM(site_url) = '')
+	`, sql.Named("site_url", siteURL), sql.Named("id", id))
+	return err
+}
+
 // BatchCreateFeedsInput holds input for batch feed creation.
 type BatchCreateFeedsInput struct {
 	GroupID int64
 	Name    string
 	Link    string
+	SiteURL string
 }
 
 // BatchCreateFeedsResult holds the result of batch feed creation.
@@ -264,7 +279,7 @@ func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFe
 
 	stmt, err := tx.Prepare(`
 		INSERT INTO feeds (group_id, name, link, site_url, proxy)
-		VALUES (:group_id, :name, :link, '', '')
+		VALUES (:group_id, :name, :link, :site_url, '')
 	`)
 	if err != nil {
 		return nil, err
@@ -281,6 +296,7 @@ func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFe
 			sql.Named("group_id", input.GroupID),
 			sql.Named("name", input.Name),
 			sql.Named("link", input.Link),
+			sql.Named("site_url", input.SiteURL),
 		)
 		if err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("failed to create %s: %v", input.Link, err))

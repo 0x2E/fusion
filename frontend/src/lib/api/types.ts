@@ -131,6 +131,7 @@ export interface BatchCreateFeedsRequest {
     group_id: number;
     name: string;
     link: string;
+    site_url?: string;
   }>;
 }
 

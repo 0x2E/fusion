@@ -51,6 +51,7 @@ type batchCreateFeedItem struct {
 	GroupID int64  `json:"group_id" binding:"required"`
 	Name    string `json:"name" binding:"required"`
 	Link    string `json:"link" binding:"required"`
+	SiteURL string `json:"site_url"`
 }
 
 func (h *Handler) listFeeds(c *gin.Context) {
@@ -281,6 +282,7 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 			GroupID: f.GroupID,
 			Name:    f.Name,
 			Link:    f.Link,
+			SiteURL: f.SiteURL,
 		}
 	}
 

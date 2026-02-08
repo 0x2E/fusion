@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/0x2E/fusion/internal/model"
@@ -22,36 +23,41 @@ type ParsedItem struct {
 }
 
 // FetchAndParse fetches RSS/Atom feed and parses into items.
-// Returns parsed items or error if fetch/parse fails.
-func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration) ([]*ParsedItem, error) {
+// Returns parsed items and optional site URL discovered from feed metadata.
+func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration) ([]*ParsedItem, string, error) {
 	client, err := httpc.NewClient(timeout, feed.Proxy)
 	if err != nil {
-		return nil, fmt.Errorf("create client: %w", err)
+		return nil, "", fmt.Errorf("create client: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", feed.Link, nil)
 	if err != nil {
-		return nil, fmt.Errorf("create request: %w", err)
+		return nil, "", fmt.Errorf("create request: %w", err)
 	}
 	httpc.SetDefaultHeaders(req)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("fetch feed: %w", err)
+		return nil, "", fmt.Errorf("fetch feed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+		return nil, "", fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
 
 	fp := gofeed.NewParser()
 	parsedFeed, err := fp.Parse(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("parse feed: %w", err)
+		return nil, "", fmt.Errorf("parse feed: %w", err)
 	}
 
+	siteURL := normalizeSiteURL(parsedFeed.Link)
+
 	baseURL, _ := url.Parse(feed.SiteURL)
+	if baseURL == nil || baseURL.String() == "" {
+		baseURL, _ = url.Parse(siteURL)
+	}
 	if baseURL == nil || baseURL.String() == "" {
 		baseURL, _ = url.Parse(feed.Link)
 	}
@@ -61,7 +67,28 @@ func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration)
 		items = append(items, mapItem(item, baseURL))
 	}
 
-	return items, nil
+	return items, siteURL, nil
+}
+
+func normalizeSiteURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed == nil {
+		return ""
+	}
+	if parsed.Host == "" {
+		return ""
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return ""
+	}
+
+	parsed.Fragment = ""
+	return parsed.String()
 }
 
 // mapItem converts gofeed.Item to ParsedItem following mapping rules:

@@ -269,7 +269,7 @@ POST /api/feeds
 }
 ```
 
-Optional fields: `name`, `proxy`
+Optional fields: `name`, `site_url`, `proxy`
 
 **Response** `201 Created`
 
@@ -309,7 +309,8 @@ Creates multiple feeds in a single transaction. Skips feeds with duplicate links
     {
       "group_id": 1,
       "name": "Feed One",
-      "link": "https://example.com/feed1.xml"
+      "link": "https://example.com/feed1.xml",
+      "site_url": "https://example.com"
     },
     {
       "group_id": 2,
@@ -319,6 +320,8 @@ Creates multiple feeds in a single transaction. Skips feeds with duplicate links
   ]
 }
 ```
+
+Each feed entry also supports optional `site_url`.
 
 **Response** `200 OK`
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/0x2E/fusion/internal/config"
@@ -84,7 +85,7 @@ func (p *Puller) pullAll(ctx context.Context) {
 func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 	p.logger.Debug("pulling feed", "feed_id", feed.ID, "feed_name", feed.Name)
 
-	items, err := FetchAndParse(ctx, feed, p.timeout)
+	items, siteURL, err := FetchAndParse(ctx, feed, p.timeout)
 	if err != nil {
 		p.logger.Warn("failed to fetch feed", "feed_id", feed.ID, "feed_name", feed.Name, "error", err)
 		if err := p.store.UpdateFeedFailure(feed.ID, err.Error()); err != nil {
@@ -115,6 +116,12 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 	if err := p.store.UpdateFeedLastBuild(feed.ID, time.Now().Unix()); err != nil {
 		p.logger.Error("failed to update last_build", "feed_id", feed.ID, "error", err)
 		return
+	}
+
+	if strings.TrimSpace(feed.SiteURL) == "" && siteURL != "" {
+		if err := p.store.UpdateFeedSiteURLIfEmpty(feed.ID, siteURL); err != nil {
+			p.logger.Warn("failed to auto-fill site_url", "feed_id", feed.ID, "site_url", siteURL, "error", err)
+		}
 	}
 
 	p.logger.Info("feed pulled successfully", "feed_id", feed.ID, "feed_name", feed.Name, "new_items", newCount)
