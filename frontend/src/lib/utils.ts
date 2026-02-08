@@ -6,43 +6,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function sanitizeHTML(html: string): string {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: [
-      "p",
-      "br",
-      "strong",
-      "em",
-      "u",
-      "s",
-      "a",
-      "img",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-      "ul",
-      "ol",
-      "li",
-      "blockquote",
-      "code",
-      "pre",
-      "table",
-      "thead",
-      "tbody",
-      "tr",
-      "th",
-      "td",
-      "div",
-      "span",
-    ],
-    ALLOWED_ATTR: ["href", "src", "alt", "title", "class"],
-    ALLOW_DATA_ATTR: false,
-  });
-}
-
 export function unixToDate(timestamp: number): Date {
   return new Date(timestamp * 1000);
 }

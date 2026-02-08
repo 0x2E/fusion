@@ -15,7 +15,8 @@ import { useDataStore } from "@/store";
 import { useArticles } from "@/hooks/use-articles";
 import { useStarred } from "@/hooks/use-starred";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
-import { formatDate, sanitizeHTML } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 
 export function ArticleDrawer() {
@@ -162,7 +163,10 @@ export function ArticleDrawer() {
                 <div
                   className="prose prose-neutral mt-6 max-w-none break-words dark:prose-invert"
                   dangerouslySetInnerHTML={{
-                    __html: sanitizeHTML(article.content),
+                    __html: processArticleContent(
+                      article.content,
+                      article.link,
+                    ),
                   }}
                 />
               </article>

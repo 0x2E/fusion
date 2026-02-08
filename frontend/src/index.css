@@ -151,6 +151,12 @@
     word-break: break-all;
   }
 
+  p:empty,
+  div:empty,
+  span:empty {
+    display: none;
+  }
+
   table {
     display: block;
     overflow-x: auto;
