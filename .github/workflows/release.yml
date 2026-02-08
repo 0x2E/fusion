@@ -33,10 +33,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.24"
-      - name: Release
+      - name: Build release artifacts
+        run: ./scripts.sh release
+      - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          args: release --clean
+        run: |
+          gh release create ${GITHUB_REF_NAME} ./dist/*.zip ./dist/checksums.txt \
+            --draft --generate-notes
