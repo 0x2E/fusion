@@ -114,20 +114,20 @@ export function EditFeedDialog() {
   };
 
   return (
-    <Dialog open={isEditFeedOpen} onOpenChange={(open) => setEditFeedOpen(open)}>
+    <Dialog
+      open={isEditFeedOpen}
+      onOpenChange={(open) => setEditFeedOpen(open)}
+    >
       <DialogContent
-        className="flex w-[480px] flex-col gap-0 overflow-hidden p-0"
+        className="flex w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
         showCloseButton={false}
       >
         {/* Header */}
         <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
-          <DialogTitle className="text-base font-semibold">Edit Feed</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={handleClose}
-          >
+          <DialogTitle className="text-base font-semibold">
+            Edit Feed
+          </DialogTitle>
+          <Button variant="ghost" size="icon-sm" onClick={handleClose}>
             <X className="h-[18px] w-[18px] text-muted-foreground" />
           </Button>
         </DialogHeader>
@@ -179,7 +179,7 @@ export function EditFeedDialog() {
               <ChevronDown
                 className={cn(
                   "h-3.5 w-3.5 transition-transform",
-                  isAdvancedOpen && "rotate-180"
+                  isAdvancedOpen && "rotate-180",
                 )}
               />
               Advanced Settings

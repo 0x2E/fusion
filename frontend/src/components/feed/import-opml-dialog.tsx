@@ -170,19 +170,14 @@ export function ImportOpmlDialog() {
   return (
     <Dialog open={isImportOpmlOpen} onOpenChange={setImportOpmlOpen}>
       <DialogContent
-        className="flex w-[480px] flex-col gap-0 overflow-hidden p-0"
+        className="flex w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
         showCloseButton={false}
       >
         <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
           <DialogTitle className="text-base font-semibold">
             Import OPML
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={handleClose}
-          >
+          <Button variant="ghost" size="icon-sm" onClick={handleClose}>
             <X className="h-[18px] w-[18px] text-muted-foreground" />
           </Button>
         </DialogHeader>

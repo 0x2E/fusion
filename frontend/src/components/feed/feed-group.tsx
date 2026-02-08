@@ -56,9 +56,7 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
           onClick={() => setSelectedGroup(groupId)}
           className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
         >
-          <span className="block min-w-0 flex-1 truncate font-medium">
-            {name}
-          </span>
+          <span className="block min-w-0 flex-1 truncate">{name}</span>
           {unreadCount > 0 && (
             <span className="shrink-0 text-xs text-muted-foreground/60">
               {unreadCount}

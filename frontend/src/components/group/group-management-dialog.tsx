@@ -124,8 +124,7 @@ export function GroupManagementDialog() {
             </DialogTitle>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-7 w-7"
+              size="icon-sm"
               onClick={() => setGroupManagementOpen(false)}
             >
               <X className="h-[18px] w-[18px] text-muted-foreground" />
@@ -199,8 +198,7 @@ export function GroupManagementDialog() {
                       <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
+                          size="icon-sm"
                           onClick={() => startEditing(group)}
                         >
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
@@ -208,8 +206,7 @@ export function GroupManagementDialog() {
                         {group.id !== 1 && (
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
+                            size="icon-sm"
                             onClick={() => setDeletingGroup(group)}
                           >
                             <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
@@ -239,10 +236,21 @@ export function GroupManagementDialog() {
           <DialogHeader>
             <DialogTitle>Delete Group</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <span className="font-semibold">{deletingGroup?.name}</span>?
-              {getFeedCount(deletingGroup?.id ?? 0) > 0
-                ? <> All {getFeedCount(deletingGroup?.id ?? 0)} feed(s) in this group will be moved to <span className="font-semibold">{targetGroup?.name ?? "Default"}</span>.</>
-                : ""}
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{deletingGroup?.name}</span>?
+              {getFeedCount(deletingGroup?.id ?? 0) > 0 ? (
+                <>
+                  {" "}
+                  All {getFeedCount(deletingGroup?.id ?? 0)} feed(s) in this
+                  group will be moved to{" "}
+                  <span className="font-semibold">
+                    {targetGroup?.name ?? "Default"}
+                  </span>
+                  .
+                </>
+              ) : (
+                ""
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

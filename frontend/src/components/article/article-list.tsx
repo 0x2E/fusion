@@ -40,7 +40,7 @@ export function ArticleList() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b px-6 py-3">
+      <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
         <h2 className="text-lg font-semibold">{title}</h2>
         <Button
           variant="outline"
@@ -55,7 +55,7 @@ export function ArticleList() {
       </div>
 
       {/* Article area with filter tabs */}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-6 py-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 py-4 sm:px-6">
         {/* Filter tabs - hidden when no articles exist */}
         {items.length > 0 && (
           <Tabs

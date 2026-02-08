@@ -1,4 +1,5 @@
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
 import { useUrlState } from "@/hooks/use-url-state";
 import { useDataStore } from "@/store";
@@ -123,44 +124,43 @@ export function ArticleItem({ article }: ArticleItemProps) {
 
       {/* Article Actions */}
       <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={handleToggleRead}
-          className={cn(
-            "rounded-md p-1.5 transition-colors hover:bg-accent",
-            article.unread ? "bg-muted" : "bg-primary/10",
-          )}
+          className={cn(article.unread ? "bg-muted" : "bg-primary/10")}
           title={article.unread ? "Mark as read" : "Mark as unread"}
         >
           {article.unread ? (
-            <Circle className="h-4 w-4 text-muted-foreground" />
+            <Circle className="text-muted-foreground" />
           ) : (
-            <CircleCheck className="h-4 w-4 text-primary" />
+            <CircleCheck className="text-primary" />
           )}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={handleToggleStar}
-          className={cn(
-            "rounded-md p-1.5 transition-colors hover:bg-accent",
-            isStarred ? "bg-amber-50" : "bg-muted",
-          )}
+          className={cn(isStarred ? "bg-amber-50" : "bg-muted")}
           title={isStarred ? "Unstar" : "Star"}
         >
           <Star
             className={cn(
-              "h-4 w-4",
               isStarred
                 ? "fill-amber-500 text-amber-500"
                 : "text-muted-foreground",
             )}
           />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={handleOpenExternal}
-          className="rounded-md bg-muted p-1.5 transition-colors hover:bg-accent"
+          className="bg-muted"
           title="Open in browser"
         >
-          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-        </button>
+          <ExternalLink className="text-muted-foreground" />
+        </Button>
       </div>
     </div>
   );

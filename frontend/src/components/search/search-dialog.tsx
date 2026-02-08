@@ -150,8 +150,7 @@ export function SearchDialog() {
                     <span className="flex-1 truncate">{feed.name}</span>
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="h-6 w-6"
+                      size="icon-xs"
                       onClick={(e) => handleEditFeed(e, feed.id)}
                     >
                       <Settings className="h-3.5 w-3.5 text-muted-foreground" />

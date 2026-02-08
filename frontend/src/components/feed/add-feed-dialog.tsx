@@ -138,7 +138,7 @@ export function AddFeedDialog() {
     <>
       <Dialog open={isAddFeedOpen} onOpenChange={setAddFeedOpen}>
         <DialogContent
-          className="flex w-[480px] flex-col gap-0 overflow-hidden p-0"
+          className="flex w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
           showCloseButton={false}
         >
           {/* Header */}
@@ -146,12 +146,7 @@ export function AddFeedDialog() {
             <DialogTitle className="text-base font-semibold">
               Add Feed
             </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleClose}
-            >
+            <Button variant="ghost" size="icon-sm" onClick={handleClose}>
               <X className="h-[18px] w-[18px] text-muted-foreground" />
             </Button>
           </DialogHeader>
@@ -268,7 +263,10 @@ export function AddFeedDialog() {
           }
         }}
       >
-        <DialogContent className="w-[560px] p-0" showCloseButton={false}>
+        <DialogContent
+          className="w-full max-w-[560px] p-0"
+          showCloseButton={false}
+        >
           <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
             <div>
               <DialogTitle className="text-base font-semibold">
@@ -280,8 +278,7 @@ export function AddFeedDialog() {
             </div>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-7 w-7"
+              size="icon-sm"
               onClick={() => {
                 setIsFeedSelectOpen(false);
                 setDetectedFeeds([]);

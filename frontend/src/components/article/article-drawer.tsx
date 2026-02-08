@@ -70,13 +70,13 @@ export function ArticleDrawer() {
     <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>
       <SheetContent
         side="right"
-        className="w-full max-w-[720px] p-0 sm:max-w-[720px]"
+        className="w-full sm:max-w-[max(720px,50vw)] p-0"
         showCloseButton={false}
       >
         {article && (
           <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between border-b px-6 py-3">
+            <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -117,9 +117,8 @@ export function ArticleDrawer() {
 
               <Button
                 variant="ghost"
-                size="icon"
+                size="icon-sm"
                 onClick={() => setSelectedArticle(null)}
-                className="h-[30px] w-[30px] rounded-md"
               >
                 <X className="h-[18px] w-[18px] text-muted-foreground" />
               </Button>
@@ -127,7 +126,7 @@ export function ArticleDrawer() {
 
             {/* Content */}
             <ScrollArea className="min-h-0 flex-1">
-              <article className="px-12 py-8">
+              <article className="px-5 py-6 sm:px-12 sm:py-8">
                 <div className="space-y-3">
                   <h1 className="text-[28px] font-bold leading-[1.3]">
                     {article.title}
@@ -173,7 +172,7 @@ export function ArticleDrawer() {
             </ScrollArea>
 
             {/* Footer - Navigation */}
-            <div className="flex items-center justify-between border-t px-6 py-3">
+            <div className="flex items-center justify-between border-t px-4 py-3 sm:px-6">
               <Button
                 variant="outline"
                 size="sm"

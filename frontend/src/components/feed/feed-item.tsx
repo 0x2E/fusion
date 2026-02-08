@@ -4,6 +4,7 @@ import { useUIStore } from "@/store";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import type { Feed } from "@/lib/api";
 import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface FeedItemProps {
   feed: Feed;
@@ -38,13 +39,19 @@ export function FeedItem({ feed }: FeedItemProps) {
       <span className="block min-w-0 max-w-full flex-1 truncate">
         {feed.name}
       </span>
-      <span className="ml-2 shrink-0 text-xs text-muted-foreground/60 group-hover:hidden">
-        {feed.unread_count > 0 ? feed.unread_count : ""}
-      </span>
-      <Settings
-        className="ml-2 hidden h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground group-hover:block"
-        onClick={handleSettingsClick}
-      />
+      <div className="ml-2 flex h-6 shrink-0 items-center justify-center">
+        <span className="text-xs text-muted-foreground/60 group-hover:hidden">
+          {feed.unread_count > 0 ? feed.unread_count : ""}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="hidden group-hover:inline-flex"
+          onClick={handleSettingsClick}
+        >
+          <Settings className="text-muted-foreground" />
+        </Button>
+      </div>
     </button>
   );
 }

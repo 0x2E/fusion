@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTheme } from "next-themes";
 import { Github, Info, Palette } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -95,15 +96,12 @@ function AboutContent() {
         <h3 className="text-xl font-semibold">Fusion</h3>
         <p className="mt-1 text-sm text-muted-foreground">Version 0.1.0</p>
       </div>
-      <a
-        href="https://github.com/0x2e/fusion"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-2 inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm transition-colors hover:bg-accent"
-      >
-        <Github className="h-4 w-4" />
-        GitHub
-      </a>
+      <Button variant="outline" asChild className="mt-2">
+        <a href="https://github.com/0x2e/fusion" target="_blank" rel="noopener noreferrer">
+          <Github className="h-4 w-4" />
+          GitHub
+        </a>
+      </Button>
     </div>
   );
 }
@@ -119,7 +117,7 @@ export function SettingsDialog() {
 
   return (
     <Dialog open={isSettingsOpen} onOpenChange={setSettingsOpen}>
-      <DialogContent className="flex h-[560px] sm:max-w-4xl gap-0 overflow-hidden p-0">
+      <DialogContent className="flex max-h-[85vh] h-auto sm:h-[560px] sm:max-w-4xl gap-0 overflow-hidden p-0">
         {/* Sidebar */}
         <div className="flex w-[200px] shrink-0 flex-col border-r border-border bg-muted/30 p-3 pt-4">
           <h2 className="px-2 text-sm font-semibold">Settings</h2>
