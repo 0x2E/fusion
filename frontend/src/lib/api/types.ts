@@ -149,3 +149,12 @@ export interface BatchCreateFeedsResponse {
   failed: number;
   errors?: string[];
 }
+
+// OIDC
+export interface OIDCStatusResponse {
+  enabled: boolean;
+}
+
+export interface OIDCLoginResponse {
+  auth_url: string;
+}

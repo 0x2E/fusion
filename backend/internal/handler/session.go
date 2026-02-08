@@ -31,14 +31,18 @@ func (h *Handler) login(c *gin.Context) {
 		return
 	}
 
-	sessionID := uuid.New().String() // FIX random string is enough for this app
+	h.createSession(c)
+	dataResponse(c, gin.H{"message": "logged in"})
+}
+
+// createSession generates a new session ID, stores it, and sets the session cookie.
+func (h *Handler) createSession(c *gin.Context) {
+	sessionID := uuid.New().String()
 
 	h.mu.Lock()
 	h.sessions[sessionID] = true
 	h.mu.Unlock()
 
-	// Set HttpOnly cookie, expires in 30 days.
-	// SameSite=Lax keeps it usable for same-site SPA dev setups while mitigating CSRF.
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "session",
 		Value:    sessionID,
@@ -48,8 +52,6 @@ func (h *Handler) login(c *gin.Context) {
 		Secure:   isSecureRequest(c.Request),
 		SameSite: http.SameSiteLaxMode,
 	})
-
-	dataResponse(c, gin.H{"message": "logged in"})
 }
 
 func (h *Handler) logout(c *gin.Context) {

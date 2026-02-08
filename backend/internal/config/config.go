@@ -18,6 +18,13 @@ type Config struct {
 
 	LogLevel  string // Log level: DEBUG, INFO, WARN, ERROR (default: INFO)
 	LogFormat string // Log format: text, json, auto (default: auto)
+
+	// OIDC Configuration (optional, enabled when OIDCIssuer is set)
+	OIDCIssuer       string // OIDC provider URL
+	OIDCClientID     string // OAuth2 client ID
+	OIDCClientSecret string // OAuth2 client secret
+	OIDCRedirectURI  string // Callback URL (default: auto-detect from Host header)
+	OIDCAllowedUser  string // Optional: restrict to specific user identity (email or sub)
 }
 
 func Load() *Config {
@@ -73,6 +80,12 @@ func Load() *Config {
 		PullMaxBackoff:  getEnvInt("FUSION_PULL_MAX_BACKOFF", 604800),
 		LogLevel:        logLevel,
 		LogFormat:       logFormat,
+
+		OIDCIssuer:       os.Getenv("FUSION_OIDC_ISSUER"),
+		OIDCClientID:     os.Getenv("FUSION_OIDC_CLIENT_ID"),
+		OIDCClientSecret: os.Getenv("FUSION_OIDC_CLIENT_SECRET"),
+		OIDCRedirectURI:  os.Getenv("FUSION_OIDC_REDIRECT_URI"),
+		OIDCAllowedUser:  os.Getenv("FUSION_OIDC_ALLOWED_USER"),
 	}
 }
 

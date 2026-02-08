@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/0x2E/fusion/internal/auth"
@@ -18,8 +19,9 @@ type Handler struct {
 	puller       interface {
 		RefreshFeed(ctx context.Context, feedID int64) error
 	}
-	sessions map[string]bool // sessionID -> valid, in-memory session store
-	mu       sync.RWMutex    // protects sessions map
+	sessions map[string]bool         // sessionID -> valid, in-memory session store
+	mu       sync.RWMutex            // protects sessions map
+	oidcAuth *auth.OIDCAuthenticator // nil when OIDC is disabled
 }
 
 func New(store *store.Store, config *config.Config, puller interface {
@@ -31,13 +33,33 @@ func New(store *store.Store, config *config.Config, puller interface {
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
-	return &Handler{
+	h := &Handler{
 		store:        store,
 		config:       config,
 		passwordHash: passwordHash,
 		puller:       puller,
 		sessions:     make(map[string]bool),
-	}, nil
+	}
+
+	if config.OIDCIssuer != "" {
+		oidcAuth, err := auth.NewOIDC(
+			context.Background(),
+			config.OIDCIssuer,
+			config.OIDCClientID,
+			config.OIDCClientSecret,
+			config.OIDCRedirectURI,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("initialize OIDC: %w", err)
+		}
+		if config.OIDCAllowedUser != "" {
+			oidcAuth.SetAllowedUser(config.OIDCAllowedUser)
+		}
+		h.oidcAuth = oidcAuth
+		slog.Info("OIDC authentication enabled", "issuer", config.OIDCIssuer)
+	}
+
+	return h, nil
 }
 
 func (h *Handler) SetupRouter() *gin.Engine {
@@ -49,6 +71,13 @@ func (h *Handler) SetupRouter() *gin.Engine {
 	{
 		api.POST("/sessions", h.login)
 		api.DELETE("/sessions", h.logout)
+
+		// OIDC routes (public, no auth middleware)
+		api.GET("/oidc/enabled", h.oidcEnabled)
+		if h.oidcAuth != nil {
+			api.GET("/oidc/login", h.oidcLogin)
+			api.GET("/oidc/callback", h.oidcCallback)
+		}
 
 		auth := api.Group("")
 		auth.Use(h.authMiddleware())

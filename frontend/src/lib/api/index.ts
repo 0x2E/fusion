@@ -19,6 +19,8 @@ import type {
   BatchCreateFeedsRequest,
   BatchCreateFeedsResponse,
   SearchResponse,
+  OIDCStatusResponse,
+  OIDCLoginResponse,
 } from "./types";
 
 // Session APIs
@@ -27,6 +29,15 @@ export const sessionAPI = {
     api.post<APIResponse<{ message: string }>>("/sessions", data),
 
   logout: () => api.delete<APIResponse<{ message: string }>>("/sessions"),
+};
+
+// OIDC APIs
+export const oidcAPI = {
+  status: () =>
+    api.get<APIResponse<OIDCStatusResponse>>("/oidc/enabled"),
+
+  login: () =>
+    api.get<APIResponse<OIDCLoginResponse>>("/oidc/login"),
 };
 
 // Group APIs
