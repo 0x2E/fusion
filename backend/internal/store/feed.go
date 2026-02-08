@@ -223,8 +223,9 @@ type BatchCreateFeedsInput struct {
 
 // BatchCreateFeedsResult holds the result of batch feed creation.
 type BatchCreateFeedsResult struct {
-	Created int
-	Errors  []string
+	Created    int
+	CreatedIDs []int64
+	Errors     []string
 }
 
 // BatchCreateFeeds creates multiple feeds in a single transaction.
@@ -276,7 +277,7 @@ func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFe
 			continue
 		}
 
-		_, err := stmt.Exec(
+		res, err := stmt.Exec(
 			sql.Named("group_id", input.GroupID),
 			sql.Named("name", input.Name),
 			sql.Named("link", input.Link),
@@ -286,8 +287,15 @@ func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFe
 			continue
 		}
 
+		id, err := res.LastInsertId()
+		if err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("failed to get id for %s: %v", input.Link, err))
+			continue
+		}
+
 		existingLinks[input.Link] = true
 		result.Created++
+		result.CreatedIDs = append(result.CreatedIDs, id)
 	}
 
 	if err := tx.Commit(); err != nil {

@@ -4,11 +4,15 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/0x2E/feedfinder"
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
+	"github.com/mmcdole/gofeed"
 )
 
 type createFeedRequest struct {
@@ -28,6 +32,15 @@ type updateFeedRequest struct {
 
 type validateFeedRequest struct {
 	URL string `json:"url" binding:"required"`
+}
+
+type discoveredFeed struct {
+	Title string `json:"title"`
+	Link  string `json:"link"`
+}
+
+type validateFeedResponse struct {
+	Feeds []discoveredFeed `json:"feeds"`
 }
 
 type batchCreateFeedsRequest struct {
@@ -82,6 +95,16 @@ func (h *Handler) createFeed(c *gin.Context) {
 		internalError(c, err, "create feed")
 		return
 	}
+
+	// Trigger initial pull in background.
+	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
+	go func(feedID int64) {
+		ctx, cancel := context.WithTimeout(context.Background(), refreshTimeout)
+		defer cancel()
+		if err := h.puller.RefreshFeed(ctx, feedID); err != nil {
+			slog.Warn("initial feed pull failed", "feed_id", feedID, "error", err)
+		}
+	}(feed.ID)
 
 	dataResponse(c, feed)
 }
@@ -161,8 +184,58 @@ func (h *Handler) validateFeed(c *gin.Context) {
 		return
 	}
 
-	// TODO implement feed validation (HTTP fetch + RSS/Atom parsing)
-	dataResponse(c, gin.H{"valid": true})
+	target := strings.TrimSpace(req.URL)
+	parsedURL, err := url.ParseRequestURI(target)
+	if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
+		badRequestError(c, "invalid url")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	found, err := feedfinder.Find(ctx, target, nil)
+	if err != nil {
+		slog.Warn("feed discovery failed", "url", target, "error", err)
+	}
+
+	feeds := normalizeDiscoveredFeeds(found)
+	if len(feeds) == 0 {
+		parser := gofeed.NewParser()
+		parsedFeed, parseErr := parser.ParseURLWithContext(target, ctx)
+		if parseErr == nil {
+			title := ""
+			if parsedFeed != nil {
+				title = strings.TrimSpace(parsedFeed.Title)
+			}
+			feeds = append(feeds, discoveredFeed{Title: title, Link: target})
+		}
+	}
+
+	dataResponse(c, validateFeedResponse{Feeds: feeds})
+}
+
+func normalizeDiscoveredFeeds(found []feedfinder.Feed) []discoveredFeed {
+	result := make([]discoveredFeed, 0, len(found))
+	seen := make(map[string]struct{}, len(found))
+
+	for _, feed := range found {
+		link := strings.TrimSpace(feed.Link)
+		if link == "" {
+			continue
+		}
+		if _, exists := seen[link]; exists {
+			continue
+		}
+
+		seen[link] = struct{}{}
+		result = append(result, discoveredFeed{
+			Title: strings.TrimSpace(feed.Title),
+			Link:  link,
+		})
+	}
+
+	return result
 }
 
 func (h *Handler) refreshFeed(c *gin.Context) {
@@ -215,6 +288,18 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 	if err != nil {
 		internalError(c, err, "batch create feeds")
 		return
+	}
+
+	// Trigger initial pull for each new feed in background.
+	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
+	for _, id := range result.CreatedIDs {
+		go func(feedID int64) {
+			ctx, cancel := context.WithTimeout(context.Background(), refreshTimeout)
+			defer cancel()
+			if err := h.puller.RefreshFeed(ctx, feedID); err != nil {
+				slog.Warn("initial feed pull failed", "feed_id", feedID, "error", err)
+			}
+		}(id)
 	}
 
 	dataResponse(c, gin.H{

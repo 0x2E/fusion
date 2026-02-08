@@ -89,6 +89,15 @@ export interface ValidateFeedRequest {
   url: string;
 }
 
+export interface DiscoveredFeed {
+  title: string;
+  link: string;
+}
+
+export interface ValidateFeedResponse {
+  feeds: DiscoveredFeed[];
+}
+
 export interface CreateBookmarkRequest {
   item_id?: number;
   link: string;

@@ -12,6 +12,7 @@ import type {
   CreateFeedRequest,
   UpdateFeedRequest,
   ValidateFeedRequest,
+  ValidateFeedResponse,
   CreateBookmarkRequest,
   MarkItemsReadRequest,
   ListItemsParams,
@@ -33,11 +34,9 @@ export const sessionAPI = {
 
 // OIDC APIs
 export const oidcAPI = {
-  status: () =>
-    api.get<APIResponse<OIDCStatusResponse>>("/oidc/enabled"),
+  status: () => api.get<APIResponse<OIDCStatusResponse>>("/oidc/enabled"),
 
-  login: () =>
-    api.get<APIResponse<OIDCLoginResponse>>("/oidc/login"),
+  login: () => api.get<APIResponse<OIDCLoginResponse>>("/oidc/login"),
 };
 
 // Group APIs
@@ -72,7 +71,7 @@ export const feedAPI = {
     api.delete<APIResponse<{ message: string }>>(`/feeds/${id}`),
 
   validate: (data: ValidateFeedRequest) =>
-    api.post<APIResponse<{ valid: boolean }>>("/feeds/validation", data),
+    api.post<APIResponse<ValidateFeedResponse>>("/feeds/validate", data),
 
   refresh: () =>
     api.post<APIResponse<{ message: string }>>("/feeds/refresh", {}),

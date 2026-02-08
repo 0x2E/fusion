@@ -93,28 +93,28 @@ DELETE FROM feeds WHERE id = ?
 
 ## 4. API Endpoints
 
-| Method | Path                  | Description              |
-| ------ | --------------------- | ------------------------ |
-| POST   | /api/sessions         | Login                    |
-| DELETE | /api/sessions         | Logout                   |
-| GET    | /api/groups           | List groups              |
-| POST   | /api/groups           | Create group             |
-| PATCH  | /api/groups/:id       | Update group             |
-| DELETE | /api/groups/:id       | Delete group             |
-| GET    | /api/feeds            | List feeds               |
-| GET    | /api/feeds/:id        | Get feed                 |
-| POST   | /api/feeds            | Create feed              |
-| POST   | /api/feeds/batch      | Batch create feeds       |
-| POST   | /api/feeds/validation | Validate feed URL        |
-| PATCH  | /api/feeds/:id        | Update feed              |
-| DELETE | /api/feeds/:id        | Delete feed              |
-| POST   | /api/feeds/refresh    | Refresh feeds            |
-| GET    | /api/items            | List items               |
-| GET    | /api/items/:id        | Get item                 |
-| PATCH  | /api/items/-/unread   | Batch update read status |
-| GET    | /api/bookmarks        | List bookmarks           |
-| POST   | /api/bookmarks        | Add bookmark             |
-| DELETE | /api/bookmarks/:id    | Delete bookmark          |
+| Method | Path                | Description              |
+| ------ | ------------------- | ------------------------ |
+| POST   | /api/sessions       | Login                    |
+| DELETE | /api/sessions       | Logout                   |
+| GET    | /api/groups         | List groups              |
+| POST   | /api/groups         | Create group             |
+| PATCH  | /api/groups/:id     | Update group             |
+| DELETE | /api/groups/:id     | Delete group             |
+| GET    | /api/feeds          | List feeds               |
+| GET    | /api/feeds/:id      | Get feed                 |
+| POST   | /api/feeds          | Create feed              |
+| POST   | /api/feeds/batch    | Batch create feeds       |
+| POST   | /api/feeds/validate | Validate feed URL        |
+| PATCH  | /api/feeds/:id      | Update feed              |
+| DELETE | /api/feeds/:id      | Delete feed              |
+| POST   | /api/feeds/refresh  | Refresh feeds            |
+| GET    | /api/items          | List items               |
+| GET    | /api/items/:id      | Get item                 |
+| PATCH  | /api/items/-/unread | Batch update read status |
+| GET    | /api/bookmarks      | List bookmarks           |
+| POST   | /api/bookmarks      | Add bookmark             |
+| DELETE | /api/bookmarks/:id  | Delete bookmark          |
 
 ## 5. Project Structure
 

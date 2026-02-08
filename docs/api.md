@@ -347,10 +347,10 @@ If some feeds fail (e.g., duplicate links):
 ### Validate Feed URL
 
 ```
-POST /api/feeds/validation
+POST /api/feeds/validate
 ```
 
-Discovers feeds from a URL. If the URL is an HTML page, returns discovered feed links.
+Discovers RSS/Atom feeds from a URL. Supports HTML discovery and well-known feed paths.
 
 **Request Body**
 
@@ -378,6 +378,8 @@ Discovers feeds from a URL. If the URL is an HTML page, returns discovered feed 
   }
 }
 ```
+
+Returns an empty `feeds` array when no feeds are found.
 
 ### Update Feed
 
