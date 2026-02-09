@@ -20,13 +20,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useUIStore, useDataStore } from "@/store";
+import { useUIStore } from "@/store";
+import { useFeedLookup } from "@/queries/feeds";
 import { useUrlState } from "@/hooks/use-url-state";
 import { formatDate } from "@/lib/utils";
 
 export function SearchDialog() {
   const { isSearchOpen, setSearchOpen, setEditFeedOpen } = useUIStore();
-  const { getFeedById } = useDataStore();
+  const { getFeedById } = useFeedLookup();
   const { setSelectedFeed, setSelectedArticle } = useUrlState();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");

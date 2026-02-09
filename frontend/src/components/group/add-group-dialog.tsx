@@ -10,34 +10,27 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useUIStore, useDataStore } from "@/store";
-import { groupAPI } from "@/lib/api";
+import { useUIStore } from "@/store";
+import { useCreateGroup } from "@/queries/groups";
 import { toast } from "sonner";
 
 export function AddGroupDialog() {
   const { isAddGroupOpen, setAddGroupOpen } = useUIStore();
-  const { addGroup } = useDataStore();
+  const createGroup = useCreateGroup();
 
   const [name, setName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
 
   const handleCreate = async () => {
     const trimmed = name.trim();
     if (!trimmed) return;
 
-    setIsCreating(true);
     try {
-      const response = await groupAPI.create({ name: trimmed });
-      if (response.data) {
-        addGroup(response.data);
-        setName("");
-        setAddGroupOpen(false);
-        toast.success("Group created");
-      }
+      await createGroup.mutateAsync(trimmed);
+      setName("");
+      setAddGroupOpen(false);
+      toast.success("Group created");
     } catch {
       toast.error("Failed to create group");
-    } finally {
-      setIsCreating(false);
     }
   };
 
@@ -71,12 +64,15 @@ export function AddGroupDialog() {
           <Button
             variant="outline"
             onClick={() => setAddGroupOpen(false)}
-            disabled={isCreating}
+            disabled={createGroup.isPending}
           >
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={!name.trim() || isCreating}>
-            {isCreating ? "Creating..." : "Create"}
+          <Button
+            onClick={handleCreate}
+            disabled={!name.trim() || createGroup.isPending}
+          >
+            {createGroup.isPending ? "Creating..." : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import {
   Circle,
   CircleCheck,
@@ -12,53 +12,82 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUrlState } from "@/hooks/use-url-state";
-import { useDataStore } from "@/store";
-import { itemAPI, type Item } from "@/lib/api";
-import { useArticles } from "@/hooks/use-articles";
-import { useStarred } from "@/hooks/use-starred";
+import type { Item } from "@/lib/api";
+import {
+  useItem,
+  useItems,
+  useMarkItemsRead,
+  useMarkItemsUnread,
+} from "@/queries/items";
+import { useFeedLookup } from "@/queries/feeds";
+import {
+  useBookmarkLookup,
+  useCreateBookmark,
+  useDeleteBookmark,
+  useStarredItems,
+} from "@/queries/bookmarks";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 
 export function ArticleDrawer() {
-  const { selectedArticleId, setSelectedArticle } = useUrlState();
-  const { getItemById, getFeedById } = useDataStore();
-  const { articles, markAsRead, markAsUnread } = useArticles();
-  const { toggleStar, isStarred } = useStarred();
+  const {
+    selectedArticleId,
+    setSelectedArticle,
+    selectedFeedId,
+    selectedGroupId,
+    articleFilter,
+  } = useUrlState();
+  const { getFeedById } = useFeedLookup();
+  const isStarredMode = articleFilter === "starred";
 
-  const articleIds = articles.map((a) => a.id);
+  const itemsQuery = useItems({
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+    unread: articleFilter === "unread" ? true : undefined,
+  });
+  const articles = useMemo(
+    () => itemsQuery.data?.pages.flatMap((p) => p.data) ?? [],
+    [itemsQuery.data],
+  );
+  const starredArticles = useStarredItems({
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+  });
+  const listArticles = isStarredMode ? starredArticles : articles;
+
+  const markRead = useMarkItemsRead();
+  const markUnread = useMarkItemsUnread();
+  const { isItemStarred, getBookmarkByItemId } = useBookmarkLookup();
+  const createBookmark = useCreateBookmark();
+  const deleteBookmark = useDeleteBookmark();
+
+  const articleIds = listArticles.map((a) => a.id);
   const { goToNext, goToPrevious, hasNext, hasPrevious } =
     useArticleNavigation(articleIds);
 
-  // Fetch article from API if not found in store (e.g. opened from search)
-  const [fetchedArticle, setFetchedArticle] = useState<Item | null>(null);
   const storeArticle = selectedArticleId
-    ? getItemById(selectedArticleId)
+    ? (listArticles.find((i) => i.id === selectedArticleId) ?? null)
     : null;
 
-  useEffect(() => {
-    if (!selectedArticleId || storeArticle) {
-      setFetchedArticle(null);
-      return;
-    }
-    let cancelled = false;
-    itemAPI
-      .get(selectedArticleId)
-      .then((res) => {
-        if (!cancelled && res.data) {
-          setFetchedArticle(res.data);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedArticleId, storeArticle]);
+  const shouldFetchArticle =
+    selectedArticleId !== null &&
+    selectedArticleId > 0 &&
+    (isStarredMode || storeArticle === null);
+  const { data: fetchedArticle } = useItem(
+    selectedArticleId,
+    shouldFetchArticle,
+  );
 
-  const article = storeArticle ?? fetchedArticle;
+  const article: Item | null =
+    (isStarredMode ? fetchedArticle ?? storeArticle : storeArticle ?? fetchedArticle) ??
+    null;
+  const canToggleRead =
+    article !== null && article.id > 0 && (!isStarredMode || fetchedArticle !== undefined);
   const feed = article ? getFeedById(article.feed_id) : null;
-  const starred = article ? isStarred(article.id) : false;
+  const bookmark = article ? getBookmarkByItemId(article.id) : null;
+  const starred = article ? isItemStarred(article.id) : false;
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -67,17 +96,32 @@ export function ArticleDrawer() {
   };
 
   const handleToggleRead = async () => {
-    if (!article) return;
-    if (article.unread) {
-      await markAsRead(article.id);
-    } else {
-      await markAsUnread(article.id);
+    if (!article || !canToggleRead) return;
+    try {
+      if (article.unread) {
+        await markRead.mutateAsync([article.id]);
+      } else {
+        await markUnread.mutateAsync([article.id]);
+      }
+    } catch (error) {
+      console.error("Failed to toggle read status:", error);
     }
   };
 
   const handleToggleStar = async () => {
     if (!article) return;
-    await toggleStar(article);
+    try {
+      if (starred) {
+        const bookmark = getBookmarkByItemId(article.id);
+        if (bookmark) {
+          await deleteBookmark.mutateAsync(bookmark.id);
+        }
+      } else {
+        await createBookmark.mutateAsync(article);
+      }
+    } catch (error) {
+      console.error("Failed to toggle star:", error);
+    }
   };
 
   const handleOpenOriginal = () => {
@@ -109,6 +153,7 @@ export function ArticleDrawer() {
                   variant="outline"
                   size="sm"
                   onClick={handleToggleRead}
+                  disabled={!canToggleRead}
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
                   {article.unread ? (
@@ -169,7 +214,7 @@ export function ArticleDrawer() {
                         />
                       )}
                       <span className="truncate">
-                        {feed?.name ?? "Unknown"}
+                        {feed?.name ?? bookmark?.feed_name ?? "Unknown"}
                       </span>
                     </span>
                     <span className="text-muted-foreground">

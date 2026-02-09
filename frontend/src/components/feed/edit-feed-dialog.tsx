@@ -23,14 +23,18 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
-import { useUIStore, useDataStore } from "@/store";
-import { feedAPI, type UpdateFeedRequest } from "@/lib/api";
+import { useUIStore } from "@/store";
+import { useGroups } from "@/queries/groups";
+import { useUpdateFeed, useDeleteFeed } from "@/queries/feeds";
+import type { UpdateFeedRequest } from "@/lib/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function EditFeedDialog() {
   const { isEditFeedOpen, editingFeed, setEditFeedOpen } = useUIStore();
-  const { groups, updateFeed, removeFeed } = useDataStore();
+  const { data: groups = [] } = useGroups();
+  const updateFeedMutation = useUpdateFeed();
+  const deleteFeedMutation = useDeleteFeed();
 
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
@@ -113,12 +117,9 @@ export function EditFeedDialog() {
         return;
       }
 
-      const response = await feedAPI.update(editingFeed.id, request);
-      if (response.data) {
-        updateFeed(editingFeed.id, response.data);
-        toast.success("Feed updated successfully");
-        handleClose();
-      }
+      await updateFeedMutation.mutateAsync({ id: editingFeed.id, ...request });
+      toast.success("Feed updated successfully");
+      handleClose();
     } catch {
       toast.error("Failed to update feed");
     } finally {
@@ -131,8 +132,7 @@ export function EditFeedDialog() {
 
     setIsDeleting(true);
     try {
-      await feedAPI.delete(editingFeed.id);
-      removeFeed(editingFeed.id);
+      await deleteFeedMutation.mutateAsync(editingFeed.id);
       toast.success(`Unsubscribed from "${editingFeed.name}"`);
       setIsDeleteOpen(false);
       handleClose();

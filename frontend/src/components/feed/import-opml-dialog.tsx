@@ -7,15 +7,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useUIStore, useDataStore } from "@/store";
+import { useUIStore } from "@/store";
+import { useQueryClient } from "@tanstack/react-query";
 import { groupAPI, feedAPI } from "@/lib/api";
+import { queryKeys } from "@/queries/keys";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { parseOPML } from "@/lib/opml";
 
 export function ImportOpmlDialog() {
   const { isImportOpmlOpen, setImportOpmlOpen } = useUIStore();
-  const { setGroups, setFeeds } = useDataStore();
+  const queryClient = useQueryClient();
 
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -134,13 +136,12 @@ export function ImportOpmlDialog() {
       if (response.data) {
         const { created, failed, errors } = response.data;
 
-        // Refresh groups and feeds after import
-        const [newGroupsRes, feedsRes] = await Promise.all([
-          groupAPI.list(),
-          feedAPI.list(),
+        // Invalidate all caches after import
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: queryKeys.groups.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.items.all }),
         ]);
-        setGroups(newGroupsRes.data);
-        setFeeds(feedsRes.data);
 
         if (created > 0) {
           toast.success(`Imported ${created} feed${created > 1 ? "s" : ""}`);

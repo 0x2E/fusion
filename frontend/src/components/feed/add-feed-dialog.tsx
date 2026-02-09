@@ -21,7 +21,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useUIStore, useDataStore } from "@/store";
+import { useUIStore } from "@/store";
+import { useGroups } from "@/queries/groups";
+import { useCreateFeed } from "@/queries/feeds";
 import {
   feedAPI,
   type CreateFeedRequest,
@@ -32,7 +34,8 @@ import { cn } from "@/lib/utils";
 
 export function AddFeedDialog() {
   const { isAddFeedOpen, setAddFeedOpen } = useUIStore();
-  const { groups, addFeed } = useDataStore();
+  const { data: groups = [] } = useGroups();
+  const createFeed = useCreateFeed();
 
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
@@ -121,12 +124,9 @@ export function AddFeedDialog() {
         request.proxy = proxy.trim();
       }
 
-      const response = await feedAPI.create(request);
-      if (response.data) {
-        addFeed(response.data);
-        toast.success("Feed added successfully");
-        handleClose();
-      }
+      await createFeed.mutateAsync(request);
+      toast.success("Feed added successfully");
+      handleClose();
     } catch {
       toast.error("Failed to add feed");
     } finally {

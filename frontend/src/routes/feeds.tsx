@@ -34,8 +34,13 @@ import {
 } from "@/components/ui/dialog";
 import { AppLayout } from "@/components/layout/app-layout";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
-import { useFeeds } from "@/hooks/use-feeds";
-import { useUIStore, useDataStore } from "@/store";
+import { useGroups, useUpdateGroup, useDeleteGroup } from "@/queries/groups";
+import {
+  useFeedLookup,
+  useRefreshFeeds,
+  useMoveFeedsToGroup,
+} from "@/queries/feeds";
+import { useUIStore } from "@/store";
 import { feedAPI, groupAPI } from "@/lib/api";
 import type { Feed, Group } from "@/lib/api";
 import { getFaviconUrl } from "@/lib/api/favicon";
@@ -56,18 +61,22 @@ const statusFilterLabels: Record<StatusFilter, string> = {
 };
 
 function FeedsPage() {
-  const { feeds, groups, getFeedsByGroup } = useFeeds();
+  const { data: groups = [] } = useGroups();
+  const { feeds, getFeedsByGroup } = useFeedLookup();
+  const updateGroupMutation = useUpdateGroup();
+  const deleteGroupMutation = useDeleteGroup();
+  const moveFeedsMutation = useMoveFeedsToGroup();
+  const refreshFeedsMutation = useRefreshFeeds();
+
   const {
     setEditFeedOpen,
     setImportOpmlOpen,
     setAddFeedOpen,
     setAddGroupOpen,
   } = useUIStore();
-  const { updateGroup, removeGroup, moveFeedsToGroup } = useDataStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(
     new Set(),
@@ -121,14 +130,11 @@ function FeedsPage() {
   };
 
   const handleRefreshAll = async () => {
-    setIsRefreshing(true);
     try {
-      await feedAPI.refresh();
+      await refreshFeedsMutation.mutateAsync();
       toast.success("Refreshing all feeds...");
     } catch {
       toast.error("Failed to refresh feeds");
-    } finally {
-      setIsRefreshing(false);
     }
   };
 
@@ -160,8 +166,7 @@ function FeedsPage() {
     if (!name || name === group.name) return;
 
     try {
-      await groupAPI.update(group.id, { name });
-      updateGroup(group.id, name);
+      await updateGroupMutation.mutateAsync({ id: group.id, name });
       toast.success("Group renamed");
     } catch {
       toast.error("Failed to rename group");
@@ -173,16 +178,13 @@ function FeedsPage() {
 
     setIsDeleting(true);
     try {
-      const groupFeeds = feeds.filter((f) => f.group_id === deletingGroup.id);
-
       // Move feeds to default group (id=1)
-      await Promise.all(
-        groupFeeds.map((feed) => feedAPI.update(feed.id, { group_id: 1 })),
-      );
-      await groupAPI.delete(deletingGroup.id);
+      await moveFeedsMutation.mutateAsync({
+        fromGroupId: deletingGroup.id,
+        toGroupId: 1,
+      });
+      await deleteGroupMutation.mutateAsync(deletingGroup.id);
 
-      moveFeedsToGroup(deletingGroup.id, 1);
-      removeGroup(deletingGroup.id);
       toast.success("Group deleted");
       setDeletingGroup(null);
     } catch {
@@ -287,12 +289,12 @@ function FeedsPage() {
               variant="outline"
               size="sm"
               onClick={() => setRefreshConfirmOpen(true)}
-              disabled={isRefreshing}
+              disabled={refreshFeedsMutation.isPending}
             >
               <RefreshCw
                 className={cn(
                   "h-3.5 w-3.5 sm:mr-1.5",
-                  isRefreshing && "animate-spin",
+                  refreshFeedsMutation.isPending && "animate-spin",
                 )}
               />
               <span className="hidden sm:inline">Refresh All</span>

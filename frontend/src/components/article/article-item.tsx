@@ -1,40 +1,40 @@
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
-import { useUrlState } from "@/hooks/use-url-state";
-import { useDataStore } from "@/store";
-import { itemAPI, bookmarkAPI, type Item } from "@/lib/api";
-import { getFaviconUrl } from "@/lib/api/favicon";
+import type { Item } from "@/lib/api";
 
 interface ArticleItemProps {
   article: Item;
+  selectedArticleId: number | null;
+  onSelectArticle: (articleId: number | null) => void;
+  onToggleRead: (article: Item) => Promise<void>;
+  onToggleStar: (article: Item) => Promise<void>;
+  canToggleRead: boolean;
+  isStarred: boolean;
+  feedName: string;
+  feedFaviconUrl: string | null;
 }
 
-export function ArticleItem({ article }: ArticleItemProps) {
-  const { selectedArticleId, setSelectedArticle } = useUrlState();
-  const {
-    getFeedById,
-    markItemRead,
-    markItemUnread,
-    isItemStarred,
-    getBookmarkByItemId,
-    addBookmark,
-    removeBookmark,
-  } = useDataStore();
+export function ArticleItem({
+  article,
+  selectedArticleId,
+  onSelectArticle,
+  onToggleRead,
+  onToggleStar,
+  canToggleRead,
+  isStarred,
+  feedName,
+  feedFaviconUrl,
+}: ArticleItemProps) {
+
   const isSelected = selectedArticleId === article.id;
-  const feed = getFeedById(article.feed_id);
-  const isStarred = isItemStarred(article.id);
 
   const handleToggleRead = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!canToggleRead) return;
+
     try {
-      if (article.unread) {
-        await itemAPI.markRead({ ids: [article.id] });
-        markItemRead(article.id);
-      } else {
-        await itemAPI.markUnread({ ids: [article.id] });
-        markItemUnread(article.id);
-      }
+      await onToggleRead(article);
     } catch (error) {
       console.error("Failed to toggle read status:", error);
     }
@@ -43,25 +43,7 @@ export function ArticleItem({ article }: ArticleItemProps) {
   const handleToggleStar = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      if (isStarred) {
-        const bookmark = getBookmarkByItemId(article.id);
-        if (bookmark) {
-          await bookmarkAPI.delete(bookmark.id);
-          removeBookmark(bookmark.id);
-        }
-      } else {
-        const response = await bookmarkAPI.create({
-          item_id: article.id,
-          link: article.link,
-          title: article.title,
-          content: article.content,
-          pub_date: article.pub_date,
-          feed_name: feed?.name ?? "Unknown",
-        });
-        if (response.data) {
-          addBookmark(response.data);
-        }
-      }
+      await onToggleStar(article);
     } catch (error) {
       console.error("Failed to toggle star:", error);
     }
@@ -78,11 +60,11 @@ export function ArticleItem({ article }: ArticleItemProps) {
     <div
       role="button"
       tabIndex={0}
-      onClick={() => setSelectedArticle(article.id)}
+      onClick={() => onSelectArticle(article.id)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          setSelectedArticle(article.id);
+          onSelectArticle(article.id);
         }
       }}
       className={cn(
@@ -104,16 +86,16 @@ export function ArticleItem({ article }: ArticleItemProps) {
           {extractSummary(article.content, 150)}
         </p>
         <div className="flex items-center gap-2 text-xs">
-          {feed && (
+          {feedFaviconUrl && (
             <img
-              src={getFaviconUrl(feed.link, feed.site_url)}
+              src={feedFaviconUrl}
               alt=""
               className="h-3.5 w-3.5 shrink-0 rounded-sm"
               loading="lazy"
             />
           )}
           <span className="truncate font-medium text-muted-foreground">
-            {feed?.name ?? "Unknown"}
+            {feedName}
           </span>
           <span className="text-muted-foreground">·</span>
           <span className="shrink-0 text-muted-foreground">
@@ -128,6 +110,7 @@ export function ArticleItem({ article }: ArticleItemProps) {
           variant="ghost"
           size="icon-sm"
           onClick={handleToggleRead}
+          disabled={!canToggleRead}
           className={cn(article.unread ? "bg-muted" : "bg-primary/10")}
           title={article.unread ? "Mark as read" : "Mark as unread"}
         >

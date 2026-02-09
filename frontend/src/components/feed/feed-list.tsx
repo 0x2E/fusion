@@ -1,6 +1,7 @@
 import { useMatchRoute } from "@tanstack/react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFeeds } from "@/hooks/use-feeds";
+import { useGroups } from "@/queries/groups";
+import { useFeedLookup, useUnreadCounts } from "@/queries/feeds";
 import { useUrlState } from "@/hooks/use-url-state";
 import { cn } from "@/lib/utils";
 import { Inbox } from "lucide-react";
@@ -8,8 +9,9 @@ import { FeedGroup } from "./feed-group";
 import { FeedItem } from "./feed-item";
 
 export function FeedList() {
-  const { groups, feeds, isLoading, getFeedsByGroup, getTotalUnreadCount } =
-    useFeeds();
+  const { data: groups = [], isLoading } = useGroups();
+  const { feeds, getFeedsByGroup } = useFeedLookup();
+  const { getTotalUnreadCount } = useUnreadCounts();
   const { selectedFeedId, selectedGroupId, selectAll } = useUrlState();
   const matchRoute = useMatchRoute();
   const isOnHomePage = !!matchRoute({ to: "/" });
