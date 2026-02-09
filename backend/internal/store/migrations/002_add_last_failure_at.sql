@@ -1,0 +1,1 @@
+ALTER TABLE feeds ADD COLUMN last_failure_at INTEGER NOT NULL DEFAULT 0;

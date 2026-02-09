@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const maxListLimit = 100
+
 type markItemsReadRequest struct {
 	IDs []int64 `json:"ids" binding:"required"`
 }
@@ -44,9 +46,12 @@ func (h *Handler) listItems(c *gin.Context) {
 
 	if limit := c.Query("limit"); limit != "" {
 		val, err := strconv.Atoi(limit)
-		if err != nil {
+		if err != nil || val <= 0 {
 			badRequestError(c, "invalid limit")
 			return
+		}
+		if val > maxListLimit {
+			val = maxListLimit
 		}
 		params.Limit = val
 	} else {
@@ -55,7 +60,7 @@ func (h *Handler) listItems(c *gin.Context) {
 
 	if offset := c.Query("offset"); offset != "" {
 		val, err := strconv.Atoi(offset)
-		if err != nil {
+		if err != nil || val < 0 {
 			badRequestError(c, "invalid offset")
 			return
 		}

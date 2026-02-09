@@ -122,6 +122,67 @@ func (s *Store) CreateItem(feedID int64, guid, title, link, content string, pubD
 	return s.GetItem(id)
 }
 
+type BatchCreateItemInput struct {
+	GUID    string
+	Title   string
+	Link    string
+	Content string
+	PubDate int64
+}
+
+// BatchCreateItemsIgnore inserts items in one transaction and ignores duplicates by (feed_id, guid).
+// Returns the number of newly inserted rows.
+func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInput) (int, error) {
+	if len(inputs) == 0 {
+		return 0, nil
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`
+		INSERT INTO items (feed_id, guid, title, link, content, pub_date)
+		VALUES (:feed_id, :guid, :title, :link, :content, :pub_date)
+		ON CONFLICT(feed_id, guid) DO NOTHING
+	`)
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+
+	created := 0
+	for _, input := range inputs {
+		result, err := stmt.Exec(
+			sql.Named("feed_id", feedID),
+			sql.Named("guid", input.GUID),
+			sql.Named("title", input.Title),
+			sql.Named("link", input.Link),
+			sql.Named("content", input.Content),
+			sql.Named("pub_date", input.PubDate),
+		)
+		if err != nil {
+			return 0, err
+		}
+
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return 0, err
+		}
+		if affected > 0 {
+			created++
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return created, nil
+}
+
 func (s *Store) UpdateItemUnread(id int64, unread bool) error {
 	result, err := s.db.Exec(`UPDATE items SET unread = :unread WHERE id = :id`,
 		sql.Named("unread", boolToInt(unread)), sql.Named("id", id))

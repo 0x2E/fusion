@@ -11,11 +11,14 @@ import (
 
 func (s *Store) ListFeeds() ([]*model.Feed, error) {
 	rows, err := s.db.Query(`
-		SELECT f.id, f.group_id, f.name, f.link, f.site_url, f.last_build,
+		SELECT f.id, f.group_id, f.name, f.link, f.site_url, f.last_build, f.last_failure_at,
 		       f.failure, f.failures, f.suspended, f.proxy, f.created_at, f.updated_at,
-		       (SELECT COUNT(*) FROM items WHERE feed_id = f.id AND unread = 1) AS unread_count,
-		       (SELECT COUNT(*) FROM items WHERE feed_id = f.id) AS item_count
+		       COALESCE(SUM(CASE WHEN i.unread = 1 THEN 1 ELSE 0 END), 0) AS unread_count,
+		       COALESCE(COUNT(i.id), 0) AS item_count
 		FROM feeds f
+		LEFT JOIN items i ON i.feed_id = f.id
+		GROUP BY f.id, f.group_id, f.name, f.link, f.site_url, f.last_build, f.last_failure_at,
+		         f.failure, f.failures, f.suspended, f.proxy, f.created_at, f.updated_at
 		ORDER BY f.id
 	`)
 	if err != nil {
@@ -27,7 +30,7 @@ func (s *Store) ListFeeds() ([]*model.Feed, error) {
 	for rows.Next() {
 		f := &model.Feed{}
 		var suspended int
-		if err := rows.Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt, &f.UnreadCount, &f.ItemCount); err != nil {
+		if err := rows.Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.LastFailureAt, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt, &f.UnreadCount, &f.ItemCount); err != nil {
 			return nil, err
 		}
 		f.Suspended = intToBool(suspended)
@@ -40,10 +43,10 @@ func (s *Store) GetFeed(id int64) (*model.Feed, error) {
 	f := &model.Feed{}
 	var suspended int
 	err := s.db.QueryRow(`
-		SELECT id, group_id, name, link, site_url, last_build, failure, failures, suspended, proxy, created_at, updated_at
+		SELECT id, group_id, name, link, site_url, last_build, last_failure_at, failure, failures, suspended, proxy, created_at, updated_at
 		FROM feeds
 		WHERE id = :id
-	`, sql.Named("id", id)).Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt)
+	`, sql.Named("id", id)).Scan(&f.ID, &f.GroupID, &f.Name, &f.Link, &f.SiteURL, &f.LastBuild, &f.LastFailureAt, &f.Failure, &f.Failures, &suspended, &f.Proxy, &f.CreatedAt, &f.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: feed", ErrNotFound)
@@ -205,7 +208,7 @@ func (s *Store) DeleteFeed(id int64) error {
 func (s *Store) UpdateFeedLastBuild(id int64, lastBuild int64) error {
 	_, err := s.db.Exec(`
 		UPDATE feeds
-		SET last_build = :last_build, failures = 0, failure = '', updated_at = unixepoch()
+		SET last_build = :last_build, last_failure_at = 0, failures = 0, failure = '', updated_at = unixepoch()
 		WHERE id = :id
 	`, sql.Named("last_build", lastBuild), sql.Named("id", id))
 	return err
@@ -214,7 +217,7 @@ func (s *Store) UpdateFeedLastBuild(id int64, lastBuild int64) error {
 func (s *Store) UpdateFeedFailure(id int64, failure string) error {
 	_, err := s.db.Exec(`
 		UPDATE feeds
-		SET failures = failures + 1, failure = :failure, updated_at = unixepoch()
+		SET failures = failures + 1, failure = :failure, last_failure_at = unixepoch(), updated_at = unixepoch()
 		WHERE id = :id
 	`, sql.Named("failure", failure), sql.Named("id", id))
 	return err

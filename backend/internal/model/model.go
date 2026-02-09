@@ -16,12 +16,14 @@ type Feed struct {
 	Link      string `json:"link"`
 	SiteURL   string `json:"site_url,omitempty"`
 	LastBuild int64  `json:"last_build"`
-	Failure   string `json:"failure,omitempty"`
-	Failures  int64  `json:"failures"`
-	Suspended bool   `json:"suspended"`
-	Proxy     string `json:"proxy,omitempty"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
+	// LastFailureAt is Unix timestamp of the most recent pull failure.
+	LastFailureAt int64  `json:"last_failure_at"`
+	Failure       string `json:"failure,omitempty"`
+	Failures      int64  `json:"failures"`
+	Suspended     bool   `json:"suspended"`
+	Proxy         string `json:"proxy,omitempty"`
+	CreatedAt     int64  `json:"created_at"`
+	UpdatedAt     int64  `json:"updated_at"`
 
 	UnreadCount int64 `json:"unread_count"`
 	ItemCount   int64 `json:"item_count"`

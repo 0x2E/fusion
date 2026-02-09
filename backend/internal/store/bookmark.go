@@ -98,3 +98,9 @@ func (s *Store) BookmarkExists(link string) (bool, error) {
 	err := s.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM bookmarks WHERE link = :link)`, sql.Named("link", link)).Scan(&exists)
 	return exists, err
 }
+
+func (s *Store) CountBookmarks() (int, error) {
+	var count int
+	err := s.db.QueryRow(`SELECT COUNT(*) FROM bookmarks`).Scan(&count)
+	return count, err
+}

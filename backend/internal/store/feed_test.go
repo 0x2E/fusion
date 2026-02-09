@@ -294,6 +294,9 @@ func TestUpdateFeedLastBuild(t *testing.T) {
 	if updated.Failures != 0 {
 		t.Error("expected failures to be cleared")
 	}
+	if updated.LastFailureAt != 0 {
+		t.Error("expected last_failure_at to be cleared")
+	}
 }
 
 func TestUpdateFeedFailure(t *testing.T) {
@@ -327,6 +330,10 @@ func TestUpdateFeedFailure(t *testing.T) {
 	if updated1.Failures != 1 {
 		t.Errorf("expected failures count to be 1, got %d", updated1.Failures)
 	}
+	if updated1.LastFailureAt == 0 {
+		t.Error("expected last_failure_at to be set after failure")
+	}
+	firstFailureAt := updated1.LastFailureAt
 
 	errorMsg2 := "second error"
 	if err := store.UpdateFeedFailure(feed.ID, errorMsg2); err != nil {
@@ -344,6 +351,9 @@ func TestUpdateFeedFailure(t *testing.T) {
 
 	if updated2.Failures != 2 {
 		t.Errorf("expected failures count to be 2, got %d", updated2.Failures)
+	}
+	if updated2.LastFailureAt < firstFailureAt {
+		t.Error("expected last_failure_at to be monotonic")
 	}
 }
 

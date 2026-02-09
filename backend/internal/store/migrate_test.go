@@ -1,6 +1,7 @@
 package store
 
 import (
+	"database/sql"
 	"testing"
 )
 
@@ -39,15 +40,17 @@ func TestMigrationVersionTracking(t *testing.T) {
 		t.Error("schema_migrations table is empty, but migrations should have been applied")
 	}
 
-	// Verify version 1 was applied
-	var applied bool
-	err = store.db.QueryRow("SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = 1)").Scan(&applied)
-	if err != nil {
-		t.Fatalf("failed to check version 1: %v", err)
-	}
-
-	if !applied {
-		t.Error("migration version 1 was not applied")
+	// Verify all expected versions were applied
+	versions := []int{1, 2, 3}
+	for _, version := range versions {
+		var applied bool
+		err = store.db.QueryRow("SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = :version)", sql.Named("version", version)).Scan(&applied)
+		if err != nil {
+			t.Fatalf("failed to check version %d: %v", version, err)
+		}
+		if !applied {
+			t.Errorf("migration version %d was not applied", version)
+		}
 	}
 }
 

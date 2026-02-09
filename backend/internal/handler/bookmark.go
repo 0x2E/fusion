@@ -23,16 +23,19 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 
 	if limitStr := c.Query("limit"); limitStr != "" {
 		val, err := strconv.Atoi(limitStr)
-		if err != nil {
+		if err != nil || val <= 0 {
 			badRequestError(c, "invalid limit")
 			return
+		}
+		if val > maxListLimit {
+			val = maxListLimit
 		}
 		limit = val
 	}
 
 	if offsetStr := c.Query("offset"); offsetStr != "" {
 		val, err := strconv.Atoi(offsetStr)
-		if err != nil {
+		if err != nil || val < 0 {
 			badRequestError(c, "invalid offset")
 			return
 		}
@@ -45,7 +48,13 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 		return
 	}
 
-	listResponse(c, bookmarks, len(bookmarks))
+	total, err := h.store.CountBookmarks()
+	if err != nil {
+		internalError(c, err, "count bookmarks")
+		return
+	}
+
+	listResponse(c, bookmarks, total)
 }
 
 func (h *Handler) getBookmark(c *gin.Context) {

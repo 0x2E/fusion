@@ -38,7 +38,11 @@ func ShouldSkip(feed *model.Feed, interval, maxBackoff time.Duration) bool {
 	// Skip if in backoff period
 	if feed.Failures > 0 {
 		backoff := CalculateBackoff(interval, feed.Failures, maxBackoff)
-		nextPull := feed.LastBuild + int64(backoff.Seconds())
+		base := feed.LastFailureAt
+		if base <= 0 {
+			base = feed.LastBuild
+		}
+		nextPull := base + int64(backoff.Seconds())
 		if now < nextPull {
 			return true
 		}

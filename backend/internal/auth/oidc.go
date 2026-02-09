@@ -84,16 +84,6 @@ func (a *OIDCAuthenticator) AuthURL() (authURL string, err error) {
 	return url, nil
 }
 
-// SetRedirectURI sets the redirect URI dynamically (for auto-detection from Host header).
-func (a *OIDCAuthenticator) SetRedirectURI(uri string) {
-	a.oauth2Config.RedirectURL = uri
-}
-
-// RedirectURI returns the currently configured redirect URI.
-func (a *OIDCAuthenticator) RedirectURI() string {
-	return a.oauth2Config.RedirectURL
-}
-
 // Callback exchanges the authorization code for tokens and verifies the ID token.
 // Returns a user identifier (email or subject claim).
 func (a *OIDCAuthenticator) Callback(ctx context.Context, state, code string) (string, error) {

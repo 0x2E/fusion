@@ -94,23 +94,21 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 		return
 	}
 
-	newCount := 0
+	inputs := make([]store.BatchCreateItemInput, 0, len(items))
 	for _, item := range items {
-		exists, err := p.store.ItemExists(feed.ID, item.GUID)
-		if err != nil {
-			p.logger.Error("failed to check item existence", "feed_id", feed.ID, "error", err)
-			continue
-		}
-		if exists {
-			continue
-		}
+		inputs = append(inputs, store.BatchCreateItemInput{
+			GUID:    item.GUID,
+			Title:   item.Title,
+			Link:    item.Link,
+			Content: item.Content,
+			PubDate: item.PubDate,
+		})
+	}
 
-		_, err = p.store.CreateItem(feed.ID, item.GUID, item.Title, item.Link, item.Content, item.PubDate)
-		if err != nil {
-			p.logger.Error("failed to create item", "feed_id", feed.ID, "error", err)
-			continue
-		}
-		newCount++
+	newCount, err := p.store.BatchCreateItemsIgnore(feed.ID, inputs)
+	if err != nil {
+		p.logger.Error("failed to batch create items", "feed_id", feed.ID, "error", err)
+		return
 	}
 
 	if err := p.store.UpdateFeedLastBuild(feed.ID, time.Now().Unix()); err != nil {

@@ -20,18 +20,21 @@ func (h *Handler) search(c *gin.Context) {
 			badRequestError(c, "invalid limit")
 			return
 		}
+		if parsed > maxListLimit {
+			parsed = maxListLimit
+		}
 		limit = parsed
 	}
 
 	feeds, err := h.store.SearchFeeds(q)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "search feeds: " + err.Error()})
+		internalError(c, err, "search feeds")
 		return
 	}
 
 	items, err := h.store.SearchItems(q, limit)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "search items: " + err.Error()})
+		internalError(c, err, "search items")
 		return
 	}
 

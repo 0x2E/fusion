@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 
 	"github.com/0x2E/fusion/internal/auth"
@@ -23,6 +24,7 @@ type Handler struct {
 	sessions map[string]bool         // sessionID -> valid, in-memory session store
 	mu       sync.RWMutex            // protects sessions map
 	oidcAuth *auth.OIDCAuthenticator // nil when OIDC is disabled
+	limiter  *loginLimiter
 }
 
 func New(store *store.Store, config *config.Config, puller interface {
@@ -41,9 +43,14 @@ func New(store *store.Store, config *config.Config, puller interface {
 		passwordHash: passwordHash,
 		puller:       puller,
 		sessions:     make(map[string]bool),
+		limiter:      newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
 	}
 
 	if config.OIDCIssuer != "" {
+		if strings.TrimSpace(config.OIDCRedirectURI) == "" {
+			return nil, fmt.Errorf("FUSION_OIDC_REDIRECT_URI is required when OIDC is enabled")
+		}
+
 		oidcAuth, err := auth.NewOIDC(
 			context.Background(),
 			config.OIDCIssuer,

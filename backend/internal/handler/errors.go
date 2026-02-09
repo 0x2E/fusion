@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log/slog"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,4 +31,12 @@ func badRequestError(c *gin.Context, message string) {
 // unauthorizedError returns 401.
 func unauthorizedError(c *gin.Context) {
 	c.JSON(401, gin.H{"error": "unauthorized"})
+}
+
+// tooManyRequestsError returns 429 and sets Retry-After when available.
+func tooManyRequestsError(c *gin.Context, retryAfterSec int64) {
+	if retryAfterSec > 0 {
+		c.Header("Retry-After", strconv.FormatInt(retryAfterSec, 10))
+	}
+	c.JSON(429, gin.H{"error": "too many login attempts"})
 }

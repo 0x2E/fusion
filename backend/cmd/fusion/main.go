@@ -27,7 +27,10 @@ func main() {
 }
 
 func run() error {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
 	setupLogger(cfg)
 
 	st, err := store.New(cfg.DBPath)
