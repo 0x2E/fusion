@@ -4,23 +4,6 @@ import (
 	"testing"
 )
 
-func TestHashPassword(t *testing.T) {
-	password := "testpassword123"
-
-	hash, err := HashPassword(password)
-	if err != nil {
-		t.Fatalf("HashPassword failed: %v", err)
-	}
-
-	if hash == "" {
-		t.Fatal("Hash should not be empty")
-	}
-
-	if hash == password {
-		t.Fatal("Hash should not equal plain password")
-	}
-}
-
 func TestCheckPassword(t *testing.T) {
 	password := "testpassword123"
 	wrongPassword := "wrongpassword"

@@ -2,35 +2,56 @@ package handler
 
 import "testing"
 
-func TestLoginLimiterSweepDeletesExpiredWindowWithoutBlock(t *testing.T) {
-	limiter := newLoginLimiter(3, 10, 30)
-	limiter.states["1.1.1.1"] = loginState{windowStart: 10, failures: 1}
-
-	limiter.sweep(120)
-
-	if _, ok := limiter.states["1.1.1.1"]; ok {
-		t.Fatal("expected expired non-blocked state to be deleted")
+func TestLoginLimiterSweep(t *testing.T) {
+	tests := []struct {
+		name       string
+		windowSecs int
+		blockSecs  int
+		ip         string
+		state      loginState
+		nowSec     int64
+		wantExists bool
+	}{
+		{
+			name:       "deletes expired window without block",
+			windowSecs: 10,
+			blockSecs:  30,
+			ip:         "1.1.1.1",
+			state:      loginState{windowStart: 10, failures: 1},
+			nowSec:     120,
+			wantExists: false,
+		},
+		{
+			name:       "deletes unblocked state",
+			windowSecs: 60,
+			blockSecs:  30,
+			ip:         "2.2.2.2",
+			state:      loginState{windowStart: 100, blockedTill: 110},
+			nowSec:     120,
+			wantExists: false,
+		},
+		{
+			name:       "keeps active blocked state",
+			windowSecs: 60,
+			blockSecs:  30,
+			ip:         "3.3.3.3",
+			state:      loginState{windowStart: 100, blockedTill: 170},
+			nowSec:     120,
+			wantExists: true,
+		},
 	}
-}
 
-func TestLoginLimiterSweepDeletesUnblockedState(t *testing.T) {
-	limiter := newLoginLimiter(3, 60, 30)
-	limiter.states["2.2.2.2"] = loginState{windowStart: 100, blockedTill: 110}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			limiter := newLoginLimiter(3, tt.windowSecs, tt.blockSecs)
+			limiter.states[tt.ip] = tt.state
 
-	limiter.sweep(120)
+			limiter.sweep(tt.nowSec)
 
-	if _, ok := limiter.states["2.2.2.2"]; ok {
-		t.Fatal("expected unblocked state to be deleted")
-	}
-}
-
-func TestLoginLimiterSweepKeepsActiveBlockedState(t *testing.T) {
-	limiter := newLoginLimiter(3, 60, 30)
-	limiter.states["3.3.3.3"] = loginState{windowStart: 100, blockedTill: 170}
-
-	limiter.sweep(120)
-
-	if _, ok := limiter.states["3.3.3.3"]; !ok {
-		t.Fatal("expected active blocked state to remain")
+			_, ok := limiter.states[tt.ip]
+			if ok != tt.wantExists {
+				t.Fatalf("state exists = %v, want %v", ok, tt.wantExists)
+			}
+		})
 	}
 }

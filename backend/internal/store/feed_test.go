@@ -12,10 +12,7 @@ func TestListFeeds(t *testing.T) {
 	defer closeStore(t, store)
 
 	// Create a group
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
+	group := mustCreateGroup(t, store, "Test Group")
 
 	// Test empty list
 	feeds, err := store.ListFeeds()
@@ -27,15 +24,8 @@ func TestListFeeds(t *testing.T) {
 	}
 
 	// Create feeds
-	f1, err := store.CreateFeed(group.ID, "Feed 1", "https://example.com/feed1", "https://example.com", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
-
-	f2, err := store.CreateFeed(group.ID, "Feed 2", "https://example.com/feed2", "https://example.com", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
+	f1 := mustCreateFeed(t, store, group.ID, "Feed 1", "https://example.com/feed1", "https://example.com", "")
+	f2 := mustCreateFeed(t, store, group.ID, "Feed 2", "https://example.com/feed2", "https://example.com", "")
 
 	// List feeds
 	feeds, err = store.ListFeeds()
@@ -60,15 +50,8 @@ func TestGetFeed(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-
-	created, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
+	group := mustCreateGroup(t, store, "Test Group")
+	created := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
 
 	// Get existing feed
 	feed, err := store.GetFeed(created.ID)
@@ -91,20 +74,14 @@ func TestCreateFeed(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
+	group := mustCreateGroup(t, store, "Test Group")
 
 	name := "New Feed"
 	link := "https://example.com/feed"
 	siteURL := "https://example.com"
 	proxy := "http://proxy.example.com"
 
-	feed, err := store.CreateFeed(group.ID, name, link, siteURL, proxy)
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
+	feed := mustCreateFeed(t, store, group.ID, name, link, siteURL, proxy)
 
 	if feed.Name != name || feed.Link != link || feed.SiteURL != siteURL || feed.Proxy != proxy {
 		t.Error("feed fields don't match input")
@@ -123,7 +100,7 @@ func TestCreateFeed(t *testing.T) {
 	}
 
 	// Test UNIQUE constraint on link
-	_, err = store.CreateFeed(group.ID, "Duplicate", link, siteURL, "")
+	_, err := store.CreateFeed(group.ID, "Duplicate", link, siteURL, "")
 	if err == nil {
 		t.Error("expected error when creating duplicate feed link, got nil")
 	}
@@ -133,20 +110,9 @@ func TestUpdateFeed(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
-	group1, err := store.CreateGroup("Group 1")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-
-	group2, err := store.CreateGroup("Group 2")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-
-	feed, err := store.CreateFeed(group1.ID, "Original Feed", "https://example.com/feed", "https://example.com", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
+	group1 := mustCreateGroup(t, store, "Group 1")
+	group2 := mustCreateGroup(t, store, "Group 2")
+	feed := mustCreateFeed(t, store, group1.ID, "Original Feed", "https://example.com/feed", "https://example.com", "")
 
 	// Update with partial params
 	newName := "Updated Feed"
@@ -211,31 +177,16 @@ func TestDeleteFeed(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-
-	feed, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
-
-	item, err := store.CreateItem(feed.ID, "guid-1", "Item 1", "https://example.com/item1", "Content 1", time.Now().Unix())
-	if err != nil {
-		t.Fatalf("CreateItem() failed: %v", err)
-	}
-
-	bookmark, err := store.CreateBookmark(&item.ID, "https://example.com/item1", "Item 1", "Content 1", item.PubDate, "Test Feed")
-	if err != nil {
-		t.Fatalf("CreateBookmark() failed: %v", err)
-	}
+	group := mustCreateGroup(t, store, "Test Group")
+	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
+	item := mustCreateItem(t, store, feed.ID, "guid-1", "Item 1", "https://example.com/item1", "Content 1", time.Now().Unix())
+	bookmark := mustCreateBookmark(t, store, &item.ID, "https://example.com/item1", "Item 1", "Content 1", item.PubDate, "Test Feed")
 
 	if err := store.DeleteFeed(feed.ID); err != nil {
 		t.Fatalf("DeleteFeed() failed: %v", err)
 	}
 
-	_, err = store.GetFeed(feed.ID)
+	_, err := store.GetFeed(feed.ID)
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected ErrNotFound after deletion, got %v", err)
 	}
@@ -259,15 +210,8 @@ func TestUpdateFeedLastBuild(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-
-	feed, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
+	group := mustCreateGroup(t, store, "Test Group")
+	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
 
 	if err := store.UpdateFeedFailure(feed.ID, "test error"); err != nil {
 		t.Fatalf("UpdateFeedFailure() failed: %v", err)
@@ -303,15 +247,8 @@ func TestUpdateFeedFailure(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-
-	feed, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
+	group := mustCreateGroup(t, store, "Test Group")
+	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
 
 	errorMsg1 := "first error"
 	if err := store.UpdateFeedFailure(feed.ID, errorMsg1); err != nil {
@@ -358,84 +295,48 @@ func TestUpdateFeedFailure(t *testing.T) {
 }
 
 func TestUpdateFeedSiteURLIfEmpty(t *testing.T) {
-	store, _ := setupTestDB(t)
-	defer closeStore(t, store)
-
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
+	tests := []struct {
+		name           string
+		initialSiteURL string
+	}{
+		{name: "empty", initialSiteURL: ""},
+		{name: "whitespace", initialSiteURL: "   "},
 	}
 
-	feed, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store, _ := setupTestDB(t)
+			defer closeStore(t, store)
 
-	firstSiteURL := "https://example.com"
-	if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, firstSiteURL); err != nil {
-		t.Fatalf("UpdateFeedSiteURLIfEmpty() failed: %v", err)
-	}
+			group := mustCreateGroup(t, store, "Test Group")
+			feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", tt.initialSiteURL, "")
 
-	updated, err := store.GetFeed(feed.ID)
-	if err != nil {
-		t.Fatalf("GetFeed() failed: %v", err)
-	}
-	if updated.SiteURL != firstSiteURL {
-		t.Fatalf("expected site_url %q, got %q", firstSiteURL, updated.SiteURL)
-	}
+			firstSiteURL := "https://example.com"
+			if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, firstSiteURL); err != nil {
+				t.Fatalf("UpdateFeedSiteURLIfEmpty() failed: %v", err)
+			}
 
-	secondSiteURL := "https://should-not-overwrite.example.com"
-	if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, secondSiteURL); err != nil {
-		t.Fatalf("UpdateFeedSiteURLIfEmpty() second call failed: %v", err)
-	}
+			updated, err := store.GetFeed(feed.ID)
+			if err != nil {
+				t.Fatalf("GetFeed() failed: %v", err)
+			}
+			if updated.SiteURL != firstSiteURL {
+				t.Fatalf("expected site_url %q, got %q", firstSiteURL, updated.SiteURL)
+			}
 
-	updated, err = store.GetFeed(feed.ID)
-	if err != nil {
-		t.Fatalf("GetFeed() failed: %v", err)
-	}
-	if updated.SiteURL != firstSiteURL {
-		t.Fatalf("site_url should remain %q, got %q", firstSiteURL, updated.SiteURL)
-	}
-}
+			secondSiteURL := "https://should-not-overwrite.example.com"
+			if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, secondSiteURL); err != nil {
+				t.Fatalf("UpdateFeedSiteURLIfEmpty() second call failed: %v", err)
+			}
 
-func TestUpdateFeedSiteURLIfEmptyTreatsWhitespaceAsEmpty(t *testing.T) {
-	store, _ := setupTestDB(t)
-	defer closeStore(t, store)
-
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-
-	feed, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "   ", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
-
-	firstSiteURL := "https://example.com"
-	if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, firstSiteURL); err != nil {
-		t.Fatalf("UpdateFeedSiteURLIfEmpty() failed: %v", err)
-	}
-
-	updated, err := store.GetFeed(feed.ID)
-	if err != nil {
-		t.Fatalf("GetFeed() failed: %v", err)
-	}
-	if updated.SiteURL != firstSiteURL {
-		t.Fatalf("expected site_url %q, got %q", firstSiteURL, updated.SiteURL)
-	}
-
-	secondSiteURL := "https://should-not-overwrite.example.com"
-	if err := store.UpdateFeedSiteURLIfEmpty(feed.ID, secondSiteURL); err != nil {
-		t.Fatalf("UpdateFeedSiteURLIfEmpty() second call failed: %v", err)
-	}
-
-	updated, err = store.GetFeed(feed.ID)
-	if err != nil {
-		t.Fatalf("GetFeed() failed: %v", err)
-	}
-	if updated.SiteURL != firstSiteURL {
-		t.Fatalf("site_url should remain %q, got %q", firstSiteURL, updated.SiteURL)
+			updated, err = store.GetFeed(feed.ID)
+			if err != nil {
+				t.Fatalf("GetFeed() failed: %v", err)
+			}
+			if updated.SiteURL != firstSiteURL {
+				t.Fatalf("site_url should remain %q, got %q", firstSiteURL, updated.SiteURL)
+			}
+		})
 	}
 }
 
@@ -443,15 +344,8 @@ func TestUpdateFeedNoParamsDoesNothing(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
-	group, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-
-	feed, err := store.CreateFeed(group.ID, "Original Feed", "https://example.com/feed", "https://example.com", "")
-	if err != nil {
-		t.Fatalf("CreateFeed() failed: %v", err)
-	}
+	group := mustCreateGroup(t, store, "Test Group")
+	feed := mustCreateFeed(t, store, group.ID, "Original Feed", "https://example.com/feed", "https://example.com", "")
 
 	if _, err := store.db.Exec(
 		`UPDATE feeds SET updated_at = :updated_at WHERE id = :id`,
@@ -483,5 +377,41 @@ func TestUpdateFeedNotFound(t *testing.T) {
 	err := store.UpdateFeed(99999, UpdateFeedParams{Name: &name})
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestBatchCreateFeedsHandlesExistingAndInBatchDuplicates(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Batch Group")
+	mustCreateFeed(t, store, group.ID, "Existing", "https://example.com/existing.xml", "", "")
+
+	result, err := store.BatchCreateFeeds([]BatchCreateFeedsInput{
+		{GroupID: group.ID, Name: "Dup Existing", Link: "https://example.com/existing.xml"},
+		{GroupID: group.ID, Name: "Fresh 1", Link: "https://example.com/fresh1.xml"},
+		{GroupID: group.ID, Name: "Dup In Batch", Link: "https://example.com/fresh1.xml"},
+		{GroupID: group.ID, Name: "Fresh 2", Link: "https://example.com/fresh2.xml"},
+	})
+	if err != nil {
+		t.Fatalf("BatchCreateFeeds() failed: %v", err)
+	}
+
+	if result.Created != 2 {
+		t.Fatalf("expected 2 created feeds, got %d", result.Created)
+	}
+	if len(result.CreatedIDs) != 2 {
+		t.Fatalf("expected 2 created IDs, got %d", len(result.CreatedIDs))
+	}
+	if len(result.Errors) != 2 {
+		t.Fatalf("expected 2 duplicate errors, got %d (%v)", len(result.Errors), result.Errors)
+	}
+
+	feeds, err := store.ListFeeds()
+	if err != nil {
+		t.Fatalf("ListFeeds() failed: %v", err)
+	}
+	if len(feeds) != 3 {
+		t.Fatalf("expected total 3 feeds (1 existing + 2 new), got %d", len(feeds))
 	}
 }

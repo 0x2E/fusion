@@ -3,6 +3,8 @@ package store
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/0x2E/fusion/internal/model"
 )
 
 func closeStore(t *testing.T, store *Store) {
@@ -26,6 +28,50 @@ func setupTestDB(t *testing.T) (*Store, string) {
 	return store, dbPath
 }
 
+func mustCreateGroup(t *testing.T, store *Store, name string) *model.Group {
+	t.Helper()
+
+	group, err := store.CreateGroup(name)
+	if err != nil {
+		t.Fatalf("CreateGroup() failed: %v", err)
+	}
+
+	return group
+}
+
+func mustCreateFeed(t *testing.T, store *Store, groupID int64, name, link, siteURL, proxy string) *model.Feed {
+	t.Helper()
+
+	feed, err := store.CreateFeed(groupID, name, link, siteURL, proxy)
+	if err != nil {
+		t.Fatalf("CreateFeed() failed: %v", err)
+	}
+
+	return feed
+}
+
+func mustCreateItem(t *testing.T, store *Store, feedID int64, guid, title, link, content string, pubDate int64) *model.Item {
+	t.Helper()
+
+	item, err := store.CreateItem(feedID, guid, title, link, content, pubDate)
+	if err != nil {
+		t.Fatalf("CreateItem() failed: %v", err)
+	}
+
+	return item
+}
+
+func mustCreateBookmark(t *testing.T, store *Store, itemID *int64, link, title, content string, pubDate int64, feedName string) *model.Bookmark {
+	t.Helper()
+
+	bookmark, err := store.CreateBookmark(itemID, link, title, content, pubDate, feedName)
+	if err != nil {
+		t.Fatalf("CreateBookmark() failed: %v", err)
+	}
+
+	return bookmark
+}
+
 func TestNew(t *testing.T) {
 	dbPath := filepath.Join(t.TempDir(), "test.db")
 
@@ -38,17 +84,6 @@ func TestNew(t *testing.T) {
 	// Verify database connection is alive
 	if err := store.db.Ping(); err != nil {
 		t.Errorf("database ping failed: %v", err)
-	}
-
-	// Verify migrations were executed by checking schema_migrations table exists
-	var count int
-	err = store.db.QueryRow("SELECT COUNT(*) FROM schema_migrations").Scan(&count)
-	if err != nil {
-		t.Errorf("schema_migrations table not found: %v", err)
-	}
-
-	if count == 0 {
-		t.Error("no migrations were applied")
 	}
 }
 

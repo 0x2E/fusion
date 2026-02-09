@@ -20,15 +20,8 @@ func TestListGroups(t *testing.T) {
 	}
 
 	// Create test groups
-	g1, err := store.CreateGroup("Group 1")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
-
-	g2, err := store.CreateGroup("Group 2")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
+	g1 := mustCreateGroup(t, store, "Group 1")
+	g2 := mustCreateGroup(t, store, "Group 2")
 
 	// List again
 	groups, err = store.ListGroups()
@@ -51,10 +44,7 @@ func TestGetGroup(t *testing.T) {
 	defer closeStore(t, store)
 
 	// Create a group
-	created, err := store.CreateGroup("Test Group")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
+	created := mustCreateGroup(t, store, "Test Group")
 
 	// Get existing group
 	group, err := store.GetGroup(created.ID)
@@ -111,10 +101,7 @@ func TestUpdateGroup(t *testing.T) {
 	defer closeStore(t, store)
 
 	// Create a group
-	group, err := store.CreateGroup("Original Name")
-	if err != nil {
-		t.Fatalf("CreateGroup() failed: %v", err)
-	}
+	group := mustCreateGroup(t, store, "Original Name")
 
 	if _, err := store.db.Exec(
 		`UPDATE groups SET updated_at = :updated_at WHERE id = :id`,
@@ -150,17 +137,14 @@ func TestDeleteGroup(t *testing.T) {
 	defer closeStore(t, store)
 
 	t.Run("delete normal group", func(t *testing.T) {
-		group, err := store.CreateGroup("Test Group")
-		if err != nil {
-			t.Fatalf("CreateGroup() failed: %v", err)
-		}
+		group := mustCreateGroup(t, store, "Test Group")
 
 		if err := store.DeleteGroup(group.ID); err != nil {
 			t.Fatalf("DeleteGroup() failed: %v", err)
 		}
 
 		// Verify deletion
-		_, err = store.GetGroup(group.ID)
+		_, err := store.GetGroup(group.ID)
 		if !errors.Is(err, ErrNotFound) {
 			t.Fatalf("expected ErrNotFound after deletion, got %v", err)
 		}
@@ -175,16 +159,10 @@ func TestDeleteGroup(t *testing.T) {
 
 	t.Run("cascade feeds to default group", func(t *testing.T) {
 		// Create a group
-		group, err := store.CreateGroup("Group with Feeds")
-		if err != nil {
-			t.Fatalf("CreateGroup() failed: %v", err)
-		}
+		group := mustCreateGroup(t, store, "Group with Feeds")
 
 		// Create a feed in this group
-		feed, err := store.CreateFeed(group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
-		if err != nil {
-			t.Fatalf("CreateFeed() failed: %v", err)
-		}
+		feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
 
 		// Delete the group
 		if err := store.DeleteGroup(group.ID); err != nil {
