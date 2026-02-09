@@ -109,11 +109,17 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 		content = item.Description
 	}
 
+	var sourcePubDate int64
+	hasSourcePubDate := false
 	var pubDate int64
 	if item.PublishedParsed != nil {
-		pubDate = item.PublishedParsed.Unix()
+		sourcePubDate = item.PublishedParsed.Unix()
+		hasSourcePubDate = true
+		pubDate = sourcePubDate
 	} else if item.UpdatedParsed != nil {
-		pubDate = item.UpdatedParsed.Unix()
+		sourcePubDate = item.UpdatedParsed.Unix()
+		hasSourcePubDate = true
+		pubDate = sourcePubDate
 	} else {
 		pubDate = time.Now().Unix()
 	}
@@ -131,7 +137,7 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 		guid = strings.TrimSpace(link)
 	}
 	if guid == "" {
-		guid = fallbackGUID(item.Title, content, pubDate)
+		guid = fallbackGUID(item.Title, content, sourcePubDate, hasSourcePubDate)
 	}
 
 	return &ParsedItem{
@@ -143,7 +149,12 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 	}
 }
 
-func fallbackGUID(title, content string, pubDate int64) string {
-	h := sha256.Sum256([]byte(strings.TrimSpace(title) + "\n" + strings.TrimSpace(content) + "\n" + strconv.FormatInt(pubDate, 10)))
+func fallbackGUID(title, content string, sourcePubDate int64, hasSourcePubDate bool) string {
+	pubDatePart := ""
+	if hasSourcePubDate {
+		pubDatePart = strconv.FormatInt(sourcePubDate, 10)
+	}
+
+	h := sha256.Sum256([]byte(strings.TrimSpace(title) + "\n" + strings.TrimSpace(content) + "\n" + pubDatePart))
 	return "generated:" + hex.EncodeToString(h[:])
 }

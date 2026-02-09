@@ -66,3 +66,21 @@ func TestMapItemDoesNotUseBaseURLWhenLinkIsMissing(t *testing.T) {
 		t.Fatalf("expected generated GUID, got %q", parsed.GUID)
 	}
 }
+
+func TestFallbackGUIDIgnoresSyntheticPubDate(t *testing.T) {
+	g1 := fallbackGUID("same title", "same content", 1700000000, false)
+	g2 := fallbackGUID("same title", "same content", 1800000000, false)
+
+	if g1 != g2 {
+		t.Fatalf("expected stable GUID without source pub date, got %q and %q", g1, g2)
+	}
+}
+
+func TestFallbackGUIDUsesSourcePubDateWhenProvided(t *testing.T) {
+	g1 := fallbackGUID("same title", "same content", 1700000000, true)
+	g2 := fallbackGUID("same title", "same content", 1800000000, true)
+
+	if g1 == g2 {
+		t.Fatalf("expected different GUID when source pub date differs, got %q", g1)
+	}
+}
