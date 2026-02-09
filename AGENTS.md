@@ -2,15 +2,20 @@
 
 ## Communication
 
-- All documentation and code comments in English.
-- Keep responses concise.
-- Challenge ideas when you have better insights.
+- Use English for all documentation and code comments.
+- Keep responses concise and actionable.
+- Challenge proposals when you have a better alternative.
+
+## Project Context
+
+- This project is an open-source, lightweight RSS reader and aggregator.
+- Prioritize simplicity and maintainability over complexity.
 
 ## Code Standards
 
 - Follow best practices without over-engineering.
 - Write self-explanatory code with clear naming.
-- Comments in English only when necessary:
+- Add comments in English only when they provide non-obvious value:
   - **DO write comments for:**
     - Complex business logic or algorithms
     - Non-obvious design decisions and trade-offs
@@ -23,12 +28,12 @@
 
 ## Go Development
 
-- After modifying Go code, format with `goimports -w .` before verification.
-- Verify compilation: `go build -o /dev/null /path/to/file_or_dir`.
-- Run related tests to ensure they pass.
-- Use named parameters in SQL queries (e.g., `:param_name` or `@param_name`).
+- After modifying Go code, run `goimports -w .` before verification.
+- Verify compilation with `go build -o /dev/null /path/to/file_or_dir`.
+- Run related tests and ensure they pass.
+- Use named SQL parameters (e.g., `:param_name` or `@param_name`).
 
 ## Frontend Development
 
-- Verify TypeScript/TSX compilation: `npx tsc -b --noEmit`.
-- DO NOT modify shadcn component source files directly.
+- Verify TypeScript/TSX compilation with `npx tsc -b --noEmit`.
+- Do not modify shadcn component source files directly.
