@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"net/url"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/0x2E/feedfinder"
+	"github.com/0x2E/fusion/internal/pkg/httpc"
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
 	"github.com/mmcdole/gofeed"
@@ -56,6 +57,8 @@ type batchCreateFeedItem struct {
 	SiteURL string `json:"site_url"`
 }
 
+const refreshAllTimeout = 30 * time.Minute
+
 func (h *Handler) listFeeds(c *gin.Context) {
 	feeds, err := h.store.ListFeeds()
 	if err != nil {
@@ -90,6 +93,10 @@ func (h *Handler) createFeed(c *gin.Context) {
 	var req createFeedRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		badRequestError(c, "invalid request")
+		return
+	}
+	if err := httpc.ValidateRequestURL(c.Request.Context(), req.Link, h.config.AllowPrivateFeeds); err != nil {
+		badRequestError(c, "invalid link")
 		return
 	}
 
@@ -133,6 +140,10 @@ func (h *Handler) updateFeed(c *gin.Context) {
 		params.Name = req.Name
 	}
 	if req.Link != nil {
+		if err := httpc.ValidateRequestURL(c.Request.Context(), *req.Link, h.config.AllowPrivateFeeds); err != nil {
+			badRequestError(c, "invalid link")
+			return
+		}
 		params.Link = req.Link
 	}
 	if req.SiteURL != nil {
@@ -194,8 +205,8 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	}
 
 	target := strings.TrimSpace(req.URL)
-	parsedURL, err := url.ParseRequestURI(target)
-	if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
+	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
+	if err := httpc.ValidateRequestURL(c.Request.Context(), target, allowPrivateFeeds); err != nil {
 		badRequestError(c, "invalid url")
 		return
 	}
@@ -209,14 +220,19 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	}
 
 	feeds := normalizeDiscoveredFeeds(found)
-	if len(feeds) == 0 {
-		parser := gofeed.NewParser()
-		parsedFeed, parseErr := parser.ParseURLWithContext(target, ctx)
-		if parseErr == nil {
-			title := ""
-			if parsedFeed != nil {
-				title = strings.TrimSpace(parsedFeed.Title)
+	if !allowPrivateFeeds {
+		filtered := make([]discoveredFeed, 0, len(feeds))
+		for _, feed := range feeds {
+			if err := httpc.ValidateRequestURL(ctx, feed.Link, false); err == nil {
+				filtered = append(filtered, feed)
 			}
+		}
+		feeds = filtered
+	}
+
+	if len(feeds) == 0 {
+		title, parseErr := h.parseFeedTitle(ctx, target)
+		if parseErr == nil {
 			feeds = append(feeds, discoveredFeed{Title: title, Link: target})
 		}
 	}
@@ -245,6 +261,42 @@ func normalizeDiscoveredFeeds(found []feedfinder.Feed) []discoveredFeed {
 	}
 
 	return result
+}
+
+func (h *Handler) parseFeedTitle(ctx context.Context, target string) (string, error) {
+	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
+
+	client, err := httpc.NewClient(30*time.Second, "", allowPrivateFeeds)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
+	if err != nil {
+		return "", err
+	}
+	httpc.SetDefaultHeaders(req)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New("feed fetch failed")
+	}
+
+	parsedFeed, err := gofeed.NewParser().Parse(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	if parsedFeed == nil {
+		return "", nil
+	}
+
+	return strings.TrimSpace(parsedFeed.Title), nil
 }
 
 func (h *Handler) refreshFeed(c *gin.Context) {
@@ -278,15 +330,42 @@ func (h *Handler) refreshFeed(c *gin.Context) {
 }
 
 func (h *Handler) refreshAllFeeds(c *gin.Context) {
+	if !h.tryStartRefreshAll() {
+		dataResponse(c, gin.H{"message": "refresh already running"})
+		return
+	}
+
 	// Run in background so the HTTP response returns immediately.
 	go func() {
-		ctx := context.Background()
-		if count, err := h.puller.RefreshAll(ctx); err != nil {
+		defer h.finishRefreshAll()
+
+		ctx, cancel := context.WithTimeout(context.Background(), refreshAllTimeout)
+		defer cancel()
+
+		if count, err := h.puller.RefreshAll(ctx); err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 			slog.Warn("refresh all feeds failed", "refreshed", count, "error", err)
 		}
 	}()
 
 	dataResponse(c, gin.H{"message": "refresh triggered"})
+}
+
+func (h *Handler) tryStartRefreshAll() bool {
+	h.refreshAllMu.Lock()
+	defer h.refreshAllMu.Unlock()
+
+	if h.refreshAllRunning {
+		return false
+	}
+
+	h.refreshAllRunning = true
+	return true
+}
+
+func (h *Handler) finishRefreshAll() {
+	h.refreshAllMu.Lock()
+	h.refreshAllRunning = false
+	h.refreshAllMu.Unlock()
 }
 
 func (h *Handler) batchCreateFeeds(c *gin.Context) {
@@ -298,6 +377,10 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 
 	inputs := make([]store.BatchCreateFeedsInput, len(req.Feeds))
 	for i, f := range req.Feeds {
+		if err := httpc.ValidateRequestURL(c.Request.Context(), f.Link, h.config.AllowPrivateFeeds); err != nil {
+			badRequestError(c, "invalid link")
+			return
+		}
 		inputs[i] = store.BatchCreateFeedsInput{
 			GroupID: f.GroupID,
 			Name:    f.Name,

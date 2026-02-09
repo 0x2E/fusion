@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"strings"
 	"sync"
 
@@ -21,10 +22,14 @@ type Handler struct {
 		RefreshFeed(ctx context.Context, feedID int64) error
 		RefreshAll(ctx context.Context) (int, error)
 	}
-	sessions map[string]bool         // sessionID -> valid, in-memory session store
-	mu       sync.RWMutex            // protects sessions map
-	oidcAuth *auth.OIDCAuthenticator // nil when OIDC is disabled
-	limiter  *loginLimiter
+	sessions  map[string]int64        // sessionID -> unix expiry seconds
+	mu        sync.RWMutex            // protects sessions state
+	oidcAuth  *auth.OIDCAuthenticator // nil when OIDC is disabled
+	limiter   *loginLimiter
+	lastSweep int64
+
+	refreshAllMu      sync.Mutex
+	refreshAllRunning bool
 }
 
 func New(store *store.Store, config *config.Config, puller interface {
@@ -42,7 +47,7 @@ func New(store *store.Store, config *config.Config, puller interface {
 		config:       config,
 		passwordHash: passwordHash,
 		puller:       puller,
-		sessions:     make(map[string]bool),
+		sessions:     make(map[string]int64),
 		limiter:      newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
 	}
 
@@ -73,6 +78,9 @@ func New(store *store.Store, config *config.Config, puller interface {
 
 func (h *Handler) SetupRouter() *gin.Engine {
 	r := gin.Default()
+	if err := h.configureTrustedProxies(r); err != nil {
+		slog.Warn("failed to configure trusted proxies", "error", err)
+	}
 
 	r.Use(h.corsMiddleware())
 
@@ -124,11 +132,22 @@ func (h *Handler) SetupRouter() *gin.Engine {
 	return r
 }
 
+func (h *Handler) configureTrustedProxies(r *gin.Engine) error {
+	if h.config == nil || len(h.config.TrustedProxies) == 0 {
+		return r.SetTrustedProxies(nil)
+	}
+
+	return r.SetTrustedProxies(h.config.TrustedProxies)
+}
+
 func (h *Handler) corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
+		origin := strings.TrimSpace(c.Request.Header.Get("Origin"))
 		if origin != "" {
-			// Cookie-based auth needs a concrete origin ("*" + credentials is rejected by browsers).
+			if !h.isOriginAllowed(origin) {
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 			c.Writer.Header().Set("Vary", "Origin")
 			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -147,6 +166,32 @@ func (h *Handler) corsMiddleware() gin.HandlerFunc {
 	}
 }
 
+func (h *Handler) isOriginAllowed(origin string) bool {
+	if h.config == nil {
+		return true
+	}
+
+	if len(h.config.CORSAllowedOrigins) == 0 {
+		return true
+	}
+
+	normalizedOrigin := normalizeOrigin(origin)
+	for _, allowed := range h.config.CORSAllowedOrigins {
+		normalizedAllowed := normalizeOrigin(allowed)
+		if normalizedAllowed == "*" || normalizedAllowed == normalizedOrigin {
+			return true
+		}
+	}
+
+	return false
+}
+
+func normalizeOrigin(origin string) string {
+	origin = strings.TrimSpace(origin)
+	origin = strings.TrimSuffix(origin, "/")
+	return strings.ToLower(origin)
+}
+
 func (h *Handler) authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionID, err := c.Cookie("session")
@@ -156,11 +201,7 @@ func (h *Handler) authMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		h.mu.RLock()
-		valid := h.sessions[sessionID]
-		h.mu.RUnlock()
-
-		if !valid {
+		if !h.isSessionValid(sessionID) {
 			unauthorizedError(c)
 			c.Abort()
 			return

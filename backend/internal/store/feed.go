@@ -267,39 +267,24 @@ func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFe
 	}
 	defer tx.Rollback()
 
-	// Check existing links to avoid duplicates
-	existingLinks := make(map[string]bool)
-	rows, err := tx.Query(`SELECT link FROM feeds`)
-	if err != nil {
-		return nil, err
-	}
-	for rows.Next() {
-		var link string
-		if err := rows.Scan(&link); err != nil {
-			rows.Close()
-			return nil, err
-		}
-		existingLinks[link] = true
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
 	stmt, err := tx.Prepare(`
 		INSERT INTO feeds (group_id, name, link, site_url, proxy)
 		VALUES (:group_id, :name, :link, :site_url, '')
+		ON CONFLICT(link) DO NOTHING
 	`)
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
+	seenLinks := make(map[string]bool, len(inputs))
+
 	for _, input := range inputs {
-		if existingLinks[input.Link] {
+		if seenLinks[input.Link] {
 			result.Errors = append(result.Errors, fmt.Sprintf("duplicate feed: %s", input.Link))
 			continue
 		}
+		seenLinks[input.Link] = true
 
 		res, err := stmt.Exec(
 			sql.Named("group_id", input.GroupID),
@@ -312,13 +297,22 @@ func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFe
 			continue
 		}
 
+		affected, err := res.RowsAffected()
+		if err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("failed to inspect result for %s: %v", input.Link, err))
+			continue
+		}
+		if affected == 0 {
+			result.Errors = append(result.Errors, fmt.Sprintf("duplicate feed: %s", input.Link))
+			continue
+		}
+
 		id, err := res.LastInsertId()
 		if err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("failed to get id for %s: %v", input.Link, err))
 			continue
 		}
 
-		existingLinks[input.Link] = true
 		result.Created++
 		result.CreatedIDs = append(result.CreatedIDs, id)
 	}

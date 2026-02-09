@@ -2,9 +2,12 @@ package pull
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,8 +27,12 @@ type ParsedItem struct {
 
 // FetchAndParse fetches RSS/Atom feed and parses into items.
 // Returns parsed items and optional site URL discovered from feed metadata.
-func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration) ([]*ParsedItem, string, error) {
-	client, err := httpc.NewClient(timeout, feed.Proxy)
+func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration, allowPrivateFeeds bool) ([]*ParsedItem, string, error) {
+	if err := httpc.ValidateRequestURL(ctx, feed.Link, allowPrivateFeeds); err != nil {
+		return nil, "", fmt.Errorf("validate feed url: %w", err)
+	}
+
+	client, err := httpc.NewClient(timeout, feed.Proxy, allowPrivateFeeds)
 	if err != nil {
 		return nil, "", fmt.Errorf("create client: %w", err)
 	}
@@ -97,11 +104,6 @@ func normalizeSiteURL(raw string) string {
 // - pub_date: prefer PublishedParsed, fallback to UpdatedParsed
 // - link: convert to absolute URL
 func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
-	guid := item.GUID
-	if guid == "" {
-		guid = item.Link
-	}
-
 	content := item.Content
 	if content == "" {
 		content = item.Description
@@ -116,11 +118,20 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 		pubDate = time.Now().Unix()
 	}
 
-	link := item.Link
-	if baseURL != nil {
-		if absURL, err := baseURL.Parse(link); err == nil {
+	rawLink := strings.TrimSpace(item.Link)
+	link := rawLink
+	if rawLink != "" && baseURL != nil {
+		if absURL, err := baseURL.Parse(rawLink); err == nil {
 			link = absURL.String()
 		}
+	}
+
+	guid := strings.TrimSpace(item.GUID)
+	if guid == "" {
+		guid = strings.TrimSpace(link)
+	}
+	if guid == "" {
+		guid = fallbackGUID(item.Title, content, pubDate)
 	}
 
 	return &ParsedItem{
@@ -130,4 +141,9 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 		Content: content,
 		PubDate: pubDate,
 	}
+}
+
+func fallbackGUID(title, content string, pubDate int64) string {
+	h := sha256.Sum256([]byte(strings.TrimSpace(title) + "\n" + strings.TrimSpace(content) + "\n" + strconv.FormatInt(pubDate, 10)))
+	return "generated:" + hex.EncodeToString(h[:])
 }

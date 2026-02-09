@@ -199,9 +199,29 @@ func (s *Store) UpdateItemUnread(id int64, unread bool) error {
 	return nil
 }
 
-// BatchUpdateItemsUnread marks multiple items as read/unread in a single query.
-// Dynamically builds IN clause with named parameters (:id0, :id1, ...) for safety.
+// BatchUpdateItemsUnread marks multiple items as read/unread.
+// IDs are chunked to keep SQL statements bounded and avoid oversized IN clauses.
 func (s *Store) BatchUpdateItemsUnread(ids []int64, unread bool) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	const chunkSize = 500
+	for start := 0; start < len(ids); start += chunkSize {
+		end := start + chunkSize
+		if end > len(ids) {
+			end = len(ids)
+		}
+
+		if err := s.batchUpdateItemsUnreadChunk(ids[start:end], unread); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Store) batchUpdateItemsUnreadChunk(ids []int64, unread bool) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -246,11 +266,60 @@ type SearchItemResult struct {
 }
 
 func (s *Store) SearchItems(query string, limit int) ([]*SearchItemResult, error) {
+	ftsQuery := buildFTSQuery(query)
+	if ftsQuery == "" {
+		return s.searchItemsLike(query, limit)
+	}
+
+	rows, err := s.db.Query(`
+		SELECT i.id, i.feed_id, i.title, i.pub_date
+		FROM items_fts
+		INNER JOIN items i ON i.id = items_fts.rowid
+		WHERE items_fts MATCH :query
+		ORDER BY i.pub_date DESC, i.id DESC
+		LIMIT :limit
+	`, sql.Named("query", ftsQuery), sql.Named("limit", limit))
+	if err != nil {
+		return s.searchItemsLike(query, limit)
+	}
+	defer rows.Close()
+
+	items := []*SearchItemResult{}
+	for rows.Next() {
+		i := &SearchItemResult{}
+		if err := rows.Scan(&i.ID, &i.FeedID, &i.Title, &i.PubDate); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	return items, rows.Err()
+}
+
+func buildFTSQuery(query string) string {
+	parts := strings.Fields(strings.TrimSpace(query))
+	if len(parts) == 0 {
+		return ""
+	}
+
+	terms := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		part = strings.ReplaceAll(part, `"`, `""`)
+		terms = append(terms, `"`+part+`"*`)
+	}
+
+	return strings.Join(terms, " AND ")
+}
+
+func (s *Store) searchItemsLike(query string, limit int) ([]*SearchItemResult, error) {
 	rows, err := s.db.Query(`
 		SELECT id, feed_id, title, pub_date
 		FROM items
 		WHERE title LIKE :query OR content LIKE :query
-		ORDER BY pub_date DESC
+		ORDER BY pub_date DESC, id DESC
 		LIMIT :limit
 	`, sql.Named("query", "%"+query+"%"), sql.Named("limit", limit))
 	if err != nil {

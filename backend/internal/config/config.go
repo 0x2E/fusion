@@ -12,6 +12,10 @@ type Config struct {
 	Password string // Plaintext password from env
 	Port     int
 
+	CORSAllowedOrigins []string // Allowed Origins for CORS. Empty means allow all.
+	TrustedProxies     []string // Trusted reverse proxies for client IP resolution. Empty disables proxy trust.
+	AllowPrivateFeeds  bool     // Allow pulling private/localhost feed URLs.
+
 	PullInterval    int // Pull interval in seconds (default: 1800 = 30 min)
 	PullTimeout     int // Request timeout in seconds (default: 30)
 	PullConcurrency int // Max concurrent pulls (default: 10)
@@ -104,6 +108,14 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	corsAllowedOrigins := parseCSVEnv(os.Getenv("FUSION_CORS_ALLOWED_ORIGINS"))
+	trustedProxies := parseCSVEnv(os.Getenv("FUSION_TRUSTED_PROXIES"))
+
+	allowPrivateFeeds, err := getEnvBool("FUSION_ALLOW_PRIVATE_FEEDS", false)
+	if err != nil {
+		return nil, err
+	}
+
 	logLevel := os.Getenv("FUSION_LOG_LEVEL")
 	if logLevel == "" {
 		logLevel = "INFO"
@@ -115,18 +127,21 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		DBPath:          dbPath,
-		Password:        password,
-		Port:            parsedPort,
-		PullInterval:    pullInterval,
-		PullTimeout:     pullTimeout,
-		PullConcurrency: pullConcurrency,
-		PullMaxBackoff:  pullMaxBackoff,
-		LoginRateLimit:  loginRateLimit,
-		LoginWindow:     loginWindow,
-		LoginBlock:      loginBlock,
-		LogLevel:        logLevel,
-		LogFormat:       logFormat,
+		DBPath:             dbPath,
+		Password:           password,
+		Port:               parsedPort,
+		CORSAllowedOrigins: corsAllowedOrigins,
+		TrustedProxies:     trustedProxies,
+		AllowPrivateFeeds:  allowPrivateFeeds,
+		PullInterval:       pullInterval,
+		PullTimeout:        pullTimeout,
+		PullConcurrency:    pullConcurrency,
+		PullMaxBackoff:     pullMaxBackoff,
+		LoginRateLimit:     loginRateLimit,
+		LoginWindow:        loginWindow,
+		LoginBlock:         loginBlock,
+		LogLevel:           logLevel,
+		LogFormat:          logFormat,
 
 		OIDCIssuer:       os.Getenv("FUSION_OIDC_ISSUER"),
 		OIDCClientID:     os.Getenv("FUSION_OIDC_CLIENT_ID"),
@@ -161,4 +176,26 @@ func getEnvBool(key string, defaultVal bool) (bool, error) {
 		return false, fmt.Errorf("invalid %s: %w", key, err)
 	}
 	return parsed, nil
+}
+
+func parseCSVEnv(val string) []string {
+	if strings.TrimSpace(val) == "" {
+		return nil
+	}
+
+	parts := strings.Split(val, ",")
+	values := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		values = append(values, part)
+	}
+
+	if len(values) == 0 {
+		return nil
+	}
+
+	return values
 }

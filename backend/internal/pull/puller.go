@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/0x2E/fusion/internal/config"
@@ -64,28 +65,16 @@ func (p *Puller) pullAll(ctx context.Context) {
 		return
 	}
 
-	for _, feed := range feeds {
-		if ShouldSkip(feed, p.interval, p.maxBackoff) {
-			continue
-		}
-
-		// Acquire semaphore slot (blocks if at capacity)
-		if err := p.concurrency.Acquire(ctx, 1); err != nil {
-			return // Context cancelled
-		}
-
-		go func(f *model.Feed) {
-			defer p.concurrency.Release(1)
-			p.pullFeed(ctx, f)
-		}(feed)
-	}
+	_, _ = p.dispatchFeeds(ctx, feeds, func(feed *model.Feed) bool {
+		return !ShouldSkip(feed, p.interval, p.maxBackoff)
+	})
 }
 
 // pullFeed fetches single feed and saves new items.
 func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 	p.logger.Debug("pulling feed", "feed_id", feed.ID, "feed_name", feed.Name)
 
-	items, siteURL, err := FetchAndParse(ctx, feed, p.timeout)
+	items, siteURL, err := FetchAndParse(ctx, feed, p.timeout, p.config.AllowPrivateFeeds)
 	if err != nil {
 		p.logger.Warn("failed to fetch feed", "feed_id", feed.ID, "feed_name", feed.Name, "error", err)
 		if err := p.store.UpdateFeedFailure(feed.ID, err.Error()); err != nil {
@@ -125,7 +114,8 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 	p.logger.Info("feed pulled successfully", "feed_id", feed.ID, "feed_name", feed.Name, "new_items", newCount)
 }
 
-// RefreshAll triggers refresh for all non-suspended feeds, bypassing backoff/interval skip logic.
+// RefreshAll triggers refresh for all non-suspended feeds and waits until all
+// started refresh jobs have completed. It bypasses backoff/interval skip logic.
 // Concurrency is controlled by the same semaphore as periodic pulls.
 func (p *Puller) RefreshAll(ctx context.Context) (int, error) {
 	feeds, err := p.store.ListFeeds()
@@ -133,24 +123,42 @@ func (p *Puller) RefreshAll(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("list feeds: %w", err)
 	}
 
+	count, err := p.dispatchFeeds(ctx, feeds, func(feed *model.Feed) bool {
+		return !feed.Suspended
+	})
+	if err != nil {
+		return count, err
+	}
+
+	return count, nil
+}
+
+func (p *Puller) dispatchFeeds(ctx context.Context, feeds []*model.Feed, shouldPull func(*model.Feed) bool) (int, error) {
 	count := 0
+	var wg sync.WaitGroup
+	var acquireErr error
+
 	for _, feed := range feeds {
-		if feed.Suspended {
+		if !shouldPull(feed) {
 			continue
 		}
-		count++
 
 		if err := p.concurrency.Acquire(ctx, 1); err != nil {
-			return count, err
+			acquireErr = err
+			break
 		}
 
+		count++
+		wg.Add(1)
 		go func(f *model.Feed) {
+			defer wg.Done()
 			defer p.concurrency.Release(1)
 			p.pullFeed(ctx, f)
 		}(feed)
 	}
 
-	return count, nil
+	wg.Wait()
+	return count, acquireErr
 }
 
 // RefreshFeed manually triggers refresh for specific feed (bypasses skip logic).

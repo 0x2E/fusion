@@ -1,6 +1,8 @@
 package httpc
 
 import (
+	"context"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -16,9 +18,9 @@ type clientPool struct {
 var defaultClientPool = &clientPool{clients: make(map[string]*http.Client)}
 
 // NewClient creates HTTP client with specified timeout and optional proxy.
-// Clients are reused by (timeout, proxy) to keep connections warm.
-func NewClient(timeout time.Duration, proxyURL string) (*http.Client, error) {
-	key := proxyURL + "|" + strconv.FormatInt(timeout.Milliseconds(), 10)
+// Clients are reused by (timeout, proxy, allowPrivate) to keep connections warm.
+func NewClient(timeout time.Duration, proxyURL string, allowPrivate bool) (*http.Client, error) {
+	key := proxyURL + "|" + strconv.FormatInt(timeout.Milliseconds(), 10) + "|" + strconv.FormatBool(allowPrivate)
 
 	defaultClientPool.mu.RLock()
 	if client, ok := defaultClientPool.clients[key]; ok {
@@ -35,6 +37,13 @@ func NewClient(timeout time.Duration, proxyURL string) (*http.Client, error) {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ResponseHeaderTimeout: timeout,
 	}
+	dialer := &net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}
+	transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		if err := validateDialTarget(ctx, addr, allowPrivate); err != nil {
+			return nil, err
+		}
+		return dialer.DialContext(ctx, network, addr)
+	}
 
 	if proxyURL != "" {
 		proxy, err := url.Parse(proxyURL)
@@ -45,8 +54,9 @@ func NewClient(timeout time.Duration, proxyURL string) (*http.Client, error) {
 	}
 
 	client := &http.Client{
-		Timeout:   timeout,
-		Transport: transport,
+		Timeout:       timeout,
+		Transport:     transport,
+		CheckRedirect: redirectValidator(allowPrivate),
 	}
 
 	defaultClientPool.mu.Lock()
@@ -59,6 +69,29 @@ func NewClient(timeout time.Duration, proxyURL string) (*http.Client, error) {
 	defaultClientPool.mu.Unlock()
 
 	return client, nil
+}
+
+func redirectValidator(allowPrivate bool) func(req *http.Request, via []*http.Request) error {
+	return func(req *http.Request, via []*http.Request) error {
+		if req == nil || req.URL == nil {
+			return nil
+		}
+
+		return ValidateRequestURL(req.Context(), req.URL.String(), allowPrivate)
+	}
+}
+
+func validateDialTarget(ctx context.Context, addr string, allowPrivate bool) error {
+	if allowPrivate {
+		return nil
+	}
+
+	host := addr
+	if parsedHost, _, err := net.SplitHostPort(addr); err == nil {
+		host = parsedHost
+	}
+
+	return validatePublicHost(ctx, host)
 }
 
 // SetDefaultHeaders adds default headers required for feed fetching.

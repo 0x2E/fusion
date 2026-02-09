@@ -9,6 +9,7 @@ import (
 )
 
 const maxListLimit = 100
+const maxBatchUpdateIDs = 1000
 
 type markItemsReadRequest struct {
 	IDs []int64 `json:"ids" binding:"required"`
@@ -114,6 +115,10 @@ func (h *Handler) markItemsRead(c *gin.Context) {
 		badRequestError(c, "invalid request")
 		return
 	}
+	if len(req.IDs) == 0 || len(req.IDs) > maxBatchUpdateIDs {
+		badRequestError(c, "invalid ids")
+		return
+	}
 
 	if err := h.store.BatchUpdateItemsUnread(req.IDs, false); err != nil {
 		internalError(c, err, "mark items as read")
@@ -127,6 +132,10 @@ func (h *Handler) markItemsUnread(c *gin.Context) {
 	var req markItemsReadRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		badRequestError(c, "invalid request")
+		return
+	}
+	if len(req.IDs) == 0 || len(req.IDs) > maxBatchUpdateIDs {
+		badRequestError(c, "invalid ids")
 		return
 	}
 

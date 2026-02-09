@@ -10,6 +10,11 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	sessionTTL           = 30 * 24 * time.Hour
+	sessionSweepInterval = 60 * time.Second
+)
+
 type loginState struct {
 	windowStart int64
 	failures    int
@@ -138,19 +143,56 @@ func (h *Handler) login(c *gin.Context) {
 	dataResponse(c, gin.H{"message": "logged in"})
 }
 
+func (h *Handler) isSessionValid(sessionID string) bool {
+	nowSec := time.Now().Unix()
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.sweepExpiredSessionsLocked(nowSec)
+
+	expiresAt, ok := h.sessions[sessionID]
+	if !ok {
+		return false
+	}
+
+	if expiresAt <= nowSec {
+		delete(h.sessions, sessionID)
+		return false
+	}
+
+	return true
+}
+
+func (h *Handler) sweepExpiredSessionsLocked(nowSec int64) {
+	if nowSec-h.lastSweep < int64(sessionSweepInterval.Seconds()) {
+		return
+	}
+	h.lastSweep = nowSec
+
+	for sessionID, expiresAt := range h.sessions {
+		if expiresAt <= nowSec {
+			delete(h.sessions, sessionID)
+		}
+	}
+}
+
 // createSession generates a new session ID, stores it, and sets the session cookie.
 func (h *Handler) createSession(c *gin.Context) {
+	now := time.Now()
+	expiresAt := now.Add(sessionTTL).Unix()
 	sessionID := uuid.New().String()
 
 	h.mu.Lock()
-	h.sessions[sessionID] = true
+	h.sweepExpiredSessionsLocked(now.Unix())
+	h.sessions[sessionID] = expiresAt
 	h.mu.Unlock()
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "session",
 		Value:    sessionID,
 		Path:     "/",
-		MaxAge:   3600 * 24 * 30,
+		MaxAge:   int(sessionTTL.Seconds()),
 		HttpOnly: true,
 		Secure:   isSecureRequest(c.Request),
 		SameSite: http.SameSiteLaxMode,
