@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FileText, Loader2, Search, Settings } from "lucide-react";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { searchAPI } from "@/lib/api";
@@ -38,31 +38,19 @@ export function SearchDialog() {
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
+      setLoading(Boolean(query));
       setDebouncedQuery(query);
     }, 500);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Reset state when dialog closes
-  useEffect(() => {
-    if (!isSearchOpen) {
-      setQuery("");
-      setDebouncedQuery("");
-      setFeeds([]);
-      setItems([]);
-    }
-  }, [isSearchOpen]);
-
   // Fetch search results from backend
   useEffect(() => {
     if (!debouncedQuery) {
-      setFeeds([]);
-      setItems([]);
       return;
     }
 
     let cancelled = false;
-    setLoading(true);
 
     searchAPI
       .search(debouncedQuery)
@@ -104,8 +92,19 @@ export function SearchDialog() {
     setSearchOpen(false);
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setQuery("");
+      setDebouncedQuery("");
+      setFeeds([]);
+      setItems([]);
+      setLoading(false);
+    }
+    setSearchOpen(open);
+  };
+
   return (
-    <Dialog open={isSearchOpen} onOpenChange={setSearchOpen}>
+    <Dialog open={isSearchOpen} onOpenChange={handleOpenChange}>
       <DialogHeader className="sr-only">
         <DialogTitle>Search</DialogTitle>
         <DialogDescription>Search feeds and articles</DialogDescription>
