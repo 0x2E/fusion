@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"net/http"
 	"strconv"
 
 	"github.com/0x2E/fusion/internal/store"
@@ -125,7 +126,7 @@ func (h *Handler) markItemsRead(c *gin.Context) {
 		return
 	}
 
-	dataResponse(c, gin.H{"message": "items marked as read"})
+	c.Status(http.StatusNoContent)
 }
 
 func (h *Handler) markItemsUnread(c *gin.Context) {
@@ -144,5 +145,5 @@ func (h *Handler) markItemsUnread(c *gin.Context) {
 		return
 	}
 
-	dataResponse(c, gin.H{"message": "items marked as unread"})
+	c.Status(http.StatusNoContent)
 }

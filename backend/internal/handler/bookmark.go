@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"net/http"
 	"strconv"
 
 	"github.com/0x2E/fusion/internal/store"
@@ -147,5 +148,5 @@ func (h *Handler) deleteBookmark(c *gin.Context) {
 		return
 	}
 
-	dataResponse(c, gin.H{"message": "bookmark deleted"})
+	c.Status(http.StatusNoContent)
 }

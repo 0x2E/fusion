@@ -19,7 +19,7 @@ export function setUnauthorizedCallback(callback: () => void) {
 
 async function request<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
 
@@ -43,11 +43,25 @@ async function request<T>(
       .catch(() => ({ error: "Unknown error" }));
     throw new APIError(
       response.status,
-      error.error || `HTTP ${response.status}`
+      error.error || `HTTP ${response.status}`,
     );
   }
 
-  return response.json();
+  if (response.status === 204 || response.status === 205) {
+    return undefined as T;
+  }
+
+  const contentType = response.headers.get("Content-Type") || "";
+  if (!contentType.includes("application/json")) {
+    return undefined as T;
+  }
+
+  const body = await response.text();
+  if (!body) {
+    return undefined as T;
+  }
+
+  return JSON.parse(body) as T;
 }
 
 async function get<T>(endpoint: string): Promise<T> {

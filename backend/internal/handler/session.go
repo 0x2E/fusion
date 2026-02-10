@@ -217,5 +217,5 @@ func (h *Handler) logout(c *gin.Context) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	dataResponse(c, gin.H{"message": "logged out"})
+	c.Status(http.StatusNoContent)
 }

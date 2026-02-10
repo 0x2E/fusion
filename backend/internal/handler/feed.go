@@ -194,7 +194,7 @@ func (h *Handler) deleteFeed(c *gin.Context) {
 		return
 	}
 
-	dataResponse(c, gin.H{"message": "feed deleted"})
+	c.Status(http.StatusNoContent)
 }
 
 func (h *Handler) validateFeed(c *gin.Context) {
@@ -326,12 +326,12 @@ func (h *Handler) refreshFeed(c *gin.Context) {
 		}
 	}(id)
 
-	dataResponse(c, gin.H{"message": "refresh triggered"})
+	c.Status(http.StatusAccepted)
 }
 
 func (h *Handler) refreshAllFeeds(c *gin.Context) {
 	if !h.tryStartRefreshAll() {
-		dataResponse(c, gin.H{"message": "refresh already running"})
+		c.Status(http.StatusAccepted)
 		return
 	}
 
@@ -347,7 +347,7 @@ func (h *Handler) refreshAllFeeds(c *gin.Context) {
 		}
 	}()
 
-	dataResponse(c, gin.H{"message": "refresh triggered"})
+	c.Status(http.StatusAccepted)
 }
 
 func (h *Handler) tryStartRefreshAll() bool {

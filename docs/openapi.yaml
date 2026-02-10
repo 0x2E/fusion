@@ -57,20 +57,13 @@ paths:
       summary: Logout
       security: []
       responses:
-        "200":
+        "204":
           description: Logged out
           headers:
             Set-Cookie:
               description: Cleared session cookie
               schema:
                 type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageEnvelope"
-              example:
-                data:
-                  message: logged out
 
   /oidc/enabled:
     get:
@@ -216,15 +209,8 @@ paths:
       summary: Delete group
       description: Group id=1 cannot be deleted. Feeds are moved to group id=1 before delete.
       responses:
-        "200":
+        "204":
           description: Group deleted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageEnvelope"
-              example:
-                data:
-                  message: group deleted
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -323,21 +309,8 @@ paths:
       tags: [Feeds]
       summary: Trigger async refresh for all non-suspended feeds
       responses:
-        "200":
-          description: Refresh triggered or already running
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageEnvelope"
-              examples:
-                triggered:
-                  value:
-                    data:
-                      message: refresh triggered
-                alreadyRunning:
-                  value:
-                    data:
-                      message: refresh already running
+        "202":
+          description: Refresh accepted
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -391,15 +364,8 @@ paths:
       summary: Delete feed
       description: Deletes feed and its items. Matching bookmarks keep snapshot with item_id set to null.
       responses:
-        "200":
+        "204":
           description: Feed deleted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageEnvelope"
-              example:
-                data:
-                  message: feed deleted
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -416,15 +382,8 @@ paths:
       tags: [Feeds]
       summary: Trigger async refresh for one feed
       responses:
-        "200":
-          description: Refresh triggered
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageEnvelope"
-              example:
-                data:
-                  message: refresh triggered
+        "202":
+          description: Refresh accepted
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -519,15 +478,8 @@ paths:
             schema:
               $ref: "#/components/schemas/MarkItemsRequest"
       responses:
-        "200":
+        "204":
           description: Read state updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageEnvelope"
-              example:
-                data:
-                  message: items marked as read
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -546,15 +498,8 @@ paths:
             schema:
               $ref: "#/components/schemas/MarkItemsRequest"
       responses:
-        "200":
+        "204":
           description: Read state updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageEnvelope"
-              example:
-                data:
-                  message: items marked as unread
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -680,15 +625,8 @@ paths:
       tags: [Bookmarks]
       summary: Delete bookmark
       responses:
-        "200":
+        "204":
           description: Bookmark deleted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageEnvelope"
-              example:
-                data:
-                  message: bookmark deleted
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":

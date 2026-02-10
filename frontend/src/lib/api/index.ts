@@ -29,7 +29,7 @@ export const sessionAPI = {
   login: (data: LoginRequest) =>
     api.post<APIResponse<{ message: string }>>("/sessions", data),
 
-  logout: () => api.delete<APIResponse<{ message: string }>>("/sessions"),
+  logout: () => api.delete<void>("/sessions"),
 };
 
 // OIDC APIs
@@ -51,8 +51,7 @@ export const groupAPI = {
   update: (id: number, data: UpdateGroupRequest) =>
     api.patch<APIResponse<Group>>(`/groups/${id}`, data),
 
-  delete: (id: number) =>
-    api.delete<APIResponse<{ message: string }>>(`/groups/${id}`),
+  delete: (id: number) => api.delete<void>(`/groups/${id}`),
 };
 
 // Feed APIs
@@ -67,14 +66,12 @@ export const feedAPI = {
   update: (id: number, data: UpdateFeedRequest) =>
     api.patch<APIResponse<Feed>>(`/feeds/${id}`, data),
 
-  delete: (id: number) =>
-    api.delete<APIResponse<{ message: string }>>(`/feeds/${id}`),
+  delete: (id: number) => api.delete<void>(`/feeds/${id}`),
 
   validate: (data: ValidateFeedRequest) =>
     api.post<APIResponse<ValidateFeedResponse>>("/feeds/validate", data),
 
-  refresh: () =>
-    api.post<APIResponse<{ message: string }>>("/feeds/refresh", {}),
+  refresh: () => api.post<void>("/feeds/refresh"),
 
   batchCreate: (data: BatchCreateFeedsRequest) =>
     api.post<APIResponse<BatchCreateFeedsResponse>>("/feeds/batch", data),
@@ -101,10 +98,10 @@ export const itemAPI = {
   get: (id: number) => api.get<APIResponse<Item>>(`/items/${id}`),
 
   markRead: (data: MarkItemsReadRequest) =>
-    api.patch<APIResponse<{ message: string }>>("/items/-/read", data),
+    api.patch<void>("/items/-/read", data),
 
   markUnread: (data: MarkItemsReadRequest) =>
-    api.patch<APIResponse<{ message: string }>>("/items/-/unread", data),
+    api.patch<void>("/items/-/unread", data),
 };
 
 // Bookmark APIs
@@ -122,8 +119,7 @@ export const bookmarkAPI = {
   create: (data: CreateBookmarkRequest) =>
     api.post<APIResponse<Bookmark>>("/bookmarks", data),
 
-  delete: (id: number) =>
-    api.delete<APIResponse<{ message: string }>>(`/bookmarks/${id}`),
+  delete: (id: number) => api.delete<void>(`/bookmarks/${id}`),
 };
 
 // Search APIs

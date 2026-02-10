@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"net/http"
 	"strconv"
 
 	"github.com/0x2E/fusion/internal/store"
@@ -113,5 +114,5 @@ func (h *Handler) deleteGroup(c *gin.Context) {
 		return
 	}
 
-	dataResponse(c, gin.H{"message": "group deleted"})
+	c.Status(http.StatusNoContent)
 }
