@@ -6,20 +6,32 @@ on:
   push:
     branches:
       - main
+    paths:
+      - backend/**
+      - Dockerfile
+      - .dockerignore
+      - scripts.sh
+      - .github/workflows/docker.yml
+      - .github/actions/setup-toolchains/action.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   docker:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # for vite extracting git tag/hash
-      - name: Lowercase Owner and Repository Name
-        run: echo "REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Normalize repository name
+        run: echo "REPOSITORY=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -32,6 +44,30 @@ jobs:
             type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
             # on push to main: tag with main
             type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      - name: Set up toolchains
+        if: github.event_name == 'push'
+        uses: ./.github/actions/setup-toolchains
+      - name: Build binaries from source
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p ./build
+          rm -f ./build/fusion-linux-amd64 ./build/fusion-linux-arm64
+          ./scripts.sh build-backend linux amd64 ./build/fusion-linux-amd64
+          ./scripts.sh build-backend linux arm64 ./build/fusion-linux-arm64
+      - name: Download binaries from release assets
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p ./build
+          gh release download "${{ github.event.release.tag_name }}" \
+            --pattern "fusion-linux-amd64" \
+            --pattern "fusion-linux-arm64" \
+            --dir ./build
+      - name: Verify prepared binaries
+        run: |
+          test -f ./build/fusion-linux-amd64
+          test -f ./build/fusion-linux-arm64
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
@@ -56,3 +92,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
