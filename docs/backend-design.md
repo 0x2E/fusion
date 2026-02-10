@@ -1,241 +1,150 @@
 # Fusion Backend Design
 
-## 1. Tech Stack
+## 1. Goals
 
-| Item         | Choice                     | Notes                         |
-| ------------ | -------------------------- | ----------------------------- |
-| Framework    | Gin                        | Popular, well-documented      |
-| Database     | modernc.org/sqlite         | Pure Go, no CGO               |
-| ORM          | Pure SQL                   | Clearer, more control         |
-| Foreign Keys | None                       | Cascade logic in app layer    |
-| Timestamps   | Unix (INTEGER)             | Efficient, no timezone issues |
-| Feed Parser  | github.com/mmcdole/gofeed  | RSS/Atom parsing              |
-| Feed Finder  | github.com/0x2E/feedfinder | Discover feeds from HTML      |
+- Keep the backend small, easy to self-host, and easy to reason about.
+- Prefer explicit SQL over ORM abstractions.
+- Preserve user content via bookmark snapshots.
 
-## 2. Database Schema
+## 2. Runtime architecture
 
-```sql
--- groups
-CREATE TABLE groups (
-    id         INTEGER PRIMARY KEY,
-    name       TEXT NOT NULL UNIQUE,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-);
+Fusion backend runs two long-lived services in one process:
 
-INSERT INTO groups (id, name) VALUES (1, 'Default');
+1. HTTP API server (Gin)
+2. Feed pull worker (periodic and manual refresh)
 
--- feeds
-CREATE TABLE feeds (
-    id         INTEGER PRIMARY KEY,
-    group_id   INTEGER NOT NULL DEFAULT 1,
-    name       TEXT NOT NULL,
-    link       TEXT NOT NULL UNIQUE,
-    site_url   TEXT DEFAULT '',
-    last_build INTEGER DEFAULT 0,
-    failure    TEXT DEFAULT '',
-    failures   INTEGER DEFAULT 0,
-    suspended  INTEGER DEFAULT 0,
-    proxy      TEXT DEFAULT '',
-    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-);
+Both services share the same SQLite store.
 
-CREATE INDEX idx_feeds_group_id ON feeds(group_id);
+## 3. Tech stack
 
--- items
-CREATE TABLE items (
-    id         INTEGER PRIMARY KEY,
-    feed_id    INTEGER NOT NULL,
-    guid       TEXT NOT NULL,
-    title      TEXT DEFAULT '',
-    link       TEXT DEFAULT '',
-    content    TEXT DEFAULT '',
-    pub_date   INTEGER DEFAULT 0,
-    unread     INTEGER DEFAULT 1,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch())
-);
+| Area           | Choice                                |
+| -------------- | ------------------------------------- |
+| Language       | Go 1.25                               |
+| HTTP framework | Gin                                   |
+| Database       | SQLite (`modernc.org/sqlite`)         |
+| Migrations     | Embedded SQL files                    |
+| Feed parser    | `github.com/mmcdole/gofeed`           |
+| Feed discovery | `github.com/0x2E/feedfinder`          |
+| Auth           | Password session auth + optional OIDC |
 
-CREATE UNIQUE INDEX idx_items_feed_guid ON items(feed_id, guid);
-CREATE INDEX idx_items_unread ON items(unread) WHERE unread = 1;
-CREATE INDEX idx_items_pub_date ON items(pub_date DESC);
+## 4. Module layout
 
--- bookmarks (stores full snapshot)
-CREATE TABLE bookmarks (
-    id         INTEGER PRIMARY KEY,
-    item_id    INTEGER,
-    link       TEXT NOT NULL UNIQUE,
-    title      TEXT DEFAULT '',
-    content    TEXT DEFAULT '',
-    pub_date   INTEGER DEFAULT 0,
-    feed_name  TEXT DEFAULT '',
-    created_at INTEGER NOT NULL DEFAULT (unixepoch())
-);
-
-CREATE INDEX idx_bookmarks_created_at ON bookmarks(created_at DESC);
-```
-
-## 3. Cascade Logic (App Layer)
-
-No foreign key constraints. Cascade handled in application:
-
-```go
-// Delete Group: move feeds to default group
-UPDATE feeds SET group_id = 1 WHERE group_id = ?
-DELETE FROM groups WHERE id = ?
-
-// Delete Feed: preserve bookmark snapshots
-UPDATE bookmarks SET item_id = NULL WHERE item_id IN (SELECT id FROM items WHERE feed_id = ?)
-DELETE FROM items WHERE feed_id = ?
-DELETE FROM feeds WHERE id = ?
-
-```
-
-## 4. API Endpoints
-
-| Method | Path                | Description              |
-| ------ | ------------------- | ------------------------ |
-| POST   | /api/sessions       | Login                    |
-| DELETE | /api/sessions       | Logout                   |
-| GET    | /api/groups         | List groups              |
-| POST   | /api/groups         | Create group             |
-| PATCH  | /api/groups/:id     | Update group             |
-| DELETE | /api/groups/:id     | Delete group             |
-| GET    | /api/feeds          | List feeds               |
-| GET    | /api/feeds/:id      | Get feed                 |
-| POST   | /api/feeds          | Create feed              |
-| POST   | /api/feeds/batch    | Batch create feeds       |
-| POST   | /api/feeds/validate | Validate feed URL        |
-| PATCH  | /api/feeds/:id      | Update feed              |
-| DELETE | /api/feeds/:id      | Delete feed              |
-| POST   | /api/feeds/refresh  | Refresh feeds            |
-| GET    | /api/items          | List items               |
-| GET    | /api/items/:id      | Get item                 |
-| PATCH  | /api/items/-/unread | Batch update read status |
-| GET    | /api/bookmarks      | List bookmarks           |
-| POST   | /api/bookmarks      | Add bookmark             |
-| DELETE | /api/bookmarks/:id  | Delete bookmark          |
-
-## 5. Project Structure
-
-```
+```text
 backend/
-├── cmd/fusion/main.go
+├── cmd/fusion/main.go           # process startup and lifecycle
 ├── internal/
-│   ├── config/config.go
-│   ├── auth/auth.go
-│   ├── handler/
-│   │   ├── handler.go
-│   │   ├── session.go
-│   │   ├── feed.go
-│   │   ├── group.go
-│   │   ├── item.go
-│   │   └── bookmark.go
-│   ├── store/
-│   │   ├── db.go
-│   │   ├── migrate.go
-│   │   ├── feed.go
-│   │   ├── group.go
-│   │   ├── item.go
-│   │   └── bookmark.go
-│   ├── model/model.go
-│   └── pull/
-│       ├── puller.go
-│       ├── fetcher.go
-│       └── backoff.go
-├── pkg/httpc/httpc.go
-└── go.mod
+│   ├── config/                  # env parsing
+│   ├── handler/                 # HTTP handlers + middleware
+│   ├── store/                   # SQL persistence + migrations
+│   ├── pull/                    # fetch/parse/schedule/backoff
+│   ├── auth/                    # password + OIDC helpers
+│   ├── model/                   # API/storage models
+│   └── pkg/httpc/               # HTTP client + SSRF guards
 ```
 
-## 6. Key Design Decisions
+## 5. Database schema (current)
 
-| Decision                | Choice             | Rationale                           |
-| ----------------------- | ------------------ | ----------------------------------- |
-| No soft delete          | Hard delete        | Simpler, bookmarks preserve content |
-| No foreign keys         | App-layer cascade  | Avoids SQLite FK complexity         |
-| Unix timestamps         | INTEGER            | Efficient, no timezone issues       |
-| Bookmark snapshots      | Full content copy  | Survives feed/item deletion         |
-| Partial index on unread | `WHERE unread = 1` | Smaller index, faster queries       |
-| Single model file       | `model/model.go`   | Simple structs, no logic            |
+Source of truth: `backend/internal/store/migrations/001_initial.sql`.
 
-## 7. Feed Pull Strategy
+### groups
 
-### 7.1 Configuration
+- `id`, `name`, `created_at`, `updated_at`
+- `name` is unique
+- Default group: `id=1`, `name='Default'`
 
-| Parameter       | Value      | Notes                        |
-| --------------- | ---------- | ---------------------------- |
-| Pull interval   | 30 minutes | Fixed interval for all feeds |
-| Request timeout | 30 seconds | Per-request timeout          |
-| Max concurrency | 10         | Concurrent feed fetches      |
-| Max backoff     | 7 days     | Maximum retry delay          |
-| Backoff base    | 1.8        | Exponential backoff base     |
+### feeds
 
-### 7.2 Exponential Backoff
+- Core: `id`, `group_id`, `name`, `link`, `site_url`
+- Pull status: `last_build`, `last_failure_at`, `failure`, `failures`, `suspended`
+- Network: `proxy`
+- Meta: `created_at`, `updated_at`
+- Unique: `link`
 
-Formula: `backoff = interval × (1.8 ^ failures)`
+### items
 
-| Failures | Backoff Time |
-| -------- | ------------ |
-| 1        | 54 min       |
-| 2        | 97 min       |
-| 3        | 175 min      |
-| 5        | 9.5 hours    |
-| 10+      | 7 days (max) |
+- `id`, `feed_id`, `guid`, `title`, `link`, `content`, `pub_date`, `unread`, `created_at`
+- Unique: `(feed_id, guid)`
+- Indexes: unread partial index, `pub_date` index, `(feed_id, unread)` index
 
-### 7.3 Pull Decision Flow
+### items full-text search
 
-```
-Start Pull
-  ↓
-suspended = true? → Skip
-  ↓
-failures > 0?
-  ├─ Yes → Check cooldown period → Not expired → Skip
-  ↓
-Last update < 30 min ago? → Skip
-  ↓
-Fetch feed
-  ├─ Success → failures = 0, update last_build
-  └─ Failure → failures++, record error in failure field
-```
+- Virtual table: `items_fts` (FTS5 on `title`, `content`)
+- Triggers keep `items_fts` synchronized with `items`
 
-### 7.4 HTTP Client
+### bookmarks
 
-```go
-http.Client{
-    Timeout: 30 * time.Second,
-    Transport: &http.Transport{
-        DisableKeepAlives: true,   // Avoid connection pool overhead
-        ForceAttemptHTTP2: true,   // Prefer HTTP/2
-        Proxy: /* Use feed.proxy if set */
-    },
-}
+- Snapshot table: `item_id`, `link`, `title`, `content`, `pub_date`, `feed_name`, `created_at`
+- `link` is unique
+- `item_id` is nullable to preserve snapshots after source item deletion
 
-// Headers
-User-Agent: fusion/1.0
-Connection: close
-```
+## 6. Data integrity and cascade strategy
 
-### 7.5 RSS Parsing Rules
+- No database foreign-key constraints.
+- Cascade rules are explicit in store transactions:
+  - Delete group: move feeds to group `1`, then delete group.
+  - Delete feed: set matching bookmarks `item_id=NULL`, delete items, then delete feed.
 
-| Field    | Priority                  | Notes                       |
-| -------- | ------------------------- | --------------------------- |
-| guid     | GUID → Link               | Unique identifier for dedup |
-| content  | Content → Description     | Prefer full content         |
-| pub_date | PublishedParsed → Updated | Publication timestamp       |
-| link     | Resolve relative URLs     | Convert to absolute URLs    |
+This keeps behavior explicit and avoids hidden DB-level side effects.
 
-### 7.6 Feed Discovery
+## 7. API surface (high level)
 
-When adding a new feed:
+- Sessions: login/logout
+- OIDC: enabled status, login URL, callback
+- Groups: list/get/create/update/delete
+- Feeds: list/get/create/update/delete/validate/batch create/refresh
+- Items: list/get/mark read/mark unread
+- Search: feed + item search
+- Bookmarks: list/get/create/delete
 
-```
-User inputs URL
-  ↓
-Try parsing as feed directly
-  ├─ Success → Return single feed
-  ↓
-Parse HTML, find <link type="application/rss+xml"> etc.
-  ↓
-Return discovered feeds for user selection
-```
+Detailed contract: `docs/openapi.yaml`.
+
+## 8. Feed pull strategy
+
+### Scheduler
+
+- Pull interval: `FUSION_PULL_INTERVAL` (default 1800s)
+- Concurrency limit: `FUSION_PULL_CONCURRENCY` (default 10)
+- Request timeout: `FUSION_PULL_TIMEOUT` (default 30s)
+
+### Skip policy
+
+Periodic pull skips feed when:
+
+- Feed is suspended, or
+- Feed is in exponential backoff window, or
+- Last successful update is within the regular interval.
+
+### Backoff
+
+- Formula: `interval * (1.8 ^ failures)`
+- Capped by `FUSION_PULL_MAX_BACKOFF` (default 7 days)
+- Failure timestamp source: `last_failure_at` (fallback to `last_build`)
+
+### Manual refresh
+
+- `POST /feeds/refresh`: refresh all non-suspended feeds
+- `POST /feeds/:id/refresh`: refresh one feed
+- Manual refresh bypasses periodic skip logic
+
+## 9. Security model
+
+- Password auth with bcrypt hash computed at startup
+- Login attempt rate limit (`FUSION_LOGIN_*`)
+- Session cookie: `HttpOnly`, `SameSite=Lax`, `Secure` on HTTPS
+- Optional OIDC SSO (`FUSION_OIDC_*`)
+- URL validation + private-network blocking by default for feed fetches
+- CORS allowlist via `FUSION_CORS_ALLOWED_ORIGINS`
+- Trusted proxy list via `FUSION_TRUSTED_PROXIES`
+
+## 10. Observability and logs
+
+- Structured logging via `log/slog`
+- Configurable log level (`FUSION_LOG_LEVEL`)
+- Configurable output format (`FUSION_LOG_FORMAT`: `auto`, `text`, `json`)
+
+## 11. Release verification checklist
+
+- Backend tests: `cd backend && go test ./...`
+- Build check: `cd backend && go build -o /dev/null ./cmd/fusion`
+- Migration sanity check: start app on empty DB and ensure schema bootstraps correctly
+- API smoke tests: login, create feed, manual refresh, search, bookmark create/delete

@@ -13,33 +13,28 @@
 
 ## Features
 
-- Group, bookmark, search, automatic feed sniffing, OPML file import/export
-- Supports RSS, Atom, and JSON feed types
-- Responsive, dark mode, PWA, keyboard shortcuts
-- Lightweight and self-hosted friendly
-  - Built with Golang and SQLite; deploys with a single binary or a Docker container
-  - Uses about 80MB of memory
-- Internationalization (i18n): English, Chinese, German, French, Spanish, Russian, Portuguese, and Swedish
+- Feed organization with groups, unread tracking, bookmarks, and search
+- RSS/Atom parsing with feed discovery support
+- Responsive web UI with keyboard shortcuts and PWA support
+- Self-hosting friendly: single binary or Docker deployment
+- Internationalization (English, Chinese, German, French, Spanish, Russian, Portuguese, Swedish)
 
-## Installation
+## Quick Start (Docker)
 
-<details>
-<summary>Docker</summary>
-
-> Use `latest` tag for the latest release version.
+> `latest` is the latest release.
 >
-> Use `main` tag for the latest development version.
-
-- Docker CLI
+> `main` is the latest development build.
 
 ```shell
 docker run -it -d -p 8080:8080 \
   -v $(pwd)/fusion:/data \
-  -e PASSWORD="fusion" \
+  -e FUSION_PASSWORD="fusion" \
   ghcr.io/0x2e/fusion:latest
 ```
 
-- Docker Compose
+Open `http://localhost:8080`.
+
+Docker Compose example:
 
 ```yaml
 version: "3"
@@ -49,64 +44,57 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     environment:
-      - PASSWORD=fusion
-    restart: "unless-stopped"
+      - FUSION_PASSWORD=fusion
+    restart: unless-stopped
     volumes:
-      # Change `./data` to where you want the files stored
       - ./data:/data
 ```
 
-</details>
+## Other Installation Options
 
-<details>
-<summary>Pre-built binary</summary>
-
-Download from [Releases](https://github.com/0x2E/fusion/releases).
-
-</details>
-
-<details>
-  <summary>One-Click Deployment</summary>
-
-[Deploy on Fly.io](./fly.toml)
-
-[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/7FRK0K?referralCode=rook1e404)
-
-Maintained by community:
-
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/XSPFK0?referralCode=milo)
-
-</details>
-
-<details>
-  <summary>Build from source</summary>
-
-Check out the "Contributing" section.
-
-</details>
+- Pre-built binary: download from [Releases](https://github.com/0x2E/fusion/releases)
+- Build from source: see [Contributing](./CONTRIBUTING.md)
+- One-click deployment:
+  - [Deploy on Fly.io](./fly.toml)
+  - [Deploy on Railway](https://railway.com/template/XSPFK0?referralCode=milo) (community maintained)
 
 ## Configuration
 
-All configuration items can be found in [`.env.example`](./.env.example).
+All config keys are documented in [`.env.example`](./.env.example).
 
-Fusion can be configured in many ways:
+Common keys:
 
-- System environment variables, such as those set by `export PASSWORD=123abc`.
-- Create a `.env` file in the same directory as the binary. Note that values in `.env` file can be overwritten by system environment variables.
+- `FUSION_DB_PATH` (default `fusion.db`)
+- `FUSION_PASSWORD` (required unless `FUSION_ALLOW_EMPTY_PASSWORD=true`)
+- `FUSION_PORT` (default `8080`)
+- `FUSION_PULL_INTERVAL`, `FUSION_PULL_TIMEOUT`, `FUSION_PULL_CONCURRENCY`
+- `FUSION_CORS_ALLOWED_ORIGINS`, `FUSION_TRUSTED_PROXIES`
+- `FUSION_OIDC_*` for optional SSO
 
-## Contributing
+Legacy env names (`DB`, `PASSWORD`, `PORT`) are still accepted for backward compatibility.
 
-Contributions are welcome! Before contributing, please read the [Contributing Guidelines](./CONTRIBUTING.md).
+## Documentation
 
-- Prepare environment: Go 1.24+, Node.js 24+ (and pnpm).
-- Check out the commands in `scripts.sh`.
+- API contract (OpenAPI): [`docs/openapi.yaml`](./docs/openapi.yaml)
+- Backend design: [`docs/backend-design.md`](./docs/backend-design.md)
+- Frontend design: [`docs/frontend-design.md`](./docs/frontend-design.md)
+- Legacy schema reference (kept for migration work): [`docs/old-database-schema.md`](./docs/old-database-schema.md)
 
-For example:
+## Development
+
+- Requirements: Go `1.25+`, Node.js `24+`, pnpm
+- Helpful commands are in [`scripts.sh`](./scripts.sh)
+
+Example:
 
 ```shell
 ./scripts.sh build
 ```
 
+## Contributing
+
+Contributions are welcome. Please read [Contributing Guidelines](./CONTRIBUTING.md) before opening a PR.
+
 ## Credits
 
-- Parsing feed with [gofeed](https://github.com/mmcdole/gofeed)
+- Feed parsing powered by [gofeed](https://github.com/mmcdole/gofeed)
