@@ -11,7 +11,7 @@ INSERT OR IGNORE INTO groups (id, name) VALUES (1, 'Default');
 
 CREATE TABLE IF NOT EXISTS feeds (
 	id         INTEGER PRIMARY KEY,
-	group_id   INTEGER NOT NULL DEFAULT 1,
+	group_id   INTEGER NOT NULL DEFAULT 1 REFERENCES groups(id) ON UPDATE CASCADE ON DELETE RESTRICT,
 	name       TEXT NOT NULL,
 	link       TEXT NOT NULL UNIQUE,
 	site_url   TEXT DEFAULT '',
@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_feeds_group_id ON feeds(group_id);
 
 CREATE TABLE IF NOT EXISTS items (
 	id         INTEGER PRIMARY KEY,
-	feed_id    INTEGER NOT NULL,
+	feed_id    INTEGER NOT NULL REFERENCES feeds(id) ON UPDATE CASCADE ON DELETE CASCADE,
 	guid       TEXT NOT NULL,
 	title      TEXT DEFAULT '',
 	link       TEXT DEFAULT '',
@@ -74,7 +74,7 @@ END;
 
 CREATE TABLE IF NOT EXISTS bookmarks (
 	id         INTEGER PRIMARY KEY,
-	item_id    INTEGER,
+	item_id    INTEGER REFERENCES items(id) ON UPDATE CASCADE ON DELETE SET NULL,
 	link       TEXT NOT NULL UNIQUE,
 	title      TEXT DEFAULT '',
 	content    TEXT DEFAULT '',
