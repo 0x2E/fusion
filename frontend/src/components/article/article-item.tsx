@@ -2,6 +2,7 @@ import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
 import type { Item } from "@/lib/api";
+import { FeedFavicon } from "@/components/feed/feed-favicon";
 
 interface ArticleItemProps {
   article: Item;
@@ -86,14 +87,7 @@ export function ArticleItem({
           {extractSummary(article.content, 150)}
         </p>
         <div className="flex items-center gap-2 text-xs">
-          {feedFaviconUrl && (
-            <img
-              src={feedFaviconUrl}
-              alt=""
-              className="h-3.5 w-3.5 shrink-0 rounded-sm"
-              loading="lazy"
-            />
-          )}
+          <FeedFavicon src={feedFaviconUrl} className="h-3.5 w-3.5 rounded-sm" />
           <span className="truncate font-medium text-muted-foreground">
             {feedName}
           </span>

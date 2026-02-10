@@ -24,6 +24,7 @@ import { useUIStore } from "@/store";
 import { useFeedLookup } from "@/queries/feeds";
 import { useUrlState } from "@/hooks/use-url-state";
 import { formatDate } from "@/lib/utils";
+import { FeedFavicon } from "@/components/feed/feed-favicon";
 
 export function SearchDialog() {
   const { isSearchOpen, setSearchOpen, setEditFeedOpen } = useUIStore();
@@ -142,11 +143,9 @@ export function SearchDialog() {
                     onSelect={() => handleSelectFeed(feed.id)}
                     className="group gap-2"
                   >
-                    <img
+                    <FeedFavicon
                       src={getFaviconUrl(feed.link, feed.site_url)}
-                      alt=""
-                      className="h-4 w-4 shrink-0 rounded-sm"
-                      loading="lazy"
+                      className="h-4 w-4 rounded-sm"
                     />
                     <span className="flex-1 truncate">{feed.name}</span>
                     <Button

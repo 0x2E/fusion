@@ -30,6 +30,7 @@ import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
+import { FeedFavicon } from "@/components/feed/feed-favicon";
 
 export function ArticleDrawer() {
   const {
@@ -206,11 +207,9 @@ export function ArticleDrawer() {
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                     <span className="flex max-w-48 items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
                       {feed && (
-                        <img
+                        <FeedFavicon
                           src={getFaviconUrl(feed.link, feed.site_url)}
-                          alt=""
-                          className="h-3.5 w-3.5 shrink-0 rounded-sm"
-                          loading="lazy"
+                          className="h-3.5 w-3.5 rounded-sm"
                         />
                       )}
                       <span className="truncate">

@@ -47,6 +47,7 @@ import {
 } from "@/queries/feeds";
 import { useDeleteGroup, useGroups, useUpdateGroup } from "@/queries/groups";
 import { useUIStore } from "@/store";
+import { FeedFavicon } from "@/components/feed/feed-favicon";
 
 export const Route = createLazyFileRoute("/feeds")({
   component: FeedsPage,
@@ -246,11 +247,16 @@ function FeedsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {(Object.keys(statusFilterLabels) as StatusFilter[]).map((key) => (
-                  <DropdownMenuItem key={key} onSelect={() => setStatusFilter(key)}>
-                    {statusFilterLabels[key]}
-                  </DropdownMenuItem>
-                ))}
+                {(Object.keys(statusFilterLabels) as StatusFilter[]).map(
+                  (key) => (
+                    <DropdownMenuItem
+                      key={key}
+                      onSelect={() => setStatusFilter(key)}
+                    >
+                      {statusFilterLabels[key]}
+                    </DropdownMenuItem>
+                  ),
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -317,7 +323,10 @@ function FeedsPage() {
               const isEditing = editingGroupId === group.id;
 
               return (
-                <div key={group.id} className="overflow-hidden rounded-lg border">
+                <div
+                  key={group.id}
+                  className="overflow-hidden rounded-lg border"
+                >
                   <div
                     onClick={() => {
                       if (!isEditing) toggleGroup(group.id);
@@ -421,11 +430,9 @@ function FeedsPage() {
                           )}
                         >
                           <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                            <img
+                            <FeedFavicon
                               src={getFaviconUrl(feed.link, feed.site_url)}
-                              alt=""
-                              className="h-5 w-5 shrink-0 rounded"
-                              loading="lazy"
+                              className="h-5 w-5"
                             />
                             <div className="min-w-0">
                               <p className="truncate text-[13px] font-medium">

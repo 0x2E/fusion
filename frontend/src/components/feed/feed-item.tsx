@@ -3,6 +3,7 @@ import { useUrlState } from "@/hooks/use-url-state";
 import { useUIStore } from "@/store";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import type { Feed } from "@/lib/api";
+import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -30,12 +31,7 @@ export function FeedItem({ feed }: FeedItemProps) {
         isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
       )}
     >
-      <img
-        src={faviconUrl}
-        alt=""
-        className="h-4 w-4 shrink-0 rounded"
-        loading="lazy"
-      />
+      <FeedFavicon src={faviconUrl} className="h-4 w-4" />
       <span className="block min-w-0 max-w-full flex-1 truncate">
         {feed.name}
       </span>

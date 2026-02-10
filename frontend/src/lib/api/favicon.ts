@@ -35,6 +35,10 @@ export function getFaviconUrl(feedLink: string, siteUrl?: string): string {
     domain = extractDomainFromFeedLink(feedLink);
   }
 
+  if (!domain) {
+    return "";
+  }
+
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 }
 
@@ -53,6 +57,6 @@ function extractDomainFromFeedLink(feedLink: string): string {
 
     return hostname;
   } catch {
-    return "example.com";
+    return "";
   }
 }
