@@ -89,9 +89,11 @@ function AppearanceContent() {
 function AboutContent() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 pb-8">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-        <span className="text-2xl font-bold text-primary-foreground">F</span>
-      </div>
+      <img
+        src="/icon-96.png"
+        alt="Fusion logo"
+        className="h-16 w-16 rounded-2xl"
+      />
       <div className="text-center">
         <h3 className="text-xl font-semibold">Fusion</h3>
         <p className="mt-1 text-xs text-muted-foreground">{__APP_VERSION__}</p>

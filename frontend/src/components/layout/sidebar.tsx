@@ -14,9 +14,11 @@ export function Sidebar() {
     <aside className="flex h-full w-75 flex-none flex-col overflow-hidden border-r bg-sidebar">
       {/* Header */}
       <div className="flex items-center gap-2 border-b px-4 py-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-          <span className="text-sm font-bold text-primary-foreground">F</span>
-        </div>
+        <img
+          src="/icon-96.png"
+          alt="Fusion logo"
+          className="h-8 w-8 rounded-md"
+        />
         <span className="text-base font-semibold">Fusion</span>
       </div>
 

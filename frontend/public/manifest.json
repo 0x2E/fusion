@@ -1,0 +1,24 @@
+{
+	"short_name": "Fusion",
+	"icons": [
+		{
+			"src": "/icon-192.png",
+			"type": "image/png",
+			"sizes": "192x192",
+			"purpose": "maskable"
+		},
+		{
+			"src": "/icon-512.png",
+			"type": "image/png",
+			"sizes": "512x512",
+			"purpose": "maskable"
+		}
+	],
+	"id": "/?source=pwa",
+	"start_url": "/",
+	"background_color": "#09090b",
+	"display": "standalone",
+	"scope": "/",
+	"theme_color": "#000000",
+	"description": "RSS aggregator and reader"
+}

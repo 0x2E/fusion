@@ -71,9 +71,11 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-6 p-4">
         <div className="flex flex-col items-center gap-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <span className="text-xl font-bold text-primary-foreground">F</span>
-          </div>
+          <img
+            src="/icon-96.png"
+            alt="Fusion logo"
+            className="h-12 w-12 rounded-xl"
+          />
           <h1 className="text-2xl font-bold">Fusion</h1>
           <p className="text-sm text-muted-foreground">
             Enter your password to continue
