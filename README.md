@@ -17,6 +17,7 @@
 - RSS/Atom parsing with feed discovery support
 - Responsive web UI with keyboard shortcuts and PWA support
 - Self-hosting friendly: single binary or Docker deployment
+- No AI features by design: just a focused, distraction-free RSS experience
 - Internationalization (English, Chinese, German, French, Spanish, Russian, Portuguese, Swedish)
 
 ## Quick Start (Docker)
