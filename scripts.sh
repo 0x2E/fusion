@@ -45,6 +45,11 @@ build_backend() {
   root=$(pwd)
   output_path=${3:-"${root}/build/fusion"}
 
+  case "$output_path" in
+  /*) ;;
+  *) output_path="${root}/${output_path#./}" ;;
+  esac
+
   if [ ! -f backend/internal/web/dist/index.html ]; then
     echo "frontend build artifacts not found for embed"
     echo "run ./scripts.sh build-frontend before building backend"
