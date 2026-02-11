@@ -46,6 +46,11 @@ backend/
 
 Source of truth: `backend/internal/store/migrations/001_initial.sql`.
 
+Legacy compatibility: when an old pre-`schema_migrations` database is detected,
+backend first creates a timestamped `.bak` backup, builds a fresh temporary
+database with the current schema, imports legacy `groups/feeds/items` data,
+atomically swaps files, then records baseline version `1`.
+
 ### groups
 
 - `id`, `name`, `created_at`, `updated_at`

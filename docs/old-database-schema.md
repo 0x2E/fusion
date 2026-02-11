@@ -1,117 +1,106 @@
-# 数据库结构文档（旧版保留）
+# Legacy Database Schema (Preserved)
 
-> ⚠️ 本文档为旧版数据库结构快照，需长期保留，用于后续迁移代码开发与校验。
+> This document preserves the legacy schema snapshot for migration development and validation. SQL DDL is the single source of truth for table/column definitions.
 
-本文档记录旧版本的数据库结构。
+## Full DDL (Authoritative)
 
-## 数据表
+```sql
+CREATE TABLE `groups` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `created_at` datetime,
+  `updated_at` datetime,
+  `deleted_at` integer,
+  `name` text NOT NULL
+);
 
-### groups
+CREATE TABLE sqlite_sequence(name,seq);
 
-分组表，用于组织 Feed。
+CREATE UNIQUE INDEX `idx_name` ON `groups`(`deleted_at`,`name`);
 
-| 字段       | 类型     | 约束                                        | 说明       |
-| ---------- | -------- | ------------------------------------------- | ---------- |
-| id         | uint     | PRIMARY KEY                                 | 主键       |
-| created_at | datetime |                                             | 创建时间   |
-| updated_at | datetime |                                             | 更新时间   |
-| deleted_at | integer  | UNIQUE INDEX (`idx_name`: deleted_at, name) | 软删除标记 |
-| name       | string   | NOT NULL, UNIQUE INDEX (`idx_name`)         | 分组名称   |
+CREATE TABLE `feeds` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `created_at` datetime,
+  `updated_at` datetime,
+  `deleted_at` integer,
+  `name` text NOT NULL,
+  `link` text NOT NULL,
+  `last_build` datetime,
+  `failure` text DEFAULT "",
+  `group_id` integer,
+  `suspended` numeric DEFAULT false,
+  `req_proxy` text,
+  `consecutive_failures` integer DEFAULT 0,
+  CONSTRAINT `fk_feeds_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`)
+);
 
-**初始数据**: 系统启动时自动创建 ID=1 的 "Default" 分组。
+CREATE TABLE `items` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `created_at` datetime,
+  `updated_at` datetime,
+  `deleted_at` integer,
+  `title` text NOT NULL,
+  `guid` text,
+  `link` text,
+  `content` text,
+  `pub_date` datetime,
+  `unread` numeric DEFAULT true,
+  `feed_id` integer,
+  `bookmark` numeric DEFAULT false,
+  CONSTRAINT `fk_items_feed` FOREIGN KEY (`feed_id`) REFERENCES `feeds`(`id`)
+);
 
----
+CREATE INDEX `idx_items_feed_id` ON `items`(`feed_id`);
+CREATE INDEX `idx_items_title` ON `items`(`title`);
+CREATE INDEX `idx_items_unread` ON `items`(`unread`);
+CREATE INDEX `idx_items_bookmark` ON `items`(`bookmark`);
 
-### feeds
-
-RSS/Atom 订阅源表。
-
-| 字段                 | 类型     | 约束                                        | 说明                   |
-| -------------------- | -------- | ------------------------------------------- | ---------------------- |
-| id                   | uint     | PRIMARY KEY                                 | 主键                   |
-| created_at           | datetime |                                             | 创建时间               |
-| updated_at           | datetime |                                             | 更新时间               |
-| deleted_at           | integer  | UNIQUE INDEX (`idx_link`: deleted_at, link) | 软删除标记             |
-| name                 | string   | NOT NULL                                    | 订阅源名称             |
-| link                 | string   | NOT NULL, UNIQUE INDEX (`idx_link`)         | 订阅源 URL             |
-| last_build           | datetime | NULLABLE                                    | 内容最后更新时间       |
-| failure              | string   | DEFAULT ''                                  | 最近一次拉取的错误信息 |
-| consecutive_failures | uint     | DEFAULT 0                                   | 连续失败次数           |
-| suspended            | bool     | DEFAULT false                               | 是否暂停拉取           |
-| req_proxy            | string   | NULLABLE                                    | 请求代理设置           |
-| group_id             | uint     | FOREIGN KEY → groups.id                     | 所属分组 ID            |
-
-**虚拟字段** (不存储在数据库):
-
-- `unread_count`: 未读条目数量
-
----
-
-### items
-
-订阅条目表，存储 Feed 中的文章/条目。
-
-| 字段       | 类型     | 约束                                                 | 说明          |
-| ---------- | -------- | ---------------------------------------------------- | ------------- |
-| id         | uint     | PRIMARY KEY                                          | 主键          |
-| created_at | datetime |                                                      | 创建时间      |
-| updated_at | datetime |                                                      | 更新时间      |
-| deleted_at | integer  | UNIQUE INDEX (`idx_guid`: deleted_at, guid, feed_id) | 软删除标记    |
-| title      | string   | NULLABLE                                             | 条目标题      |
-| guid       | string   | UNIQUE INDEX (`idx_guid`)                            | 条目唯一标识  |
-| link       | string   | NULLABLE                                             | 条目链接      |
-| content    | string   | NULLABLE                                             | 条目内容      |
-| pub_date   | datetime | NULLABLE                                             | 发布时间      |
-| unread     | bool     | DEFAULT true, INDEX                                  | 是否未读      |
-| bookmark   | bool     | DEFAULT false, INDEX                                 | 是否收藏      |
-| feed_id    | uint     | FOREIGN KEY → feeds.id, UNIQUE INDEX (`idx_guid`)    | 所属订阅源 ID |
-
----
-
-## 表关系
-
-```
-┌─────────┐       ┌─────────┐       ┌─────────┐
-│ groups  │ 1───N │  feeds  │ 1───N │  items  │
-└─────────┘       └─────────┘       └─────────┘
+CREATE UNIQUE INDEX `idx_guid` ON `items`(`deleted_at`,`guid`,`feed_id`);
+CREATE UNIQUE INDEX `idx_link` ON `feeds`(`deleted_at`,`link`);
 ```
 
-- **groups → feeds**: 一对多关系，一个分组可包含多个订阅源
-- **feeds → items**: 一对多关系，一个订阅源包含多个条目
+## Business Logic Notes
 
----
+### 1) Entity relationships
 
-## 索引说明
+- `groups -> feeds -> items` is a two-level one-to-many chain.
+- `feeds.group_id` links each feed to a group.
+- `items.feed_id` links each item to a feed.
+- Legacy schema declares foreign keys (`fk_feeds_group`, `fk_items_feed`).
 
-### groups 表
+### 2) Soft-delete model
 
-- `idx_name`: (deleted_at, name) - 复合唯一索引，支持软删除下的名称唯一性
+- All business tables use `deleted_at` (Unix timestamp) for logical delete.
+- Deletes update `deleted_at`; rows are not physically removed.
+- Unique indexes include `deleted_at`, so deleted historical rows can coexist with new active rows.
 
-### feeds 表
+### 3) Deduplication and uniqueness semantics
 
-- `idx_link`: (deleted_at, link) - 复合唯一索引，支持软删除下的 URL 唯一性
+- Group name uniqueness: `idx_name(deleted_at, name)`.
+- Feed link uniqueness: `idx_link(deleted_at, link)`.
+- Item deduplication key: `idx_guid(deleted_at, guid, feed_id)`.
+- SQLite caveat: `NULL != NULL` in unique indexes, so multiple rows with `guid=NULL` are allowed (must be preserved in migrations).
 
-### items 表
+### 4) Feed pull status fields (`feeds`)
 
-- `idx_guid`: (deleted_at, guid, feed_id) - 复合唯一索引，确保同一 Feed 下 GUID 唯一
-- `unread`: 单列索引，加速未读条目查询
-- `bookmark`: 单列索引，加速收藏条目查询
+- `last_build`: last content update time.
+- `failure` + `consecutive_failures`: latest error and failure streak.
+- `suspended`: pull disabled flag.
+- `req_proxy`: per-feed proxy setting.
 
----
+### 5) Reading state fields (`items`)
 
-## 软删除机制
+- `unread`: unread flag (default `true`).
+- `bookmark`: bookmark flag (default `false`).
+- Both are indexed for high-frequency filtering.
 
-所有表都使用软删除：
+### 6) Application-level semantics
 
-- `deleted_at` 字段类型为 integer（Unix 时间戳）
-- 删除时设置为当前时间戳，而非物理删除
-- 唯一索引包含 `deleted_at` 字段，允许"已删除"的记录与新记录共存同名/同值
+- App bootstrap ensures default group exists: `id=1`, `name="Default"`.
+- `unread_count` is a virtual field in app models and is not persisted.
 
----
+## Legacy Migration History
 
-## 迁移历史
+### After `v0.8.7`
 
-### v0.8.7 之后
-
-- 为 `feeds.link` 添加唯一索引
-- 迁移时自动删除重复的 Feed（保留 ID 最小的记录）
+- Added unique constraint for feed links via `idx_link`.
+- Migration removed duplicate feeds and kept the row with the smallest `id`.

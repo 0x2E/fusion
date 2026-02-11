@@ -37,6 +37,10 @@ func New(dbPath string) (*Store, error) {
 		})
 	})
 
+	if err := prepareLegacyDatabase(dbPath); err != nil {
+		return nil, fmt.Errorf("prepare legacy database: %w", err)
+	}
+
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
