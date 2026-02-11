@@ -20,9 +20,9 @@ size = 'shared-cpu-1x'
 memory = '256mb'
 
 [env]
-PASSWORD = "{YOUR_PASSWORD}"
-HOST = "127.0.0.1"
-DB = "/data/fusion.db"
+FUSION_PASSWORD = "{YOUR_PASSWORD}"
+FUSION_HOST = "127.0.0.1"
+FUSION_DB_PATH = "/data/fusion.db"
 
 [mounts]
 source = "fusion_data"

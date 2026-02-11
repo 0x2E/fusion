@@ -1,15 +1,10 @@
 <h1 align="center">Fusion</h1>
-<p align="center">A lightweight RSS feed aggregator and reader.</p>
-<p align="center">
-  <a href="https://news.ycombinator.com/item?id=40522244">
-    <img
-      alt="Featured on Hacker News"
-      src="https://hackerbadge.vercel.app/api?id=40522244"
-    />
-  </a>
-</p>
+<p align="center">A lightweight RSS reader.</p>
 
-![screenshots](./assets/screenshots.png)
+<p align="center">
+  <img src="./assets/article_list_light.png" alt="Article list view" width="48.5%" />&nbsp;
+  <img src="./assets/article_detail_light.png" alt="Article detail view" width="48.5%" />
+</p>
 
 ## Features
 
