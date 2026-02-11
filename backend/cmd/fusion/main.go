@@ -15,6 +15,7 @@ import (
 	"github.com/0x2E/fusion/internal/handler"
 	"github.com/0x2E/fusion/internal/pull"
 	"github.com/0x2E/fusion/internal/store"
+	"github.com/gin-gonic/gin"
 	"github.com/mattn/go-isatty"
 	"golang.org/x/sync/errgroup"
 )
@@ -32,6 +33,7 @@ func run() error {
 		return err
 	}
 	setupLogger(cfg)
+	gin.SetMode(gin.ReleaseMode)
 
 	st, err := store.New(cfg.DBPath)
 	if err != nil {
