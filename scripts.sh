@@ -31,6 +31,12 @@ build_frontend() {
     pnpm install --frozen-lockfile --prefer-offline
     VITE_FUSION_VERSION="$version" pnpm run build
   )
+
+  echo "syncing frontend build artifacts for backend embed"
+  rm -rf backend/internal/web/dist
+  mkdir -p backend/internal/web/dist
+  cp -R frontend/dist/. backend/internal/web/dist/
+  printf '%s\n' "This file keeps the embedded dist directory in version control." > backend/internal/web/dist/.keep
 }
 
 build_backend() {
@@ -38,6 +44,13 @@ build_backend() {
   target_arch=${2:-$(go env GOARCH)}
   root=$(pwd)
   output_path=${3:-"${root}/build/fusion"}
+
+  if [ ! -f backend/internal/web/dist/index.html ]; then
+    echo "frontend build artifacts not found for embed"
+    echo "run ./scripts.sh build-frontend before building backend"
+    exit 1
+  fi
+
   echo "building backend for OS: ${target_os}, Arch: ${target_arch}, Output: ${output_path}"
 
   mkdir -p "$(dirname "$output_path")"
@@ -55,6 +68,8 @@ release() {
   echo "building release artifacts"
   rm -rf ./dist
   mkdir -p ./dist
+
+  build_frontend
 
   platforms="linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64"
 

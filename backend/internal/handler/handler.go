@@ -129,6 +129,10 @@ func (h *Handler) SetupRouter() *gin.Engine {
 		}
 	}
 
+	if err := h.setupFrontendRoutes(r); err != nil {
+		slog.Warn("failed to configure frontend routes", "error", err)
+	}
+
 	return r
 }
 

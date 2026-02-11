@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - backend/**
+      - frontend/**
       - Dockerfile
       - .dockerignore
       - scripts.sh
@@ -47,11 +48,14 @@ jobs:
       - name: Set up toolchains
         if: github.event_name == 'push'
         uses: ./.github/actions/setup-toolchains
+        with:
+          setup-node: "true"
       - name: Build binaries from source
         if: github.event_name == 'push'
         run: |
           mkdir -p ./build
           rm -f ./build/fusion-linux-amd64 ./build/fusion-linux-arm64
+          ./scripts.sh build-frontend
           ./scripts.sh build-backend linux amd64 ./build/fusion-linux-amd64
           ./scripts.sh build-backend linux arm64 ./build/fusion-linux-arm64
       - name: Download binaries from release assets

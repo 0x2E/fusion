@@ -23,6 +23,8 @@ jobs:
           fetch-depth: 0
       - name: Set up toolchains
         uses: ./.github/actions/setup-toolchains
+        with:
+          setup-node: "true"
       - name: Build release artifacts
         run: ./scripts.sh release
       - name: Create GitHub Release
