@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
@@ -28,8 +29,11 @@ func prepareLegacyDatabase(dbPath string) error {
 		return fmt.Errorf("detect legacy schema: %w", err)
 	}
 	if !shouldMigrate {
+		slog.Debug("legacy database migration skipped", "reason", "schema already current")
 		return nil
 	}
+
+	slog.Info("legacy database migration started", "db_path", dbPath)
 
 	// Flush WAL pages back into the main DB file before file-copy backup.
 	// Without this, copying only *.db may miss recent committed data in *.db-wal.
@@ -41,6 +45,7 @@ func prepareLegacyDatabase(dbPath string) error {
 	if err := copyFile(dbPath, backupPath); err != nil {
 		return fmt.Errorf("backup legacy database: %w", err)
 	}
+	slog.Info("legacy database backup created", "backup_path", backupPath)
 
 	if err := db.Close(); err != nil {
 		return fmt.Errorf("close source database before migration: %w", err)
@@ -56,6 +61,8 @@ func prepareLegacyDatabase(dbPath string) error {
 		_ = os.Remove(tempPath)
 		return fmt.Errorf("replace database file: %w", err)
 	}
+
+	slog.Info("legacy database migration finished", "db_path", dbPath, "backup_path", backupPath)
 
 	return nil
 }

@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Migration files must follow naming convention: NNN_description.sql
@@ -16,6 +18,9 @@ import (
 var migrationFiles embed.FS
 
 func (s *Store) migrate() error {
+	startedAt := time.Now()
+	slog.Info("database migration started")
+
 	if err := s.createMigrationsTable(); err != nil {
 		return fmt.Errorf("create migrations table: %w", err)
 	}
@@ -34,6 +39,8 @@ func (s *Store) migrate() error {
 		return entries[i].Name() < entries[j].Name()
 	})
 
+	appliedCount := 0
+
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -45,13 +52,24 @@ func (s *Store) migrate() error {
 		}
 
 		if applied[version] {
+			slog.Debug("migration already applied", "version", version, "file", entry.Name())
 			continue
 		}
 
+		slog.Info("applying migration", "version", version, "file", entry.Name())
 		if err := s.applyMigration(version, entry.Name()); err != nil {
 			return fmt.Errorf("apply migration %s: %w", entry.Name(), err)
 		}
+
+		appliedCount++
+		slog.Info("migration applied", "version", version, "file", entry.Name())
 	}
+
+	slog.Info(
+		"database migration finished",
+		"applied", appliedCount,
+		"duration", time.Since(startedAt),
+	)
 
 	return nil
 }
