@@ -77,7 +77,9 @@ func New(store *store.Store, config *config.Config, puller interface {
 }
 
 func (h *Handler) SetupRouter() *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(requestLogMiddleware(), recoveryMiddleware())
+
 	if err := h.configureTrustedProxies(r); err != nil {
 		slog.Warn("failed to configure trusted proxies", "error", err)
 	}
