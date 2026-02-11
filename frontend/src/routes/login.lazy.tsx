@@ -38,11 +38,6 @@ function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!password.trim()) {
-      toast.error("Please enter a password");
-      return;
-    }
-
     setIsLoading(true);
     try {
       await sessionAPI.login({ password });
