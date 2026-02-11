@@ -19,24 +19,33 @@
 
 ## 3. Route map
 
-| Route    | Purpose               |
-| -------- | --------------------- |
-| `/`      | Main reading view     |
-| `/feeds` | Feed/group management |
-| `/login` | Password/OIDC login   |
+| Route pattern              | Purpose                         |
+| -------------------------- | ------------------------------- |
+| `/`                        | Canonical redirect to `/unread` |
+| `/:filter`                 | Top-level reading view          |
+| `/feeds/:feedId/:filter`   | Feed-scoped reading view        |
+| `/groups/:groupId/:filter` | Group-scoped reading view       |
+| `/feeds`                   | Feed/group management           |
+| `/login`                   | Password/OIDC login             |
 
 ## 4. URL-driven app state
 
-Main page state is kept in URL search params:
+Reading state is split between path params and search params:
 
-| Param     | Type                       | Meaning                  |
-| --------- | -------------------------- | ------------------------ |
-| `feed`    | number                     | Selected feed            |
-| `group`   | number                     | Selected group           |
-| `filter`  | `all \| unread \| starred` | Article filter           |
-| `article` | number                     | Opened article in drawer |
+| Location     | Key       | Type                       | Meaning                  |
+| ------------ | --------- | -------------------------- | ------------------------ |
+| Path param   | `filter`  | `all \| unread \| starred` | Active article filter    |
+| Path param   | `feedId`  | number                     | Selected feed scope      |
+| Path param   | `groupId` | number                     | Selected group scope     |
+| Search param | `article` | number                     | Opened article in drawer |
 
-This makes navigation, refresh, and deep-linking predictable.
+Examples:
+
+- `/unread`
+- `/feeds/6/unread`
+- `/groups/3/starred?article=289`
+
+This keeps list context stable while opening/closing article detail.
 
 ## 5. Layout system
 
@@ -61,7 +70,7 @@ This makes navigation, refresh, and deep-linking predictable.
 - Feed tree (All, groups, feeds)
 - Footer actions: Manage Feeds, Settings
 
-### Main reading view (`/`)
+### Main reading view (`/:filter`, `/feeds/:feedId/:filter`, `/groups/:groupId/:filter`)
 
 - Header with page title and "Mark all as read"
 - Filter tabs: All / Unread / Starred
@@ -121,14 +130,26 @@ Implemented shortcuts:
 
 ## 11. Key files
 
-- `frontend/src/routes/index.lazy.tsx`: main page composition
+- `frontend/src/routes/$filter.lazy.tsx`: top-level reading page
+- `frontend/src/routes/feeds_.$feedId.$filter.lazy.tsx`: feed-scoped reading page
+- `frontend/src/routes/groups.$groupId.$filter.lazy.tsx`: group-scoped reading page
 - `frontend/src/routes/feeds.lazy.tsx`: feed management page
 - `frontend/src/routes/login.lazy.tsx`: login page
+- `frontend/src/components/article/article-page.tsx`: shared reading page wrapper
 - `frontend/src/components/article/article-list.tsx`: list + tabs + bulk read
 - `frontend/src/components/article/article-drawer.tsx`: article detail
 - `frontend/src/components/feed/feed-list.tsx`: sidebar feed tree
 
-## 12. Release verification checklist
+## 12. Route file naming note
+
+TanStack file-based routes can infer parent-child nesting from file names. We intentionally keep management page `/feeds` and reading page `/feeds/:feedId/:filter` as separate route trees.
+
+- `frontend/src/routes/feeds.lazy.tsx` maps to management page `/feeds`
+- `frontend/src/routes/feeds_.$feedId.$filter.lazy.tsx` maps to reading page `/feeds/:feedId/:filter`
+
+The `feeds_` prefix is a routing implementation detail to avoid accidental nesting under the management page route while preserving the final URL path as `/feeds/...`.
+
+## 13. Release verification checklist
 
 - Type check: `cd frontend && npx tsc -b --noEmit`
 - Lint: `cd frontend && pnpm lint`

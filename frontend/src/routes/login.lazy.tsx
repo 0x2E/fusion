@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { oidcAPI, sessionAPI } from "@/lib/api";
+import { defaultArticleFilter } from "@/lib/article-filter";
 
 export const Route = createLazyFileRoute("/login")({
   component: LoginPage,
@@ -41,7 +42,10 @@ function LoginPage() {
     setIsLoading(true);
     try {
       await sessionAPI.login({ password });
-      navigate({ to: "/" });
+      navigate({
+        to: "/$filter",
+        params: { filter: defaultArticleFilter },
+      });
     } catch {
       toast.error("Invalid password");
     } finally {

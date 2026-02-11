@@ -1,5 +1,5 @@
 import { Search, Settings, Rss } from "lucide-react";
-import { useNavigate, useMatchRoute } from "@tanstack/react-router";
+import { useNavigate, useLocation } from "@tanstack/react-router";
 import { FeedList } from "@/components/feed/feed-list";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store";
@@ -7,8 +7,8 @@ import { useUIStore } from "@/store";
 export function Sidebar() {
   const { setSearchOpen, setSettingsOpen } = useUIStore();
   const navigate = useNavigate();
-  const matchRoute = useMatchRoute();
-  const isFeedsPage = !!matchRoute({ to: "/feeds" });
+  const { pathname } = useLocation();
+  const isFeedsPage = pathname === "/feeds";
 
   return (
     <aside className="sidebar-typography flex h-full w-75 flex-none flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground">

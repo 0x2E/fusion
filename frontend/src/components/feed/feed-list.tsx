@@ -1,6 +1,7 @@
-import { useMatchRoute } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 import { Inbox, Layers, Star } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { isArticleFilter } from "@/lib/article-filter";
 import { useGroups } from "@/queries/groups";
 import { useFeedLookup, useUnreadCounts } from "@/queries/feeds";
 import { useBookmarkLookup } from "@/queries/bookmarks";
@@ -20,8 +21,10 @@ export function FeedList() {
     articleFilter,
     selectTopLevelFilter,
   } = useUrlState();
-  const matchRoute = useMatchRoute();
-  const isOnHomePage = !!matchRoute({ to: "/" });
+  const { pathname } = useLocation();
+  const firstPathSegment = pathname.split("/").filter(Boolean)[0];
+  const isOnHomePage =
+    typeof firstPathSegment === "string" && isArticleFilter(firstPathSegment);
   const isTopLevelSelected =
     isOnHomePage && selectedFeedId === null && selectedGroupId === null;
   const totalUnread = getTotalUnreadCount();
