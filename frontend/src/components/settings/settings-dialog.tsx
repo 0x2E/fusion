@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTheme } from "next-themes";
-import { Bug, Github, Info, Palette } from "lucide-react";
+import { toast } from "sonner";
+import { Bug, Download, Github, Info, Palette } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUIStore } from "@/store";
+import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { cn } from "@/lib/utils";
 
 type SettingsTab = "appearance" | "about";
@@ -87,6 +89,21 @@ function AppearanceContent() {
 }
 
 function AboutContent() {
+  const { isInstallAvailable, promptInstall } = usePWAInstall();
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  const handleInstall = async () => {
+    setIsInstalling(true);
+    try {
+      const isInstalled = await promptInstall();
+      if (!isInstalled) {
+        toast.info("Installation cancelled");
+      }
+    } finally {
+      setIsInstalling(false);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 pb-8">
       <img
@@ -102,6 +119,19 @@ function AboutContent() {
         </p>
       </div>
       <div className="flex gap-2">
+        {isInstallAvailable && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => {
+              void handleInstall();
+            }}
+            disabled={isInstalling}
+          >
+            <Download className="h-4 w-4" />
+            {isInstalling ? "Installing..." : "Install App"}
+          </Button>
+        )}
         <Button variant="outline" size="sm" asChild>
           <a
             href="https://github.com/0x2e/fusion"

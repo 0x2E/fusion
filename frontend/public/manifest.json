@@ -1,24 +1,26 @@
 {
+	"name": "Fusion RSS Reader",
 	"short_name": "Fusion",
 	"icons": [
 		{
 			"src": "/icon-192.png",
 			"type": "image/png",
 			"sizes": "192x192",
-			"purpose": "maskable"
+			"purpose": "any maskable"
 		},
 		{
 			"src": "/icon-512.png",
 			"type": "image/png",
 			"sizes": "512x512",
-			"purpose": "maskable"
+			"purpose": "any maskable"
 		}
 	],
-	"id": "/?source=pwa",
+	"id": "/",
 	"start_url": "/",
 	"background_color": "#09090b",
 	"display": "standalone",
+	"display_override": ["standalone", "minimal-ui", "browser"],
 	"scope": "/",
-	"theme_color": "#000000",
-	"description": "RSS aggregator and reader"
+	"theme_color": "#09090b",
+	"description": "Lightweight RSS aggregator and reader"
 }
