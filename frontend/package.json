@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsr generate && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -48,6 +48,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@tailwindcss/typography": "^0.5.19",
+    "@tanstack/router-cli": "^1.159.4",
     "@tanstack/router-devtools": "^1.157.5",
     "@tanstack/router-vite-plugin": "^1.157.5",
     "@types/node": "^24.10.9",
