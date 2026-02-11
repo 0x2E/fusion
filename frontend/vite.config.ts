@@ -1,21 +1,35 @@
-import { sveltekit } from '@sveltejs/kit/vite';
-import tailwindcss from '@tailwindcss/vite';
-import * as process from 'process';
-import { defineConfig } from 'vite';
+import { execSync } from "child_process";
+import path from "path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { tanstackRouter } from "@tanstack/router-vite-plugin";
+import { defineConfig } from "vite";
 
+function getGitVersion(): string {
+  try {
+    return execSync("git describe --tags --always").toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
+
+// https://vite.dev/config/
 export default defineConfig({
-	plugins: [tailwindcss(), sveltekit()],
-	define: {
-		'import.meta.env.FUSION': JSON.stringify({
-			version: process.env.VITE_FUSION_VERSION || 'unknown-version'
-		})
-	},
-	server: {
-		proxy: {
-			'/api': {
-				target: 'http://localhost:8080',
-				changeOrigin: true
-			}
-		}
-	}
+  define: {
+    __APP_VERSION__: JSON.stringify(getGitVersion()),
+  },
+  plugins: [react(), tanstackRouter(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
+  },
 });

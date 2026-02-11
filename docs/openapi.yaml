@@ -1,0 +1,1156 @@
+openapi: 3.0.3
+info:
+  title: Fusion API
+  version: 1.0.0
+  description: >-
+    OpenAPI contract for Fusion backend. All endpoints are under /api.
+    Authentication uses a session cookie named `session`.
+servers:
+  - url: /api
+tags:
+  - name: Sessions
+  - name: OIDC
+  - name: Groups
+  - name: Feeds
+  - name: Items
+  - name: Search
+  - name: Bookmarks
+security:
+  - sessionCookie: []
+paths:
+  /sessions:
+    post:
+      tags: [Sessions]
+      summary: Login with password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in
+          headers:
+            Set-Cookie:
+              description: Session cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageEnvelope"
+              example:
+                data:
+                  message: logged in
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: [Sessions]
+      summary: Logout
+      security: []
+      responses:
+        "204":
+          description: Logged out
+          headers:
+            Set-Cookie:
+              description: Cleared session cookie
+              schema:
+                type: string
+
+  /oidc/enabled:
+    get:
+      tags: [OIDC]
+      summary: Check whether OIDC is enabled
+      security: []
+      responses:
+        "200":
+          description: OIDC status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OIDCEnabledEnvelope"
+
+  /oidc/login:
+    get:
+      tags: [OIDC]
+      summary: Get OIDC authorization URL
+      description: Endpoint is available only when OIDC is configured.
+      security: []
+      responses:
+        "200":
+          description: Authorization URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OIDCLoginEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /oidc/callback:
+    get:
+      tags: [OIDC]
+      summary: OIDC callback endpoint
+      description: Exchanges code for identity, creates session, and redirects.
+      security: []
+      parameters:
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "307":
+          description: Redirect to app or login error page
+          headers:
+            Location:
+              schema:
+                type: string
+
+  /groups:
+    get:
+      tags: [Groups]
+      summary: List groups
+      responses:
+        "200":
+          description: Group list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupListEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags: [Groups]
+      summary: Create group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupUpsertRequest"
+      responses:
+        "200":
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Groups]
+      summary: Get group
+      responses:
+        "200":
+          description: Group detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags: [Groups]
+      summary: Update group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupUpsertRequest"
+      responses:
+        "200":
+          description: Group updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: [Groups]
+      summary: Delete group
+      description: Group id=1 cannot be deleted. Feeds are moved to group id=1 before delete.
+      responses:
+        "204":
+          description: Group deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /feeds:
+    get:
+      tags: [Feeds]
+      summary: List feeds
+      responses:
+        "200":
+          description: Feed list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedListEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags: [Feeds]
+      summary: Create feed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFeedRequest"
+      responses:
+        "200":
+          description: Feed created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /feeds/batch:
+    post:
+      tags: [Feeds]
+      summary: Batch create feeds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchCreateFeedsRequest"
+      responses:
+        "200":
+          description: Batch create result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchCreateFeedsEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /feeds/validate:
+    post:
+      tags: [Feeds]
+      summary: Discover feed URLs from input URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateFeedRequest"
+      responses:
+        "200":
+          description: Discovered feeds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateFeedEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /feeds/refresh:
+    post:
+      tags: [Feeds]
+      summary: Trigger async refresh for all non-suspended feeds
+      responses:
+        "202":
+          description: Refresh accepted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /feeds/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Feeds]
+      summary: Get feed
+      responses:
+        "200":
+          description: Feed detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags: [Feeds]
+      summary: Update feed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFeedRequest"
+      responses:
+        "200":
+          description: Feed updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: [Feeds]
+      summary: Delete feed
+      description: Deletes feed and its items. Matching bookmarks keep snapshot with item_id set to null.
+      responses:
+        "204":
+          description: Feed deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /feeds/{id}/refresh:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    post:
+      tags: [Feeds]
+      summary: Trigger async refresh for one feed
+      responses:
+        "202":
+          description: Refresh accepted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /items:
+    get:
+      tags: [Items]
+      summary: List items
+      parameters:
+        - name: feed_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: group_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: unread
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: order_by
+          in: query
+          schema:
+            type: string
+            enum: [pub_date, created_at]
+            default: pub_date
+      responses:
+        "200":
+          description: Item list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemListEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /items/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Items]
+      summary: Get item
+      responses:
+        "200":
+          description: Item detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /items/-/read:
+    patch:
+      tags: [Items]
+      summary: Mark items as read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkItemsRequest"
+      responses:
+        "204":
+          description: Read state updated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /items/-/unread:
+    patch:
+      tags: [Items]
+      summary: Mark items as unread
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkItemsRequest"
+      responses:
+        "204":
+          description: Read state updated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /search:
+    get:
+      tags: [Search]
+      summary: Search feeds and items
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        "200":
+          description: Search result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /bookmarks:
+    get:
+      tags: [Bookmarks]
+      summary: List bookmarks
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Bookmark list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookmarkListEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags: [Bookmarks]
+      summary: Create bookmark
+      description: >-
+        Supports two modes:
+        1) provide item_id only; backend snapshots fields from item
+        2) provide snapshot fields directly (link, title, content, feed_name; pub_date optional)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/CreateBookmarkFromItemRequest"
+                - $ref: "#/components/schemas/CreateBookmarkSnapshotRequest"
+      responses:
+        "200":
+          description: Bookmark created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookmarkEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /bookmarks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Bookmarks]
+      summary: Get bookmark
+      responses:
+        "200":
+          description: Bookmark detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookmarkEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: [Bookmarks]
+      summary: Delete bookmark
+      responses:
+        "204":
+          description: Bookmark deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: invalid request
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: unauthorized
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: resource not found
+    TooManyRequests:
+      description: Too many login attempts
+      headers:
+        Retry-After:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: too many login attempts
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: internal server error
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    Message:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    MessageEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Message"
+
+    LoginRequest:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+
+    GroupUpsertRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    Group:
+      type: object
+      required: [id, name, created_at, updated_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        created_at:
+          type: integer
+          format: int64
+        updated_at:
+          type: integer
+          format: int64
+
+    GroupEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Group"
+
+    GroupListEnvelope:
+      type: object
+      required: [data, total]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Group"
+        total:
+          type: integer
+
+    Feed:
+      type: object
+      required:
+        - id
+        - group_id
+        - name
+        - link
+        - last_build
+        - last_failure_at
+        - failures
+        - suspended
+        - created_at
+        - updated_at
+        - unread_count
+        - item_count
+      properties:
+        id:
+          type: integer
+          format: int64
+        group_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        link:
+          type: string
+        site_url:
+          type: string
+        last_build:
+          type: integer
+          format: int64
+        last_failure_at:
+          type: integer
+          format: int64
+        failure:
+          type: string
+        failures:
+          type: integer
+          format: int64
+        suspended:
+          type: boolean
+        proxy:
+          type: string
+        created_at:
+          type: integer
+          format: int64
+        updated_at:
+          type: integer
+          format: int64
+        unread_count:
+          type: integer
+          format: int64
+        item_count:
+          type: integer
+          format: int64
+
+    FeedEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Feed"
+
+    FeedListEnvelope:
+      type: object
+      required: [data, total]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feed"
+        total:
+          type: integer
+
+    CreateFeedRequest:
+      type: object
+      required: [group_id, name, link]
+      properties:
+        group_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        link:
+          type: string
+        site_url:
+          type: string
+        proxy:
+          type: string
+
+    UpdateFeedRequest:
+      type: object
+      properties:
+        group_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        link:
+          type: string
+        site_url:
+          type: string
+        suspended:
+          type: boolean
+        proxy:
+          type: string
+
+    BatchCreateFeedItem:
+      type: object
+      required: [group_id, name, link]
+      properties:
+        group_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        link:
+          type: string
+        site_url:
+          type: string
+
+    BatchCreateFeedsRequest:
+      type: object
+      required: [feeds]
+      properties:
+        feeds:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchCreateFeedItem"
+
+    BatchCreateFeedsResult:
+      type: object
+      required: [created, failed, errors]
+      properties:
+        created:
+          type: integer
+        failed:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+
+    BatchCreateFeedsEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/BatchCreateFeedsResult"
+
+    ValidateFeedRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+
+    DiscoveredFeed:
+      type: object
+      required: [title, link]
+      properties:
+        title:
+          type: string
+        link:
+          type: string
+
+    ValidateFeedData:
+      type: object
+      required: [feeds]
+      properties:
+        feeds:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveredFeed"
+
+    ValidateFeedEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/ValidateFeedData"
+
+    Item:
+      type: object
+      required:
+        [id, feed_id, guid, title, link, content, pub_date, unread, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        feed_id:
+          type: integer
+          format: int64
+        guid:
+          type: string
+        title:
+          type: string
+        link:
+          type: string
+        content:
+          type: string
+        pub_date:
+          type: integer
+          format: int64
+        unread:
+          type: boolean
+        created_at:
+          type: integer
+          format: int64
+
+    ItemEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Item"
+
+    ItemListEnvelope:
+      type: object
+      required: [data, total]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+        total:
+          type: integer
+
+    MarkItemsRequest:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            type: integer
+            format: int64
+
+    SearchFeed:
+      type: object
+      required: [id, name, link, site_url]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        link:
+          type: string
+        site_url:
+          type: string
+
+    SearchItem:
+      type: object
+      required: [id, feed_id, title, pub_date]
+      properties:
+        id:
+          type: integer
+          format: int64
+        feed_id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        pub_date:
+          type: integer
+          format: int64
+
+    SearchData:
+      type: object
+      required: [feeds, items]
+      properties:
+        feeds:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchFeed"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchItem"
+
+    SearchEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/SearchData"
+
+    Bookmark:
+      type: object
+      required: [id, link, title, content, pub_date, feed_name, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        item_id:
+          type: integer
+          format: int64
+          nullable: true
+        link:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        pub_date:
+          type: integer
+          format: int64
+        feed_name:
+          type: string
+        created_at:
+          type: integer
+          format: int64
+
+    BookmarkEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Bookmark"
+
+    BookmarkListEnvelope:
+      type: object
+      required: [data, total]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bookmark"
+        total:
+          type: integer
+
+    CreateBookmarkFromItemRequest:
+      type: object
+      required: [item_id]
+      properties:
+        item_id:
+          type: integer
+          format: int64
+
+    CreateBookmarkSnapshotRequest:
+      type: object
+      required: [link, title, content, feed_name]
+      properties:
+        link:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        pub_date:
+          type: integer
+          format: int64
+          default: 0
+        feed_name:
+          type: string
+
+    OIDCEnabledData:
+      type: object
+      required: [enabled]
+      properties:
+        enabled:
+          type: boolean
+
+    OIDCEnabledEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/OIDCEnabledData"
+
+    OIDCLoginData:
+      type: object
+      required: [auth_url]
+      properties:
+        auth_url:
+          type: string
+
+    OIDCLoginEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/OIDCLoginData"

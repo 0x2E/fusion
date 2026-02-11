@@ -8,35 +8,28 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Set up toolchains
+        uses: ./.github/actions/setup-toolchains
         with:
-          node-version: 24
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - name: Build FE
-        run: |
-          # Extract version from git tag (remove 'v' prefix).
-          VERSION=${GITHUB_REF#refs/tags/v}
-          FUSION_VERSION=$VERSION ./scripts.sh build-frontend
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.24"
-      - name: Release
+          setup-node: "true"
+      - name: Build release artifacts
+        run: ./scripts.sh release
+      - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          args: release --clean
+        run: |
+          gh release create ${GITHUB_REF_NAME} ./dist/*.zip ./dist/fusion-linux-* ./dist/checksums.txt \
+            --draft --generate-notes

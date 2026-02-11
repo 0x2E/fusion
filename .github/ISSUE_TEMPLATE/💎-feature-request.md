@@ -1,27 +1,25 @@
 ---
-name: "\U0001F48E Feature Request"
-about: Suggest an idea for this project
+name: "💎 Feature Request"
+about: Propose an improvement for Fusion
 title: "[FR] "
 labels: enhancement
-assignees: ''
-
+assignees: ""
 ---
 
-## What
+## Problem
 
-<!--
-  Please provide a clear and concise description of what the feature is. Include
-  screenshots if needed.
--->
+What user problem are you trying to solve?
 
-## Why
+## Proposed Solution
 
-<!--
-  Is your feature request related to a problem?
--->
+Describe your proposed change and expected behavior.
 
-## (Optional) How
+## Alternatives Considered
 
-<!-- 
-  Describe the solution you'd like.
--->
+List any alternatives you considered (optional).
+
+## Additional Context
+
+- Screenshots / mockups (optional)
+- Related issues / discussions (optional)
+- Migration or compatibility concerns (optional)

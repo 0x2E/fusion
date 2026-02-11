@@ -2,17 +2,29 @@ name: test
 
 on:
   pull_request:
-    types: [opened, reopened]
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - backend/**
+      - scripts.sh
+      - .github/workflows/test.yml
+      - .github/actions/setup-toolchains/action.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.24"
+        uses: actions/checkout@v6
+      - name: Set up toolchains
+        uses: ./.github/actions/setup-toolchains
       - name: Test
-        run: ./scripts.sh test
+        run: ./scripts.sh test-backend

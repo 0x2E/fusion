@@ -1,0 +1,44 @@
+name: Setup toolchains
+description: Set up cached Go and optional Node toolchains
+
+inputs:
+  setup-go:
+    description: Whether to set up Go
+    required: false
+    default: "true"
+  setup-node:
+    description: Whether to set up Node and pnpm
+    required: false
+    default: "false"
+  node-version:
+    description: Node.js version
+    required: false
+    default: "lts/*"
+  pnpm-version:
+    description: pnpm version
+    required: false
+    default: "10"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up pnpm
+      if: inputs.setup-node == 'true'
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+
+    - name: Set up Node
+      if: inputs.setup-node == 'true'
+      uses: actions/setup-node@v6
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+        cache-dependency-path: frontend/pnpm-lock.yaml
+
+    - name: Set up Go
+      if: inputs.setup-go == 'true'
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: backend/go.mod
+        cache-dependency-path: backend/go.sum

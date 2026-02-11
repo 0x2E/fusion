@@ -1,77 +1,147 @@
 #!/bin/sh
 
-# Exit on first failure.
-set -e
+set -eu
 
-test_go() {
-  echo "testing"
-  # make some files for embed
-  mkdir -p ./frontend/build
-  touch ./frontend/build/index.html
-  go test ./...
+resolve_version() {
+  if [ -n "${FUSION_VERSION:-}" ]; then
+    printf '%s\n' "$FUSION_VERSION"
+    return
+  fi
+
+  if git describe --tags --abbrev=0 >/dev/null 2>&1; then
+    git describe --tags --abbrev=0
+    return
+  fi
+
+  git rev-parse --short HEAD
+}
+
+test_backend() {
+  echo "testing backend"
+  (cd backend && go test ./...)
 }
 
 build_frontend() {
   echo "building frontend"
-  mkdir -p ./build
-  root=$(pwd)
-
-  if [ -n "$FUSION_VERSION" ]; then
-    version="$FUSION_VERSION"
-  else
-    # Try to get version relative to the last git tag.
-    if git describe --tags --abbrev=0 >/dev/null 2>&1; then
-      version=$(git describe --tags --abbrev=0)
-    else
-      # If repo has no tags, just use the latest commit hash.
-      version=$(git rev-parse --short HEAD)
-    fi
-  fi
+  version=$(resolve_version)
   echo "Using fusion version string: ${version}"
 
-  cd ./frontend
-  pnpm i
-  VITE_FUSION_VERSION="$version" pnpm run build
-  cd $root
+  (
+    cd frontend
+    pnpm install --frozen-lockfile --prefer-offline
+    VITE_FUSION_VERSION="$version" pnpm run build
+  )
+
+  echo "syncing frontend build artifacts for backend embed"
+  rm -rf backend/internal/web/dist
+  mkdir -p backend/internal/web/dist
+  cp -R frontend/dist/. backend/internal/web/dist/
+  printf '%s\n' "This file keeps the embedded dist directory in version control." > backend/internal/web/dist/.keep
 }
 
 build_backend() {
   target_os=${1:-$(go env GOOS)}
   target_arch=${2:-$(go env GOARCH)}
-  echo "building backend for OS: ${target_os}, Arch: ${target_arch}"
-  CGO_ENABLED=0 GOOS=${target_os} GOARCH=${target_arch} go build \
-    -ldflags '-extldflags "-static"' \
-    -o ./build/fusion \
-    ./cmd/server/*
+  root=$(pwd)
+  output_path=${3:-"${root}/build/fusion"}
+
+  if [ ! -f backend/internal/web/dist/index.html ]; then
+    echo "frontend build artifacts not found for embed"
+    echo "run ./scripts.sh build-frontend before building backend"
+    exit 1
+  fi
+
+  echo "building backend for OS: ${target_os}, Arch: ${target_arch}, Output: ${output_path}"
+
+  mkdir -p "$(dirname "$output_path")"
+  (
+    cd backend
+    CGO_ENABLED=0 GOOS=${target_os} GOARCH=${target_arch} go build \
+      -trimpath \
+      -ldflags '-extldflags "-static"' \
+      -o "$output_path" \
+      ./cmd/fusion
+  )
+}
+
+release() {
+  echo "building release artifacts"
+  rm -rf ./dist
+  mkdir -p ./dist
+
+  build_frontend
+
+  platforms="linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64"
+
+  for platform in $platforms; do
+    os=${platform%/*}
+    arch=${platform#*/}
+    echo "--- building ${os}/${arch} ---"
+
+    bin_name="fusion"
+    if [ "$os" = "windows" ]; then
+      bin_name="fusion.exe"
+    fi
+
+    build_backend "$os" "$arch" "./dist/${bin_name}"
+
+    if [ "$os" = "linux" ]; then
+      cp "./dist/${bin_name}" "./dist/fusion-linux-${arch}"
+    fi
+
+    archive="fusion_${os}_${arch}.zip"
+    zip -j "./dist/${archive}" "./dist/${bin_name}" LICENSE* README* || \
+      zip -j "./dist/${archive}" "./dist/${bin_name}"
+    rm "./dist/${bin_name}"
+  done
+
+  (
+    cd ./dist
+    sha256sum ./*.zip ./fusion-linux-* > checksums.txt
+  )
+
+  echo "release artifacts:"
+  ls -lh ./dist/
 }
 
 build() {
-  test_go
+  test_backend
   build_frontend
   build_backend
 }
 
-dev() {
-  go run \
-    -ldflags '-extldflags "-static"' \
-    ./cmd/server
+usage() {
+  cat <<'EOF'
+Usage: ./scripts.sh <command>
+
+Commands:
+  test-backend             Run backend tests
+  build-frontend           Build frontend bundle
+  build-backend [os] [arch] [output]
+                           Build backend binary
+  build                    Run backend tests and build all
+  release                  Build release archives and checksums
+EOF
 }
 
-case $1 in
-"test")
-  test_go
-  ;;
-"dev")
-  dev
+case "${1:-}" in
+"test" | "test-backend")
+  test_backend
   ;;
 "build-frontend")
   build_frontend
   ;;
 "build-backend")
-  # Pass along additional arguments ($2, $3) to the function
-  build_backend "$2" "$3"
+  build_backend "${2:-}" "${3:-}" "${4:-}"
   ;;
 "build")
   build
+  ;;
+"release")
+  release
+  ;;
+*)
+  usage
+  exit 1
   ;;
 esac

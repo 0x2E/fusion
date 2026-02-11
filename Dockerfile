@@ -1,28 +1,17 @@
-# build frontend
-FROM node:24 AS fe
-WORKDIR /src
-RUN npm i -g pnpm
-COPY .git .git/
-COPY frontend ./frontend
-COPY scripts.sh .
-RUN ./scripts.sh build-frontend
-
-# build backend
-FROM golang:1.24 AS be
-# Add Arguments for target OS and architecture (provided by buildx)
-ARG TARGETOS
-ARG TARGETARCH
-WORKDIR /src
-COPY . ./
-COPY --from=fe /src/frontend/build ./frontend/build/
-RUN ./scripts.sh build-backend ${TARGETOS} ${TARGETARCH}
-
-# deploy
 FROM alpine:3.21.0
+ARG TARGETOS=linux
+ARG TARGETARCH
 LABEL org.opencontainers.image.source="https://github.com/0x2E/fusion"
+
+RUN addgroup -S fusion && adduser -S -D -H -h /fusion -G fusion fusion && \
+    mkdir -p /data && chown -R fusion:fusion /data
+
 WORKDIR /fusion
-COPY --from=be /src/build/fusion ./
+COPY --chown=fusion:fusion --chmod=755 build/fusion-${TARGETOS}-${TARGETARCH} ./fusion
 EXPOSE 8080
-RUN mkdir /data
+VOLUME ["/data"]
 ENV DB="/data/fusion.db"
+HEALTHCHECK --interval=10s --timeout=3s --start-period=2s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:8080/api/oidc/enabled || exit 1
+USER fusion:fusion
 CMD [ "./fusion" ]

@@ -1,29 +1,41 @@
 ---
-name: "\U0001F41B Bug Report"
-about: Create a report to help us improve
+name: "🐛 Bug Report"
+about: Report a reproducible bug in Fusion
 title: "[BUG] "
 labels: bug
-assignees: ''
-
+assignees: ""
 ---
 
-<!--
-  Please provide a clear and concise description of what the bug is. Include
-  screenshots if needed. Please test using the latest version of Fusion to make sure your issue has not already been fixed.
--->
+## Checklist
 
-## Environments
+- [ ] I searched existing issues and did not find a duplicate.
+- [ ] I tested with the latest release (or latest `main` build if relevant).
+- [ ] I can reproduce this issue consistently.
 
-- Version: 
-- OS: 
-- Device & Browser: 
+## Environment
 
-## Steps To Reproduce
+- Fusion version:
+- Deployment type: (Docker / binary / source)
+- OS:
+- Browser and version (if frontend issue):
+- Reverse proxy (if any):
+
+## Steps to Reproduce
 
 1.
 2.
+3.
 
-## The Current Behavior
+## Current Behavior
 
+Describe what happens now.
 
-## The Expected Behavior
+## Expected Behavior
+
+Describe what you expected to happen.
+
+## Logs / Screenshots
+
+Please attach relevant logs or screenshots.
+
+> Please remove secrets before sharing logs (`password`, tokens, cookies, private URLs).
