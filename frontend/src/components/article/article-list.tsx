@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import { getFaviconUrl } from "@/lib/api/favicon";
 import type { Item } from "@/lib/api";
 
 export function ArticleList() {
+  const navigate = useNavigate();
   const {
     articleFilter,
     setArticleFilter,
@@ -50,7 +52,7 @@ export function ArticleList() {
   });
 
   const { data: groups = [] } = useGroups();
-  const { getFeedById } = useFeedLookup();
+  const { feeds, getFeedById, isLoading: isFeedsLoading } = useFeedLookup();
   const markItemsRead = useMarkItemsRead();
   const markItemsUnread = useMarkItemsUnread();
   const { isItemStarred, getBookmarkByItemId } = useBookmarkLookup();
@@ -116,6 +118,7 @@ export function ArticleList() {
   }
 
   const unreadCount = displayArticles.filter((a) => a.unread).length;
+  const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
 
   const handleToggleRead = useCallback(
     async (article: Item) => {
@@ -252,7 +255,7 @@ export function ArticleList() {
       {/* Article area with filter tabs */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 py-4 sm:px-6">
         {/* Filter tabs - hidden when no articles exist */}
-        {(articles.length > 0 || articleFilter !== "all") && (
+        {!hasNoFeeds && (articles.length > 0 || articleFilter !== "all") && (
           <Tabs
             value={articleFilter}
             onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
@@ -278,11 +281,26 @@ export function ArticleList() {
                 ))}
               </div>
             ) : articles.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No articles found
-                </p>
-              </div>
+              hasNoFeeds ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    No feeds yet. Go to Feed Management to add your first feed.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate({ to: "/feeds" })}
+                  >
+                    Open Feed Management
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    No articles found
+                  </p>
+                </div>
+              )
             ) : (
               <>
                 {displayArticles.map((article) => {

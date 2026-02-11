@@ -24,12 +24,9 @@ export function useFeeds() {
 }
 
 export function useFeedLookup() {
-  const { data: feeds = [] } = useFeeds();
+  const { data: feeds = [], isLoading } = useFeeds();
 
-  const feedMap = useMemo(
-    () => new Map(feeds.map((f) => [f.id, f])),
-    [feeds],
-  );
+  const feedMap = useMemo(() => new Map(feeds.map((f) => [f.id, f])), [feeds]);
 
   const getFeedById = useCallback(
     (feedId: number) => feedMap.get(feedId),
@@ -41,7 +38,7 @@ export function useFeedLookup() {
     [feeds],
   );
 
-  return { feeds, getFeedById, getFeedsByGroup };
+  return { feeds, getFeedById, getFeedsByGroup, isLoading };
 }
 
 export function useUnreadCounts() {
@@ -138,8 +135,7 @@ export function useMoveFeedsToGroup() {
       fromGroupId: number;
       toGroupId: number;
     }) => {
-      const feeds =
-        qc.getQueryData<Feed[]>(queryKeys.feeds.list()) ?? [];
+      const feeds = qc.getQueryData<Feed[]>(queryKeys.feeds.list()) ?? [];
       const toMove = feeds.filter((f) => f.group_id === fromGroupId);
       await Promise.all(
         toMove.map((f) => feedAPI.update(f.id, { group_id: toGroupId })),

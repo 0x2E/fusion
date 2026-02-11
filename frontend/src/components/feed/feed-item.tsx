@@ -36,7 +36,7 @@ export function FeedItem({ feed }: FeedItemProps) {
         {feed.name}
       </span>
       <div className="ml-2 flex h-6 shrink-0 items-center justify-center">
-        <span className="text-xs text-muted-foreground/60 group-hover:hidden">
+        <span className="text-[11px] text-muted-foreground group-hover:hidden">
           {feed.unread_count > 0 ? feed.unread_count : ""}
         </span>
         <Button

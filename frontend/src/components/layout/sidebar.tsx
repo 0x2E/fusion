@@ -11,7 +11,7 @@ export function Sidebar() {
   const isFeedsPage = !!matchRoute({ to: "/feeds" });
 
   return (
-    <aside className="flex h-full w-75 flex-none flex-col overflow-hidden border-r bg-sidebar">
+    <aside className="sidebar-typography flex h-full w-75 flex-none flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground">
       {/* Header */}
       <div className="flex items-center gap-2 border-b px-4 py-3">
         <img

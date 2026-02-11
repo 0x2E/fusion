@@ -1,5 +1,6 @@
 .DS_*
 *.db
+*.db-*
 .claude
 tmp/
 build/

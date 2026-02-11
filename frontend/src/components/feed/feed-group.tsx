@@ -58,7 +58,7 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
         >
           <span className="block min-w-0 flex-1 truncate">{name}</span>
           {unreadCount > 0 && (
-            <span className="shrink-0 text-xs text-muted-foreground/60">
+            <span className="shrink-0 text-[11px] text-muted-foreground">
               {unreadCount}
             </span>
           )}

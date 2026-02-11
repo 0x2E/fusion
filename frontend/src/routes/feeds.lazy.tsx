@@ -63,7 +63,7 @@ const statusFilterLabels: Record<StatusFilter, string> = {
 
 function FeedsPage() {
   const { data: groups = [] } = useGroups();
-  const { feeds, getFeedsByGroup } = useFeedLookup();
+  const { feeds, getFeedsByGroup, isLoading: isFeedsLoading } = useFeedLookup();
   const updateGroupMutation = useUpdateGroup();
   const deleteGroupMutation = useDeleteGroup();
   const moveFeedsMutation = useMoveFeedsToGroup();
@@ -204,6 +204,7 @@ function FeedsPage() {
   );
 
   const totalVisible = groupedFeeds.reduce((sum, g) => sum + g.feeds.length, 0);
+  const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
 
   return (
     <AppLayout>
@@ -318,167 +319,179 @@ function FeedsPage() {
 
         <ScrollArea className="flex-1">
           <div className="space-y-2 p-4 sm:p-6">
-            {visibleGroups.map(({ group, feeds: groupFeeds }) => {
-              const isCollapsed = collapsedGroups.has(group.id);
-              const isEditing = editingGroupId === group.id;
+            {hasNoFeeds ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                No feeds yet. Use Add above to create your first feed.
+              </div>
+            ) : (
+              <>
+                {visibleGroups.map(({ group, feeds: groupFeeds }) => {
+                  const isCollapsed = collapsedGroups.has(group.id);
+                  const isEditing = editingGroupId === group.id;
 
-              return (
-                <div
-                  key={group.id}
-                  className="overflow-hidden rounded-lg border"
-                >
-                  <div
-                    onClick={() => {
-                      if (!isEditing) toggleGroup(group.id);
-                    }}
-                    className={cn(
-                      "group/header flex cursor-pointer items-center justify-between bg-muted/50 px-3.5 py-2.5",
-                      isCollapsed ? "rounded-lg" : "rounded-t-lg",
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      {isCollapsed ? (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                      <Folder
+                  return (
+                    <div
+                      key={group.id}
+                      className="overflow-hidden rounded-lg border"
+                    >
+                      <div
+                        onClick={() => {
+                          if (!isEditing) toggleGroup(group.id);
+                        }}
                         className={cn(
-                          "h-4 w-4",
-                          isCollapsed && "text-muted-foreground",
-                        )}
-                      />
-                      {isEditing ? (
-                        <Input
-                          value={editingGroupName}
-                          onChange={(e) => setEditingGroupName(e.target.value)}
-                          onBlur={() => saveGroupName(group)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") saveGroupName(group);
-                            if (e.key === "Escape") setEditingGroupId(null);
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-7 w-40 px-2 text-sm"
-                          autoFocus
-                        />
-                      ) : (
-                        <span
-                          className={cn(
-                            "text-sm",
-                            isCollapsed ? "font-medium" : "font-semibold",
-                          )}
-                        >
-                          {group.name}
-                        </span>
-                      )}
-                      <span
-                        className={cn(
-                          "rounded-full bg-muted px-2 py-0.5 text-[11px]",
-                          isCollapsed
-                            ? "font-medium text-muted-foreground"
-                            : "font-semibold text-muted-foreground",
+                          "group/header flex cursor-pointer items-center justify-between bg-muted/50 px-3.5 py-2.5",
+                          isCollapsed ? "rounded-lg" : "rounded-t-lg",
                         )}
                       >
-                        {groupFeeds.length}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover/header:opacity-100">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAddFeedOpen(true);
-                        }}
-                        className="rounded p-1 hover:bg-accent"
-                      >
-                        <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditingGroup(group);
-                        }}
-                        className="rounded p-1 hover:bg-accent"
-                      >
-                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                      </button>
-                      {group.id !== 1 && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletingGroup(group);
-                          }}
-                          className="rounded p-1 hover:bg-accent"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {!isCollapsed && groupFeeds.length > 0 && (
-                    <div>
-                      {groupFeeds.map((feed, index) => (
-                        <div
-                          key={feed.id}
-                          className={cn(
-                            "flex items-center justify-between py-2.5 pl-8 pr-3.5 transition-colors hover:bg-accent/30 sm:pl-11",
-                            index < groupFeeds.length - 1 &&
-                              "border-b border-border/50",
+                        <div className="flex items-center gap-2">
+                          {isCollapsed ? (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
                           )}
-                        >
-                          <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                            <FeedFavicon
-                              src={getFaviconUrl(feed.link, feed.site_url)}
-                              className="h-5 w-5"
+                          <Folder
+                            className={cn(
+                              "h-4 w-4",
+                              isCollapsed && "text-muted-foreground",
+                            )}
+                          />
+                          {isEditing ? (
+                            <Input
+                              value={editingGroupName}
+                              onChange={(e) =>
+                                setEditingGroupName(e.target.value)
+                              }
+                              onBlur={() => saveGroupName(group)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveGroupName(group);
+                                if (e.key === "Escape") setEditingGroupId(null);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="h-7 w-40 px-2 text-sm"
+                              autoFocus
                             />
-                            <div className="min-w-0">
-                              <p className="truncate text-[13px] font-medium">
-                                {feed.name}
-                              </p>
-                              <p className="truncate text-[11px] text-muted-foreground">
-                                {getDomain(feed.link)}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
-                            {feed.failure && (
-                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
-                            )}
-                            {feed.suspended && (
-                              <Pause className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                            )}
-                            <span className="hidden text-xs text-muted-foreground sm:inline">
-                              {feed.item_count} articles
+                          ) : (
+                            <span
+                              className={cn(
+                                "text-sm",
+                                isCollapsed ? "font-medium" : "font-semibold",
+                              )}
+                            >
+                              {group.name}
                             </span>
+                          )}
+                          <span
+                            className={cn(
+                              "rounded-full bg-muted px-2 py-0.5 text-[11px]",
+                              isCollapsed
+                                ? "font-medium text-muted-foreground"
+                                : "font-semibold text-muted-foreground",
+                            )}
+                          >
+                            {groupFeeds.length}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover/header:opacity-100">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAddFeedOpen(true);
+                            }}
+                            className="rounded p-1 hover:bg-accent"
+                          >
+                            <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditingGroup(group);
+                            }}
+                            className="rounded p-1 hover:bg-accent"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                          {group.id !== 1 && (
                             <button
                               type="button"
-                              onClick={() => setEditFeedOpen(true, feed)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletingGroup(group);
+                              }}
                               className="rounded p-1 hover:bg-accent"
                             >
-                              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                              <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                             </button>
-                          </div>
+                          )}
                         </div>
-                      ))}
+                      </div>
+
+                      {!isCollapsed && groupFeeds.length > 0 && (
+                        <div>
+                          {groupFeeds.map((feed, index) => (
+                            <div
+                              key={feed.id}
+                              className={cn(
+                                "flex items-center justify-between py-2.5 pl-8 pr-3.5 transition-colors hover:bg-accent/30 sm:pl-11",
+                                index < groupFeeds.length - 1 &&
+                                  "border-b border-border/50",
+                              )}
+                            >
+                              <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                                <FeedFavicon
+                                  src={getFaviconUrl(feed.link, feed.site_url)}
+                                  className="h-5 w-5"
+                                />
+                                <div className="min-w-0">
+                                  <p className="truncate text-[13px] font-medium">
+                                    {feed.name}
+                                  </p>
+                                  <p className="truncate text-[11px] text-muted-foreground">
+                                    {getDomain(feed.link)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+                                {feed.failure && (
+                                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
+                                )}
+                                {feed.suspended && (
+                                  <Pause className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                )}
+                                <span className="hidden text-xs text-muted-foreground sm:inline">
+                                  {feed.item_count} articles
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditFeedOpen(true, feed)}
+                                  className="rounded p-1 hover:bg-accent"
+                                >
+                                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {visibleGroups.length === 0 && (
+                  <div className="py-12 text-center text-sm text-muted-foreground">
+                    No feeds match your filters
+                  </div>
+                )}
+
+                {isFiltering &&
+                  visibleGroups.length > 0 &&
+                  totalVisible === 0 && (
+                    <div className="py-12 text-center text-sm text-muted-foreground">
+                      No feeds match your filters
                     </div>
                   )}
-                </div>
-              );
-            })}
-
-            {visibleGroups.length === 0 && (
-              <div className="py-12 text-center text-sm text-muted-foreground">
-                {isFiltering ? "No feeds match your filters" : "No feeds yet"}
-              </div>
-            )}
-
-            {isFiltering && visibleGroups.length > 0 && totalVisible === 0 && (
-              <div className="py-12 text-center text-sm text-muted-foreground">
-                No feeds match your filters
-              </div>
+              </>
             )}
           </div>
         </ScrollArea>

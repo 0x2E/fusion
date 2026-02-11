@@ -11,7 +11,7 @@ export function useUrlState() {
   const selectedFeedId = search.feed ?? null;
   const selectedGroupId = search.group ?? null;
   const selectedArticleId = search.article ?? null;
-  const articleFilter: ArticleFilter = search.filter ?? "all";
+  const articleFilter: ArticleFilter = search.filter ?? "unread";
 
   const setSelectedFeed = useCallback(
     (feedId: number | null) => {
@@ -63,7 +63,23 @@ export function useUrlState() {
         to: "/",
         search: (prev: SearchParams) => ({
           ...prev,
-          filter: filter === "all" ? undefined : filter,
+          filter,
+        }),
+        replace: true,
+      });
+    },
+    [navigate],
+  );
+
+  const selectTopLevelFilter = useCallback(
+    (filter: ArticleFilter) => {
+      navigate({
+        to: "/",
+        search: (prev: SearchParams) => ({
+          ...prev,
+          feed: undefined,
+          group: undefined,
+          filter,
         }),
         replace: true,
       });
@@ -72,16 +88,8 @@ export function useUrlState() {
   );
 
   const selectAll = useCallback(() => {
-    navigate({
-      to: "/",
-      search: (prev: SearchParams) => ({
-        ...prev,
-        feed: undefined,
-        group: undefined,
-      }),
-      replace: true,
-    });
-  }, [navigate]);
+    selectTopLevelFilter("all");
+  }, [selectTopLevelFilter]);
 
   return {
     selectedFeedId,
@@ -92,6 +100,7 @@ export function useUrlState() {
     setSelectedGroup,
     setSelectedArticle,
     setArticleFilter,
+    selectTopLevelFilter,
     selectAll,
   };
 }
