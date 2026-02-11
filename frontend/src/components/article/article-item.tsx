@@ -118,7 +118,7 @@ export function ArticleItem({
           variant="ghost"
           size="icon-sm"
           onClick={handleToggleStar}
-          className={cn(isStarred ? "bg-amber-50" : "bg-muted")}
+          className={cn(isStarred ? "bg-amber-100 dark:bg-amber-950/40" : "bg-muted")}
           title={isStarred ? "Unstar" : "Star"}
         >
           <Star
