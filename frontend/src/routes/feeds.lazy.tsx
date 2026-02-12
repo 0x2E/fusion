@@ -39,6 +39,7 @@ import { feedAPI, groupAPI } from "@/lib/api";
 import type { Feed, Group } from "@/lib/api";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { generateOPML, downloadFile } from "@/lib/opml";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   useFeedLookup,
@@ -55,13 +56,8 @@ export const Route = createLazyFileRoute("/feeds")({
 
 type StatusFilter = "all" | "error" | "paused";
 
-const statusFilterLabels: Record<StatusFilter, string> = {
-  all: "All Status",
-  error: "Error",
-  paused: "Paused",
-};
-
 function FeedsPage() {
+  const { t } = useI18n();
   const { data: groups = [] } = useGroups();
   const { feeds, getFeedsByGroup, isLoading: isFeedsLoading } = useFeedLookup();
   const updateGroupMutation = useUpdateGroup();
@@ -90,6 +86,12 @@ function FeedsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false);
+
+  const statusFilterLabels: Record<StatusFilter, string> = {
+    all: t("feeds.status.all"),
+    error: t("feeds.status.error"),
+    paused: t("feeds.status.paused"),
+  };
 
   const isFiltering = searchQuery.trim() !== "" || statusFilter !== "all";
 
@@ -130,9 +132,9 @@ function FeedsPage() {
   const handleRefreshAll = async () => {
     try {
       await refreshFeedsMutation.mutateAsync();
-      toast.success("Refreshing all feeds...");
+      toast.success(t("feeds.toast.refreshing"));
     } catch {
-      toast.error("Failed to refresh feeds");
+      toast.error(t("feeds.toast.refreshFailed"));
     }
   };
 
@@ -145,9 +147,9 @@ function FeedsPage() {
       ]);
       const opml = generateOPML(groupsRes.data, feedsRes.data);
       downloadFile(opml, "fusion-subscriptions.opml", "application/xml");
-      toast.success("OPML exported successfully");
+      toast.success(t("feeds.toast.exported"));
     } catch {
-      toast.error("Failed to export OPML");
+      toast.error(t("feeds.toast.exportFailed"));
     } finally {
       setIsExporting(false);
     }
@@ -165,9 +167,9 @@ function FeedsPage() {
 
     try {
       await updateGroupMutation.mutateAsync({ id: group.id, name });
-      toast.success("Group renamed");
+      toast.success(t("feeds.toast.renamed"));
     } catch {
-      toast.error("Failed to rename group");
+      toast.error(t("feeds.toast.renameFailed"));
     }
   };
 
@@ -182,10 +184,10 @@ function FeedsPage() {
       });
       await deleteGroupMutation.mutateAsync(deletingGroup.id);
 
-      toast.success("Group deleted");
+      toast.success(t("feeds.toast.deleted"));
       setDeletingGroup(null);
     } catch {
-      toast.error("Failed to delete group");
+      toast.error(t("feeds.toast.deleteFailed"));
     } finally {
       setIsDeleting(false);
     }
@@ -212,12 +214,12 @@ function FeedsPage() {
         <header className="flex items-center justify-between border-b px-4 py-4 sm:px-6">
           <div className="flex items-center gap-1">
             <SidebarTrigger />
-            <h1 className="text-lg font-semibold">Manage Feeds</h1>
+            <h1 className="text-lg font-semibold">{t("feeds.header")}</h1>
           </div>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Rss className="h-4 w-4" />
             <span className="font-medium">
-              {feeds.length} {feeds.length === 1 ? "feed" : "feeds"}
+              {t("feeds.count", { count: feeds.length })}
             </span>
           </div>
         </header>
@@ -227,7 +229,7 @@ function FeedsPage() {
             <div className="relative flex-1 sm:flex-initial">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search feeds..."
+                placeholder={t("feeds.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-9 w-full pl-9 sm:w-[280px]"
@@ -266,18 +268,18 @@ function FeedsPage() {
               <DropdownMenuTrigger asChild>
                 <Button size="sm">
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Add
+                  {t("common.add")}
                   <ChevronDown className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onSelect={() => setAddFeedOpen(true)}>
                   <Rss className="mr-2 h-4 w-4" />
-                  Add Feed
+                  {t("feed.add.title")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setAddGroupOpen(true)}>
                   <Folder className="mr-2 h-4 w-4" />
-                  Add Group
+                  {t("group.add.title")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -293,7 +295,7 @@ function FeedsPage() {
                   refreshFeedsMutation.isPending && "animate-spin",
                 )}
               />
-              <span className="hidden sm:inline">Refresh All</span>
+              <span className="hidden sm:inline">{t("feeds.refreshAll")}</span>
             </Button>
             <Button
               variant="outline"
@@ -301,7 +303,7 @@ function FeedsPage() {
               onClick={() => setImportOpmlOpen(true)}
             >
               <Upload className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="hidden sm:inline">Import</span>
+              <span className="hidden sm:inline">{t("common.import")}</span>
             </Button>
             <Button
               variant="outline"
@@ -311,7 +313,7 @@ function FeedsPage() {
             >
               <Download className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">
-                {isExporting ? "Exporting..." : "Export"}
+                {isExporting ? t("common.exporting") : t("feeds.exportButton")}
               </span>
             </Button>
           </div>
@@ -321,7 +323,7 @@ function FeedsPage() {
           <div className="space-y-2 p-4 sm:p-6">
             {hasNoFeeds ? (
               <div className="py-12 text-center text-sm text-muted-foreground">
-                No feeds yet. Use Add above to create your first feed.
+                {t("feeds.empty")}
               </div>
             ) : (
               <>
@@ -460,7 +462,7 @@ function FeedsPage() {
                                   <Pause className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                                 )}
                                 <span className="hidden text-xs text-muted-foreground sm:inline">
-                                  {feed.item_count} articles
+                                  {t("feeds.itemCount", { count: feed.item_count })}
                                 </span>
                                 <button
                                   type="button"
@@ -480,7 +482,7 @@ function FeedsPage() {
 
                 {visibleGroups.length === 0 && (
                   <div className="py-12 text-center text-sm text-muted-foreground">
-                    No feeds match your filters
+                    {t("feeds.noMatch")}
                   </div>
                 )}
 
@@ -488,7 +490,7 @@ function FeedsPage() {
                   visibleGroups.length > 0 &&
                   totalVisible === 0 && (
                     <div className="py-12 text-center text-sm text-muted-foreground">
-                      No feeds match your filters
+                      {t("feeds.noMatch")}
                     </div>
                   )}
               </>
@@ -503,10 +505,11 @@ function FeedsPage() {
       >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Delete Group</DialogTitle>
+            <DialogTitle>{t("feeds.deleteGroup.title")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete{" "}
-              <span className="font-semibold">{deletingGroup?.name}</span>?
+              {t("feeds.deleteGroup.description", {
+                name: deletingGroup?.name ?? "",
+              })}
               {(() => {
                 const count = feeds.filter(
                   (f) => f.group_id === deletingGroup?.id,
@@ -516,11 +519,10 @@ function FeedsPage() {
                 return (
                   <>
                     {" "}
-                    All {count} feed(s) will be moved to{" "}
-                    <span className="font-semibold">
-                      {target?.name ?? "Default"}
-                    </span>
-                    .
+                    {t("feeds.deleteGroup.moveHint", {
+                      count,
+                      target: target?.name ?? t("feeds.deleteGroup.targetDefault"),
+                    })}
                   </>
                 );
               })()}
@@ -532,14 +534,14 @@ function FeedsPage() {
               onClick={() => setDeletingGroup(null)}
               disabled={isDeleting}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={confirmDeleteGroup}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? t("common.deleting") : t("common.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -548,9 +550,9 @@ function FeedsPage() {
       <Dialog open={refreshConfirmOpen} onOpenChange={setRefreshConfirmOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Refresh All Feeds</DialogTitle>
+            <DialogTitle>{t("feeds.refreshDialog.title")}</DialogTitle>
             <DialogDescription>
-              This will refresh all {feeds.length} feeds. Continue?
+              {t("feeds.refreshDialog.description", { count: feeds.length })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -558,7 +560,7 @@ function FeedsPage() {
               variant="outline"
               onClick={() => setRefreshConfirmOpen(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={() => {
@@ -566,7 +568,7 @@ function FeedsPage() {
                 handleRefreshAll();
               }}
             >
-              Refresh
+              {t("common.refresh")}
             </Button>
           </DialogFooter>
         </DialogContent>

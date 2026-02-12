@@ -28,9 +28,11 @@ import { useGroups } from "@/queries/groups";
 import { useUpdateFeed, useDeleteFeed } from "@/queries/feeds";
 import type { UpdateFeedRequest } from "@/lib/api";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export function EditFeedDialog() {
+  const { t } = useI18n();
   const { isEditFeedOpen, editingFeed, setEditFeedOpen } = useUIStore();
   const { data: groups = [] } = useGroups();
   const updateFeedMutation = useUpdateFeed();
@@ -76,12 +78,12 @@ export function EditFeedDialog() {
     if (!editingFeed) return;
 
     if (!url.trim()) {
-      toast.error("Please enter a feed URL");
+      toast.error(t("feed.toast.enterUrl"));
       return;
     }
 
     if (!name.trim()) {
-      toast.error("Please enter a feed name");
+      toast.error(t("feed.toast.enterName"));
       return;
     }
 
@@ -112,16 +114,16 @@ export function EditFeedDialog() {
       }
 
       if (Object.keys(request).length === 0) {
-        toast.info("No changes to save");
+        toast.info(t("feed.edit.noChanges"));
         handleClose();
         return;
       }
 
       await updateFeedMutation.mutateAsync({ id: editingFeed.id, ...request });
-      toast.success("Feed updated successfully");
+      toast.success(t("feed.toast.updated"));
       handleClose();
     } catch {
-      toast.error("Failed to update feed");
+      toast.error(t("feed.toast.updateFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -133,11 +135,11 @@ export function EditFeedDialog() {
     setIsDeleting(true);
     try {
       await deleteFeedMutation.mutateAsync(editingFeed.id);
-      toast.success(`Unsubscribed from "${editingFeed.name}"`);
+      toast.success(t("feed.toast.unsubscribed", { name: editingFeed.name }));
       setIsDeleteOpen(false);
       handleClose();
     } catch {
-      toast.error("Failed to unsubscribe from feed");
+      toast.error(t("feed.toast.unsubscribeFailed"));
     } finally {
       setIsDeleting(false);
     }
@@ -156,7 +158,7 @@ export function EditFeedDialog() {
           {/* Header */}
           <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
             <DialogTitle className="text-base font-semibold">
-              Edit Feed
+              {t("feed.edit.title")}
             </DialogTitle>
             <Button variant="ghost" size="icon-sm" onClick={handleClose}>
               <X className="h-[18px] w-[18px] text-muted-foreground" />
@@ -167,9 +169,11 @@ export function EditFeedDialog() {
           <div className="space-y-4 p-5">
             {/* URL Section */}
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium">Feed URL</label>
+              <label className="text-[13px] font-medium">
+                {t("feed.add.urlLabel")}
+              </label>
               <Input
-                placeholder="https://example.com/feed.xml"
+                placeholder={t("feed.add.urlPlaceholder")}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 className="h-10"
@@ -178,9 +182,11 @@ export function EditFeedDialog() {
 
             {/* Name Section */}
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium">Feed Name</label>
+              <label className="text-[13px] font-medium">
+                {t("feed.add.nameLabel")}
+              </label>
               <Input
-                placeholder="Enter feed name..."
+                placeholder={t("feed.add.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="h-10"
@@ -189,10 +195,12 @@ export function EditFeedDialog() {
 
             {/* Group Section */}
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium">Group</label>
+              <label className="text-[13px] font-medium">
+                {t("feed.add.groupLabel")}
+              </label>
               <Select value={groupId} onValueChange={setGroupId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Select a group..." />
+                  <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {groups.map((group) => (
@@ -207,9 +215,11 @@ export function EditFeedDialog() {
             {/* Suspended Toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-[13px] font-medium">Suspend Feed</label>
+                <label className="text-[13px] font-medium">
+                  {t("feed.edit.suspendLabel")}
+                </label>
                 <p className="text-xs text-muted-foreground">
-                  Pauses automatic updates
+                  {t("feed.edit.suspendDescription")}
                 </p>
               </div>
               <Switch checked={suspended} onCheckedChange={setSuspended} />
@@ -224,18 +234,20 @@ export function EditFeedDialog() {
                     isAdvancedOpen && "rotate-180",
                   )}
                 />
-                Advanced Settings
+                {t("feed.add.advanced")}
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-1.5 pl-5 pt-3">
-                <label className="text-[13px] font-medium">HTTP Proxy</label>
+                <label className="text-[13px] font-medium">
+                  {t("feed.add.proxyLabel")}
+                </label>
                 <Input
-                  placeholder="http://proxy.example.com:8080"
+                  placeholder={t("feed.add.proxyPlaceholder")}
                   value={proxy}
                   onChange={(e) => setProxy(e.target.value)}
                   className="h-10"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Leave empty to use system proxy settings
+                  {t("feed.add.proxyHint")}
                 </p>
               </CollapsibleContent>
             </Collapsible>
@@ -250,18 +262,18 @@ export function EditFeedDialog() {
               onClick={() => setIsDeleteOpen(true)}
             >
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-              Unsubscribe
+              {t("feed.edit.unsubscribe")}
             </Button>
             <div className="flex items-center gap-3">
               <Button variant="outline" onClick={handleClose}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting || !url.trim() || !name.trim()}
               >
                 <Save className="mr-1.5 h-4 w-4" />
-                Save
+                {t("common.save")}
               </Button>
             </div>
           </div>
@@ -272,11 +284,11 @@ export function EditFeedDialog() {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Unsubscribe Feed</DialogTitle>
+            <DialogTitle>{t("feed.edit.deleteConfirm.title")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to unsubscribe from{" "}
-              <span className="font-semibold">{editingFeed?.name}</span>? All
-              items from this feed will be deleted.
+              {t("feed.edit.deleteConfirm.description", {
+                name: editingFeed?.name ?? "",
+              })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -285,14 +297,14 @@ export function EditFeedDialog() {
               onClick={() => setIsDeleteOpen(false)}
               disabled={isDeleting}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Unsubscribe"}
+              {isDeleting ? t("common.deleting") : t("feed.edit.unsubscribe")}
             </Button>
           </DialogFooter>
         </DialogContent>

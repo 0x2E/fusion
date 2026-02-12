@@ -6,11 +6,13 @@ import { useGroups } from "@/queries/groups";
 import { useFeedLookup, useUnreadCounts } from "@/queries/feeds";
 import { useBookmarkLookup } from "@/queries/bookmarks";
 import { useUrlState } from "@/hooks/use-url-state";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { FeedGroup } from "./feed-group";
 import { FeedItem } from "./feed-item";
 
 export function FeedList() {
+  const { t } = useI18n();
   const { data: groups = [], isLoading } = useGroups();
   const { feeds, getFeedsByGroup } = useFeedLookup();
   const { getTotalUnreadCount } = useUnreadCounts();
@@ -36,9 +38,24 @@ export function FeedList() {
     count: number;
     icon: typeof Inbox;
   }> = [
-    { value: "unread", label: "Unread", count: totalUnread, icon: Inbox },
-    { value: "starred", label: "Starred", count: starredCount, icon: Star },
-    { value: "all", label: "All", count: totalUnread, icon: Layers },
+    {
+      value: "unread",
+      label: t("article.filter.unread"),
+      count: totalUnread,
+      icon: Inbox,
+    },
+    {
+      value: "starred",
+      label: t("article.filter.starred"),
+      count: starredCount,
+      icon: Star,
+    },
+    {
+      value: "all",
+      label: t("article.filter.all"),
+      count: totalUnread,
+      icon: Layers,
+    },
   ];
 
   if (isLoading && groups.length === 0) {
@@ -81,7 +98,7 @@ export function FeedList() {
         {/* Feeds header */}
         <div className="mt-2 flex items-center justify-between px-2 py-1">
           <span className="text-[11px] font-medium text-muted-foreground">
-            Feeds
+            {t("search.group.feeds")}
           </span>
         </div>
 

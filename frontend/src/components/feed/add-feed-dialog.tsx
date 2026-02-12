@@ -30,9 +30,11 @@ import {
   type DiscoveredFeed,
 } from "@/lib/api";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export function AddFeedDialog() {
+  const { t } = useI18n();
   const { isAddFeedOpen, setAddFeedOpen } = useUIStore();
   const { data: groups = [] } = useGroups();
   const createFeed = useCreateFeed();
@@ -72,7 +74,7 @@ export function AddFeedDialog() {
     });
     setIsFeedSelectOpen(false);
     setDetectedFeeds([]);
-    toast.success("Feed URL detected");
+    toast.success(t("feed.toast.detected"));
   };
 
   const handleValidate = async () => {
@@ -84,7 +86,7 @@ export function AddFeedDialog() {
       const feeds = response.data?.feeds ?? [];
 
       if (feeds.length === 0) {
-        toast.info("No feeds found for this URL");
+        toast.info(t("feed.toast.noFeedsForUrl"));
         return;
       }
 
@@ -96,7 +98,7 @@ export function AddFeedDialog() {
       setDetectedFeeds(feeds);
       setIsFeedSelectOpen(true);
     } catch {
-      toast.error("Failed to discover feeds");
+      toast.error(t("feed.toast.detectFailed"));
     } finally {
       setIsValidating(false);
     }
@@ -104,7 +106,7 @@ export function AddFeedDialog() {
 
   const handleSubmit = async () => {
     if (!url.trim()) {
-      toast.error("Please enter a feed URL");
+      toast.error(t("feed.toast.enterUrl"));
       return;
     }
 
@@ -125,10 +127,10 @@ export function AddFeedDialog() {
       }
 
       await createFeed.mutateAsync(request);
-      toast.success("Feed added successfully");
+      toast.success(t("feed.toast.added"));
       handleClose();
     } catch {
-      toast.error("Failed to add feed");
+      toast.error(t("feed.toast.addFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +146,7 @@ export function AddFeedDialog() {
           {/* Header */}
           <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
             <DialogTitle className="text-base font-semibold">
-              Add Feed
+              {t("feed.add.title")}
             </DialogTitle>
             <Button variant="ghost" size="icon-sm" onClick={handleClose}>
               <X className="h-[18px] w-[18px] text-muted-foreground" />
@@ -155,10 +157,12 @@ export function AddFeedDialog() {
           <div className="space-y-4 p-5">
             {/* URL Section */}
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium">Feed URL</label>
+              <label className="text-[13px] font-medium">
+                {t("feed.add.urlLabel")}
+              </label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="https://example.com/feed.xml"
+                  placeholder={t("feed.add.urlPlaceholder")}
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   className="h-10"
@@ -169,7 +173,7 @@ export function AddFeedDialog() {
                   className="h-10 w-10 shrink-0"
                   onClick={handleValidate}
                   disabled={isValidating || !url.trim()}
-                  title="Validate feed URL"
+                  title={t("feed.add.validateTitle")}
                 >
                   <Radar
                     className={cn(
@@ -180,15 +184,17 @@ export function AddFeedDialog() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Click the icon to auto-detect feed URL from website
+                {t("feed.add.detectHint")}
               </p>
             </div>
 
             {/* Name Section */}
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium">Feed Name</label>
+              <label className="text-[13px] font-medium">
+                {t("feed.add.nameLabel")}
+              </label>
               <Input
-                placeholder="Enter feed name..."
+                placeholder={t("feed.add.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="h-10"
@@ -197,10 +203,12 @@ export function AddFeedDialog() {
 
             {/* Group Section */}
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium">Group</label>
+              <label className="text-[13px] font-medium">
+                {t("feed.add.groupLabel")}
+              </label>
               <Select value={groupId} onValueChange={setGroupId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Select a group..." />
+                  <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {groups.map((group) => (
@@ -221,18 +229,20 @@ export function AddFeedDialog() {
                     isAdvancedOpen && "rotate-180",
                   )}
                 />
-                Advanced Settings
+                {t("feed.add.advanced")}
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-1.5 pl-5 pt-3">
-                <label className="text-[13px] font-medium">HTTP Proxy</label>
+                <label className="text-[13px] font-medium">
+                  {t("feed.add.proxyLabel")}
+                </label>
                 <Input
-                  placeholder="http://proxy.example.com:8080"
+                  placeholder={t("feed.add.proxyPlaceholder")}
                   value={proxy}
                   onChange={(e) => setProxy(e.target.value)}
                   className="h-10"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Leave empty to use system proxy settings
+                  {t("feed.add.proxyHint")}
                 </p>
               </CollapsibleContent>
             </Collapsible>
@@ -241,14 +251,14 @@ export function AddFeedDialog() {
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 border-t px-5 py-4">
             <Button variant="outline" onClick={handleClose}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || !url.trim()}
             >
               <Plus className="mr-1.5 h-4 w-4" />
-              Add Feed
+              {t("feed.add.button")}
             </Button>
           </div>
         </DialogContent>
@@ -270,10 +280,10 @@ export function AddFeedDialog() {
           <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
             <div>
               <DialogTitle className="text-base font-semibold">
-                Select Feed
+                {t("feed.select.title")}
               </DialogTitle>
               <DialogDescription>
-                Multiple feeds were found. Choose one to fill the URL.
+                {t("feed.select.description")}
               </DialogDescription>
             </div>
             <Button
@@ -297,7 +307,7 @@ export function AddFeedDialog() {
                 className="w-full rounded-md border p-3 text-left transition-colors hover:bg-accent/50"
               >
                 <p className="truncate text-sm font-medium">
-                  {feed.title || `Feed ${index + 1}`}
+                  {feed.title || t("feed.select.fallback", { index: index + 1 })}
                 </p>
                 <p className="mt-1 truncate text-xs text-muted-foreground">
                   {feed.link}

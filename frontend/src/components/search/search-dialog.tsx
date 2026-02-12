@@ -23,10 +23,12 @@ import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/store";
 import { useFeedLookup } from "@/queries/feeds";
 import { useUrlState } from "@/hooks/use-url-state";
+import { useI18n } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 
 export function SearchDialog() {
+  const { t } = useI18n();
   const { isSearchOpen, setSearchOpen, setEditFeedOpen } = useUIStore();
   const { getFeedById } = useFeedLookup();
   const { setSelectedFeed, setSelectedArticle } = useUrlState();
@@ -107,8 +109,8 @@ export function SearchDialog() {
   return (
     <Dialog open={isSearchOpen} onOpenChange={handleOpenChange}>
       <DialogHeader className="sr-only">
-        <DialogTitle>Search</DialogTitle>
-        <DialogDescription>Search feeds and articles</DialogDescription>
+        <DialogTitle>{t("search.title")}</DialogTitle>
+        <DialogDescription>{t("search.description")}</DialogDescription>
       </DialogHeader>
       <DialogContent className="overflow-hidden p-0" showCloseButton={false}>
         <Command
@@ -116,7 +118,7 @@ export function SearchDialog() {
           className="[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
         >
           <CommandInput
-            placeholder="Search feeds and articles..."
+            placeholder={t("search.placeholder")}
             value={query}
             onValueChange={setQuery}
           />
@@ -131,11 +133,11 @@ export function SearchDialog() {
               debouncedQuery &&
               feeds.length === 0 &&
               items.length === 0 && (
-                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandEmpty>{t("search.noResults")}</CommandEmpty>
               )}
 
             {feeds.length > 0 && (
-              <CommandGroup heading="Feeds">
+              <CommandGroup heading={t("search.group.feeds")}>
                 {feeds.map((feed) => (
                   <CommandItem
                     key={`feed-${feed.id}`}
@@ -163,7 +165,7 @@ export function SearchDialog() {
             {feeds.length > 0 && items.length > 0 && <CommandSeparator />}
 
             {items.length > 0 && (
-              <CommandGroup heading="Articles">
+              <CommandGroup heading={t("search.group.articles")}>
                 {items.map((article) => {
                   const feed = getFeedById(article.feed_id);
                   return (
@@ -178,7 +180,7 @@ export function SearchDialog() {
                         <span className="flex-1 truncate">{article.title}</span>
                       </div>
                       <div className="flex w-full items-center gap-2 pl-6 text-xs text-muted-foreground">
-                        <span>{feed?.name ?? "Unknown feed"}</span>
+                        <span>{feed?.name ?? t("search.unknownFeed")}</span>
                         <span>·</span>
                         <span>{formatDate(article.pub_date)}</span>
                       </div>
@@ -189,10 +191,10 @@ export function SearchDialog() {
             )}
 
             {!debouncedQuery && !loading && (
-              <CommandGroup heading="Quick Actions">
+              <CommandGroup heading={t("search.group.quickActions")}>
                 <CommandItem className="gap-2">
                   <Search className="h-4 w-4 text-muted-foreground" />
-                  <span>Type to search feeds and articles</span>
+                  <span>{t("search.quickActionHint")}</span>
                 </CommandItem>
               </CommandGroup>
             )}

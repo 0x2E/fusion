@@ -3,6 +3,7 @@ import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { translate, useI18n } from "@/lib/i18n";
 import { oidcAPI, sessionAPI } from "@/lib/api";
 import { defaultArticleFilter } from "@/lib/article-filter";
 
@@ -11,6 +12,7 @@ export const Route = createLazyFileRoute("/login")({
 });
 
 function LoginPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +22,7 @@ function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("error") === "oidc_failed") {
-      toast.error("OIDC login failed. Please try again.");
+      toast.error(translate("login.oidcFailed"));
       window.history.replaceState({}, "", "/login");
     }
 
@@ -47,7 +49,7 @@ function LoginPage() {
         params: { filter: defaultArticleFilter },
       });
     } catch {
-      toast.error("Invalid password");
+      toast.error(t("login.invalidPassword"));
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +63,7 @@ function LoginPage() {
         window.location.href = res.data.auth_url;
       }
     } catch {
-      toast.error("Failed to start OIDC login");
+      toast.error(t("login.oidcStartFailed"));
       setOidcLoading(false);
     }
   };
@@ -72,12 +74,12 @@ function LoginPage() {
         <div className="flex flex-col items-center gap-2">
           <img
             src="/icon-96.png"
-            alt="Fusion logo"
+            alt={t("common.fusionLogo")}
             className="h-12 w-12 rounded-xl"
           />
           <h1 className="text-2xl font-bold">Fusion</h1>
           <p className="text-sm text-muted-foreground">
-            Enter your password to continue
+            {t("login.enterPassword")}
           </p>
         </div>
 
@@ -90,7 +92,7 @@ function LoginPage() {
               onClick={handleOIDCLogin}
               disabled={oidcLoading}
             >
-              {oidcLoading ? "Redirecting..." : "Sign in with OIDC"}
+              {oidcLoading ? t("login.oidcRedirecting") : t("login.oidcSignIn")}
             </Button>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -98,7 +100,7 @@ function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  or
+                  {t("common.or")}
                 </span>
               </div>
             </div>
@@ -108,14 +110,14 @@ function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             type="password"
-            placeholder="Password"
+            placeholder={t("login.passwordPlaceholder")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
             autoFocus
           />
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isLoading ? t("login.signingIn") : t("login.signIn")}
           </Button>
         </form>
       </div>

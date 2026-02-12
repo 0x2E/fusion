@@ -1,21 +1,49 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export const supportedLocales = ["en", "zh"] as const;
+export const supportedLocales = [
+  "en",
+  "zh",
+  "de",
+  "fr",
+  "es",
+  "ru",
+  "pt",
+  "sv",
+] as const;
 export type AppLocale = (typeof supportedLocales)[number];
 
 export const articlePageSizeOptions = [10, 20, 30, 50, 100] as const;
 export type ArticlePageSize = (typeof articlePageSizeOptions)[number];
 
-const defaultLocale: AppLocale = "en";
-const defaultArticlePageSize: ArticlePageSize = 10;
-
 const localeSet = new Set<AppLocale>(supportedLocales);
 const articlePageSizeSet = new Set<number>(articlePageSizeOptions);
 
+function resolveSupportedLocale(locale: string): AppLocale | null {
+  const normalized = locale.toLowerCase().replace("_", "-");
+
+  if (localeSet.has(normalized as AppLocale)) {
+    return normalized as AppLocale;
+  }
+
+  const languageCode = normalized.split("-")[0];
+  if (localeSet.has(languageCode as AppLocale)) {
+    return languageCode as AppLocale;
+  }
+
+  return null;
+}
+
+const defaultLocale: AppLocale =
+  (typeof navigator !== "undefined" &&
+    resolveSupportedLocale(navigator.language)) ||
+  "en";
+const defaultArticlePageSize: ArticlePageSize = 10;
+
 function normalizeLocale(locale: string): AppLocale {
-  if (localeSet.has(locale as AppLocale)) {
-    return locale as AppLocale;
+  const supportedLocale = resolveSupportedLocale(locale);
+  if (supportedLocale) {
+    return supportedLocale;
   }
 
   return defaultLocale;

@@ -1,5 +1,6 @@
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
@@ -27,6 +28,7 @@ export function ArticleItem({
   feedName,
   feedFaviconUrl,
 }: ArticleItemProps) {
+  const { t } = useI18n();
 
   const isSelected = selectedArticleId === article.id;
 
@@ -106,7 +108,11 @@ export function ArticleItem({
           onClick={handleToggleRead}
           disabled={!canToggleRead}
           className={cn(article.unread ? "bg-muted" : "bg-primary/10")}
-          title={article.unread ? "Mark as read" : "Mark as unread"}
+          title={
+            article.unread
+              ? t("article.action.markRead")
+              : t("article.action.markUnread")
+          }
         >
           {article.unread ? (
             <Circle className="text-muted-foreground" />
@@ -119,7 +125,7 @@ export function ArticleItem({
           size="icon-sm"
           onClick={handleToggleStar}
           className={cn(isStarred ? "bg-amber-100 dark:bg-amber-950/40" : "bg-muted")}
-          title={isStarred ? "Unstar" : "Star"}
+          title={isStarred ? t("article.action.unstar") : t("article.action.star")}
         >
           <Star
             className={cn(
@@ -134,7 +140,7 @@ export function ArticleItem({
           size="icon-sm"
           onClick={handleOpenExternal}
           className="bg-muted"
-          title="Open in browser"
+          title={t("article.action.openInBrowser")}
         >
           <ExternalLink className="text-muted-foreground" />
         </Button>

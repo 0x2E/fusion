@@ -1,4 +1,6 @@
 import { toast } from "sonner";
+import { translate } from "@/lib/i18n";
+import { getPreferredLocale } from "@/store/preferences";
 
 const SW_URL = "/sw.js";
 const SKIP_WAITING_MESSAGE = { type: "SKIP_WAITING" } as const;
@@ -15,12 +17,14 @@ function notifyInstallAvailability(): void {
 }
 
 function showUpdateToast(registration: ServiceWorkerRegistration): void {
-  toast.info("Update available", {
+  const locale = getPreferredLocale();
+
+  toast.info(translate("pwa.update.title", undefined, locale), {
     id: "pwa-update",
-    description: "Reload to use the latest Fusion version.",
+    description: translate("pwa.update.description", undefined, locale),
     duration: Number.POSITIVE_INFINITY,
     action: {
-      label: "Reload",
+      label: translate("pwa.update.reload", undefined, locale),
       onClick: () => {
         shouldReloadOnControllerChange = true;
         if (registration.waiting) {
@@ -36,7 +40,7 @@ function showUpdateToast(registration: ServiceWorkerRegistration): void {
 
 function setupServiceWorkerUpdateFlow(registration: ServiceWorkerRegistration): void {
   if (registration.waiting) {
-    showUpdateToast(registration);
+    void showUpdateToast(registration);
   }
 
   registration.addEventListener("updatefound", () => {
@@ -47,7 +51,7 @@ function setupServiceWorkerUpdateFlow(registration: ServiceWorkerRegistration): 
 
     installing.addEventListener("statechange", () => {
       if (installing.state === "installed" && navigator.serviceWorker.controller) {
-        showUpdateToast(registration);
+        void showUpdateToast(registration);
       }
     });
   });
@@ -102,7 +106,8 @@ export function registerPWA(): void {
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
     notifyInstallAvailability();
-    toast.success("Fusion installed");
+    const locale = getPreferredLocale();
+    toast.success(translate("pwa.toast.installed", undefined, locale));
   });
 
   window.addEventListener("load", () => {

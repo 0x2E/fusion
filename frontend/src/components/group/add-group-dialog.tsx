@@ -10,11 +10,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n";
 import { useUIStore } from "@/store";
 import { useCreateGroup } from "@/queries/groups";
 import { toast } from "sonner";
 
 export function AddGroupDialog() {
+  const { t } = useI18n();
   const { isAddGroupOpen, setAddGroupOpen } = useUIStore();
   const createGroup = useCreateGroup();
 
@@ -28,9 +30,9 @@ export function AddGroupDialog() {
       await createGroup.mutateAsync(trimmed);
       setName("");
       setAddGroupOpen(false);
-      toast.success("Group created");
+      toast.success(t("group.toast.created"));
     } catch {
-      toast.error("Failed to create group");
+      toast.error(t("group.toast.createFailed"));
     }
   };
 
@@ -42,17 +44,17 @@ export function AddGroupDialog() {
         if (!open) setName("");
       }}
     >
-      <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Add Group</DialogTitle>
+          <DialogTitle>{t("group.add.title")}</DialogTitle>
           <DialogDescription>
-            Create a new group to organize your feeds.
+            {t("group.add.description")}
           </DialogDescription>
         </DialogHeader>
         <div className="relative">
           <FolderPlus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Group name"
+            placeholder={t("group.add.placeholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -66,13 +68,13 @@ export function AddGroupDialog() {
             onClick={() => setAddGroupOpen(false)}
             disabled={createGroup.isPending}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={handleCreate}
             disabled={!name.trim() || createGroup.isPending}
           >
-            {createGroup.isPending ? "Creating..." : "Create"}
+            {createGroup.isPending ? t("common.creating") : t("common.create")}
           </Button>
         </DialogFooter>
       </DialogContent>

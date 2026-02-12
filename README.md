@@ -13,7 +13,7 @@
 - Responsive web UI with keyboard shortcuts and PWA support
 - Self-hosting friendly: single binary or Docker deployment
 - No AI features by design: just a focused, distraction-free RSS experience
-- Internationalization (English, Chinese, German, French, Spanish, Russian, Portuguese, Swedish)
+- Built-in i18n (English, Chinese, German, French, Spanish, Russian, Portuguese, Swedish)
 
 ## Quick Start (Docker)
 
@@ -80,6 +80,7 @@ Legacy env names (`DB`, `PASSWORD`, `PORT`) are still accepted for backward comp
 
 - Requirements: Go `1.25+`, Node.js `24+`, pnpm
 - Helpful commands are in [`scripts.sh`](./scripts.sh)
+- Frontend i18n key check: `cd frontend && npm run check:i18n`
 
 Example:
 

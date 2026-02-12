@@ -18,14 +18,10 @@ import {
   useUIStore,
 } from "@/store";
 import { usePWAInstall } from "@/hooks/use-pwa-install";
+import { localeLabels, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 type SettingsTab = "appearance" | "about";
-
-const localeLabels: Record<string, string> = {
-  en: "English",
-  zh: "中文",
-};
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -52,6 +48,7 @@ function NavItem({ icon, label, active, onClick }: NavItemProps) {
 }
 
 function AppearanceContent() {
+  const { t } = useI18n();
   const { theme, setTheme } = useTheme();
   const { locale, articlePageSize, setLocale, setArticlePageSize } =
     usePreferencesStore();
@@ -61,9 +58,9 @@ function AppearanceContent() {
       {/* Language */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium">Language</p>
+          <p className="text-sm font-medium">{t("settings.language.label")}</p>
           <p className="text-[13px] text-muted-foreground">
-            Select your preferred language
+            {t("settings.language.description")}
           </p>
         </div>
         <Select value={locale} onValueChange={setLocale}>
@@ -83,9 +80,11 @@ function AppearanceContent() {
       {/* Articles per load */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium">Articles per load</p>
+          <p className="text-sm font-medium">
+            {t("settings.articlePageSize.label")}
+          </p>
           <p className="text-[13px] text-muted-foreground">
-            Number of articles fetched each time
+            {t("settings.articlePageSize.description")}
           </p>
         </div>
         <Select
@@ -113,9 +112,9 @@ function AppearanceContent() {
       {/* Theme */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium">Theme</p>
+          <p className="text-sm font-medium">{t("settings.theme.label")}</p>
           <p className="text-[13px] text-muted-foreground">
-            Choose your color theme
+            {t("settings.theme.description")}
           </p>
         </div>
         <Select value={theme} onValueChange={setTheme}>
@@ -123,9 +122,9 @@ function AppearanceContent() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="light">Light</SelectItem>
-            <SelectItem value="dark">Dark</SelectItem>
-            <SelectItem value="system">System</SelectItem>
+            <SelectItem value="light">{t("settings.theme.light")}</SelectItem>
+            <SelectItem value="dark">{t("settings.theme.dark")}</SelectItem>
+            <SelectItem value="system">{t("settings.theme.system")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -134,6 +133,7 @@ function AppearanceContent() {
 }
 
 function AboutContent() {
+  const { t } = useI18n();
   const { isInstallAvailable, promptInstall } = usePWAInstall();
   const [isInstalling, setIsInstalling] = useState(false);
 
@@ -142,7 +142,7 @@ function AboutContent() {
     try {
       const isInstalled = await promptInstall();
       if (!isInstalled) {
-        toast.info("Installation cancelled");
+        toast.info(t("settings.installCancelled"));
       }
     } finally {
       setIsInstalling(false);
@@ -153,14 +153,14 @@ function AboutContent() {
     <div className="flex h-full flex-col items-center justify-center gap-4 pb-8">
       <img
         src="/icon-96.png"
-        alt="Fusion logo"
+        alt={t("common.fusionLogo")}
         className="h-16 w-16 rounded-2xl"
       />
       <div className="text-center">
         <h3 className="text-xl font-semibold">Fusion</h3>
         <p className="mt-1 text-xs text-muted-foreground">{__APP_VERSION__}</p>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          A lightweight RSS feed aggregator and reader.
+          {t("settings.about.description")}
         </p>
       </div>
       <div className="flex gap-2">
@@ -174,7 +174,9 @@ function AboutContent() {
             disabled={isInstalling}
           >
             <Download className="h-4 w-4" />
-            {isInstalling ? "Installing..." : "Install App"}
+            {isInstalling
+              ? t("settings.about.installing")
+              : t("settings.about.install")}
           </Button>
         )}
         <Button variant="outline" size="sm" asChild>
@@ -184,7 +186,7 @@ function AboutContent() {
             rel="noopener noreferrer"
           >
             <Github className="h-4 w-4" />
-            GitHub
+            {t("settings.about.github")}
           </a>
         </Button>
         <Button variant="outline" size="sm" asChild>
@@ -194,25 +196,26 @@ function AboutContent() {
             rel="noopener noreferrer"
           >
             <Bug className="h-4 w-4" />
-            Report Issue
+            {t("settings.about.reportIssue")}
           </a>
         </Button>
       </div>
       <p className="mt-auto text-xs text-muted-foreground">
-        MIT License &copy; 2024 Rook1e
+        {t("settings.about.license")}
       </p>
     </div>
   );
 }
 
-const tabTitles: Record<SettingsTab, string> = {
-  appearance: "Appearance",
-  about: "About",
-};
-
 export function SettingsDialog() {
+  const { t } = useI18n();
   const { isSettingsOpen, setSettingsOpen } = useUIStore();
   const [activeTab, setActiveTab] = useState<SettingsTab>("appearance");
+
+  const tabTitles: Record<SettingsTab, string> = {
+    appearance: t("settings.tab.appearance"),
+    about: t("settings.tab.about"),
+  };
 
   return (
     <Dialog open={isSettingsOpen} onOpenChange={setSettingsOpen}>
@@ -220,18 +223,18 @@ export function SettingsDialog() {
         {/* Sidebar (desktop) / Tab bar (mobile) */}
         <div className="flex shrink-0 flex-row border-b border-border bg-muted/30 px-3 pt-3 sm:w-[200px] sm:flex-col sm:border-b-0 sm:border-r sm:pt-4">
           <h2 className="hidden px-2 text-sm font-semibold sm:block">
-            Settings
+            {t("common.settings")}
           </h2>
           <nav className="flex gap-0.5 sm:mt-2 sm:flex-col">
             <NavItem
               icon={<Palette className="h-4 w-4" />}
-              label="Appearance"
+              label={t("settings.tab.appearance")}
               active={activeTab === "appearance"}
               onClick={() => setActiveTab("appearance")}
             />
             <NavItem
               icon={<Info className="h-4 w-4" />}
-              label="About"
+              label={t("settings.tab.about")}
               active={activeTab === "about"}
               onClick={() => setActiveTab("about")}
             />

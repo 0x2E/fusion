@@ -25,9 +25,11 @@ import {
 } from "@/queries/bookmarks";
 import { queryKeys } from "@/queries/keys";
 import { getFaviconUrl } from "@/lib/api/favicon";
+import { useI18n } from "@/lib/i18n";
 import type { Item } from "@/lib/api";
 
 export function ArticleList() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const {
     articleFilter,
@@ -108,13 +110,13 @@ export function ArticleList() {
   useArticleNavigation(articleIds);
 
   // Determine title
-  let title = "All Articles";
+  let title = t("article.list.all");
   if (selectedFeedId) {
     const feed = getFeedById(selectedFeedId);
-    title = feed?.name ?? "Feed";
+    title = feed?.name ?? t("article.feedFallback");
   } else if (selectedGroupId) {
     const group = groups.find((g) => g.id === selectedGroupId);
-    title = group?.name ?? "Group";
+    title = group?.name ?? t("article.groupFallback");
   }
 
   const unreadCount = displayArticles.filter((a) => a.unread).length;
@@ -248,7 +250,7 @@ export function ArticleList() {
           className="gap-1.5 text-xs"
         >
           <CheckCheck className="h-4 w-4" />
-          Mark all as read
+          {t("article.list.markAllRead")}
         </Button>
       </div>
 
@@ -261,9 +263,11 @@ export function ArticleList() {
             onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
           >
             <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="unread">Unread</TabsTrigger>
-              <TabsTrigger value="starred">Starred</TabsTrigger>
+              <TabsTrigger value="all">{t("article.filter.all")}</TabsTrigger>
+              <TabsTrigger value="unread">{t("article.filter.unread")}</TabsTrigger>
+              <TabsTrigger value="starred">
+                {t("article.filter.starred")}
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         )}
@@ -284,20 +288,20 @@ export function ArticleList() {
               hasNoFeeds ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
                   <p className="text-sm text-muted-foreground">
-                    No feeds yet. Go to Feed Management to add your first feed.
+                    {t("article.list.noFeeds")}
                   </p>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigate({ to: "/feeds" })}
                   >
-                    Open Feed Management
+                    {t("article.list.openFeedManagement")}
                   </Button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <p className="text-sm text-muted-foreground">
-                    No articles found
+                    {t("article.list.noArticles")}
                   </p>
                 </div>
               )
@@ -317,7 +321,7 @@ export function ArticleList() {
                       onToggleStar={handleToggleStar}
                       canToggleRead={article.id > 0}
                       isStarred={isItemStarred(article.id)}
-                      feedName={feed?.name ?? bookmark?.feed_name ?? "Unknown"}
+                      feedName={feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
                       feedFaviconUrl={
                         feed ? getFaviconUrl(feed.link, feed.site_url) : null
                       }
@@ -336,7 +340,9 @@ export function ArticleList() {
                       {isLoadingMore && (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       )}
-                      {isLoadingMore ? "Loading..." : "Load more"}
+                      {isLoadingMore
+                        ? t("article.list.loading")
+                        : t("article.list.loadMore")}
                     </Button>
                   </div>
                 )}

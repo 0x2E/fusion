@@ -10,6 +10,7 @@ import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { EditFeedDialog } from "@/components/feed/edit-feed-dialog";
 import { ImportOpmlDialog } from "@/components/feed/import-opml-dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard";
+import { useI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUIStore } from "@/store/ui";
 
@@ -18,6 +19,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const { t } = useI18n();
   const isMobile = useIsMobile();
   const isSidebarOpen = useUIStore((s) => s.isSidebarOpen);
   const setSidebarOpen = useUIStore((s) => s.setSidebarOpen);
@@ -44,7 +46,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             className="w-[260px] p-0"
             showCloseButton={false}
           >
-            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <SheetTitle className="sr-only">{t("common.navigation")}</SheetTitle>
             <Sidebar />
           </SheetContent>
         </Sheet>

@@ -1,0 +1,36 @@
+name: frontend
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - frontend/**
+      - .github/workflows/frontend.yml
+      - .github/actions/setup-toolchains/action.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  i18n:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Node toolchain
+        uses: ./.github/actions/setup-toolchains
+        with:
+          setup-go: "false"
+          setup-node: "true"
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Check i18n dictionaries
+        working-directory: frontend
+        run: pnpm run check:i18n

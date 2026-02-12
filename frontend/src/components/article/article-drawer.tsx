@@ -27,12 +27,14 @@ import {
   useStarredItems,
 } from "@/queries/bookmarks";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
+import { useI18n } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 
 export function ArticleDrawer() {
+  const { t } = useI18n();
   const {
     selectedArticleId,
     setSelectedArticle,
@@ -162,7 +164,9 @@ export function ArticleDrawer() {
                   ) : (
                     <CircleCheck className="h-4 w-4 text-primary" />
                   )}
-                  {article.unread ? "Mark as read" : "Mark as unread"}
+                  {article.unread
+                    ? t("article.action.markRead")
+                    : t("article.action.markUnread")}
                 </Button>
                 <Button
                   variant="outline"
@@ -173,7 +177,7 @@ export function ArticleDrawer() {
                   <Star
                     className={`h-4 w-4 ${starred ? "fill-current text-amber-500" : ""}`}
                   />
-                  Star
+                  {starred ? t("article.action.unstar") : t("article.action.star")}
                 </Button>
                 <Button
                   variant="outline"
@@ -182,7 +186,7 @@ export function ArticleDrawer() {
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  Original
+                  {t("article.action.original")}
                 </Button>
               </div>
 
@@ -213,7 +217,7 @@ export function ArticleDrawer() {
                         />
                       )}
                       <span className="truncate">
-                        {feed?.name ?? bookmark?.feed_name ?? "Unknown"}
+                        {feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
                       </span>
                     </span>
                     <span className="text-muted-foreground">
@@ -252,7 +256,7 @@ export function ArticleDrawer() {
                 className="h-auto gap-1.5 px-3 py-2 text-[13px] font-medium text-muted-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Previous
+                {t("common.previous")}
               </Button>
               <Button
                 variant="outline"
@@ -261,7 +265,7 @@ export function ArticleDrawer() {
                 disabled={!hasNext()}
                 className="h-auto gap-1.5 px-3 py-2 text-[13px] font-medium text-muted-foreground"
               >
-                Next
+                {t("common.next")}
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

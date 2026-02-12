@@ -12,10 +12,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { groupAPI, feedAPI } from "@/lib/api";
 import { queryKeys } from "@/queries/keys";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { parseOPML } from "@/lib/opml";
 
 export function ImportOpmlDialog() {
+  const { t } = useI18n();
   const { isImportOpmlOpen, setImportOpmlOpen } = useUIStore();
   const queryClient = useQueryClient();
 
@@ -49,7 +51,7 @@ export function ImportOpmlDialog() {
     );
 
     if (!validTypes.includes(selectedFile.type) && !hasValidExtension) {
-      toast.error("Please select an OPML or XML file");
+      toast.error(t("opml.toast.invalidFile"));
       return;
     }
 
@@ -82,7 +84,7 @@ export function ImportOpmlDialog() {
       const parsedFeeds = parseOPML(content);
 
       if (parsedFeeds.length === 0) {
-        toast.info("No feeds found in OPML file");
+        toast.info(t("opml.toast.noFeeds"));
         return;
       }
 
@@ -112,10 +114,10 @@ export function ImportOpmlDialog() {
         .values()
         .next().value;
       if (defaultGroupId === undefined) {
-        const res = await groupAPI.create({ name: "Imported Without Group" });
+        const res = await groupAPI.create({ name: t("opml.group.default") });
         if (res.data) {
           defaultGroupId = res.data.id;
-          groupNameToId.set("Imported Without Group", res.data.id);
+          groupNameToId.set(t("opml.group.default"), res.data.id);
         }
       }
 
@@ -144,25 +146,25 @@ export function ImportOpmlDialog() {
         ]);
 
         if (created > 0) {
-          toast.success(`Imported ${created} feed${created > 1 ? "s" : ""}`);
+          toast.success(t("opml.toast.imported", { count: created }));
         }
 
         if (failed > 0) {
-          const errorMsg = errors?.join(", ") || "Some feeds failed to import";
+          const errorMsg = errors?.join(", ") || t("opml.toast.failed");
           toast.warning(
-            `${failed} feed${failed > 1 ? "s" : ""} failed: ${errorMsg}`,
+            t("opml.toast.failedItems", { count: failed, errors: errorMsg }),
           );
         }
 
         if (created === 0 && failed === 0) {
-          toast.info("No new feeds found in OPML file");
+          toast.info(t("opml.toast.noNewFeeds"));
         }
 
         handleClose();
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to import OPML",
+        error instanceof Error ? error.message : t("opml.toast.failed"),
       );
     } finally {
       setIsImporting(false);
@@ -177,7 +179,7 @@ export function ImportOpmlDialog() {
       >
         <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
           <DialogTitle className="text-base font-semibold">
-            Import OPML
+            {t("opml.dialog.title")}
           </DialogTitle>
           <Button variant="ghost" size="icon-sm" onClick={handleClose}>
             <X className="h-[18px] w-[18px] text-muted-foreground" />
@@ -222,17 +224,17 @@ export function ImportOpmlDialog() {
                     setFile(null);
                   }}
                 >
-                  Choose a different file
+                  {t("opml.dialog.chooseDifferentFile")}
                 </Button>
               </>
             ) : (
               <>
                 <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
                 <p className="text-sm font-medium">
-                  Drop your OPML file here, or click to browse
+                  {t("opml.dialog.dropHint")}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Supports .opml and .xml files
+                  {t("opml.dialog.supportHint")}
                 </p>
               </>
             )}
@@ -241,11 +243,11 @@ export function ImportOpmlDialog() {
 
         <div className="flex items-center justify-end gap-3 border-t px-5 py-4">
           <Button variant="outline" onClick={handleClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleImport} disabled={!file || isImporting}>
             <Upload className="mr-1.5 h-4 w-4" />
-            {isImporting ? "Importing..." : "Import"}
+            {isImporting ? t("common.importing") : t("common.import")}
           </Button>
         </div>
       </DialogContent>
