@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import DOMPurify from "dompurify";
+import { getPreferredLocale } from "@/store/preferences";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -12,25 +13,29 @@ export function unixToDate(timestamp: number): Date {
 
 export function formatDate(timestamp: number): string {
   const date = unixToDate(timestamp);
+  const locale = getPreferredLocale();
   const now = new Date();
   const diff = now.getTime() - date.getTime();
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
 
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
+  if (minutes < 1) return rtf.format(0, "second");
+  if (minutes < 60) return rtf.format(-minutes, "minute");
+  if (hours < 24) return rtf.format(-hours, "hour");
+  if (days < 7) return rtf.format(-days, "day");
 
-  return date.toLocaleDateString();
+  return date.toLocaleDateString(locale);
 }
 
 export function formatRelativeTime(timestamp: number): string {
   const date = unixToDate(timestamp);
   const now = new Date();
-  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const rtf = new Intl.RelativeTimeFormat(getPreferredLocale(), {
+    numeric: "auto",
+  });
 
   const diff = date.getTime() - now.getTime();
   const days = Math.round(diff / 86400000);

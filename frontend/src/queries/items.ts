@@ -15,8 +15,7 @@ import {
   type ItemFilters,
   type NormalizedItemFilters,
 } from "./keys";
-
-const PAGE_SIZE = 10;
+import { usePreferencesStore } from "@/store";
 
 type ItemListResponse = Awaited<ReturnType<typeof itemAPI.list>>;
 type ItemsInfiniteData = InfiniteData<ItemListResponse, number>;
@@ -29,9 +28,10 @@ type ItemsMutationContext = {
 function buildListItemsParams(
   filters: NormalizedItemFilters,
   offset: number,
+  pageSize: number,
 ): ListItemsParams {
   const params: ListItemsParams = {
-    limit: PAGE_SIZE,
+    limit: pageSize,
     offset,
     order_by: "pub_date:desc",
   };
@@ -44,13 +44,13 @@ function buildListItemsParams(
 }
 
 export const itemQueries = {
-  list: (filters: ItemFilters) => {
+  list: (filters: ItemFilters, pageSize: number) => {
     const normalizedFilters = normalizeItemFilters(filters);
 
     return infiniteQueryOptions({
-      queryKey: queryKeys.items.list(normalizedFilters),
+      queryKey: [...queryKeys.items.lists(), normalizedFilters, pageSize],
       queryFn: async ({ pageParam }) =>
-        itemAPI.list(buildListItemsParams(normalizedFilters, pageParam)),
+        itemAPI.list(buildListItemsParams(normalizedFilters, pageParam, pageSize)),
       initialPageParam: 0,
       getNextPageParam: (lastPage, allPages) => {
         const fetched = allPages.reduce((n, p) => n + p.data.length, 0);
@@ -69,7 +69,8 @@ export const itemQueries = {
 };
 
 export function useItems(filters: ItemFilters) {
-  return useInfiniteQuery(itemQueries.list(filters));
+  const articlePageSize = usePreferencesStore((state) => state.articlePageSize);
+  return useInfiniteQuery(itemQueries.list(filters, articlePageSize));
 }
 
 export function useItem(itemId: number | null, enabled = true) {

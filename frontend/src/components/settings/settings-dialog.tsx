@@ -11,11 +11,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUIStore } from "@/store";
+import {
+  articlePageSizeOptions,
+  supportedLocales,
+  usePreferencesStore,
+  useUIStore,
+} from "@/store";
 import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { cn } from "@/lib/utils";
 
 type SettingsTab = "appearance" | "about";
+
+const localeLabels: Record<string, string> = {
+  en: "English",
+  zh: "中文",
+};
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -43,6 +53,8 @@ function NavItem({ icon, label, active, onClick }: NavItemProps) {
 
 function AppearanceContent() {
   const { theme, setTheme } = useTheme();
+  const { locale, articlePageSize, setLocale, setArticlePageSize } =
+    usePreferencesStore();
 
   return (
     <div className="space-y-5">
@@ -54,13 +66,46 @@ function AppearanceContent() {
             Select your preferred language
           </p>
         </div>
-        <Select defaultValue="en">
+        <Select value={locale} onValueChange={setLocale}>
           <SelectTrigger className="w-auto gap-2 border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="en">English</SelectItem>
-            <SelectItem value="zh">中文</SelectItem>
+            {supportedLocales.map((localeCode) => (
+              <SelectItem key={localeCode} value={localeCode}>
+                {localeLabels[localeCode] ?? localeCode}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Articles per load */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Articles per load</p>
+          <p className="text-[13px] text-muted-foreground">
+            Number of articles fetched each time
+          </p>
+        </div>
+        <Select
+          value={articlePageSize.toString()}
+          onValueChange={(value) => {
+            const parsed = Number.parseInt(value, 10);
+            if (!Number.isNaN(parsed)) {
+              setArticlePageSize(parsed);
+            }
+          }}
+        >
+          <SelectTrigger className="w-auto gap-2 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {articlePageSizeOptions.map((size) => (
+              <SelectItem key={size} value={size.toString()}>
+                {size}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

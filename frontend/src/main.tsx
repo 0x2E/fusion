@@ -7,13 +7,17 @@ import { routeTree } from "./routeTree.gen";
 import { Toaster } from "@/components/ui/sonner";
 import { queryClient } from "@/lib/query-client";
 import { registerPWA } from "@/lib/pwa";
-import "@/store";
+import { usePreferencesStore } from "@/store";
 import "./index.css";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
 
 registerPWA();
+document.documentElement.lang = usePreferencesStore.getState().locale;
+usePreferencesStore.subscribe((state) => {
+  document.documentElement.lang = state.locale;
+});
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
