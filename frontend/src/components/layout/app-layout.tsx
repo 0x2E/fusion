@@ -9,6 +9,7 @@ import { AddGroupDialog } from "@/components/group/add-group-dialog";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { EditFeedDialog } from "@/components/feed/edit-feed-dialog";
 import { ImportOpmlDialog } from "@/components/feed/import-opml-dialog";
+import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard";
 import { useI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -63,6 +64,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <AddFeedDialog />
       <EditFeedDialog />
       <ImportOpmlDialog />
+      <ShortcutsDialog />
     </div>
   );
 }

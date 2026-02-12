@@ -8,12 +8,12 @@
 
 ## Features
 
-- Feed organization with groups, unread tracking, bookmarks, and search
-- RSS/Atom parsing with feed discovery support
-- Responsive web UI with keyboard shortcuts and PWA support
+- Fast reading workflow: unread tracking, bookmarks, search, and Google Reader-style keyboard shortcuts
+- Feed management: RSS/Atom parsing, feed auto-discovery, and group organization
+- Responsive web UI with PWA support
 - Self-hosting friendly: single binary or Docker deployment
-- No AI features by design: just a focused, distraction-free RSS experience
-- Built-in i18n (English, Chinese, German, French, Spanish, Russian, Portuguese, Swedish)
+- Built-in i18n: English, Chinese, German, French, Spanish, Russian, Portuguese, Swedish
+- No AI features by design: focused, distraction-free RSS reading
 
 ## Quick Start (Docker)
 

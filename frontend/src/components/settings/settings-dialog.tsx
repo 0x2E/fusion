@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { Bug, Download, Github, Info, Palette } from "lucide-react";
+import { Bug, Download, Github, Info, Keyboard, Palette } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +50,8 @@ function NavItem({ icon, label, active, onClick }: NavItemProps) {
 function AppearanceContent() {
   const { t } = useI18n();
   const { theme, setTheme } = useTheme();
+  const setSettingsOpen = useUIStore((s) => s.setSettingsOpen);
+  const setShortcutsOpen = useUIStore((s) => s.setShortcutsOpen);
   const { locale, articlePageSize, setLocale, setArticlePageSize } =
     usePreferencesStore();
 
@@ -127,6 +129,27 @@ function AppearanceContent() {
             <SelectItem value="system">{t("settings.theme.system")}</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Keyboard shortcuts */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium">{t("settings.shortcuts.label")}</p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.shortcuts.description")}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setSettingsOpen(false);
+            setShortcutsOpen(true);
+          }}
+        >
+          <Keyboard className="h-4 w-4" />
+          {t("settings.shortcuts.open")}
+        </Button>
       </div>
     </div>
   );

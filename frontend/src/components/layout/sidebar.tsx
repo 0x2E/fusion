@@ -35,7 +35,7 @@ export function Sidebar() {
             <span className="text-sm">{t("sidebar.search")}</span>
           </div>
           <kbd className="rounded bg-accent px-1.5 py-0.5 font-mono text-[11px] font-medium">
-            ⌘K
+            Cmd+K / ?
           </kbd>
         </button>
       </div>

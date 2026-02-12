@@ -118,9 +118,25 @@ This keeps list context stable while opening/closing article detail.
 Implemented shortcuts:
 
 - `Cmd/Ctrl + K`: toggle search dialog
+- `Cmd/Ctrl + ,`: open settings dialog
 - `Esc`: close search/settings/article drawer
-- `j` / `ArrowDown`: next article
-- `k` / `ArrowUp`: previous article
+- `/`: open search dialog
+- `?`: open keyboard shortcuts help
+- `j` / `n` / `ArrowDown`: next article
+- `k` / `p` / `ArrowUp`: previous article
+- `m`: toggle read/unread for current article
+- `s` / `f`: toggle star for current article
+- `o` / `v`: open current article in browser
+- `g u`: go to unread
+- `g a`: go to all
+- `g s`: go to starred
+- `g f`: go to feed management
+
+Shortcut help entry points:
+
+- Sidebar search button hint shows `Cmd+K / ?`
+- Search dialog Quick Actions includes a "Keyboard Shortcuts" item
+- Settings > Appearance includes a "Keyboard Shortcuts" section
 
 ## 10. Authentication UX
 

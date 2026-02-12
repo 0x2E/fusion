@@ -67,8 +67,6 @@ export function ArticleDrawer() {
   const deleteBookmark = useDeleteBookmark();
 
   const articleIds = listArticles.map((a) => a.id);
-  const { goToNext, goToPrevious, hasNext, hasPrevious } =
-    useArticleNavigation(articleIds);
 
   const storeArticle = selectedArticleId
     ? (listArticles.find((i) => i.id === selectedArticleId) ?? null)
@@ -139,6 +137,18 @@ export function ArticleDrawer() {
       return url;
     }
   };
+
+  const { goToNext, goToPrevious, hasNext, hasPrevious } =
+    useArticleNavigation(articleIds, {
+      enabled: selectedArticleId !== null,
+      onToggleRead: () => {
+        void handleToggleRead();
+      },
+      onToggleStar: () => {
+        void handleToggleStar();
+      },
+      onOpenOriginal: handleOpenOriginal,
+    });
 
   return (
     <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>

@@ -107,7 +107,9 @@ export function ArticleList() {
 
   // Setup keyboard navigation
   const articleIds = displayArticles.map((a) => a.id);
-  useArticleNavigation(articleIds);
+  useArticleNavigation(articleIds, {
+    enabled: selectedArticleId === null,
+  });
 
   // Determine title
   let title = t("article.list.all");

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FileText, Loader2, Search, Settings } from "lucide-react";
+import { FileText, Keyboard, Loader2, Search, Settings } from "lucide-react";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { searchAPI } from "@/lib/api";
 import type { SearchFeed, SearchItem } from "@/lib/api/types";
@@ -29,7 +29,8 @@ import { FeedFavicon } from "@/components/feed/feed-favicon";
 
 export function SearchDialog() {
   const { t } = useI18n();
-  const { isSearchOpen, setSearchOpen, setEditFeedOpen } = useUIStore();
+  const { isSearchOpen, setSearchOpen, setEditFeedOpen, setShortcutsOpen } =
+    useUIStore();
   const { getFeedById } = useFeedLookup();
   const { setSelectedFeed, setSelectedArticle } = useUrlState();
   const [query, setQuery] = useState("");
@@ -104,6 +105,11 @@ export function SearchDialog() {
       setLoading(false);
     }
     setSearchOpen(open);
+  };
+
+  const handleOpenShortcuts = () => {
+    setSearchOpen(false);
+    setShortcutsOpen(true);
   };
 
   return (
@@ -195,6 +201,18 @@ export function SearchDialog() {
                 <CommandItem className="gap-2">
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <span>{t("search.quickActionHint")}</span>
+                </CommandItem>
+                <CommandItem
+                  className="justify-between gap-2"
+                  onSelect={handleOpenShortcuts}
+                >
+                  <div className="flex items-center gap-2">
+                    <Keyboard className="h-4 w-4 text-muted-foreground" />
+                    <span>{t("shortcuts.title")}</span>
+                  </div>
+                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
+                    ?
+                  </kbd>
                 </CommandItem>
               </CommandGroup>
             )}
