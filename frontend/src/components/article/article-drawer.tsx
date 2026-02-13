@@ -39,6 +39,7 @@ export function ArticleDrawer() {
   const {
     selectedArticleId,
     setSelectedArticle,
+    setSelectedFeed,
     selectedFeedId,
     selectedGroupId,
     articleFilter,
@@ -132,6 +133,11 @@ export function ArticleDrawer() {
     window.open(safeArticleLink, "_blank", "noopener,noreferrer");
   };
 
+  const handleOpenFeed = () => {
+    if (!article || article.feed_id <= 0) return;
+    setSelectedFeed(article.feed_id);
+  };
+
   const getLinkDomain = (url: string) => {
     try {
       return new URL(url).hostname;
@@ -222,17 +228,29 @@ export function ArticleDrawer() {
                     {article.title}
                   </h1>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                    <span className="flex max-w-48 items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-                      {feed && (
-                        <FeedFavicon
-                          src={getFaviconUrl(feed.link, feed.site_url)}
-                          className="h-3.5 w-3.5 rounded-sm"
-                        />
-                      )}
-                      <span className="truncate">
-                        {feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
+                    {article.feed_id > 0 ? (
+                      <button
+                        type="button"
+                        onClick={handleOpenFeed}
+                        className="flex max-w-48 items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                      >
+                        {feed && (
+                          <FeedFavicon
+                            src={getFaviconUrl(feed.link, feed.site_url)}
+                            className="h-3.5 w-3.5 rounded-sm"
+                          />
+                        )}
+                        <span className="truncate hover:underline">
+                          {feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
+                        </span>
+                      </button>
+                    ) : (
+                      <span className="flex max-w-48 items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                        <span className="truncate">
+                          {bookmark?.feed_name ?? t("common.unknown")}
+                        </span>
                       </span>
-                    </span>
+                    )}
                     <span className="text-muted-foreground">
                       {formatDate(article.pub_date)}
                     </span>
