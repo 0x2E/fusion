@@ -14,6 +14,7 @@
 ## Code Standards
 
 - Follow best practices without over-engineering.
+- Default to no backward-compatibility work unless explicitly requested; if a change may break data formats, public APIs, or migrations, clearly state the impact.
 - Write self-explanatory code with clear naming.
 - Add comments in English only when they provide non-obvious value:
   - **DO write comments for:**
