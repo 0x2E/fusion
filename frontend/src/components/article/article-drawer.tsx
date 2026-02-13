@@ -32,6 +32,7 @@ import { formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
+import { toSafeExternalUrl } from "@/lib/safe-url";
 
 export function ArticleDrawer() {
   const { t } = useI18n();
@@ -89,6 +90,7 @@ export function ArticleDrawer() {
   const feed = article ? getFeedById(article.feed_id) : null;
   const bookmark = article ? getBookmarkByItemId(article.id) : null;
   const starred = article ? isItemStarred(article.id) : false;
+  const safeArticleLink = article ? toSafeExternalUrl(article.link) : null;
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -126,8 +128,8 @@ export function ArticleDrawer() {
   };
 
   const handleOpenOriginal = () => {
-    if (!article) return;
-    window.open(article.link, "_blank", "noopener,noreferrer");
+    if (!safeArticleLink) return;
+    window.open(safeArticleLink, "_blank", "noopener,noreferrer");
   };
 
   const getLinkDomain = (url: string) => {
@@ -193,6 +195,7 @@ export function ArticleDrawer() {
                   variant="outline"
                   size="sm"
                   onClick={handleOpenOriginal}
+                  disabled={!safeArticleLink}
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
                   <ExternalLink className="h-4 w-4" />
@@ -233,14 +236,16 @@ export function ArticleDrawer() {
                     <span className="text-muted-foreground">
                       {formatDate(article.pub_date)}
                     </span>
-                    <a
-                      href={article.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="truncate text-primary hover:underline"
-                    >
-                      {getLinkDomain(article.link)}
-                    </a>
+                    {safeArticleLink ? (
+                      <a
+                        href={safeArticleLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate text-primary hover:underline"
+                      >
+                        {getLinkDomain(safeArticleLink)}
+                      </a>
+                    ) : null}
                   </div>
                 </div>
 
@@ -249,7 +254,7 @@ export function ArticleDrawer() {
                   dangerouslySetInnerHTML={{
                     __html: processArticleContent(
                       article.content,
-                      article.link,
+                      safeArticleLink ?? undefined,
                     ),
                   }}
                 />

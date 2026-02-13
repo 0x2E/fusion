@@ -11,7 +11,7 @@ import (
 )
 
 func (h *Handler) setupFrontendRoutes(r *gin.Engine) error {
-	frontendFS, hasFrontendBuild, err := web.FrontendFS()
+	frontendFS, _, err := web.FrontendFS()
 	if err != nil {
 		return err
 	}
@@ -20,17 +20,19 @@ func (h *Handler) setupFrontendRoutes(r *gin.Engine) error {
 
 	fileServer := http.FileServer(http.FS(frontendFS))
 	r.NoRoute(func(c *gin.Context) {
-		serveFrontendRoute(c, frontendFS, fileServer, hasFrontendBuild)
+		serveFrontendRoute(c, frontendFS, fileServer)
 	})
 
 	return nil
 }
 
-func serveFrontendRoute(c *gin.Context, frontendFS fs.FS, fileServer http.Handler, hasFrontendBuild bool) {
+func serveFrontendRoute(c *gin.Context, frontendFS fs.FS, fileServer http.Handler) {
 	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
 		c.Status(http.StatusNotFound)
 		return
 	}
+
+	setFrontendSecurityHeaders(c)
 
 	cleanedPath := path.Clean(c.Request.URL.Path)
 	if cleanedPath == "." {
@@ -43,7 +45,7 @@ func serveFrontendRoute(c *gin.Context, frontendFS fs.FS, fileServer http.Handle
 	}
 
 	if cleanedPath == "/" {
-		serveFrontendIndex(c, fileServer, hasFrontendBuild)
+		serveFrontendIndex(c, fileServer)
 		return
 	}
 
@@ -62,14 +64,18 @@ func serveFrontendRoute(c *gin.Context, frontendFS fs.FS, fileServer http.Handle
 		return
 	}
 
-	serveFrontendIndex(c, fileServer, hasFrontendBuild)
+	serveFrontendIndex(c, fileServer)
 }
 
-func serveFrontendIndex(c *gin.Context, fileServer http.Handler, hasFrontendBuild bool) {
-	if !hasFrontendBuild {
-		c.Header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'")
-	}
+func serveFrontendIndex(c *gin.Context, fileServer http.Handler) {
 	serveFrontendRequestPath(c, fileServer, "/")
+}
+
+func setFrontendSecurityHeaders(c *gin.Context) {
+	c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http: https: data:; font-src 'self' data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Header("X-Frame-Options", "DENY")
+	c.Header("Referrer-Policy", "no-referrer")
 }
 
 func serveFrontendRequestPath(c *gin.Context, fileServer http.Handler, requestPath string) {

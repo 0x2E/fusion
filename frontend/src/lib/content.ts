@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { resolveSafeExternalUrl, toSafeExternalUrl } from "@/lib/safe-url";
 
 const purify = DOMPurify(window);
 
@@ -52,10 +53,6 @@ const TRACKER_PATTERNS = [
   /emailtracking/i,
 ];
 
-function isAbsoluteUrl(url: string): boolean {
-  return /^(https?:\/\/|\/\/|data:|mailto:)/i.test(url);
-}
-
 function isTrackingPixel(img: HTMLImageElement): boolean {
   const width = img.getAttribute("width");
   const height = img.getAttribute("height");
@@ -74,74 +71,65 @@ function isEmptyElement(el: Element): boolean {
   return text.trim().length === 0;
 }
 
-function getBaseUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    const pathParts = parsed.pathname.split("/");
-    pathParts.pop(); // Remove filename
-    return parsed.origin + pathParts.join("/") + "/";
-  } catch {
-    return "";
-  }
-}
+function sanitizeAnchors(root: DocumentFragment, articleUrl: string | null): void {
+  for (const node of root.querySelectorAll("a")) {
+    const href = node.getAttribute("href");
+    const safeHref = resolveSafeExternalUrl(href, articleUrl);
+    if (!safeHref) {
+      node.removeAttribute("href");
+      node.removeAttribute("target");
+      node.removeAttribute("rel");
+      continue;
+    }
 
-function resolveUrl(url: string, articleUrl: string): string {
-  if (isAbsoluteUrl(url)) return url;
-  try {
-    return new URL(url, getBaseUrl(articleUrl)).href;
-  } catch {
-    return url;
-  }
-}
-
-// Process links and images after attribute sanitization
-purify.addHook("afterSanitizeAttributes", (node) => {
-  if (node.tagName === "A") {
+    node.setAttribute("href", safeHref);
     node.setAttribute("target", "_blank");
     node.setAttribute("rel", "noopener noreferrer");
-
-    const href = node.getAttribute("href");
-    if (href && currentArticleUrl && !isAbsoluteUrl(href)) {
-      node.setAttribute("href", resolveUrl(href, currentArticleUrl));
-    }
   }
+}
 
-  if (node.tagName === "IMG") {
+function sanitizeImages(root: DocumentFragment, articleUrl: string | null): void {
+  for (const node of root.querySelectorAll("img")) {
     const img = node as HTMLImageElement;
-
-    // Resolve relative src
-    const src = img.getAttribute("src");
-    if (src && currentArticleUrl && !isAbsoluteUrl(src)) {
-      img.setAttribute("src", resolveUrl(src, currentArticleUrl));
+    const safeSrc = resolveSafeExternalUrl(node.getAttribute("src"), articleUrl);
+    if (!safeSrc) {
+      img.remove();
+      continue;
     }
 
-    // Remove tracking pixels
+    img.setAttribute("src", safeSrc);
     if (isTrackingPixel(img)) {
       img.remove();
     }
   }
-});
+}
 
-// Remove empty wrapper elements after sanitization
-purify.addHook("afterSanitizeElements", (node) => {
-  if (node.nodeType === Node.ELEMENT_NODE && isEmptyElement(node as Element)) {
-    node.parentNode?.removeChild(node);
+function removeEmptyWrappers(root: DocumentFragment): void {
+  const elements = Array.from(root.querySelectorAll("*")).reverse();
+  for (const element of elements) {
+    if (isEmptyElement(element)) {
+      element.remove();
+    }
   }
-});
-
-// Module-level state to pass article URL into hooks
-let currentArticleUrl: string | undefined;
+}
 
 export function processArticleContent(
   html: string,
   articleUrl?: string,
 ): string {
-  currentArticleUrl = articleUrl;
-  const result = purify.sanitize(html, {
+  const safeArticleUrl = toSafeExternalUrl(articleUrl);
+  const fragment = purify.sanitize(html, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
     ALLOW_DATA_ATTR: false,
-  });
-  currentArticleUrl = undefined;
-  return result;
+    RETURN_DOM_FRAGMENT: true,
+  }) as DocumentFragment;
+
+  sanitizeAnchors(fragment, safeArticleUrl);
+  sanitizeImages(fragment, safeArticleUrl);
+  removeEmptyWrappers(fragment);
+
+  const container = document.createElement("div");
+  container.appendChild(fragment);
+  return container.innerHTML;
 }

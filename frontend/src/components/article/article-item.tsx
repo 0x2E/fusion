@@ -4,6 +4,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
+import { toSafeExternalUrl } from "@/lib/safe-url";
 
 interface ArticleItemProps {
   article: Item;
@@ -31,6 +32,7 @@ export function ArticleItem({
   const { t } = useI18n();
 
   const isSelected = selectedArticleId === article.id;
+  const safeArticleLink = toSafeExternalUrl(article.link);
 
   const handleToggleRead = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -54,8 +56,8 @@ export function ArticleItem({
 
   const handleOpenExternal = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (article.link) {
-      window.open(article.link, "_blank", "noopener,noreferrer");
+    if (safeArticleLink) {
+      window.open(safeArticleLink, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -139,6 +141,7 @@ export function ArticleItem({
           variant="ghost"
           size="icon-sm"
           onClick={handleOpenExternal}
+          disabled={!safeArticleLink}
           className="bg-muted"
           title={t("article.action.openInBrowser")}
         >

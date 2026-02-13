@@ -21,6 +21,9 @@ func TestSetupRouterServesEmbeddedFrontend(t *testing.T) {
 		if contentType := w.Header().Get("Content-Type"); !strings.Contains(contentType, "text/html") {
 			t.Fatalf("expected text/html content type, got %q", contentType)
 		}
+		if csp := w.Header().Get("Content-Security-Policy"); csp == "" {
+			t.Fatal("expected Content-Security-Policy header")
+		}
 	})
 
 	t.Run("serves index for client-side route", func(t *testing.T) {
