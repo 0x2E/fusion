@@ -104,6 +104,7 @@ function applyOptimisticItemReadState(
 ) {
   const idSet = new Set(ids);
   const feedDeltaMap = new Map<number, number>();
+  const updatedItemsById = new Map<number, Item>();
 
   qc.setQueriesData<ItemsInfiniteData>(
     { queryKey: queryKeys.items.lists() },
@@ -125,7 +126,9 @@ function applyOptimisticItemReadState(
               (feedDeltaMap.get(item.feed_id) ?? 0) + delta,
             );
 
-            return { ...item, unread: targetUnread };
+            const updatedItem = { ...item, unread: targetUnread };
+            updatedItemsById.set(item.id, updatedItem);
+            return updatedItem;
           }),
         })),
       };
@@ -133,10 +136,13 @@ function applyOptimisticItemReadState(
   );
 
   for (const id of ids) {
+    const optimisticItem = updatedItemsById.get(id);
     qc.setQueryData<Item>(queryKeys.items.detail(id), (old) =>
-      old && old.unread !== targetUnread
-        ? { ...old, unread: targetUnread }
-        : old,
+      old
+        ? old.unread !== targetUnread
+          ? { ...old, unread: targetUnread }
+          : old
+        : optimisticItem,
     );
   }
 
@@ -201,10 +207,7 @@ function useSetItemsReadState(targetUnread: boolean) {
       rollbackItemsMutation(qc, context);
     },
     onSettled: async () => {
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: queryKeys.items.all }),
-        qc.invalidateQueries({ queryKey: queryKeys.feeds.all }),
-      ]);
+      await qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
     },
   });
 }

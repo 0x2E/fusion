@@ -6,8 +6,13 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { bookmarkAPI, type Bookmark, type Item } from "@/lib/api";
+import { useArticleSessionStore } from "@/store/article-session";
 import { queryKeys } from "./keys";
 import { useFeedLookup } from "./feeds";
+
+function resolveBookmarkItemId(bookmark: Bookmark): number {
+  return bookmark.item_id ?? -bookmark.id;
+}
 
 export const bookmarkQueries = {
   list: () =>
@@ -17,6 +22,7 @@ export const bookmarkQueries = {
         const res = await bookmarkAPI.list(100, 0);
         return res.data;
       },
+      staleTime: Number.POSITIVE_INFINITY,
     }),
 };
 
@@ -26,18 +32,16 @@ export function useBookmarks() {
 
 export function useBookmarkLookup() {
   const { data: bookmarks = [] } = useBookmarks();
+  const starredOverrides = useArticleSessionStore((s) => s.starredOverrides);
 
   const byArticleId = useMemo(
-    () =>
-      new Map(
-        bookmarks.map((b) => [b.item_id ?? -b.id, b]),
-      ),
+    () => new Map(bookmarks.map((b) => [resolveBookmarkItemId(b), b])),
     [bookmarks],
   );
 
   const isItemStarred = useCallback(
-    (itemId: number) => byArticleId.has(itemId),
-    [byArticleId],
+    (itemId: number) => starredOverrides[itemId] ?? byArticleId.has(itemId),
+    [byArticleId, starredOverrides],
   );
 
   const getBookmarkByItemId = useCallback(
@@ -97,6 +101,7 @@ export function useStarredItems(filters: {
 export function useCreateBookmark() {
   const qc = useQueryClient();
   const { getFeedById } = useFeedLookup();
+  const setStarredOverride = useArticleSessionStore((s) => s.setStarredOverride);
 
   return useMutation({
     mutationFn: async (item: Item) => {
@@ -112,28 +117,45 @@ export function useCreateBookmark() {
       return res.data!;
     },
     onSuccess: (bookmark) => {
+      const itemId = resolveBookmarkItemId(bookmark);
       qc.setQueryData(
         queryKeys.bookmarks.list(),
-        (old: Bookmark[] | undefined) =>
-          old ? [bookmark, ...old] : [bookmark],
+        (old: Bookmark[] | undefined) => {
+          if (!old) return [bookmark];
+
+          const index = old.findIndex((b) => resolveBookmarkItemId(b) === itemId);
+          if (index === -1) {
+            return [bookmark, ...old];
+          }
+
+          const next = [...old];
+          next[index] = bookmark;
+          return next;
+        },
       );
+      setStarredOverride(itemId, true);
     },
   });
 }
 
 export function useDeleteBookmark() {
   const qc = useQueryClient();
+  const setStarredOverride = useArticleSessionStore((s) => s.setStarredOverride);
+
   return useMutation({
     mutationFn: async (bookmarkId: number) => {
       await bookmarkAPI.delete(bookmarkId);
       return bookmarkId;
     },
     onSuccess: (bookmarkId) => {
-      qc.setQueryData(
-        queryKeys.bookmarks.list(),
-        (old: Bookmark[] | undefined) =>
-          old?.filter((b) => b.id !== bookmarkId),
-      );
+      const bookmark = qc
+        .getQueryData<Bookmark[]>(queryKeys.bookmarks.list())
+        ?.find((b) => b.id === bookmarkId);
+      if (!bookmark) {
+        return;
+      }
+
+      setStarredOverride(resolveBookmarkItemId(bookmark), false);
     },
   });
 }
