@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/app-layout";
+import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { Button } from "@/components/ui/button";
 import {
@@ -224,7 +225,7 @@ function FeedsPage() {
   return (
     <AppLayout>
       <div className="flex h-full flex-col">
-        <header className="flex items-center justify-between border-b px-4 py-4 sm:px-6">
+        <ContentHeader>
           <div className="flex items-center gap-1">
             <SidebarTrigger />
             <h1 className="text-lg font-semibold">{t("feeds.header")}</h1>
@@ -235,7 +236,7 @@ function FeedsPage() {
               {t("feeds.count", { count: feeds.length })}
             </span>
           </div>
-        </header>
+        </ContentHeader>
 
         <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-2">
