@@ -19,7 +19,7 @@ type Config struct {
 	PullInterval    int // Pull interval in seconds (default: 1800 = 30 min)
 	PullTimeout     int // Request timeout in seconds (default: 30)
 	PullConcurrency int // Max concurrent pulls (default: 10)
-	PullMaxBackoff  int // Max backoff time in seconds (default: 604800 = 7 days)
+	PullMaxBackoff  int // Global max scheduling delay in seconds (default: 172800 = 48 hours)
 
 	LoginRateLimit int // Max failed login attempts per window (default: 10)
 	LoginWindow    int // Login rate limit window in seconds (default: 60)
@@ -90,7 +90,7 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	pullMaxBackoff, err := getEnvInt("FUSION_PULL_MAX_BACKOFF", 604800, 1)
+	pullMaxBackoff, err := getEnvInt("FUSION_PULL_MAX_BACKOFF", 172800, 1)
 	if err != nil {
 		return nil, err
 	}

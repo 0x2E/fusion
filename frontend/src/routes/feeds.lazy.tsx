@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import {
+  AlertCircle,
   ChevronDown,
   ChevronRight,
   Download,
@@ -35,12 +36,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { feedAPI, groupAPI } from "@/lib/api";
 import type { Feed, Group } from "@/lib/api";
+import { getFeedErrorPreview } from "@/lib/feed-error";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { generateOPML, downloadFile } from "@/lib/opml";
 import { useI18n } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import {
   useFeedLookup,
   useMoveFeedsToGroup,
@@ -49,6 +56,7 @@ import {
 import { useDeleteGroup, useGroups, useUpdateGroup } from "@/queries/groups";
 import { useUIStore } from "@/store";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createLazyFileRoute("/feeds")({
   component: FeedsPage,
@@ -86,6 +94,10 @@ function FeedsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false);
+  const [mobileErrorTooltipFeedId, setMobileErrorTooltipFeedId] = useState<
+    number | null
+  >(null);
+  const isMobile = useIsMobile();
 
   const statusFilterLabels: Record<StatusFilter, string> = {
     all: t("feeds.status.all"),
@@ -106,7 +118,8 @@ function FeedsPage() {
       ) {
         return false;
       }
-      if (statusFilter === "error" && !feed.failure) return false;
+      if (statusFilter === "error" && !feed.fetch_state.last_error)
+        return false;
       if (statusFilter === "paused" && !feed.suspended) return false;
       return true;
     };
@@ -455,14 +468,61 @@ function FeedsPage() {
                                 </div>
                               </div>
                               <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
-                                {feed.failure && (
-                                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
+                                {feed.fetch_state.last_error && (
+                                  <Tooltip
+                                    open={
+                                      isMobile
+                                        ? mobileErrorTooltipFeedId === feed.id
+                                        : undefined
+                                    }
+                                    onOpenChange={(open) => {
+                                      if (!isMobile || open) return;
+                                      setMobileErrorTooltipFeedId((current) =>
+                                        current === feed.id ? null : current,
+                                      );
+                                    }}
+                                  >
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        aria-label={t("feeds.status.error")}
+                                        onClick={() => {
+                                          if (!isMobile) return;
+                                          setMobileErrorTooltipFeedId((current) =>
+                                            current === feed.id ? null : feed.id,
+                                          );
+                                        }}
+                                        className="flex items-center gap-1 rounded-sm text-xs text-destructive"
+                                      >
+                                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                        <span className="hidden max-w-56 truncate font-medium sm:inline">
+                                          {getFeedErrorPreview(
+                                            feed.fetch_state.last_error,
+                                          )}
+                                        </span>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                      side="top"
+                                      className="max-w-sm whitespace-normal break-words"
+                                    >
+                                      {feed.fetch_state.last_error.trim()}
+                                    </TooltipContent>
+                                  </Tooltip>
                                 )}
                                 {feed.suspended && (
                                   <Pause className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                                 )}
                                 <span className="hidden text-xs text-muted-foreground sm:inline">
-                                  {t("feeds.itemCount", { count: feed.item_count })}
+                                  {t("feeds.itemCount", {
+                                    count: feed.item_count,
+                                  })}{" "}
+                                  ·{" "}
+                                  {feed.fetch_state.last_checked_at > 0
+                                    ? formatDate(
+                                        feed.fetch_state.last_checked_at,
+                                      )
+                                    : t("common.unknown")}
                                 </span>
                                 <button
                                   type="button"
@@ -521,7 +581,8 @@ function FeedsPage() {
                     {" "}
                     {t("feeds.deleteGroup.moveHint", {
                       count,
-                      target: target?.name ?? t("feeds.deleteGroup.targetDefault"),
+                      target:
+                        target?.name ?? t("feeds.deleteGroup.targetDefault"),
                     })}
                   </>
                 );

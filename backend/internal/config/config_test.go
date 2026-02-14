@@ -35,3 +35,16 @@ func TestLoadParsesCORSAndPrivateFeedSettings(t *testing.T) {
 		t.Fatalf("unexpected second trusted proxy: %q", cfg.TrustedProxies[1])
 	}
 }
+
+func TestLoadUsesDefaultPullMaxBackoff(t *testing.T) {
+	t.Setenv("FUSION_PASSWORD", "secret")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() failed: %v", err)
+	}
+
+	if cfg.PullMaxBackoff != 172800 {
+		t.Fatalf("expected default PullMaxBackoff to be 172800, got %d", cfg.PullMaxBackoff)
+	}
+}

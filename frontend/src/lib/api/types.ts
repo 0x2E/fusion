@@ -12,15 +12,28 @@ export interface Feed {
   name: string;
   link: string;
   site_url?: string;
-  last_build: number;
-  failure?: string;
-  failures: number;
   suspended: boolean;
   proxy?: string;
   created_at: number;
   updated_at: number;
+  fetch_state: FeedFetchState;
   unread_count: number;
   item_count: number;
+}
+
+export interface FeedFetchState {
+  etag?: string;
+  last_modified?: string;
+  cache_control?: string;
+  expires_at: number;
+  last_checked_at: number;
+  next_check_at: number;
+  last_http_status: number;
+  retry_after_until: number;
+  last_success_at: number;
+  last_error_at: number;
+  last_error?: string;
+  consecutive_failures: number;
 }
 
 export interface Item {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { ChevronDown, Save, Trash2, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { AlertCircle, ChevronDown, Save, Trash2, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useUIStore } from "@/store";
 import { useGroups } from "@/queries/groups";
 import { useUpdateFeed, useDeleteFeed } from "@/queries/feeds";
@@ -30,6 +35,7 @@ import type { UpdateFeedRequest } from "@/lib/api";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function EditFeedDialog() {
   const { t } = useI18n();
@@ -47,6 +53,10 @@ export function EditFeedDialog() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isMobileErrorTooltipOpen, setIsMobileErrorTooltipOpen] =
+    useState(false);
+  const urlInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (editingFeed) {
@@ -56,6 +66,7 @@ export function EditFeedDialog() {
       setProxy(editingFeed.proxy ?? "");
       setSuspended(editingFeed.suspended);
       setIsAdvancedOpen(!!editingFeed.proxy);
+      setIsMobileErrorTooltipOpen(false);
     }
   }, [editingFeed]);
 
@@ -72,6 +83,7 @@ export function EditFeedDialog() {
   const handleClose = () => {
     setEditFeedOpen(false);
     resetForm();
+    setIsMobileErrorTooltipOpen(false);
   };
 
   const handleSubmit = async () => {
@@ -154,11 +166,44 @@ export function EditFeedDialog() {
         <DialogContent
           className="flex w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
           showCloseButton={false}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            urlInputRef.current?.focus();
+          }}
         >
           {/* Header */}
           <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
-            <DialogTitle className="text-base font-semibold">
-              {t("feed.edit.title")}
+            <DialogTitle className="flex items-center gap-1.5 text-base font-semibold">
+              <span>{t("feed.edit.title")}</span>
+              {editingFeed?.fetch_state.last_error && (
+                <Tooltip
+                  open={isMobile ? isMobileErrorTooltipOpen : undefined}
+                  onOpenChange={(open) => {
+                    if (!isMobile || open) return;
+                    setIsMobileErrorTooltipOpen(false);
+                  }}
+                >
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={t("feeds.status.error")}
+                      onClick={() => {
+                        if (!isMobile) return;
+                        setIsMobileErrorTooltipOpen((open) => !open);
+                      }}
+                      className="inline-flex cursor-help items-center text-destructive"
+                    >
+                      <AlertCircle className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    className="max-w-sm whitespace-normal break-words"
+                  >
+                    {editingFeed.fetch_state.last_error.trim()}
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </DialogTitle>
             <Button variant="ghost" size="icon-sm" onClick={handleClose}>
               <X className="h-[18px] w-[18px] text-muted-foreground" />
@@ -173,6 +218,7 @@ export function EditFeedDialog() {
                 {t("feed.add.urlLabel")}
               </label>
               <Input
+                ref={urlInputRef}
                 placeholder={t("feed.add.urlPlaceholder")}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}

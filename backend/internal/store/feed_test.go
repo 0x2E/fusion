@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 )
@@ -91,8 +92,8 @@ func TestCreateFeed(t *testing.T) {
 		t.Error("expected suspended to default to false")
 	}
 
-	if feed.Failures != 0 {
-		t.Error("expected failures to default to 0")
+	if feed.FetchState.ConsecutiveFailures != 0 {
+		t.Error("expected consecutive_failures to default to 0")
 	}
 
 	if feed.ID == 0 || feed.CreatedAt == 0 || feed.UpdatedAt == 0 {
@@ -173,12 +174,55 @@ func TestUpdateFeed(t *testing.T) {
 	}
 }
 
+func TestUpdateFeedLinkResetsFetchState(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Group")
+	feed := mustCreateFeed(t, store, group.ID, "Feed", "https://example.com/feed.xml", "https://example.com", "")
+
+	checkedAt := time.Now().Unix()
+	if err := store.UpdateFeedFetchSuccess(feed.ID, UpdateFeedFetchSuccessParams{
+		CheckedAt:    checkedAt,
+		HTTPStatus:   200,
+		ETag:         "etag-v1",
+		LastModified: "Mon, 02 Jan 2006 15:04:05 GMT",
+		NextCheckAt:  checkedAt + 3600,
+	}); err != nil {
+		t.Fatalf("UpdateFeedFetchSuccess() failed: %v", err)
+	}
+
+	newLink := "https://example.com/new-feed.xml"
+	if err := store.UpdateFeed(feed.ID, UpdateFeedParams{Link: &newLink}); err != nil {
+		t.Fatalf("UpdateFeed() failed: %v", err)
+	}
+
+	updated, err := store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+
+	if updated.Link != newLink {
+		t.Fatalf("expected link %q, got %q", newLink, updated.Link)
+	}
+	if updated.FetchState.ETag != "" {
+		t.Fatalf("expected etag to be reset, got %q", updated.FetchState.ETag)
+	}
+	if updated.FetchState.LastModified != "" {
+		t.Fatalf("expected last_modified to be reset, got %q", updated.FetchState.LastModified)
+	}
+	if updated.FetchState.ConsecutiveFailures != 0 {
+		t.Fatalf("expected consecutive_failures reset to 0, got %d", updated.FetchState.ConsecutiveFailures)
+	}
+}
+
 func TestDeleteFeed(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
 	group := mustCreateGroup(t, store, "Test Group")
 	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
+
 	item := mustCreateItem(t, store, feed.ID, "guid-1", "Item 1", "https://example.com/item1", "Content 1", time.Now().Unix())
 	bookmark := mustCreateBookmark(t, store, &item.ID, "https://example.com/item1", "Item 1", "Content 1", item.PubDate, "Test Feed")
 
@@ -206,20 +250,46 @@ func TestDeleteFeed(t *testing.T) {
 	}
 }
 
-func TestUpdateFeedLastBuild(t *testing.T) {
+func TestUpdateFeedFetchSuccess(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
 	group := mustCreateGroup(t, store, "Test Group")
 	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
 
-	if err := store.UpdateFeedFailure(feed.ID, "test error"); err != nil {
-		t.Fatalf("UpdateFeedFailure() failed: %v", err)
+	seedCheckedAt := time.Now().Unix()
+	if err := store.UpdateFeedFetchSuccess(feed.ID, UpdateFeedFetchSuccessParams{
+		CheckedAt:    seedCheckedAt,
+		HTTPStatus:   200,
+		CacheControl: "max-age=1800",
+		ExpiresAt:    seedCheckedAt + 1800,
+		NextCheckAt:  seedCheckedAt + 1800,
+	}); err != nil {
+		t.Fatalf("UpdateFeedFetchSuccess() seed failed: %v", err)
 	}
 
-	lastBuild := time.Now().Unix()
-	if err := store.UpdateFeedLastBuild(feed.ID, lastBuild); err != nil {
-		t.Fatalf("UpdateFeedLastBuild() failed: %v", err)
+	if err := store.UpdateFeedFetchFailure(feed.ID, UpdateFeedFetchFailureParams{
+		CheckedAt:       time.Now().Unix(),
+		HTTPStatus:      500,
+		LastError:       "test error",
+		IntervalSeconds: 1800,
+		MaxBackoff:      604800,
+	}); err != nil {
+		t.Fatalf("UpdateFeedFetchFailure() failed: %v", err)
+	}
+
+	checkedAt := time.Now().Unix()
+	nextCheckAt := time.Now().Add(30 * time.Minute).Unix()
+	if err := store.UpdateFeedFetchSuccess(feed.ID, UpdateFeedFetchSuccessParams{
+		CheckedAt:    checkedAt,
+		HTTPStatus:   200,
+		ETag:         "abc",
+		LastModified: "Mon, 02 Jan 2006 15:04:05 GMT",
+		CacheControl: "max-age=1800",
+		ExpiresAt:    checkedAt + 1800,
+		NextCheckAt:  nextCheckAt,
+	}); err != nil {
+		t.Fatalf("UpdateFeedFetchSuccess() failed: %v", err)
 	}
 
 	updated, err := store.GetFeed(feed.ID)
@@ -227,32 +297,56 @@ func TestUpdateFeedLastBuild(t *testing.T) {
 		t.Fatalf("GetFeed() failed: %v", err)
 	}
 
-	if updated.LastBuild != lastBuild {
-		t.Errorf("expected last_build %d, got %d", lastBuild, updated.LastBuild)
+	if updated.FetchState.LastSuccessAt != checkedAt {
+		t.Errorf("expected last_success_at %d, got %d", checkedAt, updated.FetchState.LastSuccessAt)
 	}
 
-	if updated.Failure != "" {
-		t.Error("expected failure to be cleared")
+	if updated.FetchState.LastError != "" {
+		t.Error("expected last_error to be cleared")
 	}
 
-	if updated.Failures != 0 {
-		t.Error("expected failures to be cleared")
+	if updated.FetchState.ConsecutiveFailures != 0 {
+		t.Error("expected consecutive_failures to be cleared")
 	}
-	if updated.LastFailureAt != 0 {
-		t.Error("expected last_failure_at to be cleared")
+	if updated.FetchState.LastErrorAt != 0 {
+		t.Error("expected last_error_at to be cleared")
+	}
+	if updated.FetchState.ETag != "abc" {
+		t.Errorf("expected etag abc, got %q", updated.FetchState.ETag)
+	}
+	if updated.FetchState.NextCheckAt != nextCheckAt {
+		t.Errorf("expected next_check_at %d, got %d", nextCheckAt, updated.FetchState.NextCheckAt)
 	}
 }
 
-func TestUpdateFeedFailure(t *testing.T) {
+func TestUpdateFeedFetchFailure(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
 	group := mustCreateGroup(t, store, "Test Group")
 	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
 
+	seedCheckedAt := time.Now().Unix()
+	if err := store.UpdateFeedFetchSuccess(feed.ID, UpdateFeedFetchSuccessParams{
+		CheckedAt:    seedCheckedAt,
+		HTTPStatus:   200,
+		CacheControl: "max-age=1800",
+		ExpiresAt:    seedCheckedAt + 1800,
+		NextCheckAt:  seedCheckedAt + 1800,
+	}); err != nil {
+		t.Fatalf("UpdateFeedFetchSuccess() seed failed: %v", err)
+	}
+
 	errorMsg1 := "first error"
-	if err := store.UpdateFeedFailure(feed.ID, errorMsg1); err != nil {
-		t.Fatalf("UpdateFeedFailure() failed: %v", err)
+	firstCheckedAt := time.Now().Unix()
+	if err := store.UpdateFeedFetchFailure(feed.ID, UpdateFeedFetchFailureParams{
+		CheckedAt:       firstCheckedAt,
+		HTTPStatus:      500,
+		LastError:       errorMsg1,
+		IntervalSeconds: 1800,
+		MaxBackoff:      604800,
+	}); err != nil {
+		t.Fatalf("UpdateFeedFetchFailure() failed: %v", err)
 	}
 
 	updated1, err := store.GetFeed(feed.ID)
@@ -260,21 +354,35 @@ func TestUpdateFeedFailure(t *testing.T) {
 		t.Fatalf("GetFeed() failed: %v", err)
 	}
 
-	if updated1.Failure != errorMsg1 {
-		t.Errorf("expected failure %q, got %q", errorMsg1, updated1.Failure)
+	if updated1.FetchState.LastError != errorMsg1 {
+		t.Errorf("expected last_error %q, got %q", errorMsg1, updated1.FetchState.LastError)
 	}
 
-	if updated1.Failures != 1 {
-		t.Errorf("expected failures count to be 1, got %d", updated1.Failures)
+	if updated1.FetchState.ConsecutiveFailures != 1 {
+		t.Errorf("expected consecutive_failures to be 1, got %d", updated1.FetchState.ConsecutiveFailures)
 	}
-	if updated1.LastFailureAt == 0 {
-		t.Error("expected last_failure_at to be set after failure")
+	if updated1.FetchState.LastErrorAt == 0 {
+		t.Error("expected last_error_at to be set after failure")
 	}
-	firstFailureAt := updated1.LastFailureAt
+	if updated1.FetchState.CacheControl != "max-age=1800" {
+		t.Errorf("expected cache_control to remain from last success, got %q", updated1.FetchState.CacheControl)
+	}
+	if updated1.FetchState.ExpiresAt != seedCheckedAt+1800 {
+		t.Errorf("expected expires_at to remain from last success, got %d", updated1.FetchState.ExpiresAt)
+	}
+	firstFailureAt := updated1.FetchState.LastErrorAt
+	firstNextCheckAt := updated1.FetchState.NextCheckAt
 
 	errorMsg2 := "second error"
-	if err := store.UpdateFeedFailure(feed.ID, errorMsg2); err != nil {
-		t.Fatalf("UpdateFeedFailure() failed: %v", err)
+	secondCheckedAt := time.Now().Unix()
+	if err := store.UpdateFeedFetchFailure(feed.ID, UpdateFeedFetchFailureParams{
+		CheckedAt:       secondCheckedAt,
+		HTTPStatus:      502,
+		LastError:       errorMsg2,
+		IntervalSeconds: 1800,
+		MaxBackoff:      604800,
+	}); err != nil {
+		t.Fatalf("UpdateFeedFetchFailure() failed: %v", err)
 	}
 
 	updated2, err := store.GetFeed(feed.ID)
@@ -282,15 +390,100 @@ func TestUpdateFeedFailure(t *testing.T) {
 		t.Fatalf("GetFeed() failed: %v", err)
 	}
 
-	if updated2.Failure != errorMsg2 {
-		t.Errorf("expected failure %q, got %q", errorMsg2, updated2.Failure)
+	if updated2.FetchState.LastError != errorMsg2 {
+		t.Errorf("expected last_error %q, got %q", errorMsg2, updated2.FetchState.LastError)
 	}
 
-	if updated2.Failures != 2 {
-		t.Errorf("expected failures count to be 2, got %d", updated2.Failures)
+	if updated2.FetchState.ConsecutiveFailures != 2 {
+		t.Errorf("expected consecutive_failures to be 2, got %d", updated2.FetchState.ConsecutiveFailures)
 	}
-	if updated2.LastFailureAt < firstFailureAt {
-		t.Error("expected last_failure_at to be monotonic")
+	if updated2.FetchState.LastErrorAt < firstFailureAt {
+		t.Error("expected last_error_at to be monotonic")
+	}
+	if updated2.FetchState.CacheControl != "max-age=1800" {
+		t.Errorf("expected cache_control to remain from last success, got %q", updated2.FetchState.CacheControl)
+	}
+	if updated2.FetchState.ExpiresAt != seedCheckedAt+1800 {
+		t.Errorf("expected expires_at to remain from last success, got %d", updated2.FetchState.ExpiresAt)
+	}
+	if updated2.FetchState.NextCheckAt <= firstNextCheckAt {
+		t.Error("expected next_check_at to increase with more failures")
+	}
+}
+
+func TestUpdateFeedFetchFailureIgnoresFreshnessHeadersForScheduling(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Test Group")
+	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
+
+	checkedAt := int64(1700000000)
+	if err := store.UpdateFeedFetchFailure(feed.ID, UpdateFeedFetchFailureParams{
+		CheckedAt:       checkedAt,
+		HTTPStatus:      500,
+		LastError:       "upstream failure",
+		RetryAfterUntil: 0,
+		IntervalSeconds: 60,
+		MaxBackoff:      600,
+	}); err != nil {
+		t.Fatalf("UpdateFeedFetchFailure() failed: %v", err)
+	}
+
+	updated, err := store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+
+	if updated.FetchState.NextCheckAt >= checkedAt+3600 {
+		t.Fatalf("expected failure scheduling to ignore freshness headers, got next_check_at=%d", updated.FetchState.NextCheckAt)
+	}
+}
+
+func TestUpdateFeedFetchFailureConcurrentIncrements(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Test Group")
+	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
+
+	checkedAt := time.Now().Unix()
+	params := UpdateFeedFetchFailureParams{
+		CheckedAt:       checkedAt,
+		HTTPStatus:      500,
+		LastError:       "concurrent error",
+		IntervalSeconds: 1800,
+		MaxBackoff:      604800,
+	}
+
+	var wg sync.WaitGroup
+	var err1 error
+	var err2 error
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		err1 = store.UpdateFeedFetchFailure(feed.ID, params)
+	}()
+	go func() {
+		defer wg.Done()
+		err2 = store.UpdateFeedFetchFailure(feed.ID, params)
+	}()
+	wg.Wait()
+
+	if err1 != nil {
+		t.Fatalf("first UpdateFeedFetchFailure() failed: %v", err1)
+	}
+	if err2 != nil {
+		t.Fatalf("second UpdateFeedFetchFailure() failed: %v", err2)
+	}
+
+	updated, err := store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+
+	if updated.FetchState.ConsecutiveFailures != 2 {
+		t.Fatalf("expected consecutive_failures=2 after concurrent failures, got %d", updated.FetchState.ConsecutiveFailures)
 	}
 }
 

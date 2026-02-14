@@ -775,12 +775,10 @@ components:
         - group_id
         - name
         - link
-        - last_build
-        - last_failure_at
-        - failures
         - suspended
         - created_at
         - updated_at
+        - fetch_state
         - unread_count
         - item_count
       properties:
@@ -796,17 +794,6 @@ components:
           type: string
         site_url:
           type: string
-        last_build:
-          type: integer
-          format: int64
-        last_failure_at:
-          type: integer
-          format: int64
-        failure:
-          type: string
-        failures:
-          type: integer
-          format: int64
         suspended:
           type: boolean
         proxy:
@@ -817,10 +804,56 @@ components:
         updated_at:
           type: integer
           format: int64
+        fetch_state:
+          $ref: "#/components/schemas/FeedFetchState"
         unread_count:
           type: integer
           format: int64
         item_count:
+          type: integer
+          format: int64
+
+    FeedFetchState:
+      type: object
+      required:
+        - expires_at
+        - last_checked_at
+        - next_check_at
+        - last_http_status
+        - retry_after_until
+        - last_success_at
+        - last_error_at
+        - consecutive_failures
+      properties:
+        etag:
+          type: string
+        last_modified:
+          type: string
+        cache_control:
+          type: string
+        expires_at:
+          type: integer
+          format: int64
+        last_checked_at:
+          type: integer
+          format: int64
+        next_check_at:
+          type: integer
+          format: int64
+        last_http_status:
+          type: integer
+        retry_after_until:
+          type: integer
+          format: int64
+        last_success_at:
+          type: integer
+          format: int64
+        last_error_at:
+          type: integer
+          format: int64
+        last_error:
+          type: string
+        consecutive_failures:
           type: integer
           format: int64
 

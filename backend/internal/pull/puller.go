@@ -10,6 +10,7 @@ import (
 
 	"github.com/0x2E/fusion/internal/config"
 	"github.com/0x2E/fusion/internal/model"
+	"github.com/0x2E/fusion/internal/pullpolicy"
 	"github.com/0x2E/fusion/internal/store"
 	"golang.org/x/sync/semaphore"
 )
@@ -65,8 +66,17 @@ func (p *Puller) pullAll(ctx context.Context) {
 		return
 	}
 
+	now := time.Now().Unix()
 	_, _ = p.dispatchFeeds(ctx, feeds, func(feed *model.Feed) bool {
-		return !ShouldSkip(feed, p.interval, p.maxBackoff)
+		state := pullpolicy.FeedRuntimeState{
+			Suspended:           feed.Suspended,
+			RetryAfterUntil:     feed.FetchState.RetryAfterUntil,
+			NextCheckAt:         feed.FetchState.NextCheckAt,
+			ConsecutiveFailures: feed.FetchState.ConsecutiveFailures,
+			LastErrorAt:         feed.FetchState.LastErrorAt,
+			LastCheckedAt:       feed.FetchState.LastCheckedAt,
+		}
+		return !pullpolicy.ShouldSkip(now, state, p.interval, p.maxBackoff)
 	})
 }
 
@@ -74,17 +84,94 @@ func (p *Puller) pullAll(ctx context.Context) {
 func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 	p.logger.Debug("pulling feed", "feed_id", feed.ID, "feed_name", feed.Name)
 
-	items, siteURL, err := FetchAndParse(ctx, feed, p.timeout, p.config.AllowPrivateFeeds)
+	result, err := FetchAndParse(ctx, feed, p.timeout, p.config.AllowPrivateFeeds)
+	checkedAt := time.Now().Unix()
 	if err != nil {
-		p.logger.Warn("failed to fetch feed", "feed_id", feed.ID, "feed_name", feed.Name, "error", err)
-		if err := p.store.UpdateFeedFailure(feed.ID, err.Error()); err != nil {
+		httpStatus := 0
+		retryAfterUntil := int64(0)
+		if result != nil {
+			httpStatus = result.HTTPStatus
+			retryAfterUntil = result.RetryAfterUntil
+		}
+
+		if err := p.store.UpdateFeedFetchFailure(feed.ID, store.UpdateFeedFetchFailureParams{
+			CheckedAt:       checkedAt,
+			HTTPStatus:      httpStatus,
+			LastError:       err.Error(),
+			RetryAfterUntil: retryAfterUntil,
+			IntervalSeconds: int64(p.interval.Seconds()),
+			MaxBackoff:      int64(p.maxBackoff.Seconds()),
+		}); err != nil {
 			p.logger.Error("failed to record failure", "feed_id", feed.ID, "error", err)
 		}
+
+		p.logger.Warn("failed to fetch feed", "feed_id", feed.ID, "feed_name", feed.Name, "status", httpStatus, "error", err)
 		return
 	}
 
-	inputs := make([]store.BatchCreateItemInput, 0, len(items))
-	for _, item := range items {
+	if result.NotModified {
+		etag := result.ETag
+		// Some servers reply 304 without echoing validators; keep the previous
+		// ones so future conditional requests remain effective.
+		if strings.TrimSpace(etag) == "" {
+			etag = feed.FetchState.ETag
+		}
+
+		lastModified := result.LastModified
+		if strings.TrimSpace(lastModified) == "" {
+			lastModified = feed.FetchState.LastModified
+		}
+
+		cacheControl := result.CacheControl
+		if strings.TrimSpace(cacheControl) == "" {
+			cacheControl = feed.FetchState.CacheControl
+		}
+
+		expiresAt := result.ExpiresAt
+		if expiresAt == 0 {
+			expiresAt = feed.FetchState.ExpiresAt
+		}
+
+		nextCheckAt := pullpolicy.ComputeNextCheckAt(
+			checkedAt,
+			p.interval,
+			p.maxBackoff,
+			0,
+			result.RetryAfterUntil,
+			cacheControl,
+			expiresAt,
+		)
+
+		if err := p.store.UpdateFeedFetchSuccess(feed.ID, store.UpdateFeedFetchSuccessParams{
+			CheckedAt:       checkedAt,
+			HTTPStatus:      result.HTTPStatus,
+			ETag:            etag,
+			LastModified:    lastModified,
+			CacheControl:    cacheControl,
+			ExpiresAt:       expiresAt,
+			RetryAfterUntil: result.RetryAfterUntil,
+			NextCheckAt:     nextCheckAt,
+		}); err != nil {
+			p.logger.Error("failed to persist not-modified state", "feed_id", feed.ID, "error", err)
+			return
+		}
+
+		p.logger.Debug("feed not modified", "feed_id", feed.ID, "feed_name", feed.Name)
+		return
+	}
+
+	nextCheckAt := pullpolicy.ComputeNextCheckAt(
+		checkedAt,
+		p.interval,
+		p.maxBackoff,
+		0,
+		result.RetryAfterUntil,
+		result.CacheControl,
+		result.ExpiresAt,
+	)
+
+	inputs := make([]store.BatchCreateItemInput, 0, len(result.Items))
+	for _, item := range result.Items {
 		inputs = append(inputs, store.BatchCreateItemInput{
 			GUID:    item.GUID,
 			Title:   item.Title,
@@ -100,14 +187,23 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 		return
 	}
 
-	if err := p.store.UpdateFeedLastBuild(feed.ID, time.Now().Unix()); err != nil {
-		p.logger.Error("failed to update last_build", "feed_id", feed.ID, "error", err)
+	if err := p.store.UpdateFeedFetchSuccess(feed.ID, store.UpdateFeedFetchSuccessParams{
+		CheckedAt:       checkedAt,
+		HTTPStatus:      result.HTTPStatus,
+		ETag:            result.ETag,
+		LastModified:    result.LastModified,
+		CacheControl:    result.CacheControl,
+		ExpiresAt:       result.ExpiresAt,
+		RetryAfterUntil: result.RetryAfterUntil,
+		NextCheckAt:     nextCheckAt,
+	}); err != nil {
+		p.logger.Error("failed to update fetch state", "feed_id", feed.ID, "error", err)
 		return
 	}
 
-	if strings.TrimSpace(feed.SiteURL) == "" && siteURL != "" {
-		if err := p.store.UpdateFeedSiteURLIfEmpty(feed.ID, siteURL); err != nil {
-			p.logger.Warn("failed to auto-fill site_url", "feed_id", feed.ID, "site_url", siteURL, "error", err)
+	if strings.TrimSpace(feed.SiteURL) == "" && result.SiteURL != "" {
+		if err := p.store.UpdateFeedSiteURLIfEmpty(feed.ID, result.SiteURL); err != nil {
+			p.logger.Warn("failed to auto-fill site_url", "feed_id", feed.ID, "site_url", result.SiteURL, "error", err)
 		}
 	}
 

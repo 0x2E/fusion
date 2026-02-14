@@ -11,7 +11,7 @@ func TestMigrate(t *testing.T) {
 	defer closeStore(t, store)
 
 	// Verify all expected tables exist
-	tables := []string{"groups", "feeds", "items", "bookmarks", "schema_migrations", "items_fts"}
+	tables := []string{"groups", "feeds", "feed_fetch_state", "items", "bookmarks", "schema_migrations", "items_fts"}
 	for _, table := range tables {
 		var count int
 		query := "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=:table"
@@ -100,27 +100,38 @@ func TestMigrateLegacySchema(t *testing.T) {
 	}
 
 	var (
-		feed1GroupID     int64
-		feed1Failures    int64
-		feed1Suspended   int
-		feed1Proxy       string
-		feed1SiteURL     string
-		feed1LastBuild   int64
-		feed1LastFailure int64
+		feed1GroupID          int64
+		feed1Suspended        int
+		feed1Proxy            string
+		feed1SiteURL          string
+		feed1LastSuccess      int64
+		feed1ConsecutiveFails int64
+		feed1LastErrorAt      int64
+		feed1LastError        string
 	)
 	err = store.db.QueryRow(`
-		SELECT group_id, failures, suspended, proxy, site_url, last_build, last_failure_at
+		SELECT group_id, suspended, proxy, site_url
 		FROM feeds
 		WHERE link = 'https://legacy.example/feed-a.xml'
-	`).Scan(&feed1GroupID, &feed1Failures, &feed1Suspended, &feed1Proxy, &feed1SiteURL, &feed1LastBuild, &feed1LastFailure)
+	`).Scan(&feed1GroupID, &feed1Suspended, &feed1Proxy, &feed1SiteURL)
 	if err != nil {
 		t.Fatalf("query migrated feed failed: %v", err)
 	}
+
+	err = store.db.QueryRow(`
+		SELECT last_success_at, consecutive_failures, last_error_at, last_error
+		FROM feed_fetch_state
+		WHERE feed_id = (SELECT id FROM feeds WHERE link = 'https://legacy.example/feed-a.xml')
+	`).Scan(&feed1LastSuccess, &feed1ConsecutiveFails, &feed1LastErrorAt, &feed1LastError)
+	if err != nil {
+		t.Fatalf("query migrated feed state failed: %v", err)
+	}
+
 	if feed1GroupID != 2 {
 		t.Errorf("expected feed-a group_id=2, got %d", feed1GroupID)
 	}
-	if feed1Failures != 3 {
-		t.Errorf("expected failures=3, got %d", feed1Failures)
+	if feed1ConsecutiveFails != 3 {
+		t.Errorf("expected consecutive_failures=3, got %d", feed1ConsecutiveFails)
 	}
 	if feed1Suspended != 1 {
 		t.Errorf("expected suspended=1, got %d", feed1Suspended)
@@ -131,11 +142,14 @@ func TestMigrateLegacySchema(t *testing.T) {
 	if feed1SiteURL != "" {
 		t.Errorf("expected empty site_url default, got %q", feed1SiteURL)
 	}
-	if feed1LastBuild == 0 {
-		t.Error("expected last_build to be converted to unix timestamp")
+	if feed1LastSuccess == 0 {
+		t.Error("expected last_success_at to be converted to unix timestamp")
 	}
-	if feed1LastFailure != 0 {
-		t.Errorf("expected last_failure_at default to 0, got %d", feed1LastFailure)
+	if feed1LastErrorAt != 0 {
+		t.Errorf("expected last_error_at default to 0, got %d", feed1LastErrorAt)
+	}
+	if feed1LastError != "timeout" {
+		t.Errorf("expected last_error='timeout', got %q", feed1LastError)
 	}
 
 	var orphanGroupID int64
