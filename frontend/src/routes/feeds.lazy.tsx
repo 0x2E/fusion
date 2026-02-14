@@ -224,7 +224,7 @@ function FeedsPage() {
 
   return (
     <AppLayout>
-      <div className="flex h-full flex-col">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <ContentHeader>
           <div className="flex items-center gap-1">
             <SidebarTrigger />
@@ -333,7 +333,7 @@ function FeedsPage() {
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="min-h-0 flex-1">
           <div className="space-y-2 p-4 sm:p-6">
             {hasNoFeeds ? (
               <div className="py-12 text-center text-sm text-muted-foreground">

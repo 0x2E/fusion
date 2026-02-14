@@ -71,7 +71,7 @@ export function FeedList() {
   }
 
   return (
-    <ScrollArea className="flex-1 w-full min-w-0 overflow-hidden [&_[data-slot=scroll-area-viewport]>div]:!block">
+    <ScrollArea className="min-h-0 flex-1 w-full min-w-0 overflow-hidden [&_[data-slot=scroll-area-viewport]>div]:!block">
       <div className="w-full min-w-0 p-2 space-y-0.5">
         {/* Top-level filters */}
         <div className="space-y-0.5">
