@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	DBPath   string
-	Password string // Plaintext password from env
-	Port     int
+	DBPath      string
+	DatabaseURL string // PostgreSQL connection string (mutually exclusive with DBPath)
+	Password    string // Plaintext password from env
+	Port        int
 
 	CORSAllowedOrigins []string // Allowed Origins for CORS. Empty means allow all.
 	TrustedProxies     []string // Trusted reverse proxies for client IP resolution. Empty disables proxy trust.
@@ -128,6 +129,7 @@ func Load() (*Config, error) {
 
 	return &Config{
 		DBPath:             dbPath,
+		DatabaseURL:        os.Getenv("FUSION_DATABASE_URL"),
 		Password:           password,
 		Port:               parsedPort,
 		CORSAllowedOrigins: corsAllowedOrigins,

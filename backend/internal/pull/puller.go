@@ -16,7 +16,7 @@ import (
 )
 
 type Puller struct {
-	store       *store.Store
+	store       store.Storer
 	config      *config.Config
 	logger      *slog.Logger
 	interval    time.Duration
@@ -25,7 +25,7 @@ type Puller struct {
 	concurrency *semaphore.Weighted
 }
 
-func New(st *store.Store, cfg *config.Config) *Puller {
+func New(st store.Storer, cfg *config.Config) *Puller {
 	return &Puller{
 		store:       st,
 		config:      cfg,

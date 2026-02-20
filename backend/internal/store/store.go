@@ -11,8 +11,50 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/0x2E/fusion/internal/model"
 	"modernc.org/sqlite"
 )
+
+// Storer is the interface implemented by both Store (SQLite) and PGStore (PostgreSQL).
+// All handler and puller code depends on this interface, not on a concrete type.
+type Storer interface {
+	Close() error
+
+	ListFeeds() ([]*model.Feed, error)
+	GetFeed(id int64) (*model.Feed, error)
+	CreateFeed(groupID int64, name, link, siteURL, proxy string) (*model.Feed, error)
+	SearchFeeds(query string) ([]*SearchFeedResult, error)
+	UpdateFeed(id int64, params UpdateFeedParams) error
+	DeleteFeed(id int64) error
+	UpdateFeedFetchSuccess(id int64, params UpdateFeedFetchSuccessParams) error
+	UpdateFeedFetchFailure(id int64, params UpdateFeedFetchFailureParams) error
+	UpdateFeedSiteURLIfEmpty(id int64, siteURL string) error
+	BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFeedsResult, error)
+
+	ListItems(params ListItemsParams) ([]*model.Item, error)
+	GetItem(id int64) (*model.Item, error)
+	CreateItem(feedID int64, guid, title, link, content string, pubDate int64) (*model.Item, error)
+	BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInput) (int, error)
+	UpdateItemUnread(id int64, unread bool) error
+	BatchUpdateItemsUnread(ids []int64, unread bool) error
+	MarkAllAsRead(feedID *int64) error
+	ItemExists(feedID int64, guid string) (bool, error)
+	SearchItems(query string, limit int) ([]*SearchItemResult, error)
+	CountItems(params ListItemsParams) (int, error)
+
+	ListGroups() ([]*model.Group, error)
+	GetGroup(id int64) (*model.Group, error)
+	CreateGroup(name string) (*model.Group, error)
+	UpdateGroup(id int64, name string) error
+	DeleteGroup(id int64) error
+
+	ListBookmarks(limit, offset int) ([]*model.Bookmark, error)
+	GetBookmark(id int64) (*model.Bookmark, error)
+	CreateBookmark(itemID *int64, link, title, content string, pubDate int64, feedName string) (*model.Bookmark, error)
+	DeleteBookmark(id int64) error
+	BookmarkExists(link string) (bool, error)
+	CountBookmarks() (int, error)
+}
 
 type Store struct {
 	db *sql.DB

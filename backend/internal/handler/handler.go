@@ -15,7 +15,7 @@ import (
 )
 
 type Handler struct {
-	store        *store.Store
+	store        store.Storer
 	config       *config.Config
 	passwordHash string // bcrypt hash computed at startup
 	puller       interface {
@@ -32,7 +32,7 @@ type Handler struct {
 	refreshAllRunning bool
 }
 
-func New(store *store.Store, config *config.Config, puller interface {
+func New(store store.Storer, config *config.Config, puller interface {
 	RefreshFeed(ctx context.Context, feedID int64) error
 	RefreshAll(ctx context.Context) (int, error)
 }) (*Handler, error) {

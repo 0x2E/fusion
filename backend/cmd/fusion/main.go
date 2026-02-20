@@ -35,7 +35,12 @@ func run() error {
 	setupLogger(cfg)
 	gin.SetMode(gin.ReleaseMode)
 
-	st, err := store.New(cfg.DBPath)
+	var st store.Storer
+	if cfg.DatabaseURL != "" {
+		st, err = store.NewPostgres(cfg.DatabaseURL)
+	} else {
+		st, err = store.New(cfg.DBPath)
+	}
 	if err != nil {
 		return err
 	}
