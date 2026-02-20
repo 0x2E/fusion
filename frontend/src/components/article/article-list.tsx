@@ -3,7 +3,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArticleItem } from "./article-item";
 import { ContentHeader } from "@/components/layout/content-header";
@@ -257,26 +256,28 @@ export function ArticleList() {
       </ContentHeader>
 
       {/* Article area with filter tabs */}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 py-4 sm:px-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Filter tabs - hidden when no articles exist */}
         {!hasNoFeeds && (articles.length > 0 || articleFilter !== "all") && (
-          <Tabs
-            value={articleFilter}
-            onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
-          >
-            <TabsList>
-              <TabsTrigger value="all">{t("article.filter.all")}</TabsTrigger>
-              <TabsTrigger value="unread">{t("article.filter.unread")}</TabsTrigger>
-              <TabsTrigger value="starred">
-                {t("article.filter.starred")}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="px-4 pb-2 pt-4 sm:px-6">
+            <Tabs
+              value={articleFilter}
+              onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
+            >
+              <TabsList>
+                <TabsTrigger value="all">{t("article.filter.all")}</TabsTrigger>
+                <TabsTrigger value="unread">{t("article.filter.unread")}</TabsTrigger>
+                <TabsTrigger value="starred">
+                  {t("article.filter.starred")}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         )}
 
-        {/* Article list */}
-        <ScrollArea className="min-h-0 flex-1">
-          <div>
+        {/* Article list — edge-to-edge so item borders span full width */}
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+          <div className="w-full">
             {isLoading && articles.length === 0 ? (
               <div className="space-y-2 p-2">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -351,7 +352,7 @@ export function ArticleList() {
               </>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );
