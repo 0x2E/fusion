@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0x2E/fusion/internal/model"
-	"github.com/0x2E/fusion/internal/pkg/httpc"
 	"github.com/mmcdole/gofeed"
+	"github.com/patrickjmcd/reedme/internal/model"
+	"github.com/patrickjmcd/reedme/internal/pkg/httpc"
 )
 
 // ParsedItem represents a feed item after parsing and field mapping.

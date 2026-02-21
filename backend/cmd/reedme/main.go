@@ -8,15 +8,16 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
-	"github.com/0x2E/fusion/internal/config"
-	"github.com/0x2E/fusion/internal/handler"
-	"github.com/0x2E/fusion/internal/pull"
-	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
 	"github.com/mattn/go-isatty"
+	"github.com/patrickjmcd/reedme/internal/config"
+	"github.com/patrickjmcd/reedme/internal/handler"
+	"github.com/patrickjmcd/reedme/internal/pull"
+	"github.com/patrickjmcd/reedme/internal/store"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -37,8 +38,10 @@ func run() error {
 
 	var st store.Storer
 	if cfg.DatabaseURL != "" {
+		slog.Info("using PostgreSQL database", "url", maskPassword(cfg.DatabaseURL))
 		st, err = store.NewPostgres(cfg.DatabaseURL)
 	} else {
+		slog.Info("using SQLite database", "path", cfg.DBPath)
 		st, err = store.New(cfg.DBPath)
 	}
 	if err != nil {
@@ -140,4 +143,24 @@ func setupLogger(cfg *config.Config) {
 
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
+}
+
+func maskPassword(dbURL string) string {
+	if dbURL == "" {
+		return ""
+	}
+	// Simple masking for postgres:// URLs
+	// Format: postgres://user:password@host:port/dbname?params
+	if idx := strings.Index(dbURL, "://"); idx != -1 {
+		scheme := dbURL[:idx+3]
+		rest := dbURL[idx+3:]
+		if atIdx := strings.Index(rest, "@"); atIdx != -1 {
+			hostPart := rest[atIdx:]
+			userPart := rest[:atIdx]
+			if colonIdx := strings.Index(userPart, ":"); colonIdx != -1 {
+				return scheme + userPart[:colonIdx] + ":***" + hostPart
+			}
+		}
+	}
+	return dbURL
 }

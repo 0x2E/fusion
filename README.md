@@ -1,4 +1,4 @@
-<h1 align="center">Fusion</h1>
+<h1 align="center">ReedMe</h1>
 <p align="center">A lightweight RSS reader.</p>
 
 <p align="center">
@@ -23,9 +23,9 @@
 
 ```shell
 docker run -it -d -p 8080:8080 \
-  -v $(pwd)/fusion:/data \
-  -e FUSION_PASSWORD="fusion" \
-  ghcr.io/0x2e/fusion:latest
+  -v $(pwd)/reedme:/data \
+  -e REEDME_PASSWORD="reedme" \
+  ghcr.io/patrickjmcd/reedme:latest
 ```
 
 Open `http://localhost:8080`.
@@ -35,12 +35,12 @@ Docker Compose example:
 ```yaml
 version: "3"
 services:
-  fusion:
-    image: ghcr.io/0x2e/fusion:latest
+  reedme:
+    image: ghcr.io/patrickjmcd/reedme:latest
     ports:
       - "127.0.0.1:8080:8080"
     environment:
-      - FUSION_PASSWORD=fusion
+      - REEDME_PASSWORD=reedme
     restart: unless-stopped
     volumes:
       - ./data:/data
@@ -48,7 +48,7 @@ services:
 
 ## Other Installation Options
 
-- Pre-built binary: download from [Releases](https://github.com/0x2E/fusion/releases)
+- Pre-built binary: download from [Releases](https://github.com/patrickjmcd/reedme/releases)
 - Build from source: see [Contributing](./CONTRIBUTING.md)
 - One-click deployment:
   - [Deploy on Fly.io](./fly.toml)
@@ -60,39 +60,39 @@ All config keys are documented in [`.env.example`](./.env.example).
 
 Common keys:
 
-- `FUSION_PASSWORD` (required unless `FUSION_ALLOW_EMPTY_PASSWORD=true`)
-- `FUSION_PORT` (default `8080`)
-- `FUSION_PULL_INTERVAL`, `FUSION_PULL_TIMEOUT`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_MAX_BACKOFF`
-- `FUSION_CORS_ALLOWED_ORIGINS`, `FUSION_TRUSTED_PROXIES`
-- `FUSION_OIDC_*` for optional SSO
+- `REEDME_PASSWORD` (required unless `REEDME_ALLOW_EMPTY_PASSWORD=true`)
+- `REEDME_PORT` (default `8080`)
+- `REEDME_PULL_INTERVAL`, `REEDME_PULL_TIMEOUT`, `REEDME_PULL_CONCURRENCY`, `REEDME_PULL_MAX_BACKOFF`
+- `REEDME_CORS_ALLOWED_ORIGINS`, `REEDME_TRUSTED_PROXIES`
+- `REEDME_OIDC_*` for optional SSO
 
 Legacy env names (`DB`, `PASSWORD`, `PORT`) are still accepted for backward compatibility.
 
 ## Database
 
-Fusion supports SQLite (default) and PostgreSQL. The two are mutually exclusive — set one or the other.
+ReedMe supports SQLite (default) and PostgreSQL. The two are mutually exclusive — set one or the other.
 
 ### SQLite (default)
 
-No extra setup required. Set the file path with `FUSION_DB_PATH` (default: `fusion.db`).
+No extra setup required. Set the file path with `REEDME_DB_PATH` (default: `reedme.db`).
 
 ```shell
 docker run -it -d -p 8080:8080 \
-  -v $(pwd)/fusion:/data \
-  -e FUSION_PASSWORD="fusion" \
-  -e FUSION_DB_PATH="/data/fusion.db" \
-  ghcr.io/0x2e/fusion:latest
+  -v $(pwd)/reedme:/data \
+  -e REEDME_PASSWORD="reedme" \
+  -e REEDME_DB_PATH="/data/reedme.db" \
+  ghcr.io/patrickjmcd/reedme:latest
 ```
 
 ### PostgreSQL
 
-Set `FUSION_DATABASE_URL` to a PostgreSQL connection string. When this variable is present, `FUSION_DB_PATH` is ignored and Fusion connects to PostgreSQL instead.
+Set `REEDME_DATABASE_URL` to a PostgreSQL connection string. When this variable is present, `REEDME_DB_PATH` is ignored and ReedMe connects to PostgreSQL instead.
 
 ```shell
 docker run -it -d -p 8080:8080 \
-  -e FUSION_PASSWORD="fusion" \
-  -e FUSION_DATABASE_URL="postgres://user:password@host:5432/fusion?sslmode=disable" \
-  ghcr.io/0x2e/fusion:latest
+  -e REEDME_PASSWORD="reedme" \
+  -e REEDME_DATABASE_URL="postgres://user:password@host:5432/reedme?sslmode=disable" \
+  ghcr.io/patrickjmcd/reedme:latest
 ```
 
 Docker Compose example with a managed PostgreSQL service:
@@ -102,17 +102,17 @@ services:
   postgres:
     image: postgres:17
     environment:
-      POSTGRES_DB: fusion
-      POSTGRES_USER: fusion
-      POSTGRES_PASSWORD: fusion
+      POSTGRES_DB: reedme
+      POSTGRES_USER: reedme
+      POSTGRES_PASSWORD: reedme
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  fusion:
-    image: ghcr.io/0x2e/fusion:latest
+  reedme:
+    image: ghcr.io/patrickjmcd/reedme:latest
     environment:
-      FUSION_PASSWORD: changeme
-      FUSION_DATABASE_URL: postgres://fusion:fusion@postgres:5432/fusion?sslmode=disable
+      REEDME_PASSWORD: changeme
+      REEDME_DATABASE_URL: postgres://reedme:reedme@postgres:5432/reedme?sslmode=disable
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:

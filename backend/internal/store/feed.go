@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0x2E/fusion/internal/model"
-	"github.com/0x2E/fusion/internal/pullpolicy"
+	"github.com/patrickjmcd/reedme/internal/model"
+	"github.com/patrickjmcd/reedme/internal/pullpolicy"
 )
 
 func (s *Store) ListFeeds() ([]*model.Feed, error) {

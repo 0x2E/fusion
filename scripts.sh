@@ -3,8 +3,8 @@
 set -eu
 
 resolve_version() {
-  if [ -n "${FUSION_VERSION:-}" ]; then
-    printf '%s\n' "$FUSION_VERSION"
+  if [ -n "${REEDME_VERSION:-}" ]; then
+    printf '%s\n' "$REEDME_VERSION"
     return
   fi
 
@@ -24,12 +24,12 @@ test_backend() {
 build_frontend() {
   echo "building frontend"
   version=$(resolve_version)
-  echo "Using fusion version string: ${version}"
+  echo "Using reedme version string: ${version}"
 
   (
     cd frontend
     pnpm install --frozen-lockfile --prefer-offline
-    VITE_FUSION_VERSION="$version" pnpm run build
+    VITE_REEDME_VERSION="$version" pnpm run build
   )
 
   echo "syncing frontend build artifacts for backend embed"
@@ -43,7 +43,7 @@ build_backend() {
   target_os=${1:-$(go env GOOS)}
   target_arch=${2:-$(go env GOARCH)}
   root=$(pwd)
-  output_path=${3:-"${root}/build/fusion"}
+  output_path=${3:-"${root}/build/reedme"}
 
   case "$output_path" in
   /*) ;;
@@ -65,7 +65,7 @@ build_backend() {
       -trimpath \
       -ldflags '-extldflags "-static"' \
       -o "$output_path" \
-      ./cmd/fusion
+      ./cmd/reedme
   )
 }
 
@@ -83,18 +83,18 @@ release() {
     arch=${platform#*/}
     echo "--- building ${os}/${arch} ---"
 
-    bin_name="fusion"
+    bin_name="reedme"
     if [ "$os" = "windows" ]; then
-      bin_name="fusion.exe"
+      bin_name="reedme.exe"
     fi
 
     build_backend "$os" "$arch" "./dist/${bin_name}"
 
     if [ "$os" = "linux" ]; then
-      cp "./dist/${bin_name}" "./dist/fusion-linux-${arch}"
+      cp "./dist/${bin_name}" "./dist/reedme-linux-${arch}"
     fi
 
-    archive="fusion_${os}_${arch}.zip"
+    archive="reedme_${os}_${arch}.zip"
     zip -j "./dist/${archive}" "./dist/${bin_name}" LICENSE* README* || \
       zip -j "./dist/${archive}" "./dist/${bin_name}"
     rm "./dist/${bin_name}"
@@ -102,7 +102,7 @@ release() {
 
   (
     cd ./dist
-    sha256sum ./*.zip ./fusion-linux-* > checksums.txt
+    sha256sum ./*.zip ./reedme-linux-* > checksums.txt
   )
 
   echo "release artifacts:"
@@ -113,6 +113,11 @@ build() {
   test_backend
   build_frontend
   build_backend
+}
+
+setup_hooks() {
+  git config core.hooksPath .githooks
+  echo "git hooks configured (using .githooks/)"
 }
 
 usage() {
@@ -126,6 +131,7 @@ Commands:
                            Build backend binary
   build                    Run backend tests and build all
   release                  Build release archives and checksums
+  setup-hooks              Install git hooks (commit-msg linting)
 EOF
 }
 
@@ -144,6 +150,9 @@ case "${1:-}" in
   ;;
 "release")
   release
+  ;;
+"setup-hooks")
+  setup_hooks
   ;;
 *)
   usage

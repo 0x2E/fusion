@@ -14,6 +14,12 @@ on:
       - scripts.sh
       - .github/workflows/docker.yml
       - .github/actions/setup-toolchains/action.yml
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker tag to build (e.g., latest, dev, v1.0.0)'
+        required: true
+        default: 'dev'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -38,26 +44,36 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            rook1e404/fusion
             ghcr.io/${{ env.REPOSITORY }}
           tags: |
             # on release: tag with version (e.g., v1.2.3)
             type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+            # on release: tag with major.minor (e.g., 1.2)
+            type=semver,pattern={{major}}.{{minor}},enable=${{ github.event_name == 'release' }}
+            # on release: tag with major (e.g., 1)
+            type=semver,pattern={{major}},enable=${{ github.event_name == 'release' }}
+            # on release: tag as latest
+            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
             # on push to main: tag with main
             type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+            # on workflow dispatch: use custom tag
+            type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+          labels: |
+            org.opencontainers.image.title=reedme
+            org.opencontainers.image.description=Lightweight RSS aggregator and reader
       - name: Set up toolchains
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: ./.github/actions/setup-toolchains
         with:
           setup-node: "true"
       - name: Build binaries from source
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           mkdir -p ./build
-          rm -f ./build/fusion-linux-amd64 ./build/fusion-linux-arm64
+          rm -f ./build/reedme-linux-amd64 ./build/reedme-linux-arm64
           ./scripts.sh build-frontend
-          ./scripts.sh build-backend linux amd64 ./build/fusion-linux-amd64
-          ./scripts.sh build-backend linux arm64 ./build/fusion-linux-arm64
+          ./scripts.sh build-backend linux amd64 ./build/reedme-linux-amd64
+          ./scripts.sh build-backend linux arm64 ./build/reedme-linux-arm64
       - name: Download binaries from release assets
         if: github.event_name == 'release'
         env:
@@ -65,24 +81,23 @@ jobs:
         run: |
           mkdir -p ./build
           gh release download "${{ github.event.release.tag_name }}" \
-            --pattern "fusion-linux-amd64" \
-            --pattern "fusion-linux-arm64" \
+            --pattern "reedme-linux-amd64" \
+            --pattern "reedme-linux-arm64" \
             --dir ./build
       - name: Verify prepared binaries
         run: |
-          test -f ./build/fusion-linux-amd64
-          test -f ./build/fusion-linux-arm64
+          test -f ./build/reedme-linux-amd64
+          test -f ./build/reedme-linux-arm64
+          echo "### Binary verification" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          ls -lh ./build/ >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: amd64,arm64
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -99,3 +114,16 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Generate Docker summary
+        run: |
+          echo "## Docker Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Tags" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull $(echo '${{ steps.meta.outputs.tags }}' | head -n 1)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

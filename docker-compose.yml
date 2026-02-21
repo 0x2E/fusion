@@ -2,24 +2,24 @@ services:
   postgres:
     image: postgres:17
     environment:
-      POSTGRES_DB: fusion
-      POSTGRES_USER: fusion
-      POSTGRES_PASSWORD: fusion
+      POSTGRES_DB: reedme
+      POSTGRES_USER: reedme
+      POSTGRES_PASSWORD: reedme
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fusion -d fusion"]
+      test: ["CMD-SHELL", "pg_isready -U reedme -d reedme"]
       interval: 5s
       timeout: 3s
       retries: 5
 
-  fusion:
+  reedme:
     build: .
     environment:
-      FUSION_DATABASE_URL: postgres://fusion:fusion@postgres:5432/fusion?sslmode=disable
-      FUSION_PASSWORD: changeme
+      REEDME_DATABASE_URL: postgres://reedme:reedme@postgres:5432/reedme?sslmode=disable
+      REEDME_PASSWORD: changeme
     ports:
       - "8080:8080"
     depends_on:

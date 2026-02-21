@@ -6,8 +6,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/0x2E/fusion/internal/web"
 	"github.com/gin-gonic/gin"
+	"github.com/patrickjmcd/reedme/internal/web"
 )
 
 func (h *Handler) setupFrontendRoutes(r *gin.Engine) error {

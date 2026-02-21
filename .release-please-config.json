@@ -1,0 +1,32 @@
+{
+  "release-type": "go",
+  "packages": {
+    ".": {
+      "package-name": "reedme",
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "go",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "frontend/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  },
+  "changelog-sections": [
+    {"type": "feat", "section": "Features", "hidden": false},
+    {"type": "fix", "section": "Bug Fixes", "hidden": false},
+    {"type": "perf", "section": "Performance Improvements", "hidden": false},
+    {"type": "docs", "section": "Documentation", "hidden": false},
+    {"type": "refactor", "section": "Code Refactoring", "hidden": false},
+    {"type": "build", "section": "Build System", "hidden": false},
+    {"type": "revert", "section": "Reverts", "hidden": false},
+    {"type": "style", "section": "Styles", "hidden": true},
+    {"type": "test", "section": "Tests", "hidden": true},
+    {"type": "ci", "section": "Continuous Integration", "hidden": true},
+    {"type": "chore", "section": "Miscellaneous", "hidden": true}
+  ]
+}

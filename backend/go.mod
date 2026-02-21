@@ -1,4 +1,4 @@
-module github.com/0x2E/fusion
+module github.com/patrickjmcd/reedme
 
 go 1.25
 

@@ -1,4 +1,4 @@
-# Fusion Backend Design
+# ReedMe Backend Design
 
 ## 1. Goals
 
@@ -8,7 +8,7 @@
 
 ## 2. Runtime architecture
 
-Fusion backend runs two long-lived services in one process:
+ReedMe backend runs two long-lived services in one process:
 
 1. HTTP API server (Gin)
 2. Feed pull worker (periodic and manual refresh)
@@ -31,7 +31,7 @@ Both services share the same SQLite store.
 
 ```text
 backend/
-├── cmd/fusion/main.go           # process startup and lifecycle
+├── cmd/reedme/main.go           # process startup and lifecycle
 ├── internal/
 │   ├── config/                  # env parsing
 │   ├── handler/                 # HTTP handlers + middleware
@@ -158,14 +158,14 @@ Detailed contract: `docs/openapi.yaml`.
 
 ### Scheduler
 
-- Pull interval: `FUSION_PULL_INTERVAL` (default `1800s`)
-- Concurrency limit: `FUSION_PULL_CONCURRENCY` (default `10`)
-- Request timeout: `FUSION_PULL_TIMEOUT` (default `30s`)
-- Global max scheduling delay: `FUSION_PULL_MAX_BACKOFF` (default `48h`)
+- Pull interval: `REEDME_PULL_INTERVAL` (default `1800s`)
+- Concurrency limit: `REEDME_PULL_CONCURRENCY` (default `10`)
+- Request timeout: `REEDME_PULL_TIMEOUT` (default `30s`)
+- Global max scheduling delay: `REEDME_PULL_MAX_BACKOFF` (default `48h`)
 
 ### Next-check bound
 
-- `next_check_at` is always computed from branch delay, then capped by `FUSION_PULL_MAX_BACKOFF`.
+- `next_check_at` is always computed from branch delay, then capped by `REEDME_PULL_MAX_BACKOFF`.
 - Success branch (`200/304`):
   - `success_delay = max(interval, retry_after_delay, freshness_delay)`
   - `freshness_delay` comes from `Cache-Control max-age` and/or `Expires`.
@@ -187,12 +187,12 @@ Periodic pull skips feed when:
 
 - Formula: `interval * (1.8 ^ failures)`
 - `failures` here is the updated `consecutive_failures` value after the current failure is recorded.
-- `backoff_delay` is capped by `FUSION_PULL_MAX_BACKOFF`.
+- `backoff_delay` is capped by `REEDME_PULL_MAX_BACKOFF`.
 - Failure branch computes `next_check_at` from the strictest delay source:
   - pull interval
   - `Retry-After`
   - exponential backoff
-- Final `next_check_at` (success/failure) uses the same `FUSION_PULL_MAX_BACKOFF` cap.
+- Final `next_check_at` (success/failure) uses the same `REEDME_PULL_MAX_BACKOFF` cap.
 - Failure counter and `next_check_at` are updated in one DB transaction to avoid stale-counter races during concurrent refresh failures.
 - Failure updates do not overwrite `cache_control` / `expires_at`; these freshness fields are only refreshed on successful `200/304` checks.
 
@@ -237,22 +237,22 @@ flowchart TD
 ## 9. Security model
 
 - Password auth with bcrypt hash computed at startup
-- Login attempt rate limit (`FUSION_LOGIN_*`)
+- Login attempt rate limit (`REEDME_LOGIN_*`)
 - Session cookie: `HttpOnly`, `SameSite=Lax`, `Secure` on HTTPS
-- Optional OIDC SSO (`FUSION_OIDC_*`)
+- Optional OIDC SSO (`REEDME_OIDC_*`)
 - URL validation + private-network blocking by default for feed fetches
-- CORS allowlist via `FUSION_CORS_ALLOWED_ORIGINS`
-- Trusted proxy list via `FUSION_TRUSTED_PROXIES`
+- CORS allowlist via `REEDME_CORS_ALLOWED_ORIGINS`
+- Trusted proxy list via `REEDME_TRUSTED_PROXIES`
 
 ## 10. Observability and logs
 
 - Structured logging via `log/slog`
-- Configurable log level (`FUSION_LOG_LEVEL`)
-- Configurable output format (`FUSION_LOG_FORMAT`: `auto`, `text`, `json`)
+- Configurable log level (`REEDME_LOG_LEVEL`)
+- Configurable output format (`REEDME_LOG_FORMAT`: `auto`, `text`, `json`)
 
 ## 11. Release verification checklist
 
 - Backend tests: `cd backend && go test ./...`
-- Build check: `cd backend && go build -o /dev/null ./cmd/fusion`
+- Build check: `cd backend && go build -o /dev/null ./cmd/reedme`
 - Migration sanity check: start app on empty DB and ensure schema bootstraps correctly
 - API smoke tests: login, create feed, manual refresh, search, bookmark create/delete

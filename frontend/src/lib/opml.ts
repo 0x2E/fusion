@@ -85,7 +85,7 @@ export function generateOPML(groups: Group[], feeds: Feed[]): string {
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<opml version="2.0">',
     "  <head>",
-    "    <title>Fusion Subscriptions</title>",
+    "    <title>ReedMe Subscriptions</title>",
     `    <dateCreated>${new Date().toUTCString()}</dateCreated>`,
     "  </head>",
     "  <body>",

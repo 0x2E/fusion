@@ -1,0 +1,39 @@
+#!/bin/sh
+
+commit_msg=$(cat "$1")
+
+# Strip comment lines before validation
+msg=$(echo "$commit_msg" | grep -v '^#')
+
+# Allow empty commits (e.g., after conflict resolution)
+if [ -z "$(echo "$msg" | tr -d '[:space:]')" ]; then
+  exit 0
+fi
+
+# Conventional Commits: type(scope)!: description
+pattern='^(feat|fix|perf|docs|refactor|build|revert|style|test|ci|chore)(\([a-zA-Z0-9_/-]+\))?(!)?: .+'
+
+header=$(echo "$msg" | head -n 1)
+
+if ! echo "$header" | grep -qE "$pattern"; then
+  echo ""
+  echo "  Commit message does not follow Conventional Commits format."
+  echo ""
+  echo "  Expected: <type>[optional scope]: <description>"
+  echo "  Example:  feat(frontend): add dark mode toggle"
+  echo ""
+  echo "  Valid types: feat, fix, perf, docs, refactor, build, revert, style, test, ci, chore"
+  echo "  See: .github/COMMIT_CONVENTION.md"
+  echo ""
+  exit 1
+fi
+
+# Enforce 72-character header limit
+header_len=$(echo "$header" | wc -c | tr -d ' ')
+if [ "$header_len" -gt 73 ]; then  # wc -c counts the newline
+  echo ""
+  echo "  Commit message header exceeds 72 characters ($((header_len - 1)) chars)."
+  echo "  Please shorten: $header"
+  echo ""
+  exit 1
+fi

@@ -18,10 +18,10 @@ export function Sidebar() {
       <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
         <img
           src="/icon-96.png"
-          alt={t("common.fusionLogo")}
+          alt={t("common.reedmeLogo")}
           className="h-8 w-8 rounded-md"
         />
-        <span className="text-base font-semibold">Fusion</span>
+        <span className="text-base font-semibold">reedme</span>
       </div>
 
       {/* Search button */}

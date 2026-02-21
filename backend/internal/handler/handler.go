@@ -8,10 +8,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/0x2E/fusion/internal/auth"
-	"github.com/0x2E/fusion/internal/config"
-	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
+	"github.com/patrickjmcd/reedme/internal/auth"
+	"github.com/patrickjmcd/reedme/internal/config"
+	"github.com/patrickjmcd/reedme/internal/store"
 )
 
 type Handler struct {

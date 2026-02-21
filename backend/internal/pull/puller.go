@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0x2E/fusion/internal/config"
-	"github.com/0x2E/fusion/internal/model"
-	"github.com/0x2E/fusion/internal/pullpolicy"
-	"github.com/0x2E/fusion/internal/store"
+	"github.com/patrickjmcd/reedme/internal/config"
+	"github.com/patrickjmcd/reedme/internal/model"
+	"github.com/patrickjmcd/reedme/internal/pullpolicy"
+	"github.com/patrickjmcd/reedme/internal/store"
 	"golang.org/x/sync/semaphore"
 )
 

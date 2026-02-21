@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/0x2E/feedfinder"
-	"github.com/0x2E/fusion/internal/pkg/httpc"
-	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
 	"github.com/mmcdole/gofeed"
+	"github.com/patrickjmcd/reedme/internal/pkg/httpc"
+	"github.com/patrickjmcd/reedme/internal/store"
 )
 
 type createFeedRequest struct {

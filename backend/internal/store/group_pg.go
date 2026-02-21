@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/0x2E/fusion/internal/model"
+	"github.com/patrickjmcd/reedme/internal/model"
 )
 
 func (s *PGStore) ListGroups() ([]*model.Group, error) {
