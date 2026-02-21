@@ -1,0 +1,194 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          release-type: go
+          package-name: reedme
+          changelog-types: '[{"type":"feat","section":"Features","hidden":false},{"type":"fix","section":"Bug Fixes","hidden":false},{"type":"perf","section":"Performance Improvements","hidden":false},{"type":"docs","section":"Documentation","hidden":false},{"type":"style","section":"Styles","hidden":true},{"type":"refactor","section":"Code Refactoring","hidden":false},{"type":"test","section":"Tests","hidden":true},{"type":"build","section":"Build System","hidden":false},{"type":"ci","section":"Continuous Integration","hidden":true},{"type":"chore","section":"Miscellaneous","hidden":true},{"type":"revert","section":"Reverts","hidden":false}]'
+          bump-minor-pre-major: true
+          bump-patch-for-minor-pre-major: true
+
+  test:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up toolchains
+        uses: ./.github/actions/setup-toolchains
+      - name: Run backend tests
+        run: ./scripts.sh test-backend
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Check TypeScript
+        working-directory: frontend
+        run: npx tsc -b --noEmit
+      - name: Check i18n dictionaries
+        working-directory: frontend
+        run: pnpm run check:i18n
+
+  build:
+    needs: [release-please, test]
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up toolchains
+        uses: ./.github/actions/setup-toolchains
+        with:
+          setup-node: "true"
+      - name: Build release artifacts
+        env:
+          REEDME_VERSION: ${{ needs.release-please.outputs.version }}
+        run: ./scripts.sh release
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            dist/*.zip
+            dist/reedme-linux-*
+            dist/checksums.txt
+          retention-days: 7
+
+  release:
+    needs: [release-please, build]
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist
+      - name: Upload release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ needs.release-please.outputs.tag_name }} \
+            ./dist/*.zip \
+            ./dist/reedme-linux-* \
+            ./dist/checksums.txt
+      - name: Generate release summary
+        run: |
+          echo "## Release ${{ needs.release-please.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          ls -lh ./dist/ >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Checksums" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat ./dist/checksums.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  docker:
+    needs: [release-please, test]
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Normalize repository name
+        run: echo "REPOSITORY=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+      - name: Set up toolchains
+        uses: ./.github/actions/setup-toolchains
+        with:
+          setup-node: "true"
+      - name: Build binaries from source
+        run: |
+          mkdir -p ./build
+          rm -f ./build/reedme-linux-amd64 ./build/reedme-linux-arm64
+          ./scripts.sh build-frontend
+          ./scripts.sh build-backend linux amd64 ./build/reedme-linux-amd64
+          ./scripts.sh build-backend linux arm64 ./build/reedme-linux-arm64
+      - name: Verify prepared binaries
+        run: |
+          test -f ./build/reedme-linux-amd64
+          test -f ./build/reedme-linux-arm64
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: amd64,arm64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ env.REPOSITORY }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-please.outputs.version }}
+            type=semver,pattern={{major}},value=${{ needs.release-please.outputs.version }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=reedme
+            org.opencontainers.image.description=Lightweight RSS aggregator and reader
+            org.opencontainers.image.version=${{ needs.release-please.outputs.version }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Generate Docker summary
+        run: |
+          echo "## Docker Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Tags" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.REPOSITORY }}:${{ needs.release-please.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

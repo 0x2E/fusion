@@ -1,4 +1,4 @@
-# Fusion Frontend Design
+# ReedMe Frontend Design
 
 ## 1. Goals
 

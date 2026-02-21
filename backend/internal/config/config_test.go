@@ -3,10 +3,10 @@ package config
 import "testing"
 
 func TestLoadParsesCORSAndPrivateFeedSettings(t *testing.T) {
-	t.Setenv("FUSION_PASSWORD", "secret")
-	t.Setenv("FUSION_CORS_ALLOWED_ORIGINS", " https://app.example.com , , https://admin.example.com/ ")
-	t.Setenv("FUSION_TRUSTED_PROXIES", " 10.0.0.1 , 192.168.1.0/24 ")
-	t.Setenv("FUSION_ALLOW_PRIVATE_FEEDS", "true")
+	t.Setenv("REEDME_PASSWORD", "secret")
+	t.Setenv("REEDME_CORS_ALLOWED_ORIGINS", " https://app.example.com , , https://admin.example.com/ ")
+	t.Setenv("REEDME_TRUSTED_PROXIES", " 10.0.0.1 , 192.168.1.0/24 ")
+	t.Setenv("REEDME_ALLOW_PRIVATE_FEEDS", "true")
 
 	cfg, err := Load()
 	if err != nil {
@@ -37,7 +37,7 @@ func TestLoadParsesCORSAndPrivateFeedSettings(t *testing.T) {
 }
 
 func TestLoadUsesDefaultPullMaxBackoff(t *testing.T) {
-	t.Setenv("FUSION_PASSWORD", "secret")
+	t.Setenv("REEDME_PASSWORD", "secret")
 
 	cfg, err := Load()
 	if err != nil {

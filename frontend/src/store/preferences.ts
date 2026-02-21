@@ -74,7 +74,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         set({ articlePageSize: normalizeArticlePageSize(size) }),
     }),
     {
-      name: "fusion-preferences",
+      name: "reedme-preferences",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         locale: state.locale,

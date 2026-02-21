@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0x2E/fusion/internal/config"
-	"github.com/0x2E/fusion/internal/store"
+	"github.com/patrickjmcd/reedme/internal/config"
+	"github.com/patrickjmcd/reedme/internal/store"
 )
 
 func TestRefreshFeedPreservesValidatorsWhen304OmitHeaders(t *testing.T) {

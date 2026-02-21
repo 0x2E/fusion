@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0x2E/fusion/internal/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/patrickjmcd/reedme/internal/auth"
 )
 
 const (

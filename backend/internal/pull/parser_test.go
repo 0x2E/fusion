@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0x2E/fusion/internal/model"
 	"github.com/mmcdole/gofeed"
+	"github.com/patrickjmcd/reedme/internal/model"
 )
 
 func TestFetchAndParseSendsConditionalHeadersAndHandles304(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/0x2E/fusion/internal/model"
+	"github.com/patrickjmcd/reedme/internal/model"
 	"modernc.org/sqlite"
 )
 

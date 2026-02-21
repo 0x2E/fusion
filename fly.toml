@@ -7,7 +7,7 @@ app = "{APP_NAME}"
 primary_region = "{REGION}"
 
 [build]
-image = 'ghcr.io/0x2e/fusion:latest'
+image = 'ghcr.io/patrickjmcd/reedme:latest'
 
 [http_service]
 internal_port = 8080
@@ -20,11 +20,11 @@ size = 'shared-cpu-1x'
 memory = '256mb'
 
 [env]
-FUSION_PASSWORD = "{YOUR_PASSWORD}"
-FUSION_HOST = "127.0.0.1"
-FUSION_DB_PATH = "/data/fusion.db"
+REEDME_PASSWORD = "{YOUR_PASSWORD}"
+REEDME_HOST = "127.0.0.1"
+REEDME_DB_PATH = "/data/reedme.db"
 
 [mounts]
-source = "fusion_data"
+source = "reedme_data"
 destination = "/data"
 initial_size = "1GB"

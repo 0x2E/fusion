@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: Fusion API
+  title: ReedMe API
   version: 1.0.0
   description: >-
-    OpenAPI contract for Fusion backend. All endpoints are under /api.
+    OpenAPI contract for ReedMe backend. All endpoints are under /api.
     Authentication uses a session cookie named `session`.
 servers:
   - url: /api

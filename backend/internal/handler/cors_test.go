@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/0x2E/fusion/internal/config"
 	"github.com/gin-gonic/gin"
+	"github.com/patrickjmcd/reedme/internal/config"
 )
 
 func TestCORSMiddleware(t *testing.T) {

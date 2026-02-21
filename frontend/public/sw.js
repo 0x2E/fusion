@@ -1,4 +1,4 @@
-const CACHE_NAME = "fusion-static-v2";
+const CACHE_NAME = "reedme-static-v2";
 const APP_SHELL = [
   "/",
   "/index.html",

@@ -1,0 +1,107 @@
+name: release-manual
+
+# Manual release workflow - only use if release-please is not working
+# Prefer using release-please workflow for normal releases
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+      create_release:
+        description: 'Create GitHub release'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up toolchains
+        uses: ./.github/actions/setup-toolchains
+      - name: Run backend tests
+        run: ./scripts.sh test-backend
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Check TypeScript
+        working-directory: frontend
+        run: npx tsc -b --noEmit
+      - name: Check i18n dictionaries
+        working-directory: frontend
+        run: pnpm run check:i18n
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up toolchains
+        uses: ./.github/actions/setup-toolchains
+        with:
+          setup-node: "true"
+      - name: Build release artifacts
+        env:
+          REEDME_VERSION: ${{ github.event.inputs.version }}
+        run: ./scripts.sh release
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            dist/*.zip
+            dist/reedme-linux-*
+            dist/checksums.txt
+          retention-days: 7
+
+  release:
+    needs: build
+    if: ${{ github.event.inputs.create_release == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.event.inputs.version }} ./dist/*.zip ./dist/reedme-linux-* ./dist/checksums.txt \
+            --draft \
+            --title "reedme ${{ github.event.inputs.version }}" \
+            --generate-notes
+      - name: Generate release summary
+        run: |
+          echo "## Release ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          ls -lh ./dist/ >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Checksums" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat ./dist/checksums.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

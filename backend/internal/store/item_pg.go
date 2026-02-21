@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0x2E/fusion/internal/model"
+	"github.com/patrickjmcd/reedme/internal/model"
 )
 
 func (s *PGStore) ListItems(params ListItemsParams) ([]*model.Item, error) {

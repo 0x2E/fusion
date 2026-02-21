@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/0x2E/fusion/internal/model"
+	"github.com/patrickjmcd/reedme/internal/model"
 )
 
 func (s *PGStore) ListBookmarks(limit, offset int) ([]*model.Bookmark, error) {

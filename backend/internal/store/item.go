@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0x2E/fusion/internal/model"
+	"github.com/patrickjmcd/reedme/internal/model"
 )
 
 // ListItemsParams specifies filtering and pagination for item queries.

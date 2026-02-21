@@ -176,11 +176,11 @@ function AboutContent() {
     <div className="flex h-full flex-col items-center justify-center gap-4 pb-8">
       <img
         src="/icon-96.png"
-        alt={t("common.fusionLogo")}
+        alt={t("common.reedmeLogo")}
         className="h-16 w-16 rounded-2xl"
       />
       <div className="text-center">
-        <h3 className="text-xl font-semibold">Fusion</h3>
+        <h3 className="text-xl font-semibold">reedme</h3>
         <p className="mt-1 text-xs text-muted-foreground">{__APP_VERSION__}</p>
         <p className="mt-1.5 text-sm text-muted-foreground">
           {t("settings.about.description")}
@@ -204,7 +204,7 @@ function AboutContent() {
         )}
         <Button variant="outline" size="sm" asChild>
           <a
-            href="https://github.com/0x2e/fusion"
+            href="https://github.com/patrickjmcd/reedme"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -214,7 +214,7 @@ function AboutContent() {
         </Button>
         <Button variant="outline" size="sm" asChild>
           <a
-            href="https://github.com/0x2e/fusion/issues"
+            href="https://github.com/patrickjmcd/reedme/issues"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -224,7 +224,7 @@ function AboutContent() {
         </Button>
       </div>
       <p className="mt-auto text-xs text-muted-foreground">
-        {t("settings.about.license")}
+        {`${t("settings.about.license")} © ${new Date().getFullYear()} patrickjmcd`}
       </p>
     </div>
   );

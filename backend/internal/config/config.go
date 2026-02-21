@@ -39,32 +39,32 @@ type Config struct {
 
 func Load() (*Config, error) {
 	// Backward compatible env vars:
-	// - DB (legacy) -> FUSION_DB_PATH
-	// - PASSWORD (legacy) -> FUSION_PASSWORD
-	// - PORT (legacy) -> FUSION_PORT
-	dbPath := os.Getenv("FUSION_DB_PATH")
+	// - DB (legacy) -> REEDME_DB_PATH
+	// - PASSWORD (legacy) -> REEDME_PASSWORD
+	// - PORT (legacy) -> REEDME_PORT
+	dbPath := os.Getenv("REEDME_DB_PATH")
 	if dbPath == "" {
 		dbPath = os.Getenv("DB")
 	}
 	if dbPath == "" {
-		dbPath = "fusion.db"
+		dbPath = "reedme.db"
 	}
 
-	password := os.Getenv("FUSION_PASSWORD")
+	password := os.Getenv("REEDME_PASSWORD")
 	if password == "" {
 		password = os.Getenv("PASSWORD")
 	}
 
-	allowEmptyPassword, err := getEnvBool("FUSION_ALLOW_EMPTY_PASSWORD", false)
+	allowEmptyPassword, err := getEnvBool("REEDME_ALLOW_EMPTY_PASSWORD", false)
 	if err != nil {
 		return nil, err
 	}
 
 	if strings.TrimSpace(password) == "" && !allowEmptyPassword {
-		return nil, fmt.Errorf("FUSION_PASSWORD is required (or set FUSION_ALLOW_EMPTY_PASSWORD=true)")
+		return nil, fmt.Errorf("REEDME_PASSWORD is required (or set REEDME_ALLOW_EMPTY_PASSWORD=true)")
 	}
 
-	port := os.Getenv("FUSION_PORT")
+	port := os.Getenv("REEDME_PORT")
 	if port == "" {
 		port = os.Getenv("PORT")
 	}
@@ -73,63 +73,63 @@ func Load() (*Config, error) {
 	}
 	parsedPort, err := strconv.Atoi(port)
 	if err != nil {
-		return nil, fmt.Errorf("invalid FUSION_PORT: %w", err)
+		return nil, fmt.Errorf("invalid REEDME_PORT: %w", err)
 	}
 	if parsedPort <= 0 || parsedPort > 65535 {
-		return nil, fmt.Errorf("invalid FUSION_PORT: must be in range 1-65535")
+		return nil, fmt.Errorf("invalid REEDME_PORT: must be in range 1-65535")
 	}
 
-	pullInterval, err := getEnvInt("FUSION_PULL_INTERVAL", 1800, 1)
+	pullInterval, err := getEnvInt("REEDME_PULL_INTERVAL", 1800, 1)
 	if err != nil {
 		return nil, err
 	}
-	pullTimeout, err := getEnvInt("FUSION_PULL_TIMEOUT", 30, 1)
+	pullTimeout, err := getEnvInt("REEDME_PULL_TIMEOUT", 30, 1)
 	if err != nil {
 		return nil, err
 	}
-	pullConcurrency, err := getEnvInt("FUSION_PULL_CONCURRENCY", 10, 1)
+	pullConcurrency, err := getEnvInt("REEDME_PULL_CONCURRENCY", 10, 1)
 	if err != nil {
 		return nil, err
 	}
-	pullMaxBackoff, err := getEnvInt("FUSION_PULL_MAX_BACKOFF", 172800, 1)
-	if err != nil {
-		return nil, err
-	}
-
-	loginRateLimit, err := getEnvInt("FUSION_LOGIN_RATE_LIMIT", 10, 1)
-	if err != nil {
-		return nil, err
-	}
-	loginWindow, err := getEnvInt("FUSION_LOGIN_WINDOW", 60, 1)
-	if err != nil {
-		return nil, err
-	}
-	loginBlock, err := getEnvInt("FUSION_LOGIN_BLOCK", 300, 1)
+	pullMaxBackoff, err := getEnvInt("REEDME_PULL_MAX_BACKOFF", 172800, 1)
 	if err != nil {
 		return nil, err
 	}
 
-	corsAllowedOrigins := parseCSVEnv(os.Getenv("FUSION_CORS_ALLOWED_ORIGINS"))
-	trustedProxies := parseCSVEnv(os.Getenv("FUSION_TRUSTED_PROXIES"))
-
-	allowPrivateFeeds, err := getEnvBool("FUSION_ALLOW_PRIVATE_FEEDS", false)
+	loginRateLimit, err := getEnvInt("REEDME_LOGIN_RATE_LIMIT", 10, 1)
+	if err != nil {
+		return nil, err
+	}
+	loginWindow, err := getEnvInt("REEDME_LOGIN_WINDOW", 60, 1)
+	if err != nil {
+		return nil, err
+	}
+	loginBlock, err := getEnvInt("REEDME_LOGIN_BLOCK", 300, 1)
 	if err != nil {
 		return nil, err
 	}
 
-	logLevel := os.Getenv("FUSION_LOG_LEVEL")
+	corsAllowedOrigins := parseCSVEnv(os.Getenv("REEDME_CORS_ALLOWED_ORIGINS"))
+	trustedProxies := parseCSVEnv(os.Getenv("REEDME_TRUSTED_PROXIES"))
+
+	allowPrivateFeeds, err := getEnvBool("REEDME_ALLOW_PRIVATE_FEEDS", false)
+	if err != nil {
+		return nil, err
+	}
+
+	logLevel := os.Getenv("REEDME_LOG_LEVEL")
 	if logLevel == "" {
 		logLevel = "INFO"
 	}
 
-	logFormat := os.Getenv("FUSION_LOG_FORMAT")
+	logFormat := os.Getenv("REEDME_LOG_FORMAT")
 	if logFormat == "" {
 		logFormat = "auto"
 	}
 
 	return &Config{
 		DBPath:             dbPath,
-		DatabaseURL:        os.Getenv("FUSION_DATABASE_URL"),
+		DatabaseURL:        os.Getenv("REEDME_DATABASE_URL"),
 		Password:           password,
 		Port:               parsedPort,
 		CORSAllowedOrigins: corsAllowedOrigins,
@@ -145,11 +145,11 @@ func Load() (*Config, error) {
 		LogLevel:           logLevel,
 		LogFormat:          logFormat,
 
-		OIDCIssuer:       os.Getenv("FUSION_OIDC_ISSUER"),
-		OIDCClientID:     os.Getenv("FUSION_OIDC_CLIENT_ID"),
-		OIDCClientSecret: os.Getenv("FUSION_OIDC_CLIENT_SECRET"),
-		OIDCRedirectURI:  os.Getenv("FUSION_OIDC_REDIRECT_URI"),
-		OIDCAllowedUser:  os.Getenv("FUSION_OIDC_ALLOWED_USER"),
+		OIDCIssuer:       os.Getenv("REEDME_OIDC_ISSUER"),
+		OIDCClientID:     os.Getenv("REEDME_OIDC_CLIENT_ID"),
+		OIDCClientSecret: os.Getenv("REEDME_OIDC_CLIENT_SECRET"),
+		OIDCRedirectURI:  os.Getenv("REEDME_OIDC_REDIRECT_URI"),
+		OIDCAllowedUser:  os.Getenv("REEDME_OIDC_ALLOWED_USER"),
 	}, nil
 }
 

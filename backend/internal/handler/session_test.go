@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0x2E/fusion/internal/auth"
 	"github.com/gin-gonic/gin"
+	"github.com/patrickjmcd/reedme/internal/auth"
 )
 
 func newTestSessionHandler(t *testing.T, password string) *Handler {

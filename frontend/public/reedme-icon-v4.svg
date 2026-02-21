@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="bigglow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Overall shape: top is arc of circle, bottom is flat -->
+    <!-- The shape is: arc from (8,50) over the top to (92,50), then straight across bottom -->
+    <clipPath id="shapeClip">
+      <path d="M 8 50 A 42 42 0 1 1 92 50 L 92 88 L 8 88 Z"/>
+    </clipPath>
+
+    <!-- Top half only -->
+    <clipPath id="topHalf">
+      <rect x="0" y="0" width="100" height="50"/>
+    </clipPath>
+
+    <!-- Bottom half only -->
+    <clipPath id="bottomHalf">
+      <rect x="0" y="50" width="100" height="50"/>
+    </clipPath>
+  </defs>
+
+  <!-- Overall shape fill -->
+  <g clip-path="url(#shapeClip)">
+    <!-- Top: transparent (nothing) -->
+    <!-- Bottom: newsprint -->
+    <rect x="8" y="50" width="84" height="38" fill="#fdf6e3"/>
+  </g>
+
+  <!-- Shape outline -->
+  <path d="M 8 50 A 42 42 0 1 1 92 50 L 92 88 L 8 88 Z"
+        fill="none" stroke="#ff8c00" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- ===================== -->
+  <!-- TOP HALF: Signal rings -->
+  <!-- ===================== -->
+  <g clip-path="url(#topHalf)">
+    <circle cx="50" cy="50" r="42" fill="none" stroke="#ff8c00" stroke-width="2" opacity="0.2"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="#ff7300" stroke-width="2.5" opacity="0.35"/>
+    <circle cx="50" cy="50" r="25" fill="none" stroke="#ff7300" stroke-width="3" opacity="0.6" filter="url(#glow)"/>
+    <circle cx="50" cy="50" r="16" fill="none" stroke="#ff6200" stroke-width="3.5" opacity="0.85" filter="url(#glow)"/>
+  </g>
+
+  <!-- ========================= -->
+  <!-- BOTTOM HALF: Newspaper    -->
+  <!-- ========================= -->
+  <g clip-path="url(#bottomHalf)">
+    <!-- Rings ghosted through -->
+    <circle cx="50" cy="50" r="34" fill="none" stroke="#ff7300" stroke-width="2" opacity="0.15"/>
+    <circle cx="50" cy="50" r="25" fill="none" stroke="#ff7300" stroke-width="2" opacity="0.2"/>
+    <circle cx="50" cy="50" r="16" fill="none" stroke="#ff6200" stroke-width="2.5" opacity="0.3"/>
+
+    <!-- Headline bar -->
+    <rect x="14" y="53" width="72" height="4" rx="1" fill="#b8945a" opacity="0.55"/>
+
+    <!-- Column dividers -->
+    <line x1="40" y1="61" x2="40" y2="86" stroke="#c8a96e" stroke-width="0.75" opacity="0.5"/>
+    <line x1="60" y1="61" x2="60" y2="86" stroke="#c8a96e" stroke-width="0.75" opacity="0.5"/>
+
+    <!-- Column 1 -->
+    <line x1="14" y1="63" x2="37" y2="63" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="14" y1="68" x2="37" y2="68" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="14" y1="73" x2="35" y2="73" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="14" y1="78" x2="37" y2="78" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="14" y1="83" x2="32" y2="83" stroke="#b8945a" stroke-width="1.2" opacity="0.45"/>
+
+    <!-- Column 2 -->
+    <line x1="43" y1="63" x2="57" y2="63" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="43" y1="68" x2="57" y2="68" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="43" y1="73" x2="57" y2="73" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="43" y1="78" x2="57" y2="78" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="43" y1="83" x2="55" y2="83" stroke="#b8945a" stroke-width="1.2" opacity="0.45"/>
+
+    <!-- Column 3 -->
+    <line x1="63" y1="63" x2="86" y2="63" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="63" y1="68" x2="86" y2="68" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="63" y1="73" x2="84" y2="73" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="63" y1="78" x2="86" y2="78" stroke="#b8945a" stroke-width="1.2" opacity="0.65"/>
+    <line x1="63" y1="83" x2="81" y2="83" stroke="#b8945a" stroke-width="1.2" opacity="0.45"/>
+  </g>
+
+  <!-- Scan line divider -->
+  <line x1="8" y1="50" x2="92" y2="50" stroke="#ff6200" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- Center dot -->
+  <circle cx="50" cy="50" r="6" fill="#ff6200" filter="url(#bigglow)"/>
+  <circle cx="50" cy="50" r="3.5" fill="#ff8c00"/>
+
+</svg>
