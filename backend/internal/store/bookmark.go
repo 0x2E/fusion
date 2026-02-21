@@ -14,7 +14,7 @@ func (s *Store) ListBookmarks(limit, offset int) ([]*model.Bookmark, error) {
 		FROM bookmarks
 		ORDER BY created_at DESC, id DESC
 	`
-	args := []interface{}{}
+	args := []any{}
 
 	if limit > 0 {
 		query += ` LIMIT :limit`

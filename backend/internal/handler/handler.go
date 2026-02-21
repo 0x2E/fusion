@@ -217,10 +217,10 @@ func (h *Handler) authMiddleware() gin.HandlerFunc {
 	}
 }
 
-func dataResponse(c *gin.Context, data interface{}) {
+func dataResponse(c *gin.Context, data any) {
 	c.JSON(200, gin.H{"data": data})
 }
 
-func listResponse(c *gin.Context, data interface{}, total int) {
+func listResponse(c *gin.Context, data any, total int) {
 	c.JSON(200, gin.H{"data": data, "total": total})
 }

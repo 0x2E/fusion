@@ -28,7 +28,7 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 		SELECT items.id, items.feed_id, items.guid, items.title, items.link, items.content, items.pub_date, items.unread, items.created_at
 		FROM items
 	`
-	args := []interface{}{}
+	args := []any{}
 
 	// Join feeds table if filtering by GroupID
 	if params.GroupID != nil {
@@ -208,10 +208,7 @@ func (s *Store) BatchUpdateItemsUnread(ids []int64, unread bool) error {
 
 	const chunkSize = 500
 	for start := 0; start < len(ids); start += chunkSize {
-		end := start + chunkSize
-		if end > len(ids) {
-			end = len(ids)
-		}
+		end := min(start+chunkSize, len(ids))
 
 		if err := s.batchUpdateItemsUnreadChunk(ids[start:end], unread); err != nil {
 			return err
@@ -227,7 +224,7 @@ func (s *Store) batchUpdateItemsUnreadChunk(ids []int64, unread bool) error {
 	}
 
 	placeholders := make([]string, len(ids))
-	args := make([]interface{}, 0, len(ids)+1)
+	args := make([]any, 0, len(ids)+1)
 	args = append(args, sql.Named("unread", boolToInt(unread)))
 	for i, id := range ids {
 		paramName := fmt.Sprintf("id%d", i)
@@ -341,7 +338,7 @@ func (s *Store) searchItemsLike(query string, limit int) ([]*SearchItemResult, e
 // CountItems returns the total count of items matching the filter criteria.
 func (s *Store) CountItems(params ListItemsParams) (int, error) {
 	query := `SELECT COUNT(*) FROM items`
-	args := []interface{}{}
+	args := []any{}
 
 	if params.GroupID != nil {
 		query += ` INNER JOIN feeds ON items.feed_id = feeds.id`

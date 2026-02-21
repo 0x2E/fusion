@@ -345,7 +345,7 @@ func TestBatchUpdateItemsUnreadChunked(t *testing.T) {
 	feed := mustCreateFeed(t, store, group.ID, "Chunk Feed", "https://example.com/chunk-feed", "https://example.com", "")
 
 	inputs := make([]BatchCreateItemInput, 0, 520)
-	for i := 0; i < 520; i++ {
+	for i := range 520 {
 		inputs = append(inputs, BatchCreateItemInput{
 			GUID:    fmt.Sprintf("chunk-guid-%d", i),
 			Title:   "Chunk Item",

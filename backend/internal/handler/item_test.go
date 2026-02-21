@@ -17,7 +17,7 @@ func TestMarkItemsBatchValidation(t *testing.T) {
 		name    string
 		path    string
 		handler gin.HandlerFunc
-		body    interface{}
+		body    any
 	}{
 		{name: "read rejects too many ids", path: "/api/items/-/read", handler: (&Handler{}).markItemsRead, body: gin.H{"ids": ids}},
 		{name: "unread rejects empty ids", path: "/api/items/-/unread", handler: (&Handler{}).markItemsUnread, body: gin.H{"ids": []int64{}}},

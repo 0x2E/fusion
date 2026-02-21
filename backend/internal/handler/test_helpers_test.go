@@ -16,7 +16,7 @@ func newTestRouter() *gin.Engine {
 	return gin.New()
 }
 
-func mustJSONBody(t *testing.T, payload interface{}) *bytes.Reader {
+func mustJSONBody(t *testing.T, payload any) *bytes.Reader {
 	t.Helper()
 
 	body, err := json.Marshal(payload)

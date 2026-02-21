@@ -198,7 +198,7 @@ type UpdateFeedParams struct {
 // UpdateFeed performs partial update of feed fields using a single dynamic UPDATE query.
 func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 	setClauses := []string{}
-	args := []interface{}{sql.Named("id", id)}
+	args := []any{sql.Named("id", id)}
 
 	if params.GroupID != nil {
 		setClauses = append(setClauses, "group_id = :group_id")

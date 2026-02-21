@@ -1,6 +1,6 @@
 module github.com/0x2E/fusion
 
-go 1.25
+go 1.26
 
 require (
 	github.com/0x2E/feedfinder v0.1.1

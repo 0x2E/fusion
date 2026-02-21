@@ -156,7 +156,7 @@ func parseCacheControlMaxAgeSeconds(cacheControl string) int64 {
 		return 0
 	}
 
-	for _, part := range strings.Split(cacheControl, ",") {
+	for part := range strings.SplitSeq(cacheControl, ",") {
 		token := strings.TrimSpace(strings.ToLower(part))
 		if !strings.HasPrefix(token, "max-age=") {
 			continue
