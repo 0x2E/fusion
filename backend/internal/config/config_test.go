@@ -48,3 +48,32 @@ func TestLoadUsesDefaultPullMaxBackoff(t *testing.T) {
 		t.Fatalf("expected default PullMaxBackoff to be 172800, got %d", cfg.PullMaxBackoff)
 	}
 }
+
+func TestLoadFeverUsername(t *testing.T) {
+	t.Run("uses default username", func(t *testing.T) {
+		t.Setenv("FUSION_PASSWORD", "secret")
+
+		cfg, err := Load()
+		if err != nil {
+			t.Fatalf("Load() failed: %v", err)
+		}
+
+		if cfg.FeverUsername != "fusion" {
+			t.Fatalf("expected default FeverUsername to be %q, got %q", "fusion", cfg.FeverUsername)
+		}
+	})
+
+	t.Run("uses explicit username", func(t *testing.T) {
+		t.Setenv("FUSION_PASSWORD", "secret")
+		t.Setenv("FUSION_FEVER_USERNAME", " reader ")
+
+		cfg, err := Load()
+		if err != nil {
+			t.Fatalf("Load() failed: %v", err)
+		}
+
+		if cfg.FeverUsername != "reader" {
+			t.Fatalf("expected FeverUsername to be %q, got %q", "reader", cfg.FeverUsername)
+		}
+	})
+}

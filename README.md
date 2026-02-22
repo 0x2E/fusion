@@ -10,16 +10,40 @@
 
 - Fast reading workflow: unread tracking, bookmarks, search, and Google Reader-style keyboard shortcuts
 - Feed management: RSS/Atom parsing, feed auto-discovery, and group organization
+- Fever API compatibility for third-party clients (Reeder, Unread, FeedMe, etc.)
 - Responsive web UI with PWA support
 - Self-hosting friendly: single binary or Docker deployment
 - Built-in i18n: English, Chinese, German, French, Spanish, Russian, Portuguese, Swedish
 - No AI features by design: focused, distraction-free RSS reading
 
-## Quick Start (Docker)
+## Installation
 
-> `latest` is the latest release.
->
-> `main` is the latest development build.
+<details>
+  <summary><strong>Option 1 (Recommended): Run pre-built binary from Releases</strong></summary>
+
+Download the binary for your platform from [Releases](https://github.com/0x2E/fusion/releases), then run:
+
+```shell
+chmod +x fusion
+FUSION_PASSWORD="fusion" ./fusion
+```
+
+Windows (PowerShell):
+
+```powershell
+$env:FUSION_PASSWORD="fusion"
+.\fusion.exe
+```
+
+Open `http://localhost:8080`.
+</details>
+
+<details>
+  <summary><strong>Option 2: Run with Docker</strong></summary>
+
+`latest` is the latest release image.
+
+`main` is the latest development build.
 
 ```shell
 docker run -it -d -p 8080:8080 \
@@ -45,33 +69,52 @@ services:
     volumes:
       - ./data:/data
 ```
+</details>
 
-## Other Installation Options
+<details>
+  <summary><strong>Option 3: Build from source</strong></summary>
 
-- Pre-built binary: download from [Releases](https://github.com/0x2E/fusion/releases)
-- Build from source: see [Contributing](./CONTRIBUTING.md)
-- One-click deployment:
-  - [Deploy on Fly.io](./fly.toml)
-  - [Deploy on Railway](https://railway.com/template/XSPFK0?referralCode=milo) (community maintained)
+See [Contributing](./CONTRIBUTING.md).
+</details>
+
+<details>
+  <summary><strong>Option 4: One-click deployment</strong></summary>
+
+- [Deploy on Fly.io](./fly.toml)
+- [Deploy on Railway](https://railway.com/template/XSPFK0?referralCode=milo) (community maintained)
+</details>
 
 ## Configuration
 
-All config keys are documented in [`.env.example`](./.env.example).
+Most users only need one setting to get started:
 
-Common keys:
+- Set `FUSION_PASSWORD`.
 
-- `FUSION_DB_PATH` (default `fusion.db`)
-- `FUSION_PASSWORD` (required unless `FUSION_ALLOW_EMPTY_PASSWORD=true`)
-- `FUSION_PORT` (default `8080`)
-- `FUSION_PULL_INTERVAL`, `FUSION_PULL_TIMEOUT`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_MAX_BACKOFF`
-- `FUSION_CORS_ALLOWED_ORIGINS`, `FUSION_TRUSTED_PROXIES`
-- `FUSION_OIDC_*` for optional SSO
+Then configure based on your goal:
+
+- Run locally or on a home server
+  - Optional: `FUSION_PORT`, `FUSION_DB_PATH`
+- Expose Fusion behind a reverse proxy
+  - Configure: `FUSION_CORS_ALLOWED_ORIGINS`, `FUSION_TRUSTED_PROXIES`
+- Use mobile/desktop Fever clients (Reeder, Unread, FeedMe)
+  - Configure: `FUSION_FEVER_USERNAME` (default: `fusion`)
+  - Guide: [`docs/fever-api.md`](./docs/fever-api.md)
+- Use SSO instead of password-only login
+  - Configure: `FUSION_OIDC_*`
+- Tune feed pull behavior
+  - Configure: `FUSION_PULL_INTERVAL`, `FUSION_PULL_TIMEOUT`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_MAX_BACKOFF`
+  - Optional for private networks: `FUSION_ALLOW_PRIVATE_FEEDS`
+- Troubleshoot deployments
+  - Configure: `FUSION_LOG_LEVEL`, `FUSION_LOG_FORMAT`
+
+For the complete variable reference, see [`.env.example`](./.env.example).
 
 Legacy env names (`DB`, `PASSWORD`, `PORT`) are still accepted for backward compatibility.
 
 ## Documentation
 
 - API contract (OpenAPI): [`docs/openapi.yaml`](./docs/openapi.yaml)
+- Fever API compatibility: [`docs/fever-api.md`](./docs/fever-api.md)
 - Backend design: [`docs/backend-design.md`](./docs/backend-design.md)
 - Frontend design: [`docs/frontend-design.md`](./docs/frontend-design.md)
 - Legacy schema reference (kept for migration work): [`docs/old-database-schema.md`](./docs/old-database-schema.md)

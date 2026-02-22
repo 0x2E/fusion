@@ -248,6 +248,143 @@ func (s *Store) MarkAllAsRead(feedID *int64) error {
 	return err
 }
 
+func (s *Store) MarkGroupAsRead(groupID int64) error {
+	_, err := s.db.Exec(`
+		UPDATE items
+		SET unread = 0
+		WHERE feed_id IN (
+			SELECT id
+			FROM feeds
+			WHERE group_id = :group_id
+		)
+	`, sql.Named("group_id", groupID))
+	return err
+}
+
+func (s *Store) MarkFeedAsReadBefore(feedID, before int64) error {
+	_, err := s.db.Exec(`
+		UPDATE items
+		SET unread = 0
+		WHERE feed_id = :feed_id
+		  AND (CASE WHEN pub_date > 0 THEN pub_date ELSE created_at END) <= :before
+	`, sql.Named("feed_id", feedID), sql.Named("before", before))
+	return err
+}
+
+func (s *Store) MarkGroupAsReadBefore(groupID, before int64) error {
+	_, err := s.db.Exec(`
+		UPDATE items
+		SET unread = 0
+		WHERE feed_id IN (
+			SELECT id
+			FROM feeds
+			WHERE group_id = :group_id
+		)
+		  AND (CASE WHEN pub_date > 0 THEN pub_date ELSE created_at END) <= :before
+	`, sql.Named("group_id", groupID), sql.Named("before", before))
+	return err
+}
+
+func (s *Store) MarkAllAsReadBefore(before int64) error {
+	_, err := s.db.Exec(`
+		UPDATE items
+		SET unread = 0
+		WHERE (CASE WHEN pub_date > 0 THEN pub_date ELSE created_at END) <= :before
+	`, sql.Named("before", before))
+	return err
+}
+
+func (s *Store) ListUnreadItemIDs() ([]int64, error) {
+	rows, err := s.db.Query(`
+		SELECT id
+		FROM items
+		WHERE unread = 1
+		ORDER BY id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ids := []int64{}
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, rows.Err()
+}
+
+type ListFeverItemsParams struct {
+	WithIDs []int64
+	SinceID *int64
+	MaxID   *int64
+	Limit   int
+	SortAsc bool
+}
+
+func (s *Store) ListFeverItems(params ListFeverItemsParams) ([]*model.Item, error) {
+	query := `
+		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at
+		FROM items
+		WHERE 1=1
+	`
+	args := []any{}
+
+	if len(params.WithIDs) > 0 {
+		placeholders := make([]string, len(params.WithIDs))
+		for i, id := range params.WithIDs {
+			name := fmt.Sprintf("with_id_%d", i)
+			placeholders[i] = ":" + name
+			args = append(args, sql.Named(name, id))
+		}
+		query += fmt.Sprintf(" AND id IN (%s)", strings.Join(placeholders, ","))
+	}
+
+	if params.SinceID != nil {
+		query += ` AND id > :since_id`
+		args = append(args, sql.Named("since_id", *params.SinceID))
+	}
+
+	if params.MaxID != nil {
+		query += ` AND id <= :max_id`
+		args = append(args, sql.Named("max_id", *params.MaxID))
+	}
+
+	orderBy := "DESC"
+	if params.SortAsc {
+		orderBy = "ASC"
+	}
+	query += ` ORDER BY id ` + orderBy
+
+	if params.Limit > 0 {
+		query += ` LIMIT :limit`
+		args = append(args, sql.Named("limit", params.Limit))
+	}
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := []*model.Item{}
+	for rows.Next() {
+		i := &model.Item{}
+		var unread int
+		if err := rows.Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		i.Unread = intToBool(unread)
+		items = append(items, i)
+	}
+
+	return items, rows.Err()
+}
+
 func (s *Store) ItemExists(feedID int64, guid string) (bool, error) {
 	var exists bool
 	err := s.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM items WHERE feed_id = :feed_id AND guid = :guid)`,

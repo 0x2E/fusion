@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	DBPath   string
-	Password string // Plaintext password from env
-	Port     int
+	DBPath        string
+	Password      string // Plaintext password from env
+	Port          int
+	FeverUsername string // Username used to derive Fever API key.
 
 	CORSAllowedOrigins []string // Allowed Origins for CORS. Empty means allow all.
 	TrustedProxies     []string // Trusted reverse proxies for client IP resolution. Empty disables proxy trust.
@@ -130,6 +131,7 @@ func Load() (*Config, error) {
 		DBPath:             dbPath,
 		Password:           password,
 		Port:               parsedPort,
+		FeverUsername:      getEnvString("FUSION_FEVER_USERNAME", "fusion"),
 		CORSAllowedOrigins: corsAllowedOrigins,
 		TrustedProxies:     trustedProxies,
 		AllowPrivateFeeds:  allowPrivateFeeds,
@@ -149,6 +151,15 @@ func Load() (*Config, error) {
 		OIDCRedirectURI:  os.Getenv("FUSION_OIDC_REDIRECT_URI"),
 		OIDCAllowedUser:  os.Getenv("FUSION_OIDC_ALLOWED_USER"),
 	}, nil
+}
+
+func getEnvString(key, defaultVal string) string {
+	val := strings.TrimSpace(os.Getenv(key))
+	if val == "" {
+		return defaultVal
+	}
+
+	return val
 }
 
 func getEnvInt(key string, defaultVal, minVal int) (int, error) {

@@ -93,6 +93,20 @@ func (s *Store) DeleteBookmark(id int64) error {
 	return nil
 }
 
+func (s *Store) DeleteBookmarkByLink(link string) error {
+	_, err := s.db.Exec(`DELETE FROM bookmarks WHERE link = :link`, sql.Named("link", link))
+	return err
+}
+
+func (s *Store) UpdateBookmarkItemIDByLink(itemID int64, link string) error {
+	_, err := s.db.Exec(`
+		UPDATE bookmarks
+		SET item_id = :item_id
+		WHERE link = :link
+	`, sql.Named("item_id", itemID), sql.Named("link", link))
+	return err
+}
+
 func (s *Store) BookmarkExists(link string) (bool, error) {
 	var exists bool
 	err := s.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM bookmarks WHERE link = :link)`, sql.Named("link", link)).Scan(&exists)
@@ -103,4 +117,28 @@ func (s *Store) CountBookmarks() (int, error) {
 	var count int
 	err := s.db.QueryRow(`SELECT COUNT(*) FROM bookmarks`).Scan(&count)
 	return count, err
+}
+
+func (s *Store) ListSavedItemIDs() ([]int64, error) {
+	rows, err := s.db.Query(`
+		SELECT item_id
+		FROM bookmarks
+		WHERE item_id IS NOT NULL
+		ORDER BY item_id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ids := []int64{}
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, rows.Err()
 }

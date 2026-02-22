@@ -1,6 +1,7 @@
 # Documentation Index
 
 - `openapi.yaml`: current HTTP API contract (source of truth)
+- `fever-api.md`: Fever API compatibility contract (`/fever*` endpoints)
 - `backend-design.md`: backend architecture and operational notes
 - `frontend-design.md`: frontend architecture and interaction model
 - `old-database-schema.md`: legacy schema snapshot kept for migration work

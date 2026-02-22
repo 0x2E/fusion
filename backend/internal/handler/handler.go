@@ -18,6 +18,7 @@ type Handler struct {
 	store        *store.Store
 	config       *config.Config
 	passwordHash string // bcrypt hash computed at startup
+	feverAPIKey  string // md5(username:password) used by Fever API
 	puller       interface {
 		RefreshFeed(ctx context.Context, feedID int64) error
 		RefreshAll(ctx context.Context) (int, error)
@@ -46,6 +47,7 @@ func New(store *store.Store, config *config.Config, puller interface {
 		store:        store,
 		config:       config,
 		passwordHash: passwordHash,
+		feverAPIKey:  deriveFeverAPIKey(config.FeverUsername, config.Password),
 		puller:       puller,
 		sessions:     make(map[string]int64),
 		limiter:      newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
@@ -85,6 +87,9 @@ func (h *Handler) SetupRouter() *gin.Engine {
 	}
 
 	r.Use(h.corsMiddleware())
+	r.POST("/fever", h.fever)
+	r.POST("/fever/", h.fever)
+	r.POST("/fever.php", h.fever)
 
 	api := r.Group("/api")
 	{

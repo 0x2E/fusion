@@ -5,6 +5,8 @@ info:
   description: >-
     OpenAPI contract for Fusion backend. All endpoints are under /api.
     Authentication uses a session cookie named `session`.
+    Fever compatibility endpoints (/fever, /fever/, /fever.php) are documented
+    separately in docs/fever-api.md.
 servers:
   - url: /api
 tags:
