@@ -577,3 +577,57 @@ func TestFeverMarkReadSupportsCSVItemIDs(t *testing.T) {
 		t.Fatalf("expected both items to be read, got unread states: %v %v", updated1.Unread, updated2.Unread)
 	}
 }
+
+func TestFeverRejectsInvalidFeedMarkID(t *testing.T) {
+	h, _ := newFeverTestHandler(t)
+
+	r := newTestRouter()
+	r.POST("/fever", h.fever)
+
+	apiKey := deriveFeverAPIKey("fusion", "secret")
+	body := feverRequestBody(apiKey, url.Values{
+		"mark":   {"feed"},
+		"as":     {"read"},
+		"id":     {"0"},
+		"before": {"100"},
+	})
+
+	w := performRequest(
+		r,
+		http.MethodPost,
+		"/fever?api",
+		strings.NewReader(body),
+		map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+	)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", w.Code)
+	}
+}
+
+func TestFeverRateLimitsFailedAuth(t *testing.T) {
+	h, _ := newFeverTestHandler(t)
+
+	r := newTestRouter()
+	r.POST("/fever", h.fever)
+
+	for i := 0; i < 11; i++ {
+		w := performRequest(
+			r,
+			http.MethodPost,
+			"/fever?api",
+			strings.NewReader(feverRequestBody("wrong", nil)),
+			map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		)
+
+		if i < 10 {
+			if w.Code != http.StatusOK {
+				t.Fatalf("attempt %d: expected status 200, got %d", i+1, w.Code)
+			}
+			continue
+		}
+
+		if w.Code != http.StatusTooManyRequests {
+			t.Fatalf("attempt %d: expected status 429, got %d", i+1, w.Code)
+		}
+	}
+}

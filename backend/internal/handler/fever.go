@@ -69,6 +69,13 @@ func deriveFeverAPIKey(username, password string) string {
 }
 
 func (h *Handler) fever(c *gin.Context) {
+	ip := c.ClientIP()
+	allowed, retryAfter := h.limiter.allow(ip, time.Now())
+	if !allowed {
+		tooManyRequestsError(c, retryAfter)
+		return
+	}
+
 	if err := c.Request.ParseForm(); err != nil {
 		badRequestError(c, "invalid request")
 		return
@@ -80,9 +87,11 @@ func (h *Handler) fever(c *gin.Context) {
 	}
 
 	if !h.verifyFeverAPIKey(c.Request.Form.Get("api_key")) {
+		h.limiter.recordFailure(ip, time.Now())
 		c.JSON(200, gin.H{"api_version": feverAPIVersion, "auth": 0})
 		return
 	}
+	h.limiter.recordSuccess(ip)
 
 	response := gin.H{
 		"auth":                   1,
@@ -238,6 +247,9 @@ func (h *Handler) handleFeverMark(form url.Values) (feverMarkResult, string, err
 	case "feed":
 		id, err := parseFeverRequiredID(form.Get("id"))
 		if err != nil {
+			return feverMarkResult{}, "invalid id", nil
+		}
+		if id <= 0 {
 			return feverMarkResult{}, "invalid id", nil
 		}
 		before, err := parseFeverBefore(form.Get("before"))
