@@ -101,6 +101,8 @@ Then configure based on your goal:
   - Guide: [`docs/fever-api.md`](./docs/fever-api.md)
 - Use SSO instead of password-only login
   - Configure: `FUSION_OIDC_*`
+  - Set `FUSION_OIDC_REDIRECT_URI` to `https://<host>/api/oidc/callback`
+  - `https://<host>/oidc/callback` is accepted for compatibility
 - Tune feed pull behavior
   - Configure: `FUSION_PULL_INTERVAL`, `FUSION_PULL_TIMEOUT`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_MAX_BACKOFF`
   - Optional for private networks: `FUSION_ALLOW_PRIVATE_FEEDS`

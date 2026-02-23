@@ -101,6 +101,8 @@ func (h *Handler) SetupRouter() *gin.Engine {
 		if h.oidcAuth != nil {
 			api.GET("/oidc/login", h.oidcLogin)
 			api.GET("/oidc/callback", h.oidcCallback)
+			// Compatibility route for deployments that configured redirect_uri without /api.
+			r.GET("/oidc/callback", h.oidcCallback)
 		}
 
 		auth := api.Group("")
