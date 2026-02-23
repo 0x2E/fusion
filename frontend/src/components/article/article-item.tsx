@@ -54,13 +54,6 @@ export function ArticleItem({
     }
   };
 
-  const handleOpenExternal = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (safeArticleLink) {
-      window.open(safeArticleLink, "_blank", "noopener,noreferrer");
-    }
-  };
-
   return (
     <div
       role="button"
@@ -145,17 +138,36 @@ export function ArticleItem({
             )}
           />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleOpenExternal}
-          disabled={!safeArticleLink}
-          className="bg-muted"
-          aria-label={t("article.action.openInBrowser")}
-          title={t("article.action.openInBrowser")}
-        >
-          <ExternalLink className="text-muted-foreground" />
-        </Button>
+        {safeArticleLink ? (
+          <Button
+            asChild
+            variant="ghost"
+            size="icon-sm"
+            className="bg-muted"
+            aria-label={t("article.action.openInBrowser")}
+            title={t("article.action.openInBrowser")}
+          >
+            <a
+              href={safeArticleLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="text-muted-foreground" />
+            </a>
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled
+            className="bg-muted"
+            aria-label={t("article.action.openInBrowser")}
+            title={t("article.action.openInBrowser")}
+          >
+            <ExternalLink className="text-muted-foreground" />
+          </Button>
+        )}
       </div>
     </div>
   );

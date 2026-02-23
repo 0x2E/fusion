@@ -29,8 +29,11 @@ export function FeedFavicon({ src, className }: FeedFaviconProps) {
     <img
       src={src}
       alt=""
+      width={16}
+      height={16}
       className={cn("shrink-0 rounded", className)}
       loading="lazy"
+      decoding="async"
       onError={() => setLoadFailed(true)}
     />
   );

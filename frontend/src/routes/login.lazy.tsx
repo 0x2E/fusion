@@ -77,6 +77,8 @@ function LoginPage() {
           <img
             src="/icon-96.png"
             alt={t("common.fusionLogo")}
+            width={48}
+            height={48}
             className="h-12 w-12 rounded-xl"
           />
           <h1 className="text-2xl font-bold">Fusion</h1>

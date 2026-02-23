@@ -19,6 +19,8 @@ export function Sidebar() {
         <img
           src="/icon-96.png"
           alt={t("common.fusionLogo")}
+          width={32}
+          height={32}
           className="h-8 w-8 rounded-md"
         />
         <span className="text-base font-semibold">Fusion</span>
