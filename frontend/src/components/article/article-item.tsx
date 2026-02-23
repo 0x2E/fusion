@@ -110,6 +110,11 @@ export function ArticleItem({
           onClick={handleToggleRead}
           disabled={!canToggleRead}
           className={cn(article.unread ? "bg-muted" : "bg-primary/10")}
+          aria-label={
+            article.unread
+              ? t("article.action.markRead")
+              : t("article.action.markUnread")
+          }
           title={
             article.unread
               ? t("article.action.markRead")
@@ -127,6 +132,9 @@ export function ArticleItem({
           size="icon-sm"
           onClick={handleToggleStar}
           className={cn(isStarred ? "bg-amber-100 dark:bg-amber-950/40" : "bg-muted")}
+          aria-label={
+            isStarred ? t("article.action.unstar") : t("article.action.star")
+          }
           title={isStarred ? t("article.action.unstar") : t("article.action.star")}
         >
           <Star
@@ -143,6 +151,7 @@ export function ArticleItem({
           onClick={handleOpenExternal}
           disabled={!safeArticleLink}
           className="bg-muted"
+          aria-label={t("article.action.openInBrowser")}
           title={t("article.action.openInBrowser")}
         >
           <ExternalLink className="text-muted-foreground" />

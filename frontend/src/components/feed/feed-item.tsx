@@ -44,6 +44,7 @@ export function FeedItem({ feed }: FeedItemProps) {
           size="icon-xs"
           className="hidden group-hover:inline-flex"
           onClick={handleSettingsClick}
+          aria-label="Edit feed"
         >
           <Settings className="text-muted-foreground" />
         </Button>

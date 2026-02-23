@@ -351,42 +351,65 @@ function FeedsPage() {
                       className="overflow-hidden rounded-lg border"
                     >
                       <div
-                        onClick={() => {
-                          if (!isEditing) toggleGroup(group.id);
-                        }}
                         className={cn(
-                          "group/header flex cursor-pointer items-center justify-between bg-muted/50 px-3.5 py-2.5",
+                          "group/header flex items-center justify-between bg-muted/50 px-3.5 py-2.5",
                           isCollapsed ? "rounded-lg" : "rounded-t-lg",
                         )}
                       >
-                        <div className="flex items-center gap-2">
-                          {isCollapsed ? (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                          <Folder
-                            className={cn(
-                              "h-4 w-4",
-                              isCollapsed && "text-muted-foreground",
+                        {isEditing ? (
+                          <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                            {isCollapsed ? (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
                             )}
-                          />
-                          {isEditing ? (
+                            <Folder
+                              className={cn(
+                                "h-4 w-4",
+                                isCollapsed && "text-muted-foreground",
+                              )}
+                            />
                             <Input
                               value={editingGroupName}
-                              onChange={(e) =>
-                                setEditingGroupName(e.target.value)
-                              }
+                              onChange={(e) => setEditingGroupName(e.target.value)}
                               onBlur={() => saveGroupName(group)}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") saveGroupName(group);
                                 if (e.key === "Escape") setEditingGroupId(null);
                               }}
-                              onClick={(e) => e.stopPropagation()}
                               className="h-7 w-40 px-2 text-sm"
-                              autoFocus
+                              autoFocus={!isMobile}
                             />
-                          ) : (
+                            <span
+                              className={cn(
+                                "rounded-full bg-muted px-2 py-0.5 text-[11px]",
+                                isCollapsed
+                                  ? "font-medium text-muted-foreground"
+                                  : "font-semibold text-muted-foreground",
+                              )}
+                            >
+                              {groupFeeds.length}
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => toggleGroup(group.id)}
+                            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                            aria-expanded={!isCollapsed}
+                            aria-label={`Toggle group ${group.name}`}
+                          >
+                            {isCollapsed ? (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                            <Folder
+                              className={cn(
+                                "h-4 w-4",
+                                isCollapsed && "text-muted-foreground",
+                              )}
+                            />
                             <span
                               className={cn(
                                 "text-sm",
@@ -395,18 +418,18 @@ function FeedsPage() {
                             >
                               {group.name}
                             </span>
-                          )}
-                          <span
-                            className={cn(
-                              "rounded-full bg-muted px-2 py-0.5 text-[11px]",
-                              isCollapsed
-                                ? "font-medium text-muted-foreground"
-                                : "font-semibold text-muted-foreground",
-                            )}
-                          >
-                            {groupFeeds.length}
-                          </span>
-                        </div>
+                            <span
+                              className={cn(
+                                "rounded-full bg-muted px-2 py-0.5 text-[11px]",
+                                isCollapsed
+                                  ? "font-medium text-muted-foreground"
+                                  : "font-semibold text-muted-foreground",
+                              )}
+                            >
+                              {groupFeeds.length}
+                            </span>
+                          </button>
+                        )}
                         <div className="flex items-center gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover/header:opacity-100">
                           <button
                             type="button"
@@ -415,6 +438,7 @@ function FeedsPage() {
                               setAddFeedOpen(true);
                             }}
                             className="rounded p-1 hover:bg-accent"
+                            aria-label="Add feed"
                           >
                             <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                           </button>
@@ -425,6 +449,7 @@ function FeedsPage() {
                               startEditingGroup(group);
                             }}
                             className="rounded p-1 hover:bg-accent"
+                            aria-label="Rename group"
                           >
                             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                           </button>
@@ -436,6 +461,7 @@ function FeedsPage() {
                                 setDeletingGroup(group);
                               }}
                               className="rounded p-1 hover:bg-accent"
+                              aria-label="Delete group"
                             >
                               <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                             </button>
@@ -529,6 +555,7 @@ function FeedsPage() {
                                   type="button"
                                   onClick={() => setEditFeedOpen(true, feed)}
                                   className="rounded p-1 hover:bg-accent"
+                                  aria-label="Edit feed"
                                 >
                                   <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                                 </button>

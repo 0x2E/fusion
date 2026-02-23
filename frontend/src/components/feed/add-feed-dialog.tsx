@@ -149,6 +149,7 @@ export function AddFeedDialog() {
               {t("feed.add.title")}
             </DialogTitle>
             <Button variant="ghost" size="icon-sm" onClick={handleClose}>
+              <span className="sr-only">Close</span>
               <X className="h-[18px] w-[18px] text-muted-foreground" />
             </Button>
           </DialogHeader>
@@ -173,6 +174,7 @@ export function AddFeedDialog() {
                   className="h-10 w-10 shrink-0"
                   onClick={handleValidate}
                   disabled={isValidating || !url.trim()}
+                  aria-label={t("feed.add.validateTitle")}
                   title={t("feed.add.validateTitle")}
                 >
                   <Radar
@@ -294,6 +296,7 @@ export function AddFeedDialog() {
                 setDetectedFeeds([]);
               }}
             >
+              <span className="sr-only">Close</span>
               <X className="h-[18px] w-[18px] text-muted-foreground" />
             </Button>
           </DialogHeader>
