@@ -247,6 +247,9 @@ function FeedsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-9 w-full pl-9 sm:w-[280px]"
+                name="feed-search"
+                autoComplete="off"
+                aria-label={t("feeds.searchPlaceholder")}
               />
             </div>
             <DropdownMenu>
@@ -378,6 +381,7 @@ function FeedsPage() {
                                 if (e.key === "Escape") setEditingGroupId(null);
                               }}
                               className="h-7 w-40 px-2 text-sm"
+                              aria-label="Group name"
                               autoFocus={!isMobile}
                             />
                             <span

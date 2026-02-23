@@ -158,15 +158,21 @@ export function AddFeedDialog() {
           <div className="space-y-4 p-5">
             {/* URL Section */}
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium">
+              <label htmlFor="add-feed-url" className="text-[13px] font-medium">
                 {t("feed.add.urlLabel")}
               </label>
               <div className="flex gap-2">
                 <Input
+                  id="add-feed-url"
+                  name="feed-url"
+                  type="url"
+                  inputMode="url"
                   placeholder={t("feed.add.urlPlaceholder")}
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   className="h-10"
+                  autoComplete="off"
+                  spellCheck={false}
                 />
                 <Button
                   variant="outline"
@@ -192,24 +198,27 @@ export function AddFeedDialog() {
 
             {/* Name Section */}
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium">
+              <label htmlFor="add-feed-name" className="text-[13px] font-medium">
                 {t("feed.add.nameLabel")}
               </label>
               <Input
+                id="add-feed-name"
+                name="feed-name"
                 placeholder={t("feed.add.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="h-10"
+                autoComplete="off"
               />
             </div>
 
             {/* Group Section */}
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium">
+              <label className="text-[13px] font-medium" id="add-feed-group-label">
                 {t("feed.add.groupLabel")}
               </label>
               <Select value={groupId} onValueChange={setGroupId}>
-                <SelectTrigger className="h-10">
+                <SelectTrigger className="h-10" aria-labelledby="add-feed-group-label">
                   <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -234,14 +243,20 @@ export function AddFeedDialog() {
                 {t("feed.add.advanced")}
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-1.5 pl-5 pt-3">
-                <label className="text-[13px] font-medium">
+                <label htmlFor="add-feed-proxy" className="text-[13px] font-medium">
                   {t("feed.add.proxyLabel")}
                 </label>
                 <Input
+                  id="add-feed-proxy"
+                  name="feed-proxy"
+                  type="url"
+                  inputMode="url"
                   placeholder={t("feed.add.proxyPlaceholder")}
                   value={proxy}
                   onChange={(e) => setProxy(e.target.value)}
                   className="h-10"
+                  autoComplete="off"
+                  spellCheck={false}
                 />
                 <p className="text-xs text-muted-foreground">
                   {t("feed.add.proxyHint")}

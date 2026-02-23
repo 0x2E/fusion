@@ -20,6 +20,7 @@ export function ImportOpmlDialog() {
   const { t } = useI18n();
   const { isImportOpmlOpen, setImportOpmlOpen } = useUIStore();
   const queryClient = useQueryClient();
+  const fileInputId = "opml-file-input";
 
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -190,14 +191,16 @@ export function ImportOpmlDialog() {
         <div className="p-5">
           <input
             ref={fileInputRef}
+            id={fileInputId}
             type="file"
             accept=".opml,.xml,text/xml,application/xml"
             className="hidden"
+            aria-label={t("opml.dialog.title")}
             onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
           />
 
-          <div
-            onClick={() => fileInputRef.current?.click()}
+          <label
+            htmlFor={fileInputId}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -221,6 +224,7 @@ export function ImportOpmlDialog() {
                   size="sm"
                   className="mt-2 h-auto p-0 text-xs"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     setFile(null);
                   }}
@@ -239,7 +243,7 @@ export function ImportOpmlDialog() {
                 </p>
               </>
             )}
-          </div>
+          </label>
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t px-5 py-4">
