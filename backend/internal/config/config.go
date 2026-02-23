@@ -33,7 +33,6 @@ type Config struct {
 	OIDCIssuer       string // OIDC provider URL
 	OIDCClientID     string // OAuth2 client ID
 	OIDCClientSecret string // OAuth2 client secret
-	OIDCRedirectURI  string // Callback URL (required when OIDC is enabled)
 	OIDCAllowedUser  string // Optional: restrict to specific user identity (email or sub)
 }
 
@@ -148,7 +147,6 @@ func Load() (*Config, error) {
 		OIDCIssuer:       os.Getenv("REEDME_OIDC_ISSUER"),
 		OIDCClientID:     os.Getenv("REEDME_OIDC_CLIENT_ID"),
 		OIDCClientSecret: os.Getenv("REEDME_OIDC_CLIENT_SECRET"),
-		OIDCRedirectURI:  os.Getenv("REEDME_OIDC_REDIRECT_URI"),
 		OIDCAllowedUser:  os.Getenv("REEDME_OIDC_ALLOWED_USER"),
 	}, nil
 }
