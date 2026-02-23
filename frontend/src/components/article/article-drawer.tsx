@@ -198,14 +198,28 @@ export function ArticleDrawer() {
                   {starred ? t("article.action.unstar") : t("article.action.star")}
                 </Button>
                 <Button
+                  asChild={Boolean(safeArticleLink)}
                   variant="outline"
                   size="sm"
-                  onClick={handleOpenOriginal}
+                  onClick={safeArticleLink ? undefined : handleOpenOriginal}
                   disabled={!safeArticleLink}
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
-                  <ExternalLink className="h-4 w-4" />
-                  {t("article.action.original")}
+                  {safeArticleLink ? (
+                    <a
+                      href={safeArticleLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      {t("article.action.original")}
+                    </a>
+                  ) : (
+                    <>
+                      <ExternalLink className="h-4 w-4" />
+                      {t("article.action.original")}
+                    </>
+                  )}
                 </Button>
               </div>
 
@@ -215,6 +229,7 @@ export function ArticleDrawer() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => setSelectedArticle(null)}
+                aria-label={t("common.cancel")}
               >
                 <X className="h-[18px] w-[18px] text-muted-foreground" />
               </Button>

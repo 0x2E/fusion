@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { routeTree } from "./routeTree.gen";
 import { Toaster } from "@/components/ui/sonner";
+import { setUnauthorizedCallback } from "@/lib/api";
 import { preloadLocaleMessages } from "@/lib/i18n";
 import { queryClient } from "@/lib/query-client";
 import { registerPWA } from "@/lib/pwa";
@@ -15,6 +16,10 @@ import "./index.css";
 const router = createRouter({ routeTree });
 
 registerPWA();
+setUnauthorizedCallback(() => {
+  window.location.href = "/login";
+});
+
 const initialLocale = usePreferencesStore.getState().locale;
 document.documentElement.lang = initialLocale;
 void preloadLocaleMessages(initialLocale);

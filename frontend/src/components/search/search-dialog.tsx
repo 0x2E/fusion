@@ -160,6 +160,7 @@ export function SearchDialog() {
                       variant="outline"
                       size="icon-xs"
                       onClick={(e) => handleEditFeed(e, feed.id)}
+                      aria-label={t("feed.edit.title")}
                     >
                       <Settings className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>

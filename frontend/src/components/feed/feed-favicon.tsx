@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface FeedFaviconProps {
@@ -7,11 +7,8 @@ interface FeedFaviconProps {
 }
 
 export function FeedFavicon({ src, className }: FeedFaviconProps) {
-  const [loadFailed, setLoadFailed] = useState(!src);
-
-  useEffect(() => {
-    setLoadFailed(!src);
-  }, [src]);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const loadFailed = !src || failedSrc === src;
 
   if (!src || loadFailed) {
     return (
@@ -29,9 +26,12 @@ export function FeedFavicon({ src, className }: FeedFaviconProps) {
     <img
       src={src}
       alt=""
+      width={16}
+      height={16}
       className={cn("shrink-0 rounded", className)}
       loading="lazy"
-      onError={() => setLoadFailed(true)}
+      decoding="async"
+      onError={() => setFailedSrc(src)}
     />
   );
 }

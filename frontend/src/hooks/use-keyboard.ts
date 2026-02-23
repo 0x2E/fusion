@@ -39,6 +39,44 @@ export function useKeyboardShortcuts() {
   const navigate = useNavigate();
   const pendingPrefixRef = useRef<"g" | null>(null);
   const pendingPrefixTimerRef = useRef<number | null>(null);
+  const latestStateRef = useRef({
+    isSearchOpen,
+    isSettingsOpen,
+    isShortcutsOpen,
+    selectedArticleId,
+    setSearchOpen,
+    setSettingsOpen,
+    setShortcutsOpen,
+    setSelectedArticle,
+    selectTopLevelFilter,
+    navigate,
+  });
+
+  useEffect(() => {
+    latestStateRef.current = {
+      isSearchOpen,
+      isSettingsOpen,
+      isShortcutsOpen,
+      selectedArticleId,
+      setSearchOpen,
+      setSettingsOpen,
+      setShortcutsOpen,
+      setSelectedArticle,
+      selectTopLevelFilter,
+      navigate,
+    };
+  }, [
+    isSearchOpen,
+    isSettingsOpen,
+    isShortcutsOpen,
+    selectedArticleId,
+    setSearchOpen,
+    setSettingsOpen,
+    setShortcutsOpen,
+    setSelectedArticle,
+    selectTopLevelFilter,
+    navigate,
+  ]);
 
   useEffect(() => {
     function resetPrefix() {
@@ -58,6 +96,8 @@ export function useKeyboardShortcuts() {
     }
 
     function handleKeyDown(event: KeyboardEvent) {
+      const state = latestStateRef.current;
+
       if (event.defaultPrevented) {
         return;
       }
@@ -67,7 +107,7 @@ export function useKeyboardShortcuts() {
       // ⌘K or Ctrl+K: Open search
       if ((event.metaKey || event.ctrlKey) && key === "k") {
         event.preventDefault();
-        setSearchOpen(!isSearchOpen);
+        state.setSearchOpen(!state.isSearchOpen);
         resetPrefix();
         return;
       }
@@ -75,31 +115,31 @@ export function useKeyboardShortcuts() {
       // ⌘, or Ctrl+, : Open settings
       if ((event.metaKey || event.ctrlKey) && event.key === ",") {
         event.preventDefault();
-        setSettingsOpen(true);
+        state.setSettingsOpen(true);
         resetPrefix();
         return;
       }
 
       // ESC: Close modals/drawer
       if (event.key === "Escape") {
-        if (isSearchOpen) {
+        if (state.isSearchOpen) {
           resetPrefix();
-          setSearchOpen(false);
+          state.setSearchOpen(false);
           return;
         }
-        if (isSettingsOpen) {
+        if (state.isSettingsOpen) {
           resetPrefix();
-          setSettingsOpen(false);
+          state.setSettingsOpen(false);
           return;
         }
-        if (isShortcutsOpen) {
+        if (state.isShortcutsOpen) {
           resetPrefix();
-          setShortcutsOpen(false);
+          state.setShortcutsOpen(false);
           return;
         }
-        if (selectedArticleId !== null) {
+        if (state.selectedArticleId !== null) {
           resetPrefix();
-          setSelectedArticle(null);
+          state.setSelectedArticle(null);
           return;
         }
 
@@ -115,32 +155,32 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      if (isSearchOpen || isSettingsOpen || isShortcutsOpen) {
+      if (state.isSearchOpen || state.isSettingsOpen || state.isShortcutsOpen) {
         return;
       }
 
       if (pendingPrefixRef.current === "g") {
         if (key === "u") {
           event.preventDefault();
-          selectTopLevelFilter("unread");
+          state.selectTopLevelFilter("unread");
           resetPrefix();
           return;
         }
         if (key === "a") {
           event.preventDefault();
-          selectTopLevelFilter("all");
+          state.selectTopLevelFilter("all");
           resetPrefix();
           return;
         }
         if (key === "s") {
           event.preventDefault();
-          selectTopLevelFilter("starred");
+          state.selectTopLevelFilter("starred");
           resetPrefix();
           return;
         }
         if (key === "f") {
           event.preventDefault();
-          navigate({ to: "/feeds" });
+          state.navigate({ to: "/feeds" });
           resetPrefix();
           return;
         }
@@ -157,14 +197,14 @@ export function useKeyboardShortcuts() {
       // /: Open search
       if (event.key === "/") {
         event.preventDefault();
-        setSearchOpen(true);
+        state.setSearchOpen(true);
         return;
       }
 
       // ?: Open shortcuts help
       if (event.key === "?") {
         event.preventDefault();
-        setShortcutsOpen(true);
+        state.setShortcutsOpen(true);
         return;
       }
     }
@@ -176,18 +216,7 @@ export function useKeyboardShortcuts() {
       }
       document.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [
-    isSearchOpen,
-    isSettingsOpen,
-    isShortcutsOpen,
-    navigate,
-    selectTopLevelFilter,
-    selectedArticleId,
-    setSearchOpen,
-    setSettingsOpen,
-    setShortcutsOpen,
-    setSelectedArticle,
-  ]);
+  }, []);
 }
 
 export function useArticleNavigation(
@@ -208,13 +237,65 @@ export function useArticleNavigation(
     onToggleStar,
     onOpenOriginal,
   } = options;
+  const latestStateRef = useRef({
+    articleIds,
+    enabled,
+    selectedArticleId,
+    isSearchOpen,
+    isSettingsOpen,
+    isAddGroupOpen,
+    isAddFeedOpen,
+    isEditFeedOpen,
+    isImportOpmlOpen,
+    isShortcutsOpen,
+    onToggleRead,
+    onToggleStar,
+    onOpenOriginal,
+    setSelectedArticle,
+  });
 
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
+    latestStateRef.current = {
+      articleIds,
+      enabled,
+      selectedArticleId,
+      isSearchOpen,
+      isSettingsOpen,
+      isAddGroupOpen,
+      isAddFeedOpen,
+      isEditFeedOpen,
+      isImportOpmlOpen,
+      isShortcutsOpen,
+      onToggleRead,
+      onToggleStar,
+      onOpenOriginal,
+      setSelectedArticle,
+    };
+  }, [
+    articleIds,
+    enabled,
+    selectedArticleId,
+    isSearchOpen,
+    isSettingsOpen,
+    isAddGroupOpen,
+    isAddFeedOpen,
+    isEditFeedOpen,
+    isImportOpmlOpen,
+    isShortcutsOpen,
+    onToggleRead,
+    onToggleStar,
+    onOpenOriginal,
+    setSelectedArticle,
+  ]);
 
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      const state = latestStateRef.current;
+
+      if (!state.enabled) {
+        return;
+      }
+
       if (event.defaultPrevented) {
         return;
       }
@@ -229,19 +310,19 @@ export function useArticleNavigation(
       }
 
       if (
-        isSearchOpen ||
-        isSettingsOpen ||
-        isAddGroupOpen ||
-        isAddFeedOpen ||
-        isEditFeedOpen ||
-        isImportOpmlOpen ||
-        isShortcutsOpen
+        state.isSearchOpen ||
+        state.isSettingsOpen ||
+        state.isAddGroupOpen ||
+        state.isAddFeedOpen ||
+        state.isEditFeedOpen ||
+        state.isImportOpmlOpen ||
+        state.isShortcutsOpen
       ) {
         return;
       }
 
-      const currentIndex = selectedArticleId
-        ? articleIds.indexOf(selectedArticleId)
+      const currentIndex = state.selectedArticleId
+        ? state.articleIds.indexOf(state.selectedArticleId)
         : -1;
 
       const key = event.key.toLowerCase();
@@ -249,8 +330,8 @@ export function useArticleNavigation(
       // J or ArrowDown: Next article
       if (key === "j" || key === "n" || event.key === "ArrowDown") {
         event.preventDefault();
-        if (currentIndex < articleIds.length - 1) {
-          setSelectedArticle(articleIds[currentIndex + 1]);
+        if (currentIndex < state.articleIds.length - 1) {
+          state.setSelectedArticle(state.articleIds[currentIndex + 1]);
         }
         return;
       }
@@ -259,55 +340,40 @@ export function useArticleNavigation(
       if (key === "k" || key === "p" || event.key === "ArrowUp") {
         event.preventDefault();
         if (currentIndex > 0) {
-          setSelectedArticle(articleIds[currentIndex - 1]);
+          state.setSelectedArticle(state.articleIds[currentIndex - 1]);
         }
         return;
       }
 
-      if (selectedArticleId === null) {
+      if (state.selectedArticleId === null) {
         return;
       }
 
       // M: toggle read/unread
-      if (key === "m" && onToggleRead) {
+      if (key === "m" && state.onToggleRead) {
         event.preventDefault();
-        void onToggleRead();
+        void state.onToggleRead();
         return;
       }
 
       // S/F: toggle star
-      if ((key === "s" || key === "f") && onToggleStar) {
+      if ((key === "s" || key === "f") && state.onToggleStar) {
         event.preventDefault();
-        void onToggleStar();
+        void state.onToggleStar();
         return;
       }
 
       // O/V: open original article
-      if ((key === "o" || key === "v") && onOpenOriginal) {
+      if ((key === "o" || key === "v") && state.onOpenOriginal) {
         event.preventDefault();
-        onOpenOriginal();
+        state.onOpenOriginal();
         return;
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [
-    articleIds,
-    enabled,
-    isAddFeedOpen,
-    isAddGroupOpen,
-    isEditFeedOpen,
-    isImportOpmlOpen,
-    isSearchOpen,
-    isSettingsOpen,
-    isShortcutsOpen,
-    onOpenOriginal,
-    onToggleRead,
-    onToggleStar,
-    selectedArticleId,
-    setSelectedArticle,
-  ]);
+  }, []);
 
   const goToNext = () => {
     const currentIndex = selectedArticleId

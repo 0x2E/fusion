@@ -177,6 +177,8 @@ function AboutContent() {
       <img
         src="/icon-96.png"
         alt={t("common.fusionLogo")}
+        width={64}
+        height={64}
         className="h-16 w-16 rounded-2xl"
       />
       <div className="text-center">

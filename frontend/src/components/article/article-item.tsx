@@ -54,13 +54,6 @@ export function ArticleItem({
     }
   };
 
-  const handleOpenExternal = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (safeArticleLink) {
-      window.open(safeArticleLink, "_blank", "noopener,noreferrer");
-    }
-  };
-
   return (
     <div
       role="button"
@@ -110,6 +103,11 @@ export function ArticleItem({
           onClick={handleToggleRead}
           disabled={!canToggleRead}
           className={cn(article.unread ? "bg-muted" : "bg-primary/10")}
+          aria-label={
+            article.unread
+              ? t("article.action.markRead")
+              : t("article.action.markUnread")
+          }
           title={
             article.unread
               ? t("article.action.markRead")
@@ -127,6 +125,9 @@ export function ArticleItem({
           size="icon-sm"
           onClick={handleToggleStar}
           className={cn(isStarred ? "bg-amber-100 dark:bg-amber-950/40" : "bg-muted")}
+          aria-label={
+            isStarred ? t("article.action.unstar") : t("article.action.star")
+          }
           title={isStarred ? t("article.action.unstar") : t("article.action.star")}
         >
           <Star
@@ -137,16 +138,36 @@ export function ArticleItem({
             )}
           />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleOpenExternal}
-          disabled={!safeArticleLink}
-          className="bg-muted"
-          title={t("article.action.openInBrowser")}
-        >
-          <ExternalLink className="text-muted-foreground" />
-        </Button>
+        {safeArticleLink ? (
+          <Button
+            asChild
+            variant="ghost"
+            size="icon-sm"
+            className="bg-muted"
+            aria-label={t("article.action.openInBrowser")}
+            title={t("article.action.openInBrowser")}
+          >
+            <a
+              href={safeArticleLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="text-muted-foreground" />
+            </a>
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled
+            className="bg-muted"
+            aria-label={t("article.action.openInBrowser")}
+            title={t("article.action.openInBrowser")}
+          >
+            <ExternalLink className="text-muted-foreground" />
+          </Button>
+        )}
       </div>
     </div>
   );
