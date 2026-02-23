@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/patrickjmcd/reedme/compare/v1.0.0...v1.1.0) (2026-02-23)
+
+
+### Features
+
+* add pnpm setup step in release workflow ([6e56515](https://github.com/patrickjmcd/reedme/commit/6e56515cf77d2f67c81c0019d07d614a6b7f400d))
+
 ## 1.0.0 (2026-02-21)
 
 
