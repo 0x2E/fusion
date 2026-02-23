@@ -229,7 +229,7 @@ export function ArticleDrawer() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => setSelectedArticle(null)}
-                aria-label="Close"
+                aria-label={t("common.cancel")}
               >
                 <X className="h-[18px] w-[18px] text-muted-foreground" />
               </Button>

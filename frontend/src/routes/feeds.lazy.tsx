@@ -381,7 +381,7 @@ function FeedsPage() {
                                 if (e.key === "Escape") setEditingGroupId(null);
                               }}
                               className="h-7 w-40 px-2 text-sm"
-                              aria-label="Group name"
+                              aria-label={t("group.add.placeholder")}
                               autoFocus={!isMobile}
                             />
                             <span
@@ -442,7 +442,7 @@ function FeedsPage() {
                               setAddFeedOpen(true);
                             }}
                             className="rounded p-1 hover:bg-accent"
-                            aria-label="Add feed"
+                            aria-label={t("feed.add.button")}
                           >
                             <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                           </button>
@@ -453,7 +453,7 @@ function FeedsPage() {
                               startEditingGroup(group);
                             }}
                             className="rounded p-1 hover:bg-accent"
-                            aria-label="Rename group"
+                            aria-label={t("feeds.toast.renamed")}
                           >
                             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                           </button>
@@ -465,7 +465,7 @@ function FeedsPage() {
                                 setDeletingGroup(group);
                               }}
                               className="rounded p-1 hover:bg-accent"
-                              aria-label="Delete group"
+                              aria-label={t("feeds.deleteGroup.title")}
                             >
                               <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                             </button>
@@ -559,7 +559,7 @@ function FeedsPage() {
                                   type="button"
                                   onClick={() => setEditFeedOpen(true, feed)}
                                   className="rounded p-1 hover:bg-accent"
-                                  aria-label="Edit feed"
+                                  aria-label={t("feed.edit.title")}
                                 >
                                   <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                                 </button>

@@ -6,12 +6,14 @@ import type { Feed } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 interface FeedItemProps {
   feed: Feed;
 }
 
 export function FeedItem({ feed }: FeedItemProps) {
+  const { t } = useI18n();
   const { selectedFeedId, setSelectedFeed } = useUrlState();
   const { setEditFeedOpen } = useUIStore();
 
@@ -44,7 +46,7 @@ export function FeedItem({ feed }: FeedItemProps) {
           size="icon-xs"
           className="hidden group-hover:inline-flex"
           onClick={handleSettingsClick}
-          aria-label="Edit feed"
+          aria-label={t("feed.edit.title")}
         >
           <Settings className="text-muted-foreground" />
         </Button>
