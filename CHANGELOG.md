@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/patrickjmcd/reedme/compare/v1.1.1...v1.1.2) (2026-02-23)
+
+
+### Bug Fixes
+
+* tsr ([9b1ddcf](https://github.com/patrickjmcd/reedme/commit/9b1ddcf22e2aa5780a9b1a3b986a32585ad2d9f7))
+
 ## [1.1.1](https://github.com/patrickjmcd/reedme/compare/v1.1.0...v1.1.1) (2026-02-23)
 
 
