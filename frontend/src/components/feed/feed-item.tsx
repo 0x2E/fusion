@@ -26,8 +26,16 @@ export function FeedItem({ feed }: FeedItemProps) {
   };
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => setSelectedFeed(feed.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setSelectedFeed(feed.id);
+        }
+      }}
       className={cn(
         "group flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
         isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
@@ -51,6 +59,6 @@ export function FeedItem({ feed }: FeedItemProps) {
           <Settings className="text-muted-foreground" />
         </Button>
       </div>
-    </button>
+    </div>
   );
 }
