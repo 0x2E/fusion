@@ -41,6 +41,9 @@ jobs:
         run: ./scripts.sh test-backend
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          cache: true
       - name: Install frontend dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile --prefer-offline
