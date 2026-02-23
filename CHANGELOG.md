@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/patrickjmcd/reedme/compare/v1.1.0...v1.1.1) (2026-02-23)
+
+
+### Bug Fixes
+
+* add pnpm version in github actions ([bb2689e](https://github.com/patrickjmcd/reedme/commit/bb2689eb42073db4ad84e0b5cfb4595eda2ce395))
+
 ## [1.1.0](https://github.com/patrickjmcd/reedme/compare/v1.0.0...v1.1.0) (2026-02-23)
 
 
