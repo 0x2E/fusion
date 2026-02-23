@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestLoadParsesCORSAndPrivateFeedSettings(t *testing.T) {
 	t.Setenv("FUSION_PASSWORD", "secret")
@@ -76,4 +79,31 @@ func TestLoadFeverUsername(t *testing.T) {
 			t.Fatalf("expected FeverUsername to be %q, got %q", "reader", cfg.FeverUsername)
 		}
 	})
+}
+
+func TestLoadParsesKubernetesStyleFusionPort(t *testing.T) {
+	t.Setenv("FUSION_PASSWORD", "secret")
+	t.Setenv("FUSION_PORT", "tcp://10.43.157.55:8080")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() failed: %v", err)
+	}
+
+	if cfg.Port != 8080 {
+		t.Fatalf("expected Port to be 8080, got %d", cfg.Port)
+	}
+}
+
+func TestLoadRejectsInvalidFusionPort(t *testing.T) {
+	t.Setenv("FUSION_PASSWORD", "secret")
+	t.Setenv("FUSION_PORT", "tcp://10.43.157.55")
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected Load() to fail for invalid FUSION_PORT")
+	}
+	if !strings.Contains(err.Error(), "invalid FUSION_PORT") {
+		t.Fatalf("expected error to mention invalid FUSION_PORT, got %v", err)
+	}
 }

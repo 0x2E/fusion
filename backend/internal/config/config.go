@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -71,7 +72,7 @@ func Load() (*Config, error) {
 	if port == "" {
 		port = "8080"
 	}
-	parsedPort, err := strconv.Atoi(port)
+	parsedPort, err := parsePort(port)
 	if err != nil {
 		return nil, fmt.Errorf("invalid FUSION_PORT: %w", err)
 	}
@@ -187,6 +188,32 @@ func getEnvBool(key string, defaultVal bool) (bool, error) {
 		return false, fmt.Errorf("invalid %s: %w", key, err)
 	}
 	return parsed, nil
+}
+
+// parsePort accepts plain numeric ports and Kubernetes service-link URL values
+// such as tcp://10.43.157.55:8080.
+func parsePort(val string) (int, error) {
+	trimmed := strings.TrimSpace(val)
+	parsed, err := strconv.Atoi(trimmed)
+	if err == nil {
+		return parsed, nil
+	}
+
+	if !strings.Contains(trimmed, "://") {
+		return 0, err
+	}
+
+	parsedURL, err := url.Parse(trimmed)
+	if err != nil {
+		return 0, err
+	}
+
+	port := parsedURL.Port()
+	if port == "" {
+		return 0, fmt.Errorf("missing port")
+	}
+
+	return strconv.Atoi(port)
 }
 
 func parseCSVEnv(val string) []string {
