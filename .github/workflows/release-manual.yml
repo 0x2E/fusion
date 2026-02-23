@@ -37,6 +37,9 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Generate route tree
+        working-directory: frontend
+        run: pnpm exec tsr generate
       - name: Check TypeScript
         working-directory: frontend
         run: npx tsc -b --noEmit
