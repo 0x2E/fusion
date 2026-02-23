@@ -39,6 +39,8 @@ jobs:
         uses: ./.github/actions/setup-toolchains
       - name: Run backend tests
         run: ./scripts.sh test-backend
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
       - name: Install frontend dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile --prefer-offline
