@@ -137,18 +137,26 @@
 
 /* Article content prose styles */
 .prose {
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   word-wrap: break-word;
-  word-break: break-word;
+  word-break: normal;
 
   pre {
     white-space: pre-wrap;
-    word-break: break-all;
+    overflow-wrap: anywhere;
+    word-break: normal;
     overflow-x: auto;
   }
 
+  pre code {
+    white-space: inherit;
+    overflow-wrap: inherit;
+    word-break: inherit;
+  }
+
   code {
-    word-break: break-all;
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
 
   img {
@@ -157,7 +165,8 @@
   }
 
   a {
-    word-break: break-all;
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
 
   p:empty,
