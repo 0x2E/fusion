@@ -89,6 +89,7 @@ See [Contributing](./CONTRIBUTING.md).
 Most users only need one setting to get started:
 
 - Set `FUSION_PASSWORD`.
+- For local trusted environments only: set `FUSION_ALLOW_EMPTY_PASSWORD=true` to run without auth when OIDC is also disabled.
 
 Then configure based on your goal:
 

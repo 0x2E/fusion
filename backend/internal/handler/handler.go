@@ -19,6 +19,7 @@ type Handler struct {
 	config       *config.Config
 	passwordHash string // bcrypt hash computed at startup
 	feverAPIKey  string // md5(username:password) used by Fever API
+	allowAnonAPI bool   // true when both password and OIDC auth are disabled
 	puller       interface {
 		RefreshFeed(ctx context.Context, feedID int64) error
 		RefreshAll(ctx context.Context) (int, error)
@@ -48,9 +49,14 @@ func New(store *store.Store, config *config.Config, puller interface {
 		config:       config,
 		passwordHash: passwordHash,
 		feverAPIKey:  deriveFeverAPIKey(config.FeverUsername, config.Password),
+		allowAnonAPI: strings.TrimSpace(config.Password) == "" && strings.TrimSpace(config.OIDCIssuer) == "",
 		puller:       puller,
 		sessions:     make(map[string]int64),
 		limiter:      newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
+	}
+
+	if h.allowAnonAPI {
+		slog.Warn("authentication is disabled because both password and OIDC are empty")
 	}
 
 	if config.OIDCIssuer != "" {
@@ -207,6 +213,11 @@ func normalizeOrigin(origin string) string {
 
 func (h *Handler) authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if h.allowAnonAPI {
+			c.Next()
+			return
+		}
+
 		sessionID, err := c.Cookie("session")
 		if err != nil {
 			unauthorizedError(c)

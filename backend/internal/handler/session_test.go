@@ -82,6 +82,7 @@ func TestAuthMiddleware(t *testing.T) {
 		expiresAt     int64
 		wantStatus    int
 		wantStillLive bool
+		allowAnonAPI  bool
 	}{
 		{
 			name:          "rejects expired session and cleans it",
@@ -97,12 +98,21 @@ func TestAuthMiddleware(t *testing.T) {
 			wantStatus:    http.StatusOK,
 			wantStillLive: true,
 		},
+		{
+			name:          "allows requests when auth is disabled",
+			wantStatus:    http.StatusOK,
+			wantStillLive: false,
+			allowAnonAPI:  true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := newTestSessionHandler(t, "secret")
-			h.sessions[tt.token] = tt.expiresAt
+			h.allowAnonAPI = tt.allowAnonAPI
+			if tt.token != "" {
+				h.sessions[tt.token] = tt.expiresAt
+			}
 
 			r := newTestRouter()
 			r.Use(h.authMiddleware())

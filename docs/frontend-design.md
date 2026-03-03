@@ -140,7 +140,8 @@ Shortcut help entry points:
 
 ## 10. Authentication UX
 
-- Password login is always available
+- Password login is available when password auth is enabled
+- If password is empty and OIDC is not configured, the UI is directly accessible without `/login`
 - When OIDC is enabled, login page shows "Sign in with OIDC"
 - OIDC callback failure is surfaced as `/login?error=oidc_failed`
 
