@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   Circle,
   CircleCheck,
@@ -88,6 +88,14 @@ export function ArticleDrawer() {
     null;
   const canToggleRead =
     article !== null && article.id > 0 && (!isStarredMode || fetchedArticle !== undefined);
+
+  useEffect(() => {
+    if (article && article.unread && canToggleRead) {
+      markRead.mutateAsync([article.id]).catch(console.error);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [article?.id, canToggleRead]);
+
   const feed = article ? getFeedById(article.feed_id) : null;
   const bookmark = article ? getBookmarkByItemId(article.id) : null;
   const starred = article ? isItemStarred(article.id) : false;
