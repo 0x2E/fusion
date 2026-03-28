@@ -49,6 +49,7 @@ export function EditFeedDialog() {
   const [groupId, setGroupId] = useState<string>("");
   const [proxy, setProxy] = useState("");
   const [suspended, setSuspended] = useState(false);
+  const [crawl, setCrawl] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -65,6 +66,7 @@ export function EditFeedDialog() {
       setGroupId(editingFeed.group_id.toString());
       setProxy(editingFeed.proxy ?? "");
       setSuspended(editingFeed.suspended);
+      setCrawl(editingFeed.crawl);
       setIsAdvancedOpen(!!editingFeed.proxy);
       setIsMobileErrorTooltipOpen(false);
     }
@@ -76,6 +78,7 @@ export function EditFeedDialog() {
     setGroupId("");
     setProxy("");
     setSuspended(false);
+    setCrawl(false);
     setIsAdvancedOpen(false);
     setIsDeleteOpen(false);
   };
@@ -118,6 +121,10 @@ export function EditFeedDialog() {
 
       if (suspended !== editingFeed.suspended) {
         request.suspended = suspended;
+      }
+
+      if (crawl !== editingFeed.crawl) {
+        request.crawl = crawl;
       }
 
       const newProxy = proxy.trim() || undefined;
@@ -285,6 +292,26 @@ export function EditFeedDialog() {
                 id="edit-feed-suspended"
                 checked={suspended}
                 onCheckedChange={setSuspended}
+              />
+            </div>
+
+            {/* Crawl Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <label
+                  htmlFor="edit-feed-crawl"
+                  className="text-[13px] font-medium"
+                >
+                  {t("feed.edit.crawlLabel")}
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {t("feed.edit.crawlDescription")}
+                </p>
+              </div>
+              <Switch
+                id="edit-feed-crawl"
+                checked={crawl}
+                onCheckedChange={setCrawl}
               />
             </div>
 

@@ -101,6 +101,8 @@ export const enMessages = {
   "feed.edit.deleteConfirm.description":
     'Are you sure you want to unsubscribe from "{name}"? All items from this feed will be deleted.',
   "feed.edit.deleteConfirm.title": "Unsubscribe Feed",
+  "feed.edit.crawlDescription": "Fetch full article content by crawling linked pages",
+  "feed.edit.crawlLabel": "Crawl Article Content",
   "feed.edit.noChanges": "No changes to save",
   "feed.edit.suspendDescription": "Pauses automatic updates",
   "feed.edit.suspendLabel": "Suspend Feed",

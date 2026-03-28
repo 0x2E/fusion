@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, Plus, Radar, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,7 @@ export function AddFeedDialog() {
   const [name, setName] = useState("");
   const [groupId, setGroupId] = useState<string>("");
   const [proxy, setProxy] = useState("");
+  const [crawl, setCrawl] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -54,6 +56,7 @@ export function AddFeedDialog() {
     setName("");
     setGroupId("");
     setProxy("");
+    setCrawl(false);
     setIsAdvancedOpen(false);
     setDetectedFeeds([]);
     setIsFeedSelectOpen(false);
@@ -121,6 +124,10 @@ export function AddFeedDialog() {
         name: name.trim() || url.trim(),
         group_id: selectedGroupId,
       };
+
+      if (crawl) {
+        request.crawl = true;
+      }
 
       if (proxy.trim()) {
         request.proxy = proxy.trim();
@@ -242,25 +249,45 @@ export function AddFeedDialog() {
                 />
                 {t("feed.add.advanced")}
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-1.5 pl-5 pt-3">
-                <label htmlFor="add-feed-proxy" className="text-[13px] font-medium">
-                  {t("feed.add.proxyLabel")}
-                </label>
-                <Input
-                  id="add-feed-proxy"
-                  name="feed-proxy"
-                  type="url"
-                  inputMode="url"
-                  placeholder={t("feed.add.proxyPlaceholder")}
-                  value={proxy}
-                  onChange={(e) => setProxy(e.target.value)}
-                  className="h-10"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("feed.add.proxyHint")}
-                </p>
+              <CollapsibleContent className="space-y-4 pl-5 pt-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label
+                      htmlFor="add-feed-crawl"
+                      className="text-[13px] font-medium"
+                    >
+                      {t("feed.edit.crawlLabel")}
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      {t("feed.edit.crawlDescription")}
+                    </p>
+                  </div>
+                  <Switch
+                    id="add-feed-crawl"
+                    checked={crawl}
+                    onCheckedChange={setCrawl}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="add-feed-proxy" className="text-[13px] font-medium">
+                    {t("feed.add.proxyLabel")}
+                  </label>
+                  <Input
+                    id="add-feed-proxy"
+                    name="feed-proxy"
+                    type="url"
+                    inputMode="url"
+                    placeholder={t("feed.add.proxyPlaceholder")}
+                    value={proxy}
+                    onChange={(e) => setProxy(e.target.value)}
+                    className="h-10"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("feed.add.proxyHint")}
+                  </p>
+                </div>
               </CollapsibleContent>
             </Collapsible>
           </div>

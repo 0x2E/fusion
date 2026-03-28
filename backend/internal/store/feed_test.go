@@ -92,6 +92,10 @@ func TestCreateFeed(t *testing.T) {
 		t.Error("expected suspended to default to false")
 	}
 
+	if feed.Crawl != false {
+		t.Error("expected crawl to default to false")
+	}
+
 	if feed.FetchState.ConsecutiveFailures != 0 {
 		t.Error("expected consecutive_failures to default to 0")
 	}
@@ -101,7 +105,7 @@ func TestCreateFeed(t *testing.T) {
 	}
 
 	// Test UNIQUE constraint on link
-	_, err := store.CreateFeed(group.ID, "Duplicate", link, siteURL, "")
+	_, err := store.CreateFeed(group.ID, "Duplicate", link, siteURL, "", false)
 	if err == nil {
 		t.Error("expected error when creating duplicate feed link, got nil")
 	}
@@ -606,5 +610,66 @@ func TestBatchCreateFeedsHandlesExistingAndInBatchDuplicates(t *testing.T) {
 	}
 	if len(feeds) != 3 {
 		t.Fatalf("expected total 3 feeds (1 existing + 2 new), got %d", len(feeds))
+	}
+}
+
+func TestFeedCrawlField(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Group")
+
+	// crawl=false by default (via mustCreateFeed)
+	feed := mustCreateFeed(t, store, group.ID, "Feed", "https://example.com/feed", "", "")
+	if feed.Crawl != false {
+		t.Error("expected crawl to be false by default")
+	}
+
+	// crawl=true via CreateFeed
+	crawlFeed, err := store.CreateFeed(group.ID, "Crawl Feed", "https://example.com/crawl", "", "", true)
+	if err != nil {
+		t.Fatalf("CreateFeed() with crawl=true failed: %v", err)
+	}
+	if crawlFeed.Crawl != true {
+		t.Error("expected crawl to be true")
+	}
+
+	// Round-trip: ListFeeds preserves crawl value.
+	feeds, err := store.ListFeeds()
+	if err != nil {
+		t.Fatalf("ListFeeds() failed: %v", err)
+	}
+	for _, f := range feeds {
+		if f.ID == crawlFeed.ID && !f.Crawl {
+			t.Error("ListFeeds: crawl should be true for crawl feed")
+		}
+		if f.ID == feed.ID && f.Crawl {
+			t.Error("ListFeeds: crawl should be false for regular feed")
+		}
+	}
+
+	// UpdateFeed toggles crawl.
+	crawlTrue := true
+	if err := store.UpdateFeed(feed.ID, UpdateFeedParams{Crawl: &crawlTrue}); err != nil {
+		t.Fatalf("UpdateFeed() failed: %v", err)
+	}
+	updated, err := store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+	if !updated.Crawl {
+		t.Error("expected crawl to be true after UpdateFeed")
+	}
+
+	crawlFalse := false
+	if err := store.UpdateFeed(feed.ID, UpdateFeedParams{Crawl: &crawlFalse}); err != nil {
+		t.Fatalf("UpdateFeed() failed: %v", err)
+	}
+	updated2, err := store.GetFeed(feed.ID)
+	if err != nil {
+		t.Fatalf("GetFeed() failed: %v", err)
+	}
+	if updated2.Crawl {
+		t.Error("expected crawl to be false after second UpdateFeed")
 	}
 }

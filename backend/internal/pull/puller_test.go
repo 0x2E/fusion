@@ -42,7 +42,7 @@ func TestRefreshFeedPreservesValidatorsWhen304OmitHeaders(t *testing.T) {
 	}))
 	defer server.Close()
 
-	feed, err := st.CreateFeed(1, "Feed A", server.URL, "", "")
+	feed, err := st.CreateFeed(1, "Feed A", server.URL, "", "", false)
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
@@ -108,10 +108,10 @@ func TestRefreshAllWaitsForRunningJobs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if _, err := st.CreateFeed(1, "Feed A", server.URL+"/a", "", ""); err != nil {
+	if _, err := st.CreateFeed(1, "Feed A", server.URL+"/a", "", "", false); err != nil {
 		t.Fatalf("create feed A: %v", err)
 	}
-	if _, err := st.CreateFeed(1, "Feed B", server.URL+"/b", "", ""); err != nil {
+	if _, err := st.CreateFeed(1, "Feed B", server.URL+"/b", "", "", false); err != nil {
 		t.Fatalf("create feed B: %v", err)
 	}
 

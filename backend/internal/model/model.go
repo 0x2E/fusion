@@ -16,6 +16,7 @@ type Feed struct {
 	Link      string `json:"link"`
 	SiteURL   string `json:"site_url,omitempty"`
 	Suspended bool   `json:"suspended"`
+	Crawl     bool   `json:"crawl"`
 	Proxy     string `json:"proxy,omitempty"`
 	CreatedAt int64  `json:"created_at"`
 	UpdatedAt int64  `json:"updated_at"`

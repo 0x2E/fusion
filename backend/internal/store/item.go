@@ -385,6 +385,43 @@ func (s *Store) ListFeverItems(params ListFeverItemsParams) ([]*model.Item, erro
 	return items, rows.Err()
 }
 
+// ListUncrawledItems returns items for a feed that have never had a crawl attempt,
+// ordered newest-first, capped at limit.
+func (s *Store) ListUncrawledItems(feedID int64, limit int) ([]*model.Item, error) {
+	rows, err := s.db.Query(`
+		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at
+		FROM items
+		WHERE feed_id = :feed_id AND crawled_at IS NULL AND link != ''
+		ORDER BY created_at DESC, id DESC
+		LIMIT :limit
+	`, sql.Named("feed_id", feedID), sql.Named("limit", limit))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := []*model.Item{}
+	for rows.Next() {
+		i := &model.Item{}
+		var unread int
+		if err := rows.Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		i.Unread = intToBool(unread)
+		items = append(items, i)
+	}
+	return items, rows.Err()
+}
+
+// UpdateItemCrawled sets the content and crawled_at timestamp for an item.
+// crawledAt is set even on crawl failure to prevent indefinite retries.
+func (s *Store) UpdateItemCrawled(id int64, content string, crawledAt int64) error {
+	_, err := s.db.Exec(`
+		UPDATE items SET content = :content, crawled_at = :crawled_at WHERE id = :id
+	`, sql.Named("content", content), sql.Named("crawled_at", crawledAt), sql.Named("id", id))
+	return err
+}
+
 func (s *Store) ItemExists(feedID int64, guid string) (bool, error) {
 	var exists bool
 	err := s.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM items WHERE feed_id = :feed_id AND guid = :guid)`,

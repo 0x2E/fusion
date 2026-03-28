@@ -21,6 +21,7 @@ type createFeedRequest struct {
 	Name    string `json:"name" binding:"required"`
 	Link    string `json:"link" binding:"required"`
 	SiteURL string `json:"site_url"`
+	Crawl   bool   `json:"crawl"`
 	Proxy   string `json:"proxy"`
 }
 
@@ -30,6 +31,7 @@ type updateFeedRequest struct {
 	Link      *string `json:"link"`
 	SiteURL   *string `json:"site_url"`
 	Suspended *bool   `json:"suspended"`
+	Crawl     *bool   `json:"crawl"`
 	Proxy     *string `json:"proxy"` // Empty string clears proxy
 }
 
@@ -100,7 +102,7 @@ func (h *Handler) createFeed(c *gin.Context) {
 		return
 	}
 
-	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy)
+	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy, req.Crawl)
 	if err != nil {
 		internalError(c, err, "create feed")
 		return
@@ -151,6 +153,9 @@ func (h *Handler) updateFeed(c *gin.Context) {
 	}
 	if req.Suspended != nil {
 		params.Suspended = req.Suspended
+	}
+	if req.Crawl != nil {
+		params.Crawl = req.Crawl
 	}
 	if req.Proxy != nil {
 		params.Proxy = req.Proxy

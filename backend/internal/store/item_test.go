@@ -542,3 +542,94 @@ func TestSearchItemsFTSReflectsUpdateAndDelete(t *testing.T) {
 		t.Fatalf("expected 0 results for beta after delete, got %d", len(results))
 	}
 }
+
+func TestListUncrawledItems(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Group")
+	feed := mustCreateFeed(t, store, group.ID, "Feed", "https://example.com/feed", "https://example.com", "")
+
+	// Items with links (crawlable)
+	item1 := mustCreateItem(t, store, feed.ID, "guid-1", "Item 1", "https://example.com/1", "short", 100)
+	item2 := mustCreateItem(t, store, feed.ID, "guid-2", "Item 2", "https://example.com/2", "short", 200)
+	// Item without a link (not crawlable)
+	mustCreateItem(t, store, feed.ID, "guid-3", "Item 3", "", "content", 300)
+
+	items, err := store.ListUncrawledItems(feed.ID, 10)
+	if err != nil {
+		t.Fatalf("ListUncrawledItems() failed: %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("expected 2 uncrawled items with links, got %d", len(items))
+	}
+
+	// Results are ordered newest-first (by created_at DESC).
+	if items[0].ID != item2.ID || items[1].ID != item1.ID {
+		t.Error("expected items ordered newest-first")
+	}
+
+	// After crawling item2, it should no longer appear.
+	if err := store.UpdateItemCrawled(item2.ID, "full content", 999); err != nil {
+		t.Fatalf("UpdateItemCrawled() failed: %v", err)
+	}
+
+	items, err = store.ListUncrawledItems(feed.ID, 10)
+	if err != nil {
+		t.Fatalf("ListUncrawledItems() after crawl failed: %v", err)
+	}
+	if len(items) != 1 || items[0].ID != item1.ID {
+		t.Errorf("expected only item1 remaining, got %d items", len(items))
+	}
+}
+
+func TestListUncrawledItemsLimit(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Group")
+	feed := mustCreateFeed(t, store, group.ID, "Feed", "https://example.com/feed", "https://example.com", "")
+
+	for i := range 5 {
+		mustCreateItem(t, store, feed.ID, fmt.Sprintf("guid-%d", i), "Title", "https://example.com/"+fmt.Sprint(i), "content", int64(i))
+	}
+
+	items, err := store.ListUncrawledItems(feed.ID, 3)
+	if err != nil {
+		t.Fatalf("ListUncrawledItems() failed: %v", err)
+	}
+	if len(items) != 3 {
+		t.Errorf("expected 3 items (limit), got %d", len(items))
+	}
+}
+
+func TestUpdateItemCrawled(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Group")
+	feed := mustCreateFeed(t, store, group.ID, "Feed", "https://example.com/feed", "https://example.com", "")
+	item := mustCreateItem(t, store, feed.ID, "guid-1", "Title", "https://example.com/1", "original", 100)
+
+	crawledAt := int64(12345)
+	if err := store.UpdateItemCrawled(item.ID, "crawled content", crawledAt); err != nil {
+		t.Fatalf("UpdateItemCrawled() failed: %v", err)
+	}
+
+	// Verify content was updated and item is no longer returned as uncrawled.
+	retrieved, err := store.GetItem(item.ID)
+	if err != nil {
+		t.Fatalf("GetItem() failed: %v", err)
+	}
+	if retrieved.Content != "crawled content" {
+		t.Errorf("expected crawled content, got %q", retrieved.Content)
+	}
+
+	uncrawled, err := store.ListUncrawledItems(feed.ID, 10)
+	if err != nil {
+		t.Fatalf("ListUncrawledItems() failed: %v", err)
+	}
+	if len(uncrawled) != 0 {
+		t.Errorf("expected 0 uncrawled items after update, got %d", len(uncrawled))
+	}
+}

@@ -13,6 +13,7 @@ export interface Feed {
   link: string;
   site_url?: string;
   suspended: boolean;
+  crawl: boolean;
   proxy?: string;
   created_at: number;
   updated_at: number;
@@ -88,6 +89,7 @@ export interface CreateFeedRequest {
   name: string;
   link: string;
   site_url?: string;
+  crawl?: boolean;
   proxy?: string;
 }
 
@@ -97,6 +99,7 @@ export interface UpdateFeedRequest {
   link?: string;
   site_url?: string;
   suspended?: boolean;
+  crawl?: boolean;
   proxy?: string;
 }
 

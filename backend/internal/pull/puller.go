@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/0x2E/fusion/internal/config"
+	"github.com/0x2E/fusion/internal/crawl"
 	"github.com/0x2E/fusion/internal/model"
 	"github.com/0x2E/fusion/internal/pullpolicy"
 	"github.com/0x2E/fusion/internal/store"
@@ -23,17 +24,20 @@ type Puller struct {
 	timeout     time.Duration
 	maxBackoff  time.Duration
 	concurrency *semaphore.Weighted
+	crawler     *crawl.Crawler
 }
 
 func New(st *store.Store, cfg *config.Config) *Puller {
+	timeout := time.Duration(cfg.PullTimeout) * time.Second
 	return &Puller{
 		store:       st,
 		config:      cfg,
 		logger:      slog.Default(),
 		interval:    time.Duration(cfg.PullInterval) * time.Second,
-		timeout:     time.Duration(cfg.PullTimeout) * time.Second,
+		timeout:     timeout,
 		maxBackoff:  time.Duration(cfg.PullMaxBackoff) * time.Second,
 		concurrency: semaphore.NewWeighted(int64(cfg.PullConcurrency)),
+		crawler:     crawl.New(st, timeout, cfg.AllowPrivateFeeds),
 	}
 }
 
@@ -185,6 +189,10 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 	if err != nil {
 		p.logger.Error("failed to batch create items", "feed_id", feed.ID, "error", err)
 		return
+	}
+
+	if err := p.crawler.CrawlFeedItems(ctx, feed); err != nil {
+		p.logger.Warn("crawl failed", "feed_id", feed.ID, "error", err)
 	}
 
 	if err := p.store.UpdateFeedFetchSuccess(feed.ID, store.UpdateFeedFetchSuccessParams{

@@ -42,7 +42,7 @@ func mustCreateGroup(t *testing.T, store *Store, name string) *model.Group {
 func mustCreateFeed(t *testing.T, store *Store, groupID int64, name, link, siteURL, proxy string) *model.Feed {
 	t.Helper()
 
-	feed, err := store.CreateFeed(groupID, name, link, siteURL, proxy)
+	feed, err := store.CreateFeed(groupID, name, link, siteURL, proxy, false)
 	if err != nil {
 		t.Fatalf("CreateFeed() failed: %v", err)
 	}
