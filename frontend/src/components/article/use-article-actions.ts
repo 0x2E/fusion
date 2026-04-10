@@ -22,6 +22,7 @@ export function useArticleActions(
   const contextKey = getArticleListContextKey(context);
   const overlay = useArticleSessionStore((state) => state.overlays[contextKey]);
   const keepVisible = useArticleSessionStore((state) => state.keepVisible);
+  const setStickyArticle = useArticleSessionStore((state) => state.setStickyArticle);
   const setReadOverride = useArticleSessionStore((state) => state.setReadOverride);
   const setStarOverride = useArticleSessionStore((state) => state.setStarOverride);
   const setOverlay = useArticleSessionStore((state) => state.setOverlay);
@@ -92,6 +93,7 @@ export function useArticleActions(
       try {
         if (context.filter === "starred" && starred) {
           keepVisible(contextKey, article.id);
+          setStickyArticle(contextKey, article);
           setStarOverride(contextKey, article.id, false);
         } else {
           setStarOverride(contextKey, article.id, !starred);
@@ -119,6 +121,7 @@ export function useArticleActions(
       deleteBookmark,
       keepVisible,
       overlay,
+      setStickyArticle,
       setOverlay,
       setStarOverride,
     ],

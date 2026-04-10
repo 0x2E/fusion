@@ -17,6 +17,11 @@ import {
   useBookmarkLookup,
   useStarredItems,
 } from "./bookmarks";
+import {
+  countStickyRemovedRows,
+  getAdjustedOffset,
+  mergeStickyArticles,
+} from "./article-list-logic";
 import { queryKeys } from "./keys";
 import { fetchItemsPage, itemQueries, type ItemListResponse, useItems } from "./items";
 
@@ -57,7 +62,7 @@ export function useArticleListData(context: ArticleListContext): ArticleListData
     groupId: context.groupId,
   });
   const {
-    bookmarks,
+    fetchedCount: fetchedBookmarkCount,
     total: bookmarkTotal,
     getBookmarkByItemId,
     isItemStarred: isBaselineItemStarred,
@@ -71,45 +76,49 @@ export function useArticleListData(context: ArticleListContext): ArticleListData
       count + page.data.filter((article) => overlay.readOverrides[article.id] === false).length,
     0,
   );
-  const starredLoadedCount = bookmarks.length;
-  const starredRemovedCount = bookmarks.filter(
-    (bookmark) => overlay.starOverrides[bookmark.item_id ?? -bookmark.id] === false,
-  ).length;
-  const adjustedUnreadOffset = Math.max(0, unreadLoadedCount - unreadRemovedCount);
-  const adjustedStarredOffset = Math.max(0, starredLoadedCount - starredRemovedCount);
+  const starredLoadedCount = fetchedBookmarkCount;
+  const starredRemovedCount = countStickyRemovedRows(
+    overlay.stickyVisibleIds,
+    overlay.starOverrides,
+  );
+  const adjustedUnreadOffset = getAdjustedOffset(
+    unreadLoadedCount,
+    unreadRemovedCount,
+  );
+  const adjustedStarredOffset = getAdjustedOffset(
+    starredLoadedCount,
+    starredRemovedCount,
+  );
 
   const articles = useMemo(() => {
     const baselineArticles =
       context.filter === "starred"
         ? starredItems.articles
         : itemsQuery.data?.pages.flatMap((page) => page.data) ?? [];
-    const articleById = new Map<number, Item>();
+    const visibleArticles = mergeStickyArticles({
+      baselineArticles,
+      stickyVisibleIds: overlay.stickyVisibleIds,
+      stickyArticles: overlay.stickyArticles,
+      getArticleId: (article) => article.id,
+      getCachedArticle: (itemId) => {
+        if (itemId <= 0) {
+          return undefined;
+        }
 
-    for (const article of baselineArticles) {
-      if (context.filter === "starred" && article.id > 0) {
-        const cachedItem = queryClient.getQueryData<Item>(
-          queryKeys.items.detail(article.id),
-        );
-        articleById.set(article.id, cachedItem ?? article);
-        continue;
+        return queryClient.getQueryData<Item>(queryKeys.items.detail(itemId));
+      },
+    }).map((article) => {
+      if (context.filter !== "starred" || article.id <= 0) {
+        return article;
       }
 
-      articleById.set(article.id, article);
-    }
+      const cachedItem = queryClient.getQueryData<Item>(
+        queryKeys.items.detail(article.id),
+      );
+      return cachedItem ?? article;
+    });
 
-    for (const stickyId of Object.keys(overlay.stickyVisibleIds)) {
-      const itemId = Number(stickyId);
-      if (articleById.has(itemId) || itemId <= 0) {
-        continue;
-      }
-
-      const cachedItem = queryClient.getQueryData<Item>(queryKeys.items.detail(itemId));
-      if (cachedItem) {
-        articleById.set(itemId, cachedItem);
-      }
-    }
-
-    return Array.from(articleById.values())
+    return visibleArticles
       .filter((article) => {
         if (context.filter === "all") {
           return true;
@@ -129,6 +138,7 @@ export function useArticleListData(context: ArticleListContext): ArticleListData
     itemsQuery.data,
     overlay.readOverrides,
     overlay.starOverrides,
+    overlay.stickyArticles,
     overlay.stickyVisibleIds,
     queryClient,
     starredItems.articles,

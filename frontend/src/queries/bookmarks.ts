@@ -13,6 +13,7 @@ import {
   type Item,
   type ListAPIResponse,
 } from "@/lib/api";
+import { countFetchedRows } from "./article-list-logic";
 import { useFeedLookup } from "./feeds";
 import { queryKeys } from "./keys";
 
@@ -187,6 +188,7 @@ export function useBookmarkLookup() {
   } = useBookmarks();
   const pages = data?.pages ?? [];
   const bookmarks = useMemo(() => pages.flatMap((page) => page.data), [pages]);
+  const fetchedCount = useMemo(() => countFetchedRows(pages), [pages]);
   const total = pages.at(-1)?.total ?? 0;
 
   const byArticleId = useMemo(
@@ -206,6 +208,7 @@ export function useBookmarkLookup() {
 
   return {
     bookmarks,
+    fetchedCount,
     total,
     hasNextPage,
     fetchNextPage,
