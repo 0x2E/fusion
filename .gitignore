@@ -2,6 +2,7 @@
 *.db
 *.db-*
 .claude
+.worktrees/
 tmp/
 build/
 dist/

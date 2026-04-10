@@ -1,12 +1,12 @@
 import {
   infiniteQueryOptions,
   queryOptions,
+  type InfiniteData,
   type QueryClient,
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
-  type InfiniteData,
 } from "@tanstack/react-query";
 import { itemAPI, type Feed, type Item, type ListItemsParams } from "@/lib/api";
 import {
@@ -17,7 +17,7 @@ import {
 } from "./keys";
 import { usePreferencesStore } from "@/store";
 
-type ItemListResponse = Awaited<ReturnType<typeof itemAPI.list>>;
+export type ItemListResponse = Awaited<ReturnType<typeof itemAPI.list>>;
 type ItemsInfiniteData = InfiniteData<ItemListResponse, number>;
 type ItemsMutationContext = {
   prevItemLists: Array<[readonly unknown[], ItemsInfiniteData | undefined]>;
@@ -67,6 +67,14 @@ export const itemQueries = {
       },
     }),
 };
+
+export async function fetchItemsPage(
+  filters: ItemFilters,
+  pageSize: number,
+  offset: number,
+): Promise<ItemListResponse> {
+  return itemAPI.list(buildListItemsParams(normalizeItemFilters(filters), offset, pageSize));
+}
 
 export function useItems(filters: ItemFilters) {
   const articlePageSize = usePreferencesStore((state) => state.articlePageSize);

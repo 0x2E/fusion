@@ -9,6 +9,7 @@ import {
   isArticleFilter,
   type ArticleFilter,
 } from "@/lib/article-filter";
+import { type ArticleListContext } from "@/lib/article-list-context";
 import { parsePositiveIntegerParam } from "@/lib/route-params";
 
 export type { ArticleFilter } from "@/lib/article-filter";
@@ -33,6 +34,11 @@ export function useUrlState() {
   const selectedFeedId = routeFeedId;
   const selectedGroupId = routeGroupId;
   const articleFilter = routeFilter;
+  const articleListContext: ArticleListContext = {
+    filter: articleFilter,
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+  };
 
   const navigateToList = useCallback(
     ({
@@ -164,6 +170,7 @@ export function useUrlState() {
     selectedGroupId,
     selectedArticleId,
     articleFilter,
+    articleListContext,
     setSelectedFeed,
     setSelectedGroup,
     setSelectedArticle,

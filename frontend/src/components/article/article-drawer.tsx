@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback } from "react";
 import {
   Circle,
   CircleCheck,
@@ -13,26 +13,17 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
-import {
-  useItem,
-  useItems,
-  useMarkItemsRead,
-  useMarkItemsUnread,
-} from "@/queries/items";
+import { useItem } from "@/queries/items";
 import { useFeedLookup } from "@/queries/feeds";
-import {
-  useBookmarkLookup,
-  useCreateBookmark,
-  useDeleteBookmark,
-  useStarredItems,
-} from "@/queries/bookmarks";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
+import { useArticleListData } from "@/queries/article-list";
 import { useI18n } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+import { useArticleActions } from "./use-article-actions";
 
 export function ArticleDrawer() {
   const { t } = useI18n();
@@ -40,33 +31,14 @@ export function ArticleDrawer() {
     selectedArticleId,
     setSelectedArticle,
     setSelectedFeed,
-    selectedFeedId,
-    selectedGroupId,
     articleFilter,
+    articleListContext,
   } = useUrlState();
+  const articleList = useArticleListData(articleListContext);
   const { getFeedById } = useFeedLookup();
   const isStarredMode = articleFilter === "starred";
-
-  const itemsQuery = useItems({
-    feedId: selectedFeedId,
-    groupId: selectedGroupId,
-    unread: articleFilter === "unread" ? true : undefined,
-  });
-  const articles = useMemo(
-    () => itemsQuery.data?.pages.flatMap((p) => p.data) ?? [],
-    [itemsQuery.data],
-  );
-  const starredArticles = useStarredItems({
-    feedId: selectedFeedId,
-    groupId: selectedGroupId,
-  });
-  const listArticles = isStarredMode ? starredArticles : articles;
-
-  const markRead = useMarkItemsRead();
-  const markUnread = useMarkItemsUnread();
-  const { isItemStarred, getBookmarkByItemId } = useBookmarkLookup();
-  const createBookmark = useCreateBookmark();
-  const deleteBookmark = useDeleteBookmark();
+  const listArticles = articleList.articles;
+  const { toggleRead, toggleStar } = useArticleActions(articleListContext, articleList);
 
   const articleIds = listArticles.map((a) => a.id);
 
@@ -83,14 +55,17 @@ export function ArticleDrawer() {
     shouldFetchArticle,
   );
 
-  const article: Item | null =
-    (isStarredMode ? fetchedArticle ?? storeArticle : storeArticle ?? fetchedArticle) ??
-    null;
+  const article: Item | null = fetchedArticle
+    ? {
+        ...fetchedArticle,
+        unread: storeArticle?.unread ?? fetchedArticle.unread,
+      }
+    : storeArticle;
   const canToggleRead =
     article !== null && article.id > 0 && (!isStarredMode || fetchedArticle !== undefined);
   const feed = article ? getFeedById(article.feed_id) : null;
-  const bookmark = article ? getBookmarkByItemId(article.id) : null;
-  const starred = article ? isItemStarred(article.id) : false;
+  const bookmark = article ? articleList.getBookmarkByItemId(article.id) : null;
+  const starred = article ? articleList.isItemStarred(article.id) : false;
   const safeArticleLink = article ? toSafeExternalUrl(article.link) : null;
 
   const handleOpenChange = (open: boolean) => {
@@ -99,34 +74,25 @@ export function ArticleDrawer() {
     }
   };
 
-  const handleToggleRead = async () => {
+  const handleToggleRead = useCallback(async () => {
     if (!article || !canToggleRead) return;
+
     try {
-      if (article.unread) {
-        await markRead.mutateAsync([article.id]);
-      } else {
-        await markUnread.mutateAsync([article.id]);
-      }
+      await toggleRead(article);
     } catch (error) {
       console.error("Failed to toggle read status:", error);
     }
-  };
+  }, [article, canToggleRead, toggleRead]);
 
-  const handleToggleStar = async () => {
+  const handleToggleStar = useCallback(async () => {
     if (!article) return;
+
     try {
-      if (starred) {
-        const bookmark = getBookmarkByItemId(article.id);
-        if (bookmark) {
-          await deleteBookmark.mutateAsync(bookmark.id);
-        }
-      } else {
-        await createBookmark.mutateAsync(article);
-      }
+      await toggleStar(article);
     } catch (error) {
       console.error("Failed to toggle star:", error);
     }
-  };
+  }, [article, toggleStar]);
 
   const handleOpenOriginal = () => {
     if (!safeArticleLink) return;
