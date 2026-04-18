@@ -58,6 +58,16 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 	listResponse(c, bookmarks, total)
 }
 
+func (h *Handler) listSavedBookmarkRefs(c *gin.Context) {
+	refs, err := h.store.ListSavedBookmarkRefs()
+	if err != nil {
+		internalError(c, err, "list saved bookmark refs")
+		return
+	}
+
+	dataResponse(c, refs)
+}
+
 func (h *Handler) getBookmark(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {

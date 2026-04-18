@@ -142,3 +142,27 @@ func (s *Store) ListSavedItemIDs() ([]int64, error) {
 
 	return ids, rows.Err()
 }
+
+func (s *Store) ListSavedBookmarkRefs() ([]*model.SavedBookmarkRef, error) {
+	rows, err := s.db.Query(`
+		SELECT id, item_id
+		FROM bookmarks
+		WHERE item_id IS NOT NULL
+		ORDER BY item_id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	refs := []*model.SavedBookmarkRef{}
+	for rows.Next() {
+		ref := &model.SavedBookmarkRef{}
+		if err := rows.Scan(&ref.BookmarkID, &ref.ItemID); err != nil {
+			return nil, err
+		}
+		refs = append(refs, ref)
+	}
+
+	return refs, rows.Err()
+}

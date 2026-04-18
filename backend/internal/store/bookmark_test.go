@@ -196,6 +196,35 @@ func TestDeleteBookmark(t *testing.T) {
 	}
 }
 
+func TestListSavedBookmarkRefs(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Test Group")
+	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
+	firstItem := mustCreateItem(t, store, feed.ID, "guid-1", "First", "https://example.com/1", "Content 1", 123)
+	secondItem := mustCreateItem(t, store, feed.ID, "guid-2", "Second", "https://example.com/2", "Content 2", 124)
+	firstBookmark := mustCreateBookmark(t, store, &firstItem.ID, firstItem.Link, firstItem.Title, firstItem.Content, firstItem.PubDate, feed.Name)
+	secondBookmark := mustCreateBookmark(t, store, &secondItem.ID, secondItem.Link, secondItem.Title, secondItem.Content, secondItem.PubDate, feed.Name)
+	mustCreateBookmark(t, store, nil, "https://example.com/orphan", "Orphan", "Content", 125, feed.Name)
+
+	refs, err := store.ListSavedBookmarkRefs()
+	if err != nil {
+		t.Fatalf("ListSavedBookmarkRefs() failed: %v", err)
+	}
+
+	if len(refs) != 2 {
+		t.Fatalf("expected 2 saved bookmark refs, got %d", len(refs))
+	}
+
+	if refs[0].BookmarkID != firstBookmark.ID || refs[0].ItemID != firstItem.ID {
+		t.Fatalf("unexpected first ref: %#v", refs[0])
+	}
+	if refs[1].BookmarkID != secondBookmark.ID || refs[1].ItemID != secondItem.ID {
+		t.Fatalf("unexpected second ref: %#v", refs[1])
+	}
+}
+
 func TestBookmarkExists(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)

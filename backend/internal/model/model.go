@@ -79,3 +79,9 @@ type Bookmark struct {
 	FeedName  string `json:"feed_name"`
 	CreatedAt int64  `json:"created_at"`
 }
+
+// SavedBookmarkRef links a saved item back to its bookmark id.
+type SavedBookmarkRef struct {
+	BookmarkID int64 `json:"bookmark_id"`
+	ItemID     int64 `json:"item_id"`
+}

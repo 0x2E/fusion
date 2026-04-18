@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from "react";
 import {
-  type QueryClient,
-  type InfiniteData,
   infiniteQueryOptions,
+  queryOptions,
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import {
@@ -12,8 +12,16 @@ import {
   type Bookmark,
   type Item,
   type ListAPIResponse,
+  type SavedBookmarkRef,
 } from "@/lib/api";
 import { countFetchedRows } from "./article-list-logic";
+import {
+  buildSavedBookmarkLookup,
+  resolveBookmarkFeedId,
+  resolveSavedBookmarkId,
+  removeSavedBookmarkRef,
+  upsertSavedBookmarkRef,
+} from "./bookmark-lookup-logic";
 import { useFeedLookup } from "./feeds";
 import { queryKeys } from "./keys";
 
@@ -21,7 +29,10 @@ type CachedItemPages = {
   pages: Array<{ data: Item[] }>;
 };
 
-function getCachedItemById(queryClient: QueryClient, itemId: number): Item | undefined {
+function getCachedItemById(
+  queryClient: ReturnType<typeof useQueryClient>,
+  itemId: number,
+): Item | undefined {
   const detailItem = queryClient.getQueryData<Item>(queryKeys.items.detail(itemId));
   if (detailItem) {
     return detailItem;
@@ -46,107 +57,19 @@ function resolveBookmarkItemId(bookmark: Bookmark): number {
 }
 
 export type BookmarkPage = ListAPIResponse<Bookmark> & { fetchedCount: number };
-type BookmarkInfiniteData = InfiniteData<BookmarkPage, number>;
 
 const bookmarkPageSize = 100;
 
-function updateBookmarkPages(
-  old: BookmarkInfiniteData | undefined,
-  updater: (page: BookmarkPage, pageIndex: number) => BookmarkPage,
-  totalDelta: number,
-): BookmarkInfiniteData | undefined {
-  if (!old) {
-    return old;
-  }
-
-  return {
-    ...old,
-    pages: old.pages.map((page, index) => ({
-      ...updater(page, index),
-      total: Math.max(0, page.total + totalDelta),
-      fetchedCount: page.fetchedCount,
-    })),
-  };
-}
-
-function upsertBookmarkInPages(
-  old: BookmarkInfiniteData | undefined,
-  bookmark: Bookmark,
-): BookmarkInfiniteData | undefined {
-  if (!old) {
-    return old;
-  }
-
-  const itemId = resolveBookmarkItemId(bookmark);
-  const exists = old.pages.some((page) =>
-    page.data.some(
-      (entry) => resolveBookmarkItemId(entry) === itemId || entry.id === bookmark.id,
-    ),
-  );
-
-  return updateBookmarkPages(
-    old,
-    (page, index) => {
-      const existingIndex = page.data.findIndex(
-        (entry) => resolveBookmarkItemId(entry) === itemId || entry.id === bookmark.id,
-      );
-      if (existingIndex !== -1) {
-        const data = [...page.data];
-        data[existingIndex] = bookmark;
-        return { ...page, data };
-      }
-
-      if (!exists && index === 0) {
-        return { ...page, data: [bookmark, ...page.data] };
-      }
-
-      return page;
-    },
-    exists ? 0 : 1,
-  );
-}
-
-function removeBookmarkFromPages(
-  old: BookmarkInfiniteData | undefined,
-  bookmarkId: number,
-): BookmarkInfiniteData | undefined {
-  if (!old) {
-    return old;
-  }
-
-  const removed = old.pages.some((page) =>
-    page.data.some((entry) => entry.id === bookmarkId),
-  );
-  if (!removed) {
-    return old;
-  }
-
-  return updateBookmarkPages(
-    old,
-    (page) => ({
-      ...page,
-      data: page.data.filter((entry) => entry.id !== bookmarkId),
-    }),
-    -1,
-  );
-}
-
-function resolveBookmarkFeedId(
-  bookmark: Bookmark,
-  queryClient: QueryClient,
-  uniqueFeedIdByName: Map<string, number>,
-): number {
-  if (bookmark.item_id && bookmark.item_id > 0) {
-    const item = getCachedItemById(queryClient, bookmark.item_id);
-    if (item) {
-      return item.feed_id;
-    }
-  }
-
-  return uniqueFeedIdByName.get(bookmark.feed_name) ?? 0;
-}
-
 export const bookmarkQueries = {
+  refs: () =>
+    queryOptions({
+      queryKey: queryKeys.bookmarks.refs(),
+      queryFn: async () => {
+        const res = await bookmarkAPI.listSavedItemRefs();
+        return res.data ?? [];
+      },
+      staleTime: Number.POSITIVE_INFINITY,
+    }),
   list: () =>
     infiniteQueryOptions({
       queryKey: queryKeys.bookmarks.list(),
@@ -178,18 +101,30 @@ export function useBookmarks() {
   return useInfiniteQuery(bookmarkQueries.list());
 }
 
+export function useSavedBookmarkRefs() {
+  return useQuery(bookmarkQueries.refs());
+}
+
 export function useBookmarkLookup() {
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
+    isLoading: isBookmarksLoading,
   } = useBookmarks();
+  const {
+    data: savedRefs = [],
+    isLoading: isSavedRefsLoading,
+  } = useSavedBookmarkRefs();
   const pages = data?.pages ?? [];
   const bookmarks = useMemo(() => pages.flatMap((page) => page.data), [pages]);
   const fetchedCount = useMemo(() => countFetchedRows(pages), [pages]);
-  const total = pages.at(-1)?.total ?? 0;
+  const total = pages.at(-1)?.total ?? savedRefs.length;
+  const savedLookup = useMemo(
+    () => buildSavedBookmarkLookup(savedRefs),
+    [savedRefs],
+  );
 
   const byArticleId = useMemo(
     () => new Map(bookmarks.map((bookmark) => [resolveBookmarkItemId(bookmark), bookmark])),
@@ -197,13 +132,19 @@ export function useBookmarkLookup() {
   );
 
   const isItemStarred = useCallback(
-    (itemId: number) => byArticleId.has(itemId),
-    [byArticleId],
+    (itemId: number) => resolveSavedBookmarkId({ savedLookup, loadedBookmarks: byArticleId, itemId }) !== undefined,
+    [byArticleId, savedLookup],
   );
 
   const getBookmarkByItemId = useCallback(
     (itemId: number) => byArticleId.get(itemId),
     [byArticleId],
+  );
+
+  const getSavedBookmarkIdByItemId = useCallback(
+    (itemId: number) =>
+      resolveSavedBookmarkId({ savedLookup, loadedBookmarks: byArticleId, itemId }),
+    [byArticleId, savedLookup],
   );
 
   return {
@@ -213,9 +154,10 @@ export function useBookmarkLookup() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-    isLoading,
+    isLoading: isBookmarksLoading || isSavedRefsLoading,
     isItemStarred,
     getBookmarkByItemId,
+    getSavedBookmarkIdByItemId,
   };
 }
 
@@ -247,13 +189,22 @@ export function useStarredItems(filters: {
 
     if (filters.feedId) {
       filtered = filtered.filter(
-        (bookmark) =>
-          resolveBookmarkFeedId(bookmark, queryClient, uniqueFeedIdByName) ===
-          filters.feedId,
+        (bookmark) => {
+          const feedId = resolveBookmarkFeedId({
+            bookmark,
+            uniqueFeedIdByName,
+            getCachedFeedId: (itemId) => getCachedItemById(queryClient, itemId)?.feed_id,
+          });
+          return feedId === filters.feedId;
+        },
       );
     } else if (filters.groupId) {
       filtered = filtered.filter((bookmark) => {
-        const feedId = resolveBookmarkFeedId(bookmark, queryClient, uniqueFeedIdByName);
+        const feedId = resolveBookmarkFeedId({
+          bookmark,
+          uniqueFeedIdByName,
+          getCachedFeedId: (itemId) => getCachedItemById(queryClient, itemId)?.feed_id,
+        });
         return feedId > 0 && groupFeedIds?.has(feedId) === true;
       });
     }
@@ -261,7 +212,11 @@ export function useStarredItems(filters: {
     return filtered.map(
       (bookmark): Item => ({
         id: bookmark.item_id ?? -bookmark.id,
-        feed_id: resolveBookmarkFeedId(bookmark, queryClient, uniqueFeedIdByName),
+        feed_id: resolveBookmarkFeedId({
+          bookmark,
+          uniqueFeedIdByName,
+          getCachedFeedId: (itemId) => getCachedItemById(queryClient, itemId)?.feed_id,
+        }),
         guid: bookmark.link || `bookmark:${bookmark.id}`,
         title: bookmark.title,
         link: bookmark.link,
@@ -277,7 +232,6 @@ export function useStarredItems(filters: {
     filters.feedId,
     filters.groupId,
     getFeedsByGroup,
-    queryClient,
   ]);
 
   return {
@@ -307,9 +261,10 @@ export function useCreateBookmark() {
       return res.data!;
     },
     onSuccess: (bookmark) => {
-      qc.setQueryData(queryKeys.bookmarks.list(), (old: BookmarkInfiniteData | undefined) =>
-        upsertBookmarkInPages(old, bookmark),
+      qc.setQueryData(queryKeys.bookmarks.refs(), (old: SavedBookmarkRef[] | undefined) =>
+        upsertSavedBookmarkRef(old, bookmark),
       );
+      void qc.invalidateQueries({ queryKey: queryKeys.bookmarks.list() });
     },
   });
 }
@@ -323,9 +278,10 @@ export function useDeleteBookmark() {
       return bookmarkId;
     },
     onSuccess: (bookmarkId) => {
-      qc.setQueryData(queryKeys.bookmarks.list(), (old: BookmarkInfiniteData | undefined) =>
-        removeBookmarkFromPages(old, bookmarkId),
+      qc.setQueryData(queryKeys.bookmarks.refs(), (old: SavedBookmarkRef[] | undefined) =>
+        removeSavedBookmarkRef(old, bookmarkId),
       );
+      void qc.invalidateQueries({ queryKey: queryKeys.bookmarks.list() });
     },
   });
 }

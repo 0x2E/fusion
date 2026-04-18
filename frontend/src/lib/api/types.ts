@@ -59,6 +59,11 @@ export interface Bookmark {
   created_at: number;
 }
 
+export interface SavedBookmarkRef {
+  bookmark_id: number;
+  item_id: number;
+}
+
 // API response wrappers
 export interface APIResponse<T> {
   data?: T;

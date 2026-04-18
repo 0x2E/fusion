@@ -40,5 +40,6 @@ export const queryKeys = {
   bookmarks: {
     all: ["bookmarks"] as const,
     list: () => [...queryKeys.bookmarks.all, "list"] as const,
+    refs: () => [...queryKeys.bookmarks.all, "refs"] as const,
   },
 };

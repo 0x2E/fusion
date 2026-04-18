@@ -33,6 +33,7 @@ export interface ArticleListData {
   loadMore: () => Promise<unknown>;
   isItemStarred: (itemId: number) => boolean;
   getBookmarkByItemId: (itemId: number) => Bookmark | undefined;
+  getSavedBookmarkIdByItemId: (itemId: number) => number | undefined;
 }
 
 function applyArticleOverrides(
@@ -65,6 +66,7 @@ export function useArticleListData(context: ArticleListContext): ArticleListData
     fetchedCount: fetchedBookmarkCount,
     total: bookmarkTotal,
     getBookmarkByItemId,
+    getSavedBookmarkIdByItemId,
     isItemStarred: isBaselineItemStarred,
     isLoading: isBookmarksLoading,
   } = useBookmarkLookup();
@@ -297,5 +299,7 @@ export function useArticleListData(context: ArticleListContext): ArticleListData
     isItemStarred,
     getBookmarkByItemId: (itemId: number): Bookmark | undefined =>
       getBookmarkByItemId(itemId),
+    getSavedBookmarkIdByItemId: (itemId: number): number | undefined =>
+      getSavedBookmarkIdByItemId(itemId),
   };
 }

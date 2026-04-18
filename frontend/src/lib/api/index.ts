@@ -7,6 +7,7 @@ import type {
   Feed,
   Item,
   Bookmark,
+  SavedBookmarkRef,
   CreateGroupRequest,
   UpdateGroupRequest,
   CreateFeedRequest,
@@ -106,6 +107,8 @@ export const itemAPI = {
 
 // Bookmark APIs
 export const bookmarkAPI = {
+  listSavedItemRefs: () => api.get<APIResponse<SavedBookmarkRef[]>>("/bookmarks/-/items"),
+
   list: (limit = 50, offset = 0) => {
     const query = new URLSearchParams({
       limit: limit.toString(),

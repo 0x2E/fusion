@@ -100,9 +100,9 @@ export function useArticleActions(
         }
 
         if (starred) {
-          const bookmark = articleList.getBookmarkByItemId(article.id);
-          if (bookmark) {
-            await deleteBookmark.mutateAsync(bookmark.id);
+          const bookmarkId = articleList.getSavedBookmarkIdByItemId(article.id);
+          if (bookmarkId !== undefined) {
+            await deleteBookmark.mutateAsync(bookmarkId);
           }
           return;
         }
