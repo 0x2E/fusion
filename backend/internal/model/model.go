@@ -10,16 +10,16 @@ type Group struct {
 
 // Feed represents an RSS/Atom feed.
 type Feed struct {
-	ID        int64  `json:"id"`
-	GroupID   int64  `json:"group_id"`
-	Name      string `json:"name"`
-	Link      string `json:"link"`
-	SiteURL   string `json:"site_url,omitempty"`
-	Suspended bool   `json:"suspended"`
+	ID              int64  `json:"id"`
+	GroupID         int64  `json:"group_id"`
+	Name            string `json:"name"`
+	Link            string `json:"link"`
+	SiteURL         string `json:"site_url,omitempty"`
+	Suspended       bool   `json:"suspended"`
 	Proxy           string `json:"proxy,omitempty"`
 	RefreshInterval *int64 `json:"refresh_interval,omitempty"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
+	CreatedAt       int64  `json:"created_at"`
+	UpdatedAt       int64  `json:"updated_at"`
 
 	FetchState FeedFetchState `json:"fetch_state"`
 
