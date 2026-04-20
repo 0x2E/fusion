@@ -22,6 +22,7 @@ import type {
   SearchResponse,
   OIDCStatusResponse,
   OIDCLoginResponse,
+  AppInfoResponse,
 } from "./types";
 
 // Session APIs
@@ -128,6 +129,11 @@ export const searchAPI = {
     api.get<APIResponse<SearchResponse>>(
       `/search?q=${encodeURIComponent(q)}&limit=${limit}`,
     ),
+};
+
+// App APIs
+export const appAPI = {
+  getInfo: () => api.get<APIResponse<AppInfoResponse>>("/app"),
 };
 
 // OPML APIs

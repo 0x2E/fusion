@@ -31,11 +31,19 @@ import {
 import { useUIStore } from "@/store";
 import { useGroups } from "@/queries/groups";
 import { useUpdateFeed, useDeleteFeed } from "@/queries/feeds";
+import { useQuery } from "@tanstack/react-query";
+import { appAPI } from "@/lib/api";
 import type { UpdateFeedRequest } from "@/lib/api";
 import { toast } from "sonner";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type TranslationKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+function formatInterval(seconds: number): string {
+  if (seconds < 3600) return `${seconds / 60} min`;
+  if (seconds < 86400) return `${seconds / 3600}h`;
+  return `${seconds / 86400}d`;
+}
 
 export function EditFeedDialog() {
   const { t } = useI18n();
@@ -49,6 +57,7 @@ export function EditFeedDialog() {
   const [groupId, setGroupId] = useState<string>("");
   const [proxy, setProxy] = useState("");
   const [suspended, setSuspended] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState<string>("default");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -58,6 +67,16 @@ export function EditFeedDialog() {
   const urlInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
+  const { data: appInfo } = useQuery({
+    queryKey: ["appInfo"],
+    queryFn: async () => {
+      const res = await appAPI.getInfo();
+      return res.data;
+    },
+    staleTime: Infinity,
+  });
+  const globalPullInterval = appInfo?.pull_interval ?? 1800;
+
   useEffect(() => {
     if (editingFeed) {
       setUrl(editingFeed.link);
@@ -65,7 +84,12 @@ export function EditFeedDialog() {
       setGroupId(editingFeed.group_id.toString());
       setProxy(editingFeed.proxy ?? "");
       setSuspended(editingFeed.suspended);
-      setIsAdvancedOpen(!!editingFeed.proxy);
+      if (editingFeed.refresh_interval != null) {
+        setRefreshInterval(editingFeed.refresh_interval.toString());
+      } else {
+        setRefreshInterval("default");
+      }
+      setIsAdvancedOpen(!!editingFeed.proxy || editingFeed.refresh_interval != null);
       setIsMobileErrorTooltipOpen(false);
     }
   }, [editingFeed]);
@@ -76,6 +100,7 @@ export function EditFeedDialog() {
     setGroupId("");
     setProxy("");
     setSuspended(false);
+    setRefreshInterval("default");
     setIsAdvancedOpen(false);
     setIsDeleteOpen(false);
   };
@@ -123,6 +148,17 @@ export function EditFeedDialog() {
       const newProxy = proxy.trim() || undefined;
       if (newProxy !== editingFeed.proxy) {
         request.proxy = newProxy;
+      }
+
+      if (refreshInterval === "default") {
+        if (editingFeed.refresh_interval != null) {
+          request.refresh_interval = 0;
+        }
+      } else {
+        const newVal = parseInt(refreshInterval, 10);
+        if (editingFeed.refresh_interval !== newVal) {
+          request.refresh_interval = newVal;
+        }
       }
 
       if (Object.keys(request).length === 0) {
@@ -299,25 +335,47 @@ export function EditFeedDialog() {
                 />
                 {t("feed.add.advanced")}
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-1.5 pl-5 pt-3">
-                <label htmlFor="edit-feed-proxy" className="text-[13px] font-medium">
-                  {t("feed.add.proxyLabel")}
-                </label>
-                <Input
-                  id="edit-feed-proxy"
-                  name="feed-proxy"
-                  type="url"
-                  inputMode="url"
-                  placeholder={t("feed.add.proxyPlaceholder")}
-                  value={proxy}
-                  onChange={(e) => setProxy(e.target.value)}
-                  className="h-10"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("feed.add.proxyHint")}
-                </p>
+              <CollapsibleContent className="space-y-4 pl-5 pt-3">
+                <div className="space-y-1.5">
+                  <label className="text-[13px] font-medium" id="edit-feed-refresh-label">
+                    {t("feed.add.refreshFrequencyLabel")}
+                  </label>
+                  <Select value={refreshInterval} onValueChange={setRefreshInterval}>
+                    <SelectTrigger className="h-10" aria-labelledby="edit-feed-refresh-label">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">
+                        {t("feed.add.refreshFrequencyDefault", { interval: formatInterval(globalPullInterval) })}
+                      </SelectItem>
+                      {[900, 1800, 3600, 7200, 21600, 43200, 86400].map((seconds) => (
+                        <SelectItem key={seconds} value={seconds.toString()}>
+                          {t(`feed.add.refreshFrequency.${seconds}` as TranslationKey)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="edit-feed-proxy" className="text-[13px] font-medium">
+                    {t("feed.add.proxyLabel")}
+                  </label>
+                  <Input
+                    id="edit-feed-proxy"
+                    name="feed-proxy"
+                    type="url"
+                    inputMode="url"
+                    placeholder={t("feed.add.proxyPlaceholder")}
+                    value={proxy}
+                    onChange={(e) => setProxy(e.target.value)}
+                    className="h-10"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("feed.add.proxyHint")}
+                  </p>
+                </div>
               </CollapsibleContent>
             </Collapsible>
           </div>
