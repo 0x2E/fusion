@@ -25,6 +25,13 @@ type Puller struct {
 	concurrency *semaphore.Weighted
 }
 
+func (p *Puller) effectiveInterval(feed *model.Feed) time.Duration {
+	if feed.RefreshInterval != nil && *feed.RefreshInterval > 0 {
+		return time.Duration(*feed.RefreshInterval) * time.Second
+	}
+	return p.interval
+}
+
 func New(st *store.Store, cfg *config.Config) *Puller {
 	return &Puller{
 		store:       st,
@@ -41,10 +48,10 @@ func New(st *store.Store, cfg *config.Config) *Puller {
 func (p *Puller) Start(ctx context.Context) error {
 	p.logger.Info("pull service started", "interval", p.interval, "timeout", p.timeout, "concurrency", p.config.PullConcurrency)
 
-	// Run immediately on startup
 	p.pullAll(ctx)
 
-	ticker := time.NewTicker(p.interval)
+	tickerInterval := p.interval
+	ticker := time.NewTicker(tickerInterval)
 	defer ticker.Stop()
 
 	for {
@@ -55,7 +62,34 @@ func (p *Puller) Start(ctx context.Context) error {
 		case <-ticker.C:
 			p.pullAll(ctx)
 		}
+
+		newInterval := p.computeMinInterval()
+		if newInterval != tickerInterval {
+			tickerInterval = newInterval
+			ticker.Reset(tickerInterval)
+			p.logger.Info("adjusted pull ticker", "interval", tickerInterval)
+		}
 	}
+}
+
+func (p *Puller) computeMinInterval() time.Duration {
+	feeds, err := p.store.ListFeeds()
+	if err != nil {
+		p.logger.Error("failed to list feeds for ticker computation", "error", err)
+		return p.interval
+	}
+
+	minInterval := p.interval
+	for _, feed := range feeds {
+		if feed.Suspended {
+			continue
+		}
+		effective := p.effectiveInterval(feed)
+		if effective < minInterval {
+			minInterval = effective
+		}
+	}
+	return minInterval
 }
 
 // pullAll fetches all feeds concurrently with semaphore limiting.
@@ -76,7 +110,8 @@ func (p *Puller) pullAll(ctx context.Context) {
 			LastErrorAt:         feed.FetchState.LastErrorAt,
 			LastCheckedAt:       feed.FetchState.LastCheckedAt,
 		}
-		return !pullpolicy.ShouldSkip(now, state, p.interval, p.maxBackoff)
+		interval := p.effectiveInterval(feed)
+		return !pullpolicy.ShouldSkip(now, state, interval, p.maxBackoff)
 	})
 }
 
@@ -99,7 +134,7 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 			HTTPStatus:      httpStatus,
 			LastError:       err.Error(),
 			RetryAfterUntil: retryAfterUntil,
-			IntervalSeconds: int64(p.interval.Seconds()),
+			IntervalSeconds: int64(p.effectiveInterval(feed).Seconds()),
 			MaxBackoff:      int64(p.maxBackoff.Seconds()),
 		}); err != nil {
 			p.logger.Error("failed to record failure", "feed_id", feed.ID, "error", err)
@@ -134,7 +169,7 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 
 		nextCheckAt := pullpolicy.ComputeNextCheckAt(
 			checkedAt,
-			p.interval,
+			p.effectiveInterval(feed),
 			p.maxBackoff,
 			0,
 			result.RetryAfterUntil,
@@ -162,7 +197,7 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 
 	nextCheckAt := pullpolicy.ComputeNextCheckAt(
 		checkedAt,
-		p.interval,
+		p.effectiveInterval(feed),
 		p.maxBackoff,
 		0,
 		result.RetryAfterUntil,
