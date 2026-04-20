@@ -14,6 +14,7 @@ export interface Feed {
   site_url?: string;
   suspended: boolean;
   proxy?: string;
+  refresh_interval?: number | null;
   created_at: number;
   updated_at: number;
   fetch_state: FeedFetchState;
@@ -88,8 +89,10 @@ export interface CreateFeedRequest {
   name: string;
   link: string;
   site_url?: string;
-  proxy?: string;
+proxy?: string;
+  refresh_interval?: number | null;
 }
+
 
 export interface UpdateFeedRequest {
   group_id?: number;
@@ -98,6 +101,7 @@ export interface UpdateFeedRequest {
   site_url?: string;
   suspended?: boolean;
   proxy?: string;
+  refresh_interval?: number | null;
 }
 
 export interface ValidateFeedRequest {
@@ -173,6 +177,10 @@ export interface BatchCreateFeedsResponse {
   created: number;
   failed: number;
   errors?: string[];
+}
+
+export interface AppInfoResponse {
+  pull_interval: number;
 }
 
 // OIDC
