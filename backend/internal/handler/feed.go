@@ -75,7 +75,7 @@ var allowedRefreshIntervals = map[int64]bool{
 }
 
 func validateRefreshInterval(v *int64) error {
-	if v == nil {
+	if v == nil || *v == 0 {
 		return nil
 	}
 	if !allowedRefreshIntervals[*v] {
