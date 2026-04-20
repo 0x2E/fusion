@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -17,20 +18,22 @@ import (
 )
 
 type createFeedRequest struct {
-	GroupID int64  `json:"group_id" binding:"required"`
-	Name    string `json:"name" binding:"required"`
-	Link    string `json:"link" binding:"required"`
-	SiteURL string `json:"site_url"`
-	Proxy   string `json:"proxy"`
+	GroupID         int64  `json:"group_id" binding:"required"`
+	Name            string `json:"name" binding:"required"`
+	Link            string `json:"link" binding:"required"`
+	SiteURL         string `json:"site_url"`
+	Proxy           string `json:"proxy"`
+	RefreshInterval *int64 `json:"refresh_interval"`
 }
 
 type updateFeedRequest struct {
-	GroupID   *int64  `json:"group_id"`
-	Name      *string `json:"name"`
-	Link      *string `json:"link"`
-	SiteURL   *string `json:"site_url"`
-	Suspended *bool   `json:"suspended"`
-	Proxy     *string `json:"proxy"` // Empty string clears proxy
+	GroupID         *int64  `json:"group_id"`
+	Name            *string `json:"name"`
+	Link            *string `json:"link"`
+	SiteURL         *string `json:"site_url"`
+	Suspended       *bool   `json:"suspended"`
+	Proxy           *string `json:"proxy"`
+	RefreshInterval *int64  `json:"refresh_interval"`
 }
 
 type validateFeedRequest struct {
@@ -46,6 +49,10 @@ type validateFeedResponse struct {
 	Feeds []discoveredFeed `json:"feeds"`
 }
 
+type appInfoResponse struct {
+	PullInterval int `json:"pull_interval"`
+}
+
 type batchCreateFeedsRequest struct {
 	Feeds []batchCreateFeedItem `json:"feeds" binding:"required"`
 }
@@ -55,6 +62,32 @@ type batchCreateFeedItem struct {
 	Name    string `json:"name" binding:"required"`
 	Link    string `json:"link" binding:"required"`
 	SiteURL string `json:"site_url"`
+}
+
+var allowedRefreshIntervals = map[int64]bool{
+	900:   true,
+	1800:  true,
+	3600:  true,
+	7200:  true,
+	21600: true,
+	43200: true,
+	86400: true,
+}
+
+func validateRefreshInterval(v *int64) error {
+	if v == nil {
+		return nil
+	}
+	if !allowedRefreshIntervals[*v] {
+		return fmt.Errorf("invalid refresh_interval: must be one of 900, 1800, 3600, 7200, 21600, 43200, 86400")
+	}
+	return nil
+}
+
+func (h *Handler) getAppInfo(c *gin.Context) {
+	dataResponse(c, appInfoResponse{
+		PullInterval: h.config.PullInterval,
+	})
 }
 
 const refreshAllTimeout = 30 * time.Minute
@@ -99,8 +132,12 @@ func (h *Handler) createFeed(c *gin.Context) {
 		badRequestError(c, "invalid link")
 		return
 	}
+	if err := validateRefreshInterval(req.RefreshInterval); err != nil {
+		badRequestError(c, err.Error())
+		return
+	}
 
-	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy)
+	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy, req.RefreshInterval)
 	if err != nil {
 		internalError(c, err, "create feed")
 		return
@@ -131,6 +168,10 @@ func (h *Handler) updateFeed(c *gin.Context) {
 		badRequestError(c, "invalid request")
 		return
 	}
+	if err := validateRefreshInterval(req.RefreshInterval); err != nil {
+		badRequestError(c, err.Error())
+		return
+	}
 
 	params := store.UpdateFeedParams{}
 	if req.GroupID != nil {
@@ -154,6 +195,14 @@ func (h *Handler) updateFeed(c *gin.Context) {
 	}
 	if req.Proxy != nil {
 		params.Proxy = req.Proxy
+	}
+	if req.RefreshInterval != nil {
+		if *req.RefreshInterval == 0 {
+			nilInterval := int64(-1)
+			params.RefreshInterval = &nilInterval
+		} else {
+			params.RefreshInterval = req.RefreshInterval
+		}
 	}
 
 	if err := h.store.UpdateFeed(id, params); err != nil {

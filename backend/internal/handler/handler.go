@@ -130,6 +130,8 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.POST("/feeds/validate", h.validateFeed)
 			auth.POST("/feeds/:id/refresh", h.refreshFeed)
 
+			auth.GET("/app", h.getAppInfo)
+
 			auth.GET("/items", h.listItems)
 			auth.GET("/items/:id", h.getItem)
 			auth.PATCH("/items/-/read", h.markItemsRead)
