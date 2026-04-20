@@ -32,9 +32,10 @@ import { useUIStore } from "@/store";
 import { useGroups } from "@/queries/groups";
 import { useUpdateFeed, useDeleteFeed } from "@/queries/feeds";
 import { useQuery } from "@tanstack/react-query";
-import { appAPI, type { UpdateFeedRequest } from "@/lib/api";
+import { appAPI } from "@/lib/api";
+import type { UpdateFeedRequest } from "@/lib/api";
 import { toast } from "sonner";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type TranslationKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -349,7 +350,7 @@ export function EditFeedDialog() {
                       </SelectItem>
                       {[900, 1800, 3600, 7200, 21600, 43200, 86400].map((seconds) => (
                         <SelectItem key={seconds} value={seconds.toString()}>
-                          {t(`feed.add.refreshFrequency.${seconds}`)}
+                          {t(`feed.add.refreshFrequency.${seconds}` as TranslationKey)}
                         </SelectItem>
                       ))}
                     </SelectContent>
