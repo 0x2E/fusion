@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   Circle,
   CircleCheck,
@@ -15,7 +14,6 @@ import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
 import {
   useItem,
-  useItems,
   useMarkItemsRead,
   useMarkItemsUnread,
 } from "@/queries/items";
@@ -24,8 +22,8 @@ import {
   useBookmarkLookup,
   useCreateBookmark,
   useDeleteBookmark,
-  useStarredItems,
 } from "@/queries/bookmarks";
+import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useI18n } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
@@ -45,22 +43,12 @@ export function ArticleDrawer() {
     articleFilter,
   } = useUrlState();
   const { getFeedById } = useFeedLookup();
-  const isStarredMode = articleFilter === "starred";
 
-  const itemsQuery = useItems({
+  const { articles, isStarredMode } = useArticleList({
     feedId: selectedFeedId,
     groupId: selectedGroupId,
-    unread: articleFilter === "unread" ? true : undefined,
+    articleFilter,
   });
-  const articles = useMemo(
-    () => itemsQuery.data?.pages.flatMap((p) => p.data) ?? [],
-    [itemsQuery.data],
-  );
-  const starredArticles = useStarredItems({
-    feedId: selectedFeedId,
-    groupId: selectedGroupId,
-  });
-  const listArticles = isStarredMode ? starredArticles : articles;
 
   const markRead = useMarkItemsRead();
   const markUnread = useMarkItemsUnread();
@@ -68,10 +56,10 @@ export function ArticleDrawer() {
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
-  const articleIds = listArticles.map((a) => a.id);
+  const articleIds = articles.map((a) => a.id);
 
   const storeArticle = selectedArticleId
-    ? (listArticles.find((i) => i.id === selectedArticleId) ?? null)
+    ? (articles.find((i) => i.id === selectedArticleId) ?? null)
     : null;
 
   const shouldFetchArticle =
