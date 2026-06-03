@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useReducer } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useItems } from "@/queries/items";
 import { useStarredItems } from "@/queries/bookmarks";
@@ -15,6 +15,26 @@ interface ArticleListFilters {
 export function useArticleList(filters: ArticleListFilters) {
   const queryClient = useQueryClient();
   const isStarredMode = filters.articleFilter === "starred";
+
+  const [detailVersion, bumpDetailVersion] = useReducer(
+    (x: number) => x + 1,
+    0,
+  );
+
+  useEffect(() => {
+    if (!isStarredMode) return;
+
+    return queryClient.getQueryCache().subscribe((event) => {
+      const key = event?.query.queryKey;
+      if (
+        Array.isArray(key) &&
+        key[0] === "items" &&
+        key[1] === "detail"
+      ) {
+        bumpDetailVersion();
+      }
+    });
+  }, [isStarredMode, queryClient]);
 
   const itemsQuery = useItems({
     feedId: filters.feedId,
@@ -56,7 +76,8 @@ export function useArticleList(filters: ArticleListFilters) {
         ...article,
         unread: getArticleUnread(article),
       })),
-    [articles, getArticleUnread],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [articles, getArticleUnread, detailVersion],
   );
 
   return {
