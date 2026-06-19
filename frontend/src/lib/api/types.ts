@@ -56,6 +56,8 @@ export interface Bookmark {
   content: string;
   pub_date: number;
   feed_name: string;
+  feed_id: number | null;
+  unread: boolean;
   created_at: number;
 }
 
@@ -133,6 +135,13 @@ export interface ListItemsParams {
   limit?: number;
   offset?: number;
   order_by?: string;
+}
+
+export interface ListBookmarksParams {
+  feed_id?: number;
+  group_id?: number;
+  limit?: number;
+  offset?: number;
 }
 
 export interface ImportOpmlResponse {

@@ -19,8 +19,25 @@ type createBookmarkRequest struct {
 }
 
 func (h *Handler) listBookmarks(c *gin.Context) {
-	limit := 50
-	offset := 0
+	params := store.ListBookmarksParams{}
+
+	if feedID := c.Query("feed_id"); feedID != "" {
+		id, err := strconv.ParseInt(feedID, 10, 64)
+		if err != nil {
+			badRequestError(c, "invalid feed_id")
+			return
+		}
+		params.FeedID = &id
+	}
+
+	if groupID := c.Query("group_id"); groupID != "" {
+		id, err := strconv.ParseInt(groupID, 10, 64)
+		if err != nil {
+			badRequestError(c, "invalid group_id")
+			return
+		}
+		params.GroupID = &id
+	}
 
 	if limitStr := c.Query("limit"); limitStr != "" {
 		val, err := strconv.Atoi(limitStr)
@@ -31,7 +48,7 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 		if val > maxListLimit {
 			val = maxListLimit
 		}
-		limit = val
+		params.Limit = val
 	}
 
 	if offsetStr := c.Query("offset"); offsetStr != "" {
@@ -40,16 +57,16 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 			badRequestError(c, "invalid offset")
 			return
 		}
-		offset = val
+		params.Offset = val
 	}
 
-	bookmarks, err := h.store.ListBookmarks(limit, offset)
+	bookmarks, err := h.store.ListBookmarks(params)
 	if err != nil {
 		internalError(c, err, "list bookmarks")
 		return
 	}
 
-	total, err := h.store.CountBookmarks()
+	total, err := h.store.CountBookmarks(params)
 	if err != nil {
 		internalError(c, err, "count bookmarks")
 		return
@@ -86,6 +103,7 @@ func (h *Handler) createBookmark(c *gin.Context) {
 	}
 
 	var link, title, content, feedName string
+	var feedID *int64
 	var pubDate int64
 
 	// If item_id provided, auto-fill bookmark fields from item
@@ -111,6 +129,7 @@ func (h *Handler) createBookmark(c *gin.Context) {
 		content = item.Content
 		pubDate = item.PubDate
 		feedName = feed.Name
+		feedID = &item.FeedID
 	} else {
 		if req.Link == "" || req.Title == "" || req.Content == "" || req.FeedName == "" {
 			badRequestError(c, "missing required fields")
@@ -123,7 +142,7 @@ func (h *Handler) createBookmark(c *gin.Context) {
 		feedName = req.FeedName
 	}
 
-	bookmark, err := h.store.CreateBookmark(req.ItemID, link, title, content, pubDate, feedName)
+	bookmark, err := h.store.CreateBookmark(req.ItemID, feedID, link, title, content, pubDate, feedName)
 	if err != nil {
 		internalError(c, err, "create bookmark")
 		return

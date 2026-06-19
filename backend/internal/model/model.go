@@ -70,12 +70,18 @@ type Item struct {
 
 // Bookmark represents a saved item snapshot.
 type Bookmark struct {
-	ID        int64  `json:"id"`
-	ItemID    *int64 `json:"item_id"` // nullable
-	Link      string `json:"link"`
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	PubDate   int64  `json:"pub_date"`
-	FeedName  string `json:"feed_name"`
-	CreatedAt int64  `json:"created_at"`
+	ID       int64  `json:"id"`
+	ItemID   *int64 `json:"item_id"` // nullable
+	Link     string `json:"link"`
+	Title    string `json:"title"`
+	Content  string `json:"content"`
+	PubDate  int64  `json:"pub_date"`
+	FeedName string `json:"feed_name"`
+	// FeedID is a soft association to the source feed used for filtering. It is
+	// nil for orphaned bookmarks whose feed/item no longer exists; the bookmark
+	// itself always survives such deletions (it is a content snapshot).
+	FeedID *int64 `json:"feed_id"`
+	// Unread mirrors the linked item's unread state (false for orphans).
+	Unread    bool  `json:"unread"`
+	CreatedAt int64 `json:"created_at"`
 }

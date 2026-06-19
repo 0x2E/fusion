@@ -236,7 +236,7 @@ func TestFeverMarkSavedLinksExistingBookmarkToItem(t *testing.T) {
 		t.Fatalf("create item: %v", err)
 	}
 
-	if _, err := st.CreateBookmark(nil, item.Link, "Old Snapshot", "<p>old</p>", item.PubDate, feed.Name); err != nil {
+	if _, err := st.CreateBookmark(nil, nil, item.Link, "Old Snapshot", "<p>old</p>", item.PubDate, feed.Name); err != nil {
 		t.Fatalf("create preexisting bookmark: %v", err)
 	}
 

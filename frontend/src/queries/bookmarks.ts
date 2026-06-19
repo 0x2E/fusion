@@ -1,99 +1,155 @@
 import { useCallback, useMemo } from "react";
 import {
-  queryOptions,
+  useInfiniteQuery,
   useMutation,
-  useQuery,
   useQueryClient,
+  type InfiniteData,
 } from "@tanstack/react-query";
-import { bookmarkAPI, type Bookmark, type Item } from "@/lib/api";
-import { queryKeys } from "./keys";
+import {
+  bookmarkAPI,
+  type Bookmark,
+  type Item,
+  type ListAPIResponse,
+} from "@/lib/api";
+import {
+  normalizeBookmarkFilters,
+  queryKeys,
+  type BookmarkFilters,
+  type NormalizedBookmarkFilters,
+} from "./keys";
 import { useFeedLookup } from "./feeds";
+import { usePreferencesStore } from "@/store";
 
-function resolveBookmarkItemId(bookmark: Bookmark): number {
+// The lookup query (star icons + sidebar count) fetches a large first page so
+// most users' bookmarks are covered in a single request. 100 is also the
+// backend per-request cap, so it is the natural chunk size.
+const BOOKMARK_LOOKUP_PAGE_SIZE = 100;
+
+type BookmarkListResponse = ListAPIResponse<Bookmark>;
+export type BookmarksInfiniteData = InfiniteData<BookmarkListResponse, number>;
+
+export function resolveBookmarkItemId(bookmark: Bookmark): number {
   return bookmark.item_id ?? -bookmark.id;
 }
 
-export const bookmarkQueries = {
-  list: () =>
-    queryOptions({
-      queryKey: queryKeys.bookmarks.list(),
-      queryFn: async () => {
-        const res = await bookmarkAPI.list(100, 0);
-        return res.data;
-      },
-      staleTime: Number.POSITIVE_INFINITY,
-    }),
-};
-
-export function useBookmarks() {
-  return useQuery(bookmarkQueries.list());
+function buildListBookmarksParams(
+  filters: NormalizedBookmarkFilters,
+  offset: number,
+  pageSize: number,
+) {
+  const params: Parameters<typeof bookmarkAPI.list>[0] = {
+    limit: pageSize,
+    offset,
+  };
+  if (filters.feedId) params.feed_id = filters.feedId;
+  if (filters.groupId) params.group_id = filters.groupId;
+  return params;
 }
 
-export function useBookmarkLookup() {
-  const { data: bookmarks = [] } = useBookmarks();
+// useBookmarks is the shared infinite query over bookmarks. Callers pass the
+// filters and page size that fit their use case (lookup vs. starred list).
+// Options are inlined (rather than spread from a helper) so React Query infers
+// the pageParam type as `number`.
+function useBookmarks(
+  filters: BookmarkFilters,
+  pageSize: number,
+  enabled = true,
+) {
+  const normalized = normalizeBookmarkFilters(filters);
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.bookmarks.lists(), normalized, pageSize],
+    queryFn: async ({ pageParam }) =>
+      bookmarkAPI.list(
+        buildListBookmarksParams(normalized, pageParam, pageSize),
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const fetched = allPages.reduce((n, p) => n + p.data.length, 0);
+      return fetched < lastPage.total ? fetched : undefined;
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+    enabled,
+  });
+}
 
-  const byArticleId = useMemo(
+// useBookmarkLookup powers star indicators and the sidebar starred count.
+// It is intentionally unfiltered so star state is consistent across views;
+// the first page (up to BOOKMARK_LOOKUP_PAGE_SIZE) covers the common case and
+// `total` always reflects the true global count.
+export function useBookmarkLookup() {
+  const query = useBookmarks({}, BOOKMARK_LOOKUP_PAGE_SIZE);
+
+  const bookmarks = useMemo(
+    () => query.data?.pages.flatMap((p) => p.data) ?? [],
+    [query.data],
+  );
+  const total = query.data?.pages.at(-1)?.total ?? 0;
+
+  const byItemId = useMemo(
     () => new Map(bookmarks.map((b) => [resolveBookmarkItemId(b), b])),
     [bookmarks],
   );
 
   const isItemStarred = useCallback(
-    (itemId: number) => byArticleId.has(itemId),
-    [byArticleId],
+    (itemId: number) => byItemId.has(itemId),
+    [byItemId],
   );
 
   const getBookmarkByItemId = useCallback(
-    (itemId: number) => byArticleId.get(itemId),
-    [byArticleId],
+    (itemId: number) => byItemId.get(itemId),
+    [byItemId],
   );
 
-  return { bookmarks, isItemStarred, getBookmarkByItemId };
+  return { bookmarks, total, isItemStarred, getBookmarkByItemId };
 }
 
-export function useStarredItems(filters: {
-  feedId: number | null;
-  groupId: number | null;
-}) {
-  const { bookmarks } = useBookmarkLookup();
-  const { feeds, getFeedById, getFeedsByGroup } = useFeedLookup();
+export interface StarredItemsResult {
+  items: Item[];
+  bookmarks: Bookmark[];
+  hasNextPage: boolean;
+  isLoading: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
+}
 
-  return useMemo(() => {
-    let filtered = bookmarks;
+// useStarredItems is the paginated, server-filtered starred list. Filtering by
+// feed/group is pushed to the backend, so pagination is correct in every scope.
+export function useStarredItems(
+  filters: BookmarkFilters,
+  enabled = true,
+): StarredItemsResult {
+  const pageSize = usePreferencesStore((state) => state.articlePageSize);
+  const query = useBookmarks(filters, pageSize, enabled);
 
-    if (filters.feedId) {
-      const feed = getFeedById(filters.feedId);
-      if (!feed) {
-        return [];
-      }
-      filtered = filtered.filter((b) => b.feed_name === feed.name);
-    } else if (filters.groupId) {
-      const feedNames = new Set(getFeedsByGroup(filters.groupId).map((f) => f.name));
-      filtered = filtered.filter((b) => feedNames.has(b.feed_name));
-    }
+  const bookmarks = useMemo(
+    () => query.data?.pages.flatMap((p) => p.data) ?? [],
+    [query.data],
+  );
 
-    const feedIdByName = new Map(feeds.map((f) => [f.name, f.id]));
-
-    return filtered.map(
-      (bookmark): Item => ({
+  const items = useMemo<Item[]>(
+    () =>
+      bookmarks.map((bookmark) => ({
         id: bookmark.item_id ?? -bookmark.id,
-        feed_id: feedIdByName.get(bookmark.feed_name) ?? 0,
+        feed_id: bookmark.feed_id ?? 0,
         guid: bookmark.link || `bookmark:${bookmark.id}`,
         title: bookmark.title,
         link: bookmark.link,
         content: bookmark.content,
         pub_date: bookmark.pub_date,
-        unread: false,
+        unread: bookmark.unread,
         created_at: bookmark.created_at,
-      }),
-    );
-  }, [
+      })),
+    [bookmarks],
+  );
+
+  return {
+    items,
     bookmarks,
-    filters.feedId,
-    filters.groupId,
-    feeds,
-    getFeedById,
-    getFeedsByGroup,
-  ]);
+    hasNextPage: query.hasNextPage,
+    isLoading: query.isLoading,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: () => void query.fetchNextPage(),
+  };
 }
 
 export function useCreateBookmark() {
@@ -115,21 +171,29 @@ export function useCreateBookmark() {
     },
     onSuccess: (bookmark) => {
       const itemId = resolveBookmarkItemId(bookmark);
-      qc.setQueryData<Bookmark[]>(
-        queryKeys.bookmarks.list(),
+      qc.setQueriesData<BookmarksInfiniteData>(
+        { queryKey: queryKeys.bookmarks.lists() },
         (old) => {
-          if (!old) return [bookmark];
+          if (!old) return old;
+          const pages = [...old.pages];
+          const first = pages[0];
+          if (!first) return old;
 
-          const index = old.findIndex(
+          const index = first.data.findIndex(
             (b) => resolveBookmarkItemId(b) === itemId,
           );
-          if (index === -1) {
-            return [bookmark, ...old];
+          if (index !== -1) {
+            const newData = [...first.data];
+            newData[index] = bookmark;
+            pages[0] = { ...first, data: newData };
+          } else {
+            pages[0] = {
+              ...first,
+              data: [bookmark, ...first.data],
+              total: first.total + 1,
+            };
           }
-
-          const next = [...old];
-          next[index] = bookmark;
-          return next;
+          return { ...old, pages };
         },
       );
     },
@@ -148,11 +212,20 @@ export function useDeleteBookmark() {
       return bookmarkId;
     },
     onSuccess: (bookmarkId) => {
-      qc.setQueryData<Bookmark[]>(
-        queryKeys.bookmarks.list(),
+      qc.setQueriesData<BookmarksInfiniteData>(
+        { queryKey: queryKeys.bookmarks.lists() },
         (old) => {
           if (!old) return old;
-          return old.filter((b) => b.id !== bookmarkId);
+          const pages = old.pages.map((page) => {
+            const newData = page.data.filter((b) => b.id !== bookmarkId);
+            if (newData.length === page.data.length) return page;
+            return {
+              ...page,
+              data: newData,
+              total: Math.max(0, page.total - 1),
+            };
+          });
+          return { ...old, pages };
         },
       );
     },

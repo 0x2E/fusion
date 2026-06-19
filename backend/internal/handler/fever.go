@@ -315,7 +315,7 @@ func (h *Handler) markItemSaved(itemID int64) error {
 		return err
 	}
 
-	_, err = h.store.CreateBookmark(&item.ID, item.Link, item.Title, item.Content, item.PubDate, feed.Name)
+	_, err = h.store.CreateBookmark(&item.ID, &item.FeedID, item.Link, item.Title, item.Content, item.PubDate, feed.Name)
 	return err
 }
 

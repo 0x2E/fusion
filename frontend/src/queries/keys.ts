@@ -20,6 +20,25 @@ export function normalizeItemFilters(
   };
 }
 
+export interface BookmarkFilters {
+  feedId?: number | null;
+  groupId?: number | null;
+}
+
+export interface NormalizedBookmarkFilters {
+  feedId: number | null;
+  groupId: number | null;
+}
+
+export function normalizeBookmarkFilters(
+  filters: BookmarkFilters,
+): NormalizedBookmarkFilters {
+  return {
+    feedId: filters.feedId ?? null,
+    groupId: filters.groupId ?? null,
+  };
+}
+
 export const queryKeys = {
   groups: {
     all: ["groups"] as const,
@@ -39,6 +58,6 @@ export const queryKeys = {
   },
   bookmarks: {
     all: ["bookmarks"] as const,
-    list: () => [...queryKeys.bookmarks.all, "list"] as const,
+    lists: () => [...queryKeys.bookmarks.all, "list"] as const,
   },
 };

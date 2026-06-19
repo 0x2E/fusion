@@ -16,6 +16,7 @@ import type {
   CreateBookmarkRequest,
   MarkItemsReadRequest,
   ListItemsParams,
+  ListBookmarksParams,
   ImportOpmlResponse,
   BatchCreateFeedsRequest,
   BatchCreateFeedsResponse,
@@ -106,11 +107,12 @@ export const itemAPI = {
 
 // Bookmark APIs
 export const bookmarkAPI = {
-  list: (limit = 50, offset = 0) => {
-    const query = new URLSearchParams({
-      limit: limit.toString(),
-      offset: offset.toString(),
-    });
+  list: (params: ListBookmarksParams = {}) => {
+    const query = new URLSearchParams();
+    if (params.feed_id) query.set("feed_id", params.feed_id.toString());
+    if (params.group_id) query.set("group_id", params.group_id.toString());
+    query.set("limit", (params.limit ?? 50).toString());
+    query.set("offset", (params.offset ?? 0).toString());
     return api.get<ListAPIResponse<Bookmark>>(`/bookmarks?${query}`);
   },
 

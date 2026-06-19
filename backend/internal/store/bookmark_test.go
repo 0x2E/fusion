@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"testing"
+
+	"github.com/0x2E/fusion/internal/model"
 )
 
 func TestListBookmarks(t *testing.T) {
@@ -11,7 +13,7 @@ func TestListBookmarks(t *testing.T) {
 	defer closeStore(t, store)
 
 	// Test empty list
-	bookmarks, err := store.ListBookmarks(10, 0)
+	bookmarks, err := store.ListBookmarks(ListBookmarksParams{Limit: 10})
 	if err != nil {
 		t.Fatalf("ListBookmarks() failed: %v", err)
 	}
@@ -20,9 +22,9 @@ func TestListBookmarks(t *testing.T) {
 	}
 
 	pubDate := int64(123)
-	b1 := mustCreateBookmark(t, store, nil, "https://example.com/1", "Bookmark 1", "Content 1", pubDate, "Feed 1")
-	b2 := mustCreateBookmark(t, store, nil, "https://example.com/2", "Bookmark 2", "Content 2", pubDate, "Feed 2")
-	b3 := mustCreateBookmark(t, store, nil, "https://example.com/3", "Bookmark 3", "Content 3", pubDate, "Feed 3")
+	b1 := mustCreateBookmark(t, store, nil, nil, "https://example.com/1", "Bookmark 1", "Content 1", pubDate, "Feed 1")
+	b2 := mustCreateBookmark(t, store, nil, nil, "https://example.com/2", "Bookmark 2", "Content 2", pubDate, "Feed 2")
+	b3 := mustCreateBookmark(t, store, nil, nil, "https://example.com/3", "Bookmark 3", "Content 3", pubDate, "Feed 3")
 
 	// Make created_at deterministic (avoid time.Sleep + unixepoch() 1s resolution)
 	if _, err := store.db.Exec(
@@ -48,7 +50,7 @@ func TestListBookmarks(t *testing.T) {
 	}
 
 	t.Run("list all bookmarks ordered by created_at DESC", func(t *testing.T) {
-		bookmarks, err := store.ListBookmarks(10, 0)
+		bookmarks, err := store.ListBookmarks(ListBookmarksParams{Limit: 10})
 		if err != nil {
 			t.Fatalf("ListBookmarks() failed: %v", err)
 		}
@@ -64,7 +66,7 @@ func TestListBookmarks(t *testing.T) {
 	})
 
 	t.Run("pagination with limit", func(t *testing.T) {
-		bookmarks, err := store.ListBookmarks(2, 0)
+		bookmarks, err := store.ListBookmarks(ListBookmarksParams{Limit: 2})
 		if err != nil {
 			t.Fatalf("ListBookmarks() failed: %v", err)
 		}
@@ -75,7 +77,7 @@ func TestListBookmarks(t *testing.T) {
 	})
 
 	t.Run("pagination with offset", func(t *testing.T) {
-		bookmarks, err := store.ListBookmarks(10, 2)
+		bookmarks, err := store.ListBookmarks(ListBookmarksParams{Limit: 10, Offset: 2})
 		if err != nil {
 			t.Fatalf("ListBookmarks() failed: %v", err)
 		}
@@ -94,7 +96,7 @@ func TestListBookmarks(t *testing.T) {
 			t.Fatalf("failed to set created_at for tie test: %v", err)
 		}
 
-		bookmarks, err := store.ListBookmarks(10, 0)
+		bookmarks, err := store.ListBookmarks(ListBookmarksParams{Limit: 10})
 		if err != nil {
 			t.Fatalf("ListBookmarks() failed: %v", err)
 		}
@@ -107,11 +109,110 @@ func TestListBookmarks(t *testing.T) {
 	})
 }
 
+func TestListBookmarksFilters(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group1 := mustCreateGroup(t, store, "Group 1")
+	group2 := mustCreateGroup(t, store, "Group 2")
+	feedA := mustCreateFeed(t, store, group1.ID, "Feed A", "https://example.com/a", "https://example.com", "")
+	feedB := mustCreateFeed(t, store, group1.ID, "Feed B", "https://example.com/b", "https://example.com", "")
+	feedC := mustCreateFeed(t, store, group2.ID, "Feed C", "https://example.com/c", "https://example.com", "")
+
+	// Linked items carry real unread state; orphan bookmark has feed_id=0.
+	itemA := mustCreateItem(t, store, feedA.ID, "guid-a", "Item A", "https://example.com/ia", "Content", 100) // unread (default)
+	itemB := mustCreateItem(t, store, feedB.ID, "guid-b", "Item B", "https://example.com/ib", "Content", 100)
+	if err := store.UpdateItemUnread(itemB.ID, false); err != nil {
+		t.Fatalf("mark itemB read: %v", err)
+	}
+
+	mustCreateBookmark(t, store, &itemA.ID, &itemA.FeedID, itemA.Link, itemA.Title, itemA.Content, itemA.PubDate, feedA.Name)
+	mustCreateBookmark(t, store, &itemB.ID, &itemB.FeedID, itemB.Link, itemB.Title, itemB.Content, itemB.PubDate, feedB.Name)
+	// Bookmark linked to feedC but without an item (orphan with known feed).
+	mustCreateBookmark(t, store, nil, &feedC.ID, "https://example.com/ic", "Orphan C", "Content", 100, feedC.Name)
+	// Bookmark whose source feed is gone entirely (feed_id = NULL).
+	mustCreateBookmark(t, store, nil, nil, "https://example.com/orphan", "Orphan", "Content", 100, "Gone Feed")
+
+	t.Run("filter by feed_id", func(t *testing.T) {
+		got, err := store.ListBookmarks(ListBookmarksParams{FeedID: &feedA.ID, Limit: 10})
+		if err != nil {
+			t.Fatalf("ListBookmarks() failed: %v", err)
+		}
+		if len(got) != 1 || got[0].FeedID == nil || *got[0].FeedID != feedA.ID {
+			t.Errorf("expected only feedA bookmark, got %d", len(got))
+		}
+
+		count, err := store.CountBookmarks(ListBookmarksParams{FeedID: &feedA.ID})
+		if err != nil {
+			t.Fatalf("CountBookmarks() failed: %v", err)
+		}
+		if count != 1 {
+			t.Errorf("expected count 1 for feedA, got %d", count)
+		}
+	})
+
+	t.Run("filter by group_id joins feeds", func(t *testing.T) {
+		got, err := store.ListBookmarks(ListBookmarksParams{GroupID: &group1.ID, Limit: 10})
+		if err != nil {
+			t.Fatalf("ListBookmarks() failed: %v", err)
+		}
+		// feedA + feedB belong to group1; feedC and orphan excluded.
+		if len(got) != 2 {
+			t.Errorf("expected 2 bookmarks in group1, got %d", len(got))
+		}
+
+		count, err := store.CountBookmarks(ListBookmarksParams{GroupID: &group1.ID})
+		if err != nil {
+			t.Fatalf("CountBookmarks() failed: %v", err)
+		}
+		if count != 2 {
+			t.Errorf("expected count 2 for group1, got %d", count)
+		}
+	})
+
+	t.Run("unread mirrors linked item", func(t *testing.T) {
+		got, err := store.ListBookmarks(ListBookmarksParams{FeedID: &feedA.ID, Limit: 10})
+		if err != nil {
+			t.Fatalf("ListBookmarks() failed: %v", err)
+		}
+		if !got[0].Unread {
+			t.Error("expected bookmark of unread itemA to be unread")
+		}
+
+		gotB, err := store.ListBookmarks(ListBookmarksParams{FeedID: &feedB.ID, Limit: 10})
+		if err != nil {
+			t.Fatalf("ListBookmarks() failed: %v", err)
+		}
+		if gotB[0].Unread {
+			t.Error("expected bookmark of read itemB to be read")
+		}
+	})
+
+	t.Run("orphan bookmark has nil feed_id and reads as read", func(t *testing.T) {
+		got, err := store.ListBookmarks(ListBookmarksParams{Limit: 10})
+		if err != nil {
+			t.Fatalf("ListBookmarks() failed: %v", err)
+		}
+		var orphan *model.Bookmark
+		for _, b := range got {
+			if b.FeedID == nil {
+				orphan = b
+			}
+		}
+		if orphan == nil {
+			t.Fatal("expected an orphan bookmark with nil feed_id")
+		}
+		if orphan.Unread {
+			t.Error("expected orphan bookmark to read as read")
+		}
+	})
+}
+
 func TestGetBookmark(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
-	created := mustCreateBookmark(t, store, nil, "https://example.com/test", "Test Bookmark", "Content", 123, "Test Feed")
+	created := mustCreateBookmark(t, store, nil, nil, "https://example.com/test", "Test Bookmark", "Content", 123, "Test Feed")
 
 	// Get existing bookmark
 	bookmark, err := store.GetBookmark(created.ID)
@@ -139,7 +240,7 @@ func TestCreateBookmark(t *testing.T) {
 		feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
 		item := mustCreateItem(t, store, feed.ID, "guid-1", "Test Item", "https://example.com/item", "Content", 123)
 
-		bookmark := mustCreateBookmark(t, store, &item.ID, item.Link, item.Title, item.Content, item.PubDate, "Test Feed")
+		bookmark := mustCreateBookmark(t, store, &item.ID, &item.FeedID, item.Link, item.Title, item.Content, item.PubDate, "Test Feed")
 
 		if bookmark.ItemID == nil || *bookmark.ItemID != item.ID {
 			t.Error("expected item_id to be set")
@@ -155,7 +256,7 @@ func TestCreateBookmark(t *testing.T) {
 	})
 
 	t.Run("create bookmark with NULL item_id", func(t *testing.T) {
-		bookmark := mustCreateBookmark(t, store, nil, "https://example.com/orphan", "Orphan Bookmark", "Content", 123, "Unknown Feed")
+		bookmark := mustCreateBookmark(t, store, nil, nil, "https://example.com/orphan", "Orphan Bookmark", "Content", 123, "Unknown Feed")
 
 		if bookmark.ItemID != nil {
 			t.Error("expected item_id to be NULL")
@@ -168,10 +269,10 @@ func TestCreateBookmark(t *testing.T) {
 
 	t.Run("unique constraint on link", func(t *testing.T) {
 		link := "https://example.com/duplicate"
-		mustCreateBookmark(t, store, nil, link, "Bookmark 1", "Content", 123, "Feed")
+		mustCreateBookmark(t, store, nil, nil, link, "Bookmark 1", "Content", 123, "Feed")
 
 		// Try to create duplicate
-		_, err := store.CreateBookmark(nil, link, "Bookmark 2", "Content", 123, "Feed")
+		_, err := store.CreateBookmark(nil, nil, link, "Bookmark 2", "Content", 123, "Feed")
 		if err == nil {
 			t.Error("expected error when creating duplicate bookmark link, got nil")
 		}
@@ -182,7 +283,7 @@ func TestDeleteBookmark(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)
 
-	bookmark := mustCreateBookmark(t, store, nil, "https://example.com/test", "Test Bookmark", "Content", 123, "Test Feed")
+	bookmark := mustCreateBookmark(t, store, nil, nil, "https://example.com/test", "Test Bookmark", "Content", 123, "Test Feed")
 
 	// Delete bookmark
 	if err := store.DeleteBookmark(bookmark.ID); err != nil {
@@ -201,7 +302,7 @@ func TestBookmarkExists(t *testing.T) {
 	defer closeStore(t, store)
 
 	link := "https://example.com/test"
-	mustCreateBookmark(t, store, nil, link, "Test Bookmark", "Content", 123, "Test Feed")
+	mustCreateBookmark(t, store, nil, nil, link, "Test Bookmark", "Content", 123, "Test Feed")
 
 	// Test existing bookmark
 	exists, err := store.BookmarkExists(link)

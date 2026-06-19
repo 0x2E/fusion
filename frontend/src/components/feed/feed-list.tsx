@@ -16,7 +16,7 @@ export function FeedList() {
   const { data: groups = [], isLoading } = useGroups();
   const { feeds, getFeedsByGroup } = useFeedLookup();
   const { getTotalUnreadCount } = useUnreadCounts();
-  const { bookmarks } = useBookmarkLookup();
+  const { total: starredTotal } = useBookmarkLookup();
   const {
     selectedFeedId,
     selectedGroupId,
@@ -30,7 +30,7 @@ export function FeedList() {
   const isTopLevelSelected =
     isOnHomePage && selectedFeedId === null && selectedGroupId === null;
   const totalUnread = getTotalUnreadCount();
-  const starredCount = bookmarks.length;
+  const starredCount = starredTotal;
 
   const topFilters: Array<{
     value: "all" | "unread" | "starred";

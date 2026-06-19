@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
 import { CheckCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,14 +10,10 @@ import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useUrlState, type ArticleFilter } from "@/hooks/use-url-state";
 import { useArticleList } from "@/hooks/use-article-list";
-import { useMarkItemsRead, useMarkItemsUnread, itemQueries } from "@/queries/items";
+import { useMarkItemsRead, useMarkItemsUnread } from "@/queries/items";
 import { useFeedLookup } from "@/queries/feeds";
 import { useGroups } from "@/queries/groups";
-import {
-  useBookmarkLookup,
-  useCreateBookmark,
-  useDeleteBookmark,
-} from "@/queries/bookmarks";
+import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { useI18n } from "@/lib/i18n";
 import type { Item } from "@/lib/api";
@@ -35,16 +30,15 @@ export function ArticleList() {
     setSelectedArticle,
   } = useUrlState();
 
-  const queryClient = useQueryClient();
-
   const {
     articles,
     displayArticles,
     hasMore,
     isLoading,
     isLoadingMore,
-    isStarredMode,
     fetchNextPage,
+    isItemStarred,
+    getBookmarkByItemId,
   } = useArticleList({
     feedId: selectedFeedId,
     groupId: selectedGroupId,
@@ -55,7 +49,6 @@ export function ArticleList() {
   const { feeds, getFeedById, isLoading: isFeedsLoading } = useFeedLookup();
   const markItemsRead = useMarkItemsRead();
   const markItemsUnread = useMarkItemsUnread();
-  const { isItemStarred, getBookmarkByItemId } = useBookmarkLookup();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
@@ -80,22 +73,8 @@ export function ArticleList() {
     async (article: Item) => {
       if (article.id <= 0) return;
 
-      let unread = article.unread;
-
-      if (isStarredMode) {
-        try {
-          const detail = await queryClient.ensureQueryData(
-            itemQueries.detail(article.id),
-          );
-          if (detail === undefined) return;
-          unread = detail.unread;
-        } catch {
-          return;
-        }
-      }
-
       try {
-        if (unread) {
+        if (article.unread) {
           await markItemsRead.mutateAsync([article.id]);
         } else {
           await markItemsUnread.mutateAsync([article.id]);
@@ -104,7 +83,7 @@ export function ArticleList() {
         console.error("Failed to toggle read status:", error);
       }
     },
-    [isStarredMode, markItemsRead, markItemsUnread, queryClient],
+    [markItemsRead, markItemsUnread],
   );
 
   const handleToggleStar = useCallback(
@@ -127,30 +106,9 @@ export function ArticleList() {
   );
 
   const handleMarkAllAsRead = async () => {
-    let unreadIds: number[];
-
-    if (isStarredMode) {
-      const ids = articles.filter((a) => a.id > 0).map((a) => a.id);
-      const detailEntries = await Promise.all(
-        ids.map(async (id) => {
-          try {
-            const detail = await queryClient.ensureQueryData(
-              itemQueries.detail(id),
-            );
-            return [id, detail?.unread ?? false] as const;
-          } catch {
-            return [id, false] as const;
-          }
-        }),
-      );
-      unreadIds = detailEntries
-        .filter(([, unread]) => unread)
-        .map(([id]) => id);
-    } else {
-      unreadIds = displayArticles
-        .filter((a) => a.unread && a.id > 0)
-        .map((a) => a.id);
-    }
+    const unreadIds = displayArticles
+      .filter((a) => a.unread && a.id > 0)
+      .map((a) => a.id);
 
     if (unreadIds.length === 0) return;
 

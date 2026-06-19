@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useReducer } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo } from "react";
 import { useItems } from "@/queries/items";
-import { useStarredItems } from "@/queries/bookmarks";
-import { queryKeys } from "@/queries/keys";
-import type { Item } from "@/lib/api";
+import {
+  resolveBookmarkItemId,
+  useStarredItems,
+} from "@/queries/bookmarks";
+import { useBookmarkLookup } from "@/queries/bookmarks";
+import type { Bookmark, Item } from "@/lib/api";
 import type { ArticleFilter } from "@/lib/article-filter";
 
 interface ArticleListFilters {
@@ -13,28 +15,7 @@ interface ArticleListFilters {
 }
 
 export function useArticleList(filters: ArticleListFilters) {
-  const queryClient = useQueryClient();
   const isStarredMode = filters.articleFilter === "starred";
-
-  const [detailVersion, bumpDetailVersion] = useReducer(
-    (x: number) => x + 1,
-    0,
-  );
-
-  useEffect(() => {
-    if (!isStarredMode) return;
-
-    return queryClient.getQueryCache().subscribe((event) => {
-      const key = event?.query.queryKey;
-      if (
-        Array.isArray(key) &&
-        key[0] === "items" &&
-        key[1] === "detail"
-      ) {
-        bumpDetailVersion();
-      }
-    });
-  }, [isStarredMode, queryClient]);
 
   const itemsQuery = useItems({
     feedId: filters.feedId,
@@ -42,51 +23,58 @@ export function useArticleList(filters: ArticleListFilters) {
     unread: filters.articleFilter === "unread" ? true : undefined,
   });
 
+  // Unfiltered lookup: powers star indicators in non-starred views.
+  const lookup = useBookmarkLookup();
+
+  // Server-filtered, paginated starred list. Only fetched in starred mode.
+  const starred = useStarredItems(
+    { feedId: filters.feedId, groupId: filters.groupId },
+    isStarredMode,
+  );
+
   const items = useMemo(
     () => itemsQuery.data?.pages.flatMap((p) => p.data) ?? [],
     [itemsQuery.data],
   );
 
-  const starredItems = useStarredItems({
-    feedId: filters.feedId,
-    groupId: filters.groupId,
-  });
+  const articles: Item[] = isStarredMode ? starred.items : items;
 
-  const articles = isStarredMode ? starredItems : items;
-
-  const getArticleUnread = useCallback(
-    (article: Item) => {
-      if (!isStarredMode) return article.unread;
-
-      if (article.id > 0) {
-        const cachedItem = queryClient.getQueryData<Item>(
-          queryKeys.items.detail(article.id),
-        );
-        if (cachedItem) return cachedItem.unread;
-      }
-
-      return article.unread;
-    },
-    [isStarredMode, queryClient],
+  // Bookmark resolution for star state + un-starring. In starred mode every
+  // displayed article is itself a bookmark, so resolve from the starred data
+  // (which may exceed the lookup's first page). Otherwise use the lookup.
+  const bookmarkSource: Bookmark[] = isStarredMode
+    ? starred.bookmarks
+    : lookup.bookmarks;
+  const bookmarkByItemId = useMemo(
+    () =>
+      new Map(bookmarkSource.map((b) => [resolveBookmarkItemId(b), b])),
+    [bookmarkSource],
   );
 
-  const displayArticles = useMemo(
-    () =>
-      articles.map((article) => ({
-        ...article,
-        unread: getArticleUnread(article),
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [articles, getArticleUnread, detailVersion],
+  const isItemStarred = useCallback(
+    (itemId: number) =>
+      isStarredMode ? true : bookmarkByItemId.has(itemId),
+    [isStarredMode, bookmarkByItemId],
+  );
+
+  const getBookmarkByItemId = useCallback(
+    (itemId: number) => bookmarkByItemId.get(itemId),
+    [bookmarkByItemId],
   );
 
   return {
     articles,
-    displayArticles,
-    hasMore: isStarredMode ? false : itemsQuery.hasNextPage,
-    isLoading: isStarredMode ? false : itemsQuery.isLoading,
-    isLoadingMore: itemsQuery.isFetchingNextPage,
+    displayArticles: articles,
+    hasMore: isStarredMode ? starred.hasNextPage : itemsQuery.hasNextPage,
+    isLoading: isStarredMode ? starred.isLoading : itemsQuery.isLoading,
+    isLoadingMore: isStarredMode
+      ? starred.isFetchingNextPage
+      : itemsQuery.isFetchingNextPage,
     isStarredMode,
-    fetchNextPage: itemsQuery.fetchNextPage,
+    fetchNextPage: isStarredMode
+      ? starred.fetchNextPage
+      : () => itemsQuery.fetchNextPage(),
+    isItemStarred,
+    getBookmarkByItemId,
   };
 }

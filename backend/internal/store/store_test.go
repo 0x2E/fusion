@@ -61,10 +61,10 @@ func mustCreateItem(t *testing.T, store *Store, feedID int64, guid, title, link,
 	return item
 }
 
-func mustCreateBookmark(t *testing.T, store *Store, itemID *int64, link, title, content string, pubDate int64, feedName string) *model.Bookmark {
+func mustCreateBookmark(t *testing.T, store *Store, itemID *int64, feedID *int64, link, title, content string, pubDate int64, feedName string) *model.Bookmark {
 	t.Helper()
 
-	bookmark, err := store.CreateBookmark(itemID, link, title, content, pubDate, feedName)
+	bookmark, err := store.CreateBookmark(itemID, feedID, link, title, content, pubDate, feedName)
 	if err != nil {
 		t.Fatalf("CreateBookmark() failed: %v", err)
 	}

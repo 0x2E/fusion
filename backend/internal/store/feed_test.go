@@ -224,7 +224,7 @@ func TestDeleteFeed(t *testing.T) {
 	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
 
 	item := mustCreateItem(t, store, feed.ID, "guid-1", "Item 1", "https://example.com/item1", "Content 1", time.Now().Unix())
-	bookmark := mustCreateBookmark(t, store, &item.ID, "https://example.com/item1", "Item 1", "Content 1", item.PubDate, "Test Feed")
+	bookmark := mustCreateBookmark(t, store, &item.ID, &item.FeedID, "https://example.com/item1", "Item 1", "Content 1", item.PubDate, "Test Feed")
 
 	if err := store.DeleteFeed(feed.ID); err != nil {
 		t.Fatalf("DeleteFeed() failed: %v", err)

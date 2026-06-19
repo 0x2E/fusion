@@ -19,7 +19,6 @@ import {
 } from "@/queries/items";
 import { useFeedLookup } from "@/queries/feeds";
 import {
-  useBookmarkLookup,
   useCreateBookmark,
   useDeleteBookmark,
 } from "@/queries/bookmarks";
@@ -44,15 +43,15 @@ export function ArticleDrawer() {
   } = useUrlState();
   const { getFeedById } = useFeedLookup();
 
-  const { articles, isStarredMode } = useArticleList({
-    feedId: selectedFeedId,
-    groupId: selectedGroupId,
-    articleFilter,
-  });
+  const { articles, isStarredMode, isItemStarred, getBookmarkByItemId } =
+    useArticleList({
+      feedId: selectedFeedId,
+      groupId: selectedGroupId,
+      articleFilter,
+    });
 
   const markRead = useMarkItemsRead();
   const markUnread = useMarkItemsUnread();
-  const { isItemStarred, getBookmarkByItemId } = useBookmarkLookup();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
@@ -74,8 +73,7 @@ export function ArticleDrawer() {
   const article: Item | null =
     (isStarredMode ? fetchedArticle ?? storeArticle : storeArticle ?? fetchedArticle) ??
     null;
-  const canToggleRead =
-    article !== null && article.id > 0 && (!isStarredMode || fetchedArticle !== undefined);
+  const canToggleRead = article !== null && article.id > 0;
   const feed = article ? getFeedById(article.feed_id) : null;
   const bookmark = article ? getBookmarkByItemId(article.id) : null;
   const starred = article ? isItemStarred(article.id) : false;
