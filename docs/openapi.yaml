@@ -545,6 +545,16 @@ paths:
       tags: [Bookmarks]
       summary: List bookmarks
       parameters:
+        - name: feed_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: group_id
+          in: query
+          schema:
+            type: integer
+            format: int64
         - name: limit
           in: query
           schema:
