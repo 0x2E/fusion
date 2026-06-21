@@ -144,12 +144,6 @@ export interface ListBookmarksParams {
   offset?: number;
 }
 
-export interface ImportOpmlResponse {
-  imported: number;
-  failed: number;
-  errors?: string[];
-}
-
 export interface BatchCreateFeedsRequest {
   feeds: Array<{
     group_id: number;

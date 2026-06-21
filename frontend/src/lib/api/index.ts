@@ -17,7 +17,6 @@ import type {
   MarkItemsReadRequest,
   ListItemsParams,
   ListBookmarksParams,
-  ImportOpmlResponse,
   BatchCreateFeedsRequest,
   BatchCreateFeedsResponse,
   SearchResponse,
@@ -130,31 +129,6 @@ export const searchAPI = {
     api.get<APIResponse<SearchResponse>>(
       `/search?q=${encodeURIComponent(q)}&limit=${limit}`,
     ),
-};
-
-// OPML APIs
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
-
-export const opmlAPI = {
-  import: async (file: File): Promise<APIResponse<ImportOpmlResponse>> => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const response = await fetch(`${API_BASE}/opml/import`, {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ error: "Unknown error" }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-
-    return response.json();
-  },
 };
 
 export * from "./types";
