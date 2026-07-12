@@ -113,34 +113,58 @@ function applyOptimisticItemReadState(
   const feedDeltaMap = new Map<number, number>();
   const updatedItemsById = new Map<number, Item>();
 
-  qc.setQueriesData<ItemsInfiniteData>(
-    { queryKey: queryKeys.items.lists() },
-    (old) => {
-      if (!old) return old;
+  const applyDelta = (item: Item): Item => {
+    const delta = targetUnread ? 1 : -1;
+    feedDeltaMap.set(
+      item.feed_id,
+      (feedDeltaMap.get(item.feed_id) ?? 0) + delta,
+    );
+    const updatedItem = { ...item, unread: targetUnread };
+    updatedItemsById.set(item.id, updatedItem);
+    return updatedItem;
+  };
 
-      return {
-        ...old,
-        pages: old.pages.map((page) => ({
-          ...page,
-          data: page.data.map((item) => {
-            if (!idSet.has(item.id) || item.unread === targetUnread) {
-              return item;
-            }
+  // Item list caches carry the unread filter in their query key
+  // (["items","list",{feedId,groupId,unread},pageSize]). When marking items
+  // read inside an unread-filtered cache, those items stop matching the
+  // filter, so they must be dropped and `total` shrunk — otherwise the
+  // count-based getNextPageParam keeps a stale `data.length` that diverges
+  // from the server's shrinking unread `total`, making the "load more" button
+  // vanish while unread items still exist. Mirrors useDeleteBookmark.
+  const itemLists = qc.getQueriesData<ItemsInfiniteData>({
+    queryKey: queryKeys.items.lists(),
+  });
 
-            const delta = targetUnread ? 1 : -1;
-            feedDeltaMap.set(
-              item.feed_id,
-              (feedDeltaMap.get(item.feed_id) ?? 0) + delta,
-            );
+  for (const [key, old] of itemLists) {
+    if (!old) continue;
 
-            const updatedItem = { ...item, unread: targetUnread };
-            updatedItemsById.set(item.id, updatedItem);
-            return updatedItem;
-          }),
-        })),
-      };
-    },
-  );
+    const filters = key[2] as NormalizedItemFilters | undefined;
+    const dropMatching = filters?.unread === true && !targetUnread;
+
+    const pages = old.pages.map((page) => {
+      if (dropMatching) {
+        let removed = 0;
+        const data = page.data.filter((item) => {
+          if (!idSet.has(item.id) || item.unread === targetUnread) return true;
+          removed += 1;
+          applyDelta(item);
+          return false;
+        });
+        if (removed === 0) return page;
+        return { ...page, data, total: Math.max(0, page.total - removed) };
+      }
+
+      let changed = false;
+      const data = page.data.map((item) => {
+        if (!idSet.has(item.id) || item.unread === targetUnread) return item;
+        changed = true;
+        return applyDelta(item);
+      });
+      return changed ? { ...page, data } : page;
+    });
+
+    qc.setQueryData(key, { ...old, pages });
+  }
 
   for (const id of ids) {
     const optimisticItem = updatedItemsById.get(id);
