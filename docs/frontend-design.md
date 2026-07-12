@@ -115,28 +115,7 @@ This keeps list context stable while opening/closing article detail.
 
 ## 9. Keyboard interactions
 
-Implemented shortcuts:
-
-- `Cmd/Ctrl + K`: toggle search dialog
-- `Cmd/Ctrl + ,`: open settings dialog
-- `Esc`: close search/settings/article drawer
-- `/`: open search dialog
-- `?`: open keyboard shortcuts help
-- `j` / `n` / `ArrowDown`: next article
-- `k` / `p` / `ArrowUp`: previous article
-- `m`: toggle read/unread for current article
-- `s` / `f`: toggle star for current article
-- `o` / `v`: open current article in browser
-- `g u`: go to unread
-- `g a`: go to all
-- `g s`: go to starred
-- `g f`: go to feed management
-
-Shortcut help entry points:
-
-- Sidebar search button hint shows `Cmd+K / ?`
-- Search dialog Quick Actions includes a "Keyboard Shortcuts" item
-- Settings > Appearance includes a "Keyboard Shortcuts" section
+The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), read/star toggles, view jumps (`g u` / `g a` / `g s` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
 
 ## 10. Authentication UX
 
@@ -144,36 +123,3 @@ Shortcut help entry points:
 - If password is empty and OIDC is not configured, the UI is directly accessible without `/login`
 - When OIDC is enabled, login page shows "Sign in with OIDC"
 - OIDC callback failure is surfaced as `/login?error=oidc_failed`
-
-## 11. Key files
-
-- `frontend/src/routes/$filter.lazy.tsx`: top-level reading page
-- `frontend/src/routes/feeds_.$feedId.$filter.lazy.tsx`: feed-scoped reading page
-- `frontend/src/routes/groups.$groupId.$filter.lazy.tsx`: group-scoped reading page
-- `frontend/src/routes/feeds.lazy.tsx`: feed management page
-- `frontend/src/routes/login.lazy.tsx`: login page
-- `frontend/src/components/article/article-page.tsx`: shared reading page wrapper
-- `frontend/src/components/article/article-list.tsx`: list + tabs + bulk read
-- `frontend/src/components/article/article-drawer.tsx`: article detail
-- `frontend/src/components/feed/feed-list.tsx`: sidebar feed tree
-
-## 12. Route file naming note
-
-TanStack file-based routes can infer parent-child nesting from file names. We intentionally keep management page `/feeds` and reading page `/feeds/:feedId/:filter` as separate route trees.
-
-- `frontend/src/routes/feeds.lazy.tsx` maps to management page `/feeds`
-- `frontend/src/routes/feeds_.$feedId.$filter.lazy.tsx` maps to reading page `/feeds/:feedId/:filter`
-
-The `feeds_` prefix is a routing implementation detail to avoid accidental nesting under the management page route while preserving the final URL path as `/feeds/...`.
-
-## 13. Release verification checklist
-
-- Type check: `cd frontend && npx tsc -b --noEmit`
-- Lint: `cd frontend && pnpm lint`
-- Production build: `cd frontend && pnpm build`
-- Smoke test flows:
-  - login/logout
-  - search open + result navigation
-  - feed/group selection and URL sync
-  - read/unread + starred updates
-  - `/feeds` page operations (add/edit/delete/import/export)
