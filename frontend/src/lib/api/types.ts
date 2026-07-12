@@ -70,6 +70,7 @@ export interface APIResponse<T> {
 export interface ListAPIResponse<T> {
   data: T[];
   total: number;
+  next_cursor: string | null;
 }
 
 // Request types
@@ -133,7 +134,7 @@ export interface ListItemsParams {
   group_id?: number;
   unread?: boolean;
   limit?: number;
-  offset?: number;
+  before?: string;
   order_by?: string;
 }
 
@@ -141,7 +142,7 @@ export interface ListBookmarksParams {
   feed_id?: number;
   group_id?: number;
   limit?: number;
-  offset?: number;
+  before?: string;
 }
 
 export interface BatchCreateFeedsRequest {

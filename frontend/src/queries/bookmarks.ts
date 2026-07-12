@@ -26,7 +26,7 @@ import { usePreferencesStore } from "@/store";
 const BOOKMARK_LOOKUP_PAGE_SIZE = 100;
 
 type BookmarkListResponse = ListAPIResponse<Bookmark>;
-export type BookmarksInfiniteData = InfiniteData<BookmarkListResponse, number>;
+export type BookmarksInfiniteData = InfiniteData<BookmarkListResponse, string | null>;
 
 export function resolveBookmarkItemId(bookmark: Bookmark): number {
   return bookmark.item_id ?? -bookmark.id;
@@ -34,22 +34,20 @@ export function resolveBookmarkItemId(bookmark: Bookmark): number {
 
 function buildListBookmarksParams(
   filters: NormalizedBookmarkFilters,
-  offset: number,
+  cursor: string | null,
   pageSize: number,
 ) {
   const params: Parameters<typeof bookmarkAPI.list>[0] = {
     limit: pageSize,
-    offset,
   };
   if (filters.feedId) params.feed_id = filters.feedId;
   if (filters.groupId) params.group_id = filters.groupId;
+  if (cursor) params.before = cursor;
   return params;
 }
 
 // useBookmarks is the shared infinite query over bookmarks. Callers pass the
 // filters and page size that fit their use case (lookup vs. starred list).
-// Options are inlined (rather than spread from a helper) so React Query infers
-// the pageParam type as `number`.
 function useBookmarks(
   filters: BookmarkFilters,
   pageSize: number,
@@ -62,11 +60,8 @@ function useBookmarks(
       bookmarkAPI.list(
         buildListBookmarksParams(normalized, pageParam, pageSize),
       ),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      const fetched = allPages.reduce((n, p) => n + p.data.length, 0);
-      return fetched < lastPage.total ? fetched : undefined;
-    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     staleTime: Number.POSITIVE_INFINITY,
     enabled,
   });

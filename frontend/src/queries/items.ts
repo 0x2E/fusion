@@ -19,7 +19,7 @@ import { usePreferencesStore } from "@/store";
 import type { BookmarksInfiniteData } from "./bookmarks";
 
 type ItemListResponse = Awaited<ReturnType<typeof itemAPI.list>>;
-type ItemsInfiniteData = InfiniteData<ItemListResponse, number>;
+type ItemsInfiniteData = InfiniteData<ItemListResponse, string | null>;
 type ItemsMutationContext = {
   prevItemLists: Array<[readonly unknown[], ItemsInfiniteData | undefined]>;
   prevItemDetails: Array<readonly [number, Item | undefined]>;
@@ -31,18 +31,18 @@ type ItemsMutationContext = {
 
 function buildListItemsParams(
   filters: NormalizedItemFilters,
-  offset: number,
+  cursor: string | null,
   pageSize: number,
 ): ListItemsParams {
   const params: ListItemsParams = {
     limit: pageSize,
-    offset,
     order_by: "pub_date:desc",
   };
 
   if (filters.feedId) params.feed_id = filters.feedId;
   if (filters.groupId) params.group_id = filters.groupId;
   if (filters.unread) params.unread = true;
+  if (cursor) params.before = cursor;
 
   return params;
 }
@@ -55,20 +55,8 @@ export const itemQueries = {
       queryKey: [...queryKeys.items.lists(), normalizedFilters, pageSize],
       queryFn: async ({ pageParam }) =>
         itemAPI.list(buildListItemsParams(normalizedFilters, pageParam, pageSize)),
-      initialPageParam: 0,
-      getNextPageParam: (lastPage, allPages) => {
-        // Read items linger in the unread-filtered cache (greyed, for undo),
-        // so data.length over-counts relative to the server's unread-only
-        // offset. Count only unread items there to keep the next offset and
-        // hasMore consistent with the server's filtered set.
-        const loaded = normalizedFilters.unread
-          ? allPages.reduce(
-              (n, p) => n + p.data.filter((i) => i.unread).length,
-              0,
-            )
-          : allPages.reduce((n, p) => n + p.data.length, 0);
-        return loaded < lastPage.total ? loaded : undefined;
-      },
+      initialPageParam: null as string | null,
+      getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     });
   },
   detail: (itemId: number) =>

@@ -86,7 +86,7 @@ export const itemAPI = {
     if (params?.unread !== undefined)
       query.set("unread", params.unread.toString());
     if (params?.limit) query.set("limit", params.limit.toString());
-    if (params?.offset) query.set("offset", params.offset.toString());
+    if (params?.before) query.set("before", params.before);
     if (params?.order_by) query.set("order_by", params.order_by);
 
     const queryString = query.toString();
@@ -111,7 +111,7 @@ export const bookmarkAPI = {
     if (params.feed_id) query.set("feed_id", params.feed_id.toString());
     if (params.group_id) query.set("group_id", params.group_id.toString());
     query.set("limit", (params.limit ?? 50).toString());
-    query.set("offset", (params.offset ?? 0).toString());
+    if (params.before) query.set("before", params.before);
     return api.get<ListAPIResponse<Bookmark>>(`/bookmarks?${query}`);
   },
 
