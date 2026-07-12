@@ -12,15 +12,18 @@ import (
 // ListItemsParams specifies filtering and pagination for item queries.
 //
 // Pointer fields (FeedID, GroupID, Unread) are optional filters - nil means "no filter".
+// BeforePubDate/BeforeID form an optional cursor: when both are non-nil, only items
+// ordered before that (pub_date, id) position are returned (nil = first page).
 // OrderBy accepts "pub_date" (default) or "created_at".
-// Limit/Offset = 0 means no limit/offset.
+// Limit = 0 means no limit.
 type ListItemsParams struct {
-	FeedID  *int64
-	GroupID *int64
-	Unread  *bool
-	Limit   int
-	Offset  int
-	OrderBy string // "pub_date" or "created_at"
+	FeedID        *int64
+	GroupID       *int64
+	Unread        *bool
+	Limit         int
+	BeforePubDate *int64
+	BeforeID      *int64
+	OrderBy       string // "pub_date" or "created_at"
 }
 
 func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
@@ -50,6 +53,13 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 		args = append(args, sql.Named("unread", boolToInt(*params.Unread)))
 	}
 
+	// Cursor pagination: skip items at or before the cursor position, matching
+	// the ORDER BY (pub_date DESC, id DESC) tie-break semantics.
+	if params.BeforePubDate != nil && params.BeforeID != nil {
+		query += ` AND (items.pub_date < :before_pub_date OR (items.pub_date = :before_pub_date AND items.id < :before_id))`
+		args = append(args, sql.Named("before_pub_date", *params.BeforePubDate), sql.Named("before_id", *params.BeforeID))
+	}
+
 	// ORDER BY cannot use named parameters, validated via allowlist instead
 	orderBy := "items.pub_date DESC, items.id DESC"
 	if params.OrderBy == "created_at" {
@@ -60,10 +70,6 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	if params.Limit > 0 {
 		query += ` LIMIT :limit`
 		args = append(args, sql.Named("limit", params.Limit))
-	}
-	if params.Offset > 0 {
-		query += ` OFFSET :offset`
-		args = append(args, sql.Named("offset", params.Offset))
 	}
 
 	rows, err := s.db.Query(query, args...)

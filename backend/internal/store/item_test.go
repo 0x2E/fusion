@@ -67,21 +67,48 @@ func TestListItems(t *testing.T) {
 		}
 	})
 
-	t.Run("pagination with limit and offset", func(t *testing.T) {
-		items, err := store.ListItems(ListItemsParams{Limit: 2, Offset: 0})
+	t.Run("pagination with limit and cursor", func(t *testing.T) {
+		// First page: no cursor, returns the 2 newest items (item3 @300, item2 @200).
+		page1, err := store.ListItems(ListItemsParams{Limit: 2})
 		if err != nil {
 			t.Fatalf("ListItems() failed: %v", err)
 		}
-		if len(items) != 2 {
-			t.Errorf("expected 2 items with limit=2, got %d", len(items))
+		if len(page1) != 2 {
+			t.Fatalf("expected 2 items on first page, got %d", len(page1))
+		}
+		if page1[0].ID != item3.ID || page1[1].ID != item2.ID {
+			t.Errorf("expected first page [item3, item2], got ids [%d, %d]", page1[0].ID, page1[1].ID)
 		}
 
-		items2, err := store.ListItems(ListItemsParams{Limit: 2, Offset: 2})
+		// Second page: cursor from the last item of page1 (item2).
+		last := page1[len(page1)-1]
+		page2, err := store.ListItems(ListItemsParams{
+			Limit:         2,
+			BeforePubDate: &last.PubDate,
+			BeforeID:      &last.ID,
+		})
 		if err != nil {
 			t.Fatalf("ListItems() failed: %v", err)
 		}
-		if len(items2) != 1 {
-			t.Errorf("expected 1 item with offset=2, got %d", len(items2))
+		if len(page2) != 1 {
+			t.Fatalf("expected 1 item on second page, got %d", len(page2))
+		}
+		if page2[0].ID != item1.ID {
+			t.Errorf("expected second page [item1], got id %d", page2[0].ID)
+		}
+
+		// Beyond-last page: cursor from the final item returns nothing.
+		last = page2[len(page2)-1]
+		page3, err := store.ListItems(ListItemsParams{
+			Limit:         2,
+			BeforePubDate: &last.PubDate,
+			BeforeID:      &last.ID,
+		})
+		if err != nil {
+			t.Fatalf("ListItems() failed: %v", err)
+		}
+		if len(page3) != 0 {
+			t.Errorf("expected empty page beyond last item, got %d", len(page3))
 		}
 	})
 

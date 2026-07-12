@@ -2,8 +2,10 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
@@ -60,13 +62,14 @@ func (h *Handler) listItems(c *gin.Context) {
 		params.Limit = 10
 	}
 
-	if offset := c.Query("offset"); offset != "" {
-		val, err := strconv.Atoi(offset)
-		if err != nil || val < 0 {
-			badRequestError(c, "invalid offset")
+	if before := c.Query("before"); before != "" {
+		pubDate, id, err := parseItemCursor(before)
+		if err != nil {
+			badRequestError(c, "invalid before")
 			return
 		}
-		params.Offset = val
+		params.BeforePubDate = &pubDate
+		params.BeforeID = &id
 	}
 
 	if orderBy := c.Query("order_by"); orderBy != "" {
@@ -87,7 +90,31 @@ func (h *Handler) listItems(c *gin.Context) {
 		return
 	}
 
-	listResponse(c, items, total)
+	// A non-null next_cursor signals the client may request another full page.
+	var nextCursor *string
+	if params.Limit > 0 && len(items) >= params.Limit {
+		last := items[len(items)-1]
+		nc := fmt.Sprintf("%d_%d", last.PubDate, last.ID)
+		nextCursor = &nc
+	}
+	paginatedListResponse(c, items, total, nextCursor)
+}
+
+// parseItemCursor decodes a "<pub_date>_<id>" cursor into its int64 components.
+func parseItemCursor(cursor string) (pubDate int64, id int64, err error) {
+	parts := strings.SplitN(cursor, "_", 2)
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	pubDate, err = strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	id, err = strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	return pubDate, id, nil
 }
 
 func (h *Handler) getItem(c *gin.Context) {

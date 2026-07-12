@@ -242,3 +242,9 @@ func dataResponse(c *gin.Context, data any) {
 func listResponse(c *gin.Context, data any, total int) {
 	c.JSON(200, gin.H{"data": data, "total": total})
 }
+
+// paginatedListResponse emits a list payload with a cursor-based next_cursor.
+// nextCursor is non-nil only when more pages may exist; nil means "no more".
+func paginatedListResponse(c *gin.Context, data any, total int, nextCursor *string) {
+	c.JSON(200, gin.H{"data": data, "total": total, "next_cursor": nextCursor})
+}
