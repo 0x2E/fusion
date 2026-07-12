@@ -421,12 +421,12 @@ paths:
             minimum: 1
             maximum: 100
             default: 10
-        - name: offset
+        - name: before
           in: query
+          description: Cursor for pagination. Omit on first page. Use the next_cursor value from the previous response.
+          required: false
           schema:
-            type: integer
-            minimum: 0
-            default: 0
+            type: string
         - name: order_by
           in: query
           schema:
@@ -562,12 +562,12 @@ paths:
             minimum: 1
             maximum: 100
             default: 50
-        - name: offset
+        - name: before
           in: query
+          description: Cursor for pagination. Omit on first page. Use the next_cursor value from the previous response.
+          required: false
           schema:
-            type: integer
-            minimum: 0
-            default: 0
+            type: string
       responses:
         "200":
           description: Bookmark list
@@ -1032,7 +1032,7 @@ components:
 
     ItemListEnvelope:
       type: object
-      required: [data, total]
+      required: [data, total, next_cursor]
       properties:
         data:
           type: array
@@ -1040,6 +1040,10 @@ components:
             $ref: "#/components/schemas/Item"
         total:
           type: integer
+        next_cursor:
+          type: string
+          nullable: true
+          description: Cursor for the next page. Null when there are no more pages.
 
     MarkItemsRequest:
       type: object
@@ -1146,7 +1150,7 @@ components:
 
     BookmarkListEnvelope:
       type: object
-      required: [data, total]
+      required: [data, total, next_cursor]
       properties:
         data:
           type: array
@@ -1154,6 +1158,10 @@ components:
             $ref: "#/components/schemas/Bookmark"
         total:
           type: integer
+        next_cursor:
+          type: string
+          nullable: true
+          description: Cursor for the next page. Null when there are no more pages.
 
     CreateBookmarkFromItemRequest:
       type: object

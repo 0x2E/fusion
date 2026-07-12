@@ -95,7 +95,7 @@ This keeps list context stable while opening/closing article detail.
 - API layer lives in `frontend/src/lib/api/`
 - Query logic lives in `frontend/src/queries/`
 - TanStack Query handles:
-  - infinite pagination for items
+  - cursor-based pagination for items and bookmarks (opaque `next_cursor` passed as the `before` query param; `next_cursor` is null when no more pages exist)
   - optimistic read/unread updates
   - cache invalidation after mutations
 - Zustand stores transient UI state only (dialogs, mobile sidebar, edit targets)
