@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
@@ -56,7 +55,7 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 	}
 
 	if before := c.Query("before"); before != "" {
-		createdAt, id, err := parseBookmarkCursor(before)
+		createdAt, id, err := parseCursor(before)
 		if err != nil {
 			badRequestError(c, "invalid before")
 			return
@@ -85,23 +84,6 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 		nextCursor = &nc
 	}
 	paginatedListResponse(c, bookmarks, total, nextCursor)
-}
-
-// parseBookmarkCursor decodes a "<created_at>_<id>" cursor into its int64 components.
-func parseBookmarkCursor(cursor string) (createdAt int64, id int64, err error) {
-	parts := strings.SplitN(cursor, "_", 2)
-	if len(parts) != 2 {
-		return 0, 0, fmt.Errorf("malformed cursor")
-	}
-	createdAt, err = strconv.ParseInt(parts[0], 10, 64)
-	if err != nil {
-		return 0, 0, fmt.Errorf("malformed cursor")
-	}
-	id, err = strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return 0, 0, fmt.Errorf("malformed cursor")
-	}
-	return createdAt, id, nil
 }
 
 func (h *Handler) getBookmark(c *gin.Context) {

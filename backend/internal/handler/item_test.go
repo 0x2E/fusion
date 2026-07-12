@@ -136,3 +136,15 @@ func TestListItemsCursorInvalidBefore(t *testing.T) {
 		t.Fatalf("expected status 400 for malformed cursor, got %d", w.Code)
 	}
 }
+
+func TestListItemsCursorWithOrderByCreatedAt(t *testing.T) {
+	h, _ := newFeverTestHandler(t)
+
+	r := newTestRouter()
+	r.GET("/api/items", h.listItems)
+
+	w := performRequest(r, http.MethodGet, "/api/items?order_by=created_at&before=100_1", nil, nil)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400 for before cursor with order_by=created_at, got %d", w.Code)
+	}
+}

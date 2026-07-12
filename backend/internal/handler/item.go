@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
@@ -63,7 +62,7 @@ func (h *Handler) listItems(c *gin.Context) {
 	}
 
 	if before := c.Query("before"); before != "" {
-		pubDate, id, err := parseItemCursor(before)
+		pubDate, id, err := parseCursor(before)
 		if err != nil {
 			badRequestError(c, "invalid before")
 			return
@@ -76,6 +75,12 @@ func (h *Handler) listItems(c *gin.Context) {
 		params.OrderBy = orderBy
 	} else {
 		params.OrderBy = "pub_date"
+	}
+
+	// The cursor is keyed on pub_date, so it is only valid with the default ordering.
+	if params.BeforePubDate != nil && params.OrderBy == "created_at" {
+		badRequestError(c, "before cursor is only supported with default ordering (pub_date)")
+		return
 	}
 
 	items, err := h.store.ListItems(params)
@@ -98,23 +103,6 @@ func (h *Handler) listItems(c *gin.Context) {
 		nextCursor = &nc
 	}
 	paginatedListResponse(c, items, total, nextCursor)
-}
-
-// parseItemCursor decodes a "<pub_date>_<id>" cursor into its int64 components.
-func parseItemCursor(cursor string) (pubDate int64, id int64, err error) {
-	parts := strings.SplitN(cursor, "_", 2)
-	if len(parts) != 2 {
-		return 0, 0, fmt.Errorf("malformed cursor")
-	}
-	pubDate, err = strconv.ParseInt(parts[0], 10, 64)
-	if err != nil {
-		return 0, 0, fmt.Errorf("malformed cursor")
-	}
-	id, err = strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return 0, 0, fmt.Errorf("malformed cursor")
-	}
-	return pubDate, id, nil
 }
 
 func (h *Handler) getItem(c *gin.Context) {

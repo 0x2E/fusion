@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -247,4 +248,22 @@ func listResponse(c *gin.Context, data any, total int) {
 // nextCursor is non-nil only when more pages may exist; nil means "no more".
 func paginatedListResponse(c *gin.Context, data any, total int, nextCursor *string) {
 	c.JSON(200, gin.H{"data": data, "total": total, "next_cursor": nextCursor})
+}
+
+// parseCursor decodes a "<value>_<id>" cursor into its two int64 components.
+// Shared by list endpoints that paginate on a composite (timestamp, id) key.
+func parseCursor(cursor string) (first int64, second int64, err error) {
+	parts := strings.SplitN(cursor, "_", 2)
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	first, err = strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	second, err = strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	return first, second, nil
 }
