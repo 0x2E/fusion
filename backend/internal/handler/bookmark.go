@@ -2,8 +2,10 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
@@ -53,13 +55,14 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 		params.Limit = 50
 	}
 
-	if offsetStr := c.Query("offset"); offsetStr != "" {
-		val, err := strconv.Atoi(offsetStr)
-		if err != nil || val < 0 {
-			badRequestError(c, "invalid offset")
+	if before := c.Query("before"); before != "" {
+		createdAt, id, err := parseBookmarkCursor(before)
+		if err != nil {
+			badRequestError(c, "invalid before")
 			return
 		}
-		params.Offset = val
+		params.BeforeCreatedAt = &createdAt
+		params.BeforeID = &id
 	}
 
 	bookmarks, err := h.store.ListBookmarks(params)
@@ -74,7 +77,31 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 		return
 	}
 
-	listResponse(c, bookmarks, total)
+	// A non-null next_cursor signals the client may request another full page.
+	var nextCursor *string
+	if params.Limit > 0 && len(bookmarks) >= params.Limit {
+		last := bookmarks[len(bookmarks)-1]
+		nc := fmt.Sprintf("%d_%d", last.CreatedAt, last.ID)
+		nextCursor = &nc
+	}
+	paginatedListResponse(c, bookmarks, total, nextCursor)
+}
+
+// parseBookmarkCursor decodes a "<created_at>_<id>" cursor into its int64 components.
+func parseBookmarkCursor(cursor string) (createdAt int64, id int64, err error) {
+	parts := strings.SplitN(cursor, "_", 2)
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	createdAt, err = strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	id, err = strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	return createdAt, id, nil
 }
 
 func (h *Handler) getBookmark(c *gin.Context) {

@@ -77,18 +77,48 @@ func TestListBookmarks(t *testing.T) {
 		}
 	})
 
-	t.Run("pagination with offset", func(t *testing.T) {
-		bookmarks, err := store.ListBookmarks(ListBookmarksParams{Limit: 10, Offset: 2})
+	t.Run("pagination with cursor", func(t *testing.T) {
+		// First page: no cursor, returns the 2 newest (b3 @300, b2 @200).
+		page1, err := store.ListBookmarks(ListBookmarksParams{Limit: 2})
 		if err != nil {
 			t.Fatalf("ListBookmarks() failed: %v", err)
 		}
-
-		if len(bookmarks) != 1 {
-			t.Errorf("expected 1 bookmark with offset=2, got %d", len(bookmarks))
+		if len(page1) != 2 {
+			t.Fatalf("expected 2 bookmarks on first page, got %d", len(page1))
+		}
+		if page1[0].ID != b3.ID || page1[1].ID != b2.ID {
+			t.Errorf("expected first page [b3, b2], got ids [%d, %d]", page1[0].ID, page1[1].ID)
 		}
 
-		if bookmarks[0].ID != b1.ID {
-			t.Error("incorrect bookmark returned with offset")
+		// Second page: cursor from the last item of page1 (b2).
+		last := page1[len(page1)-1]
+		page2, err := store.ListBookmarks(ListBookmarksParams{
+			Limit:           2,
+			BeforeCreatedAt: &last.CreatedAt,
+			BeforeID:        &last.ID,
+		})
+		if err != nil {
+			t.Fatalf("ListBookmarks() failed: %v", err)
+		}
+		if len(page2) != 1 {
+			t.Fatalf("expected 1 bookmark on second page, got %d", len(page2))
+		}
+		if page2[0].ID != b1.ID {
+			t.Errorf("expected second page [b1], got id %d", page2[0].ID)
+		}
+
+		// Beyond-last page: cursor from the final item returns nothing.
+		last = page2[len(page2)-1]
+		page3, err := store.ListBookmarks(ListBookmarksParams{
+			Limit:           2,
+			BeforeCreatedAt: &last.CreatedAt,
+			BeforeID:        &last.ID,
+		})
+		if err != nil {
+			t.Fatalf("ListBookmarks() failed: %v", err)
+		}
+		if len(page3) != 0 {
+			t.Errorf("expected empty page beyond last item, got %d", len(page3))
 		}
 	})
 
@@ -235,7 +265,7 @@ func TestListBookmarksFilters(t *testing.T) {
 		}
 
 		// Page 1: newest two -> ids[3], ids[2].
-		page1, err := store.ListBookmarks(ListBookmarksParams{FeedID: &pagFeed.ID, Limit: 2, Offset: 0})
+		page1, err := store.ListBookmarks(ListBookmarksParams{FeedID: &pagFeed.ID, Limit: 2})
 		if err != nil {
 			t.Fatalf("ListBookmarks() page1 failed: %v", err)
 		}
@@ -246,8 +276,14 @@ func TestListBookmarksFilters(t *testing.T) {
 			t.Errorf("page1 order = [%d, %d], want [%d, %d]", page1[0].ID, page1[1].ID, ids[3], ids[2])
 		}
 
-		// Page 2: remaining two -> ids[1], ids[0].
-		page2, err := store.ListBookmarks(ListBookmarksParams{FeedID: &pagFeed.ID, Limit: 2, Offset: 2})
+		// Page 2: cursor past page1's last item -> ids[1], ids[0].
+		last := page1[len(page1)-1]
+		page2, err := store.ListBookmarks(ListBookmarksParams{
+			FeedID:          &pagFeed.ID,
+			Limit:           2,
+			BeforeCreatedAt: &last.CreatedAt,
+			BeforeID:        &last.ID,
+		})
 		if err != nil {
 			t.Fatalf("ListBookmarks() page2 failed: %v", err)
 		}
@@ -259,7 +295,13 @@ func TestListBookmarksFilters(t *testing.T) {
 		}
 
 		// Past the last page returns nothing while count stays full.
-		page3, err := store.ListBookmarks(ListBookmarksParams{FeedID: &pagFeed.ID, Limit: 2, Offset: 4})
+		last = page2[len(page2)-1]
+		page3, err := store.ListBookmarks(ListBookmarksParams{
+			FeedID:          &pagFeed.ID,
+			Limit:           2,
+			BeforeCreatedAt: &last.CreatedAt,
+			BeforeID:        &last.ID,
+		})
 		if err != nil {
 			t.Fatalf("ListBookmarks() page3 failed: %v", err)
 		}

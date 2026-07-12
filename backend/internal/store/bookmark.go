@@ -11,12 +11,15 @@ import (
 // ListBookmarksParams specifies filtering and pagination for bookmark queries.
 //
 // Pointer fields (FeedID, GroupID) are optional filters - nil means "no filter".
-// Limit/Offset = 0 means no limit/offset.
+// BeforeCreatedAt/BeforeID form an optional cursor: when both are non-nil, only
+// bookmarks ordered before that (created_at, id) position are returned
+// (nil = first page). Limit = 0 means no limit.
 type ListBookmarksParams struct {
-	FeedID  *int64
-	GroupID *int64
-	Limit   int
-	Offset  int
+	FeedID          *int64
+	GroupID         *int64
+	Limit           int
+	BeforeCreatedAt *int64
+	BeforeID        *int64
 }
 
 func (s *Store) ListBookmarks(params ListBookmarksParams) ([]*model.Bookmark, error) {
@@ -45,15 +48,18 @@ func (s *Store) ListBookmarks(params ListBookmarksParams) ([]*model.Bookmark, er
 		args = append(args, sql.Named("group_id", *params.GroupID))
 	}
 
+	// Cursor pagination: skip bookmarks at or before the cursor position, matching
+	// the ORDER BY (created_at DESC, id DESC) tie-break semantics.
+	if params.BeforeCreatedAt != nil && params.BeforeID != nil {
+		query += ` AND (b.created_at < :before_created_at OR (b.created_at = :before_created_at AND b.id < :before_id))`
+		args = append(args, sql.Named("before_created_at", *params.BeforeCreatedAt), sql.Named("before_id", *params.BeforeID))
+	}
+
 	query += ` ORDER BY b.created_at DESC, b.id DESC`
 
 	if params.Limit > 0 {
 		query += ` LIMIT :limit`
 		args = append(args, sql.Named("limit", params.Limit))
-	}
-	if params.Offset > 0 {
-		query += ` OFFSET :offset`
-		args = append(args, sql.Named("offset", params.Offset))
 	}
 
 	rows, err := s.db.Query(query, args...)
