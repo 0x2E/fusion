@@ -57,8 +57,17 @@ export const itemQueries = {
         itemAPI.list(buildListItemsParams(normalizedFilters, pageParam, pageSize)),
       initialPageParam: 0,
       getNextPageParam: (lastPage, allPages) => {
-        const fetched = allPages.reduce((n, p) => n + p.data.length, 0);
-        return fetched < lastPage.total ? fetched : undefined;
+        // Read items linger in the unread-filtered cache (greyed, for undo),
+        // so data.length over-counts relative to the server's unread-only
+        // offset. Count only unread items there to keep the next offset and
+        // hasMore consistent with the server's filtered set.
+        const loaded = normalizedFilters.unread
+          ? allPages.reduce(
+              (n, p) => n + p.data.filter((i) => i.unread).length,
+              0,
+            )
+          : allPages.reduce((n, p) => n + p.data.length, 0);
+        return loaded < lastPage.total ? loaded : undefined;
       },
     });
   },
@@ -247,11 +256,6 @@ function useSetItemsReadState(targetUnread: boolean) {
     },
     onSettled: async () => {
       await qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
-      // The unread-filtered list's membership changes when read-state flips, so
-      // the count-based pagination (data.length vs server total) would diverge
-      // from the optimistic cache. Invalidate to let the server reconcile the
-      // list, total, and offset — same pattern as useDeleteBookmark.
-      await qc.invalidateQueries({ queryKey: queryKeys.items.all });
     },
   });
 }
