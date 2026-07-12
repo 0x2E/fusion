@@ -249,19 +249,21 @@ function FeedsPage() {
               />
             </div>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0 gap-1.5"
-                >
-                  <ListFilter className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">
-                    {statusFilterLabels[statusFilter]}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 gap-1.5"
+                  >
+                    <ListFilter className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">
+                      {statusFilterLabels[statusFilter]}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                }
+              />
               <DropdownMenuContent align="start">
                 {(Object.keys(statusFilterLabels) as StatusFilter[]).map(
                   (key) => (
@@ -278,13 +280,15 @@ function FeedsPage() {
           </div>
           <div className="flex items-center gap-2">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm">
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  {t("common.add")}
-                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <Button size="sm">
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    {t("common.add")}
+                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                  </Button>
+                }
+              />
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onSelect={() => setAddFeedOpen(true)}>
                   <Rss className="mr-2 h-4 w-4" />

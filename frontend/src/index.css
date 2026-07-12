@@ -1,8 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@plugin "@tailwindcss/typography";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "./typeset.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -39,6 +41,8 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.55 0.12 250);
+  --font-geist: "Geist Variable", sans-serif;
+  --font-geist-mono: "Geist Mono Variable", monospace;
 }
 
 .dark {
@@ -135,49 +139,11 @@
   font-weight: 500;
 }
 
-/* Article content prose styles */
-.prose {
-  overflow-wrap: anywhere;
-  word-wrap: break-word;
-  word-break: normal;
-
-  pre {
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    word-break: normal;
-    overflow-x: auto;
-  }
-
-  pre code {
-    white-space: inherit;
-    overflow-wrap: inherit;
-    word-break: inherit;
-  }
-
-  code {
-    overflow-wrap: anywhere;
-    word-break: normal;
-  }
-
-  img {
-    max-width: 100%;
-    height: auto;
-  }
-
-  a {
-    overflow-wrap: anywhere;
-    word-break: normal;
-  }
-
-  p:empty,
-  div:empty,
-  span:empty {
-    display: none;
-  }
-
-  table {
-    display: block;
-    overflow-x: auto;
-    max-width: 100%;
-  }
+.typeset-article {
+  --typeset-font-body: var(--font-geist);
+  --typeset-font-heading: var(--font-geist);
+  --typeset-font-mono: var(--font-geist-mono);
+  --typeset-size: 15px;
+  --typeset-leading: 1.75;
+  --typeset-flow: 1.25em;
 }

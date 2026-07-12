@@ -166,10 +166,7 @@ export function EditFeedDialog() {
         <DialogContent
           className="flex w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
           showCloseButton={false}
-          onOpenAutoFocus={(event) => {
-            event.preventDefault();
-            urlInputRef.current?.focus();
-          }}
+          initialFocus={urlInputRef}
         >
           {/* Header */}
           <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
@@ -183,18 +180,20 @@ export function EditFeedDialog() {
                     setIsMobileErrorTooltipOpen(false);
                   }}
                 >
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label={t("feeds.status.error")}
-                      onClick={() => {
-                        if (!isMobile) return;
-                        setIsMobileErrorTooltipOpen((open) => !open);
-                      }}
-                      className="inline-flex cursor-help items-center text-destructive"
-                    >
-                      <AlertCircle className="h-4 w-4" />
-                    </button>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        type="button"
+                        aria-label={t("feeds.status.error")}
+                        onClick={() => {
+                          if (!isMobile) return;
+                          setIsMobileErrorTooltipOpen((open) => !open);
+                        }}
+                        className="inline-flex cursor-help items-center text-destructive"
+                      />
+                    }
+                  >
+                    <AlertCircle className="h-4 w-4" />
                   </TooltipTrigger>
                   <TooltipContent
                     side="bottom"
@@ -254,7 +253,7 @@ export function EditFeedDialog() {
               <label className="text-[13px] font-medium" id="edit-feed-group-label">
                 {t("feed.add.groupLabel")}
               </label>
-              <Select value={groupId} onValueChange={setGroupId}>
+              <Select value={groupId} onValueChange={(v) => { if (v) setGroupId(v); }}>
                 <SelectTrigger className="h-10" aria-labelledby="edit-feed-group-label">
                   <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>

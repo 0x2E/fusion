@@ -37,4 +37,4 @@
 ## Frontend Development
 
 - Verify TypeScript/TSX compilation with `npx tsc -b --noEmit`.
-- Do not modify shadcn component source files directly.
+- shadcn components use Base UI (`@base-ui/react`) on the `base-vega` style. Regenerate via CLI (`pnpm dlx shadcn@latest add <component> --overwrite`) instead of hand-editing source files in `frontend/src/components/ui/`.

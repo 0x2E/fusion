@@ -219,23 +219,25 @@ export function FeedGroupCard({
                       );
                     }}
                   >
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label={t("feeds.status.error")}
-                        onClick={() => {
-                          if (!isMobile) return;
-                          onChangeMobileErrorTooltipFeedId((current) =>
-                            current === feed.id ? null : feed.id,
-                          );
-                        }}
-                        className="flex items-center gap-1 rounded-sm text-xs text-destructive"
-                      >
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                        <span className="hidden max-w-56 truncate font-medium sm:inline">
-                          {getFeedErrorPreview(feed.fetch_state.last_error)}
-                        </span>
-                      </button>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          type="button"
+                          aria-label={t("feeds.status.error")}
+                          onClick={() => {
+                            if (!isMobile) return;
+                            onChangeMobileErrorTooltipFeedId((current) =>
+                              current === feed.id ? null : feed.id,
+                            );
+                          }}
+                          className="flex items-center gap-1 rounded-sm text-xs text-destructive"
+                        />
+                      }
+                    >
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                      <span className="hidden max-w-56 truncate font-medium sm:inline">
+                        {getFeedErrorPreview(feed.fetch_state.last_error)}
+                      </span>
                     </TooltipTrigger>
                     <TooltipContent
                       side="top"

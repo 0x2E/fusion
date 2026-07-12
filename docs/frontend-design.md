@@ -15,7 +15,7 @@
 | Router              | TanStack Router          |
 | Data fetching/cache | TanStack Query           |
 | State               | Zustand (UI-only state)  |
-| UI system           | shadcn/ui + Tailwind CSS |
+| UI system           | shadcn/ui (Base UI) + Tailwind CSS |
 
 ## 3. Route map
 

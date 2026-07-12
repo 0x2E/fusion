@@ -217,7 +217,7 @@ export function AddFeedDialog() {
               <label className="text-[13px] font-medium" id="add-feed-group-label">
                 {t("feed.add.groupLabel")}
               </label>
-              <Select value={groupId} onValueChange={setGroupId}>
+              <Select value={groupId} onValueChange={(v) => { if (v) setGroupId(v); }}>
                 <SelectTrigger className="h-10" aria-labelledby="add-feed-group-label">
                   <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>

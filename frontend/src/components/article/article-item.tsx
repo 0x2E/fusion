@@ -140,21 +140,21 @@ export function ArticleItem({
         </Button>
         {safeArticleLink ? (
           <Button
-            asChild
+            render={
+              <a
+                href={safeArticleLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              />
+            }
             variant="ghost"
             size="icon-sm"
             className="bg-muted"
             aria-label={t("article.action.openInBrowser")}
             title={t("article.action.openInBrowser")}
           >
-            <a
-              href={safeArticleLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink className="text-muted-foreground" />
-            </a>
+            <ExternalLink className="text-muted-foreground" />
           </Button>
         ) : (
           <Button
