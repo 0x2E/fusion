@@ -32,7 +32,6 @@ export function ArticleList() {
 
   const {
     articles,
-    displayArticles,
     hasMore,
     isLoading,
     isLoadingMore,
@@ -52,7 +51,7 @@ export function ArticleList() {
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
-  const articleIds = displayArticles.map((a) => a.id);
+  const articleIds = articles.map((a) => a.id);
   useArticleNavigation(articleIds, {
     enabled: selectedArticleId === null,
   });
@@ -66,7 +65,7 @@ export function ArticleList() {
     title = group?.name ?? t("article.groupFallback");
   }
 
-  const unreadCount = displayArticles.filter((a) => a.unread).length;
+  const unreadCount = articles.filter((a) => a.unread).length;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
 
   const handleToggleRead = useCallback(
@@ -106,7 +105,7 @@ export function ArticleList() {
   );
 
   const handleMarkAllAsRead = async () => {
-    const unreadIds = displayArticles
+    const unreadIds = articles
       .filter((a) => a.unread && a.id > 0)
       .map((a) => a.id);
 
@@ -191,7 +190,7 @@ export function ArticleList() {
               )
             ) : (
               <>
-                {displayArticles.map((article) => {
+                {articles.map((article) => {
                   const feed = getFeedById(article.feed_id);
                   const bookmark = getBookmarkByItemId(article.id);
 

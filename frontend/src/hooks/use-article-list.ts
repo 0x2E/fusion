@@ -2,9 +2,9 @@ import { useCallback, useMemo } from "react";
 import { useItems } from "@/queries/items";
 import {
   resolveBookmarkItemId,
+  useBookmarkLookup,
   useStarredItems,
 } from "@/queries/bookmarks";
-import { useBookmarkLookup } from "@/queries/bookmarks";
 import type { Bookmark, Item } from "@/lib/api";
 import type { ArticleFilter } from "@/lib/article-filter";
 
@@ -17,11 +17,16 @@ interface ArticleListFilters {
 export function useArticleList(filters: ArticleListFilters) {
   const isStarredMode = filters.articleFilter === "starred";
 
-  const itemsQuery = useItems({
-    feedId: filters.feedId,
-    groupId: filters.groupId,
-    unread: filters.articleFilter === "unread" ? true : undefined,
-  });
+  // Items are unused in starred mode (bookmarks ARE the articles there), so
+  // skip the request entirely.
+  const itemsQuery = useItems(
+    {
+      feedId: filters.feedId,
+      groupId: filters.groupId,
+      unread: filters.articleFilter === "unread" ? true : undefined,
+    },
+    !isStarredMode,
+  );
 
   // Unfiltered lookup: powers star indicators in non-starred views.
   const lookup = useBookmarkLookup();
@@ -64,7 +69,6 @@ export function useArticleList(filters: ArticleListFilters) {
 
   return {
     articles,
-    displayArticles: articles,
     hasMore: isStarredMode ? starred.hasNextPage : itemsQuery.hasNextPage,
     isLoading: isStarredMode ? starred.isLoading : itemsQuery.isLoading,
     isLoadingMore: isStarredMode
@@ -73,7 +77,7 @@ export function useArticleList(filters: ArticleListFilters) {
     isStarredMode,
     fetchNextPage: isStarredMode
       ? starred.fetchNextPage
-      : () => itemsQuery.fetchNextPage(),
+      : () => void itemsQuery.fetchNextPage(),
     isItemStarred,
     getBookmarkByItemId,
   };

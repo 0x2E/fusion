@@ -72,9 +72,9 @@ export const itemQueries = {
     }),
 };
 
-export function useItems(filters: ItemFilters) {
+export function useItems(filters: ItemFilters, enabled = true) {
   const articlePageSize = usePreferencesStore((state) => state.articlePageSize);
-  return useInfiniteQuery(itemQueries.list(filters, articlePageSize));
+  return useInfiniteQuery({ ...itemQueries.list(filters, articlePageSize), enabled });
 }
 
 export function useItem(itemId: number | null, enabled = true) {

@@ -171,6 +171,9 @@ export function useCreateBookmark() {
     },
     onSuccess: (bookmark) => {
       const itemId = resolveBookmarkItemId(bookmark);
+      // Optimistically insert/update across ALL bookmark list caches (including
+      // feed/group-filtered variants). This may add the bookmark to a filtered
+      // cache it doesn't belong in; onSettled below invalidates and reconciles.
       qc.setQueriesData<BookmarksInfiniteData>(
         { queryKey: queryKeys.bookmarks.lists() },
         (old) => {
@@ -212,6 +215,8 @@ export function useDeleteBookmark() {
       return bookmarkId;
     },
     onSuccess: (bookmarkId) => {
+      // Optimistically remove from every bookmark list cache (filtered or not);
+      // onSettled below re-fetches to correct any cross-filter drift.
       qc.setQueriesData<BookmarksInfiniteData>(
         { queryKey: queryKeys.bookmarks.lists() },
         (old) => {
