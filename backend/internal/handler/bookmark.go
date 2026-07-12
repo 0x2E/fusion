@@ -49,6 +49,8 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 			val = maxListLimit
 		}
 		params.Limit = val
+	} else {
+		params.Limit = 50
 	}
 
 	if offsetStr := c.Query("offset"); offsetStr != "" {
