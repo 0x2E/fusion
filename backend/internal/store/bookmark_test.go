@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/0x2E/fusion/internal/model"
@@ -204,6 +205,66 @@ func TestListBookmarksFilters(t *testing.T) {
 		}
 		if orphan.Unread {
 			t.Error("expected orphan bookmark to read as read")
+		}
+	})
+
+	t.Run("pagination applies after feed_id filter", func(t *testing.T) {
+		// Fresh feed keeps the count deterministic and isolated from earlier subtests.
+		pagFeed := mustCreateFeed(t, store, group1.ID, "Pag Feed", "https://example.com/pag", "https://example.com", "")
+		const n = 4
+		ids := make([]int64, n)
+		for i := 0; i < n; i++ {
+			b := mustCreateBookmark(t, store, nil, &pagFeed.ID, fmt.Sprintf("https://example.com/pag/%d", i+1), "Pag", "Content", 100, pagFeed.Name)
+			ids[i] = b.ID
+			// Deterministic created_at (DESC order: highest value sorts first).
+			if _, err := store.db.Exec(
+				`UPDATE bookmarks SET created_at = :created_at WHERE id = :id`,
+				sql.Named("created_at", int64(100*(i+1))),
+				sql.Named("id", b.ID),
+			); err != nil {
+				t.Fatalf("failed to set created_at: %v", err)
+			}
+		}
+
+		total, err := store.CountBookmarks(ListBookmarksParams{FeedID: &pagFeed.ID})
+		if err != nil {
+			t.Fatalf("CountBookmarks() failed: %v", err)
+		}
+		if total != n {
+			t.Fatalf("expected filtered count %d, got %d", n, total)
+		}
+
+		// Page 1: newest two -> ids[3], ids[2].
+		page1, err := store.ListBookmarks(ListBookmarksParams{FeedID: &pagFeed.ID, Limit: 2, Offset: 0})
+		if err != nil {
+			t.Fatalf("ListBookmarks() page1 failed: %v", err)
+		}
+		if len(page1) != 2 {
+			t.Fatalf("expected page1 len 2, got %d", len(page1))
+		}
+		if page1[0].ID != ids[3] || page1[1].ID != ids[2] {
+			t.Errorf("page1 order = [%d, %d], want [%d, %d]", page1[0].ID, page1[1].ID, ids[3], ids[2])
+		}
+
+		// Page 2: remaining two -> ids[1], ids[0].
+		page2, err := store.ListBookmarks(ListBookmarksParams{FeedID: &pagFeed.ID, Limit: 2, Offset: 2})
+		if err != nil {
+			t.Fatalf("ListBookmarks() page2 failed: %v", err)
+		}
+		if len(page2) != 2 {
+			t.Fatalf("expected page2 len 2, got %d", len(page2))
+		}
+		if page2[0].ID != ids[1] || page2[1].ID != ids[0] {
+			t.Errorf("page2 order = [%d, %d], want [%d, %d]", page2[0].ID, page2[1].ID, ids[1], ids[0])
+		}
+
+		// Past the last page returns nothing while count stays full.
+		page3, err := store.ListBookmarks(ListBookmarksParams{FeedID: &pagFeed.ID, Limit: 2, Offset: 4})
+		if err != nil {
+			t.Fatalf("ListBookmarks() page3 failed: %v", err)
+		}
+		if len(page3) != 0 {
+			t.Errorf("expected empty page3, got %d", len(page3))
 		}
 	})
 }
