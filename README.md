@@ -82,6 +82,7 @@ See [Contributing](./CONTRIBUTING.md).
 
 - [Deploy on Fly.io](./fly.toml)
 - [Deploy on Railway](https://railway.com/template/XSPFK0?referralCode=milo) (community maintained)
+- [Deploy on PikaPods](https://www.pikapods.com/pods?run=fusion)
 </details>
 
 ## Configuration
