@@ -269,7 +269,7 @@ function FeedsPage() {
                   (key) => (
                     <DropdownMenuItem
                       key={key}
-                      onSelect={() => setStatusFilter(key)}
+                      onClick={() => setStatusFilter(key)}
                     >
                       {statusFilterLabels[key]}
                     </DropdownMenuItem>
@@ -290,11 +290,11 @@ function FeedsPage() {
                 }
               />
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => setAddFeedOpen(true)}>
+                <DropdownMenuItem onClick={() => setAddFeedOpen(true)}>
                   <Rss className="mr-2 h-4 w-4" />
                   {t("feed.add.title")}
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setAddGroupOpen(true)}>
+                <DropdownMenuItem onClick={() => setAddGroupOpen(true)}>
                   <Folder className="mr-2 h-4 w-4" />
                   {t("group.add.title")}
                 </DropdownMenuItem>
