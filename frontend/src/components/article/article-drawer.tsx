@@ -184,6 +184,7 @@ export function ArticleDrawer() {
                   {starred ? t("article.action.unstar") : t("article.action.star")}
                 </Button>
                 <Button
+                  nativeButton={!safeArticleLink}
                   render={
                     safeArticleLink ? (
                       <a

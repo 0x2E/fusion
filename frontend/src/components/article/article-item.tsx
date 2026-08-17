@@ -140,6 +140,7 @@ export function ArticleItem({
         </Button>
         {safeArticleLink ? (
           <Button
+            nativeButton={false}
             render={
               <a
                 href={safeArticleLink}
