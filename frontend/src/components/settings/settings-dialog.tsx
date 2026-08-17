@@ -3,7 +3,7 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Bug, Download, Info, Keyboard, Palette } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -242,36 +242,24 @@ function AboutContent() {
               : t("settings.about.install")}
           </Button>
         )}
-        <Button
-          variant="outline"
-          size="sm"
-          nativeButton={false}
-          render={
-            <a
-              href="https://github.com/0x2e/fusion"
-              target="_blank"
-              rel="noopener noreferrer"
-            />
-          }
+        <a
+          href="https://github.com/0x2e/fusion"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
         >
           <GithubIcon className="h-4 w-4" />
           {t("settings.about.github")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          nativeButton={false}
-          render={
-            <a
-              href="https://github.com/0x2e/fusion/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-            />
-          }
+        </a>
+        <a
+          href="https://github.com/0x2e/fusion/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
         >
           <Bug className="h-4 w-4" />
           {t("settings.about.reportIssue")}
-        </Button>
+        </a>
       </div>
       <p className="mt-auto text-xs text-muted-foreground">
         {t("settings.about.license")}

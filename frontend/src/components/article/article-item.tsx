@@ -1,5 +1,5 @@
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
 import type { Item } from "@/lib/api";
@@ -139,24 +139,17 @@ export function ArticleItem({
           />
         </Button>
         {safeArticleLink ? (
-          <Button
-            nativeButton={false}
-            render={
-              <a
-                href={safeArticleLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-              />
-            }
-            variant="ghost"
-            size="icon-sm"
-            className="bg-muted"
+          <a
+            href={safeArticleLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "bg-muted")}
             aria-label={t("article.action.openInBrowser")}
             title={t("article.action.openInBrowser")}
           >
             <ExternalLink className="text-muted-foreground" />
-          </Button>
+          </a>
         ) : (
           <Button
             variant="ghost"
