@@ -57,6 +57,10 @@ export function EditFeedDialog() {
     useState(false);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const groupItems = groups.map((group) => ({
+    value: group.id.toString(),
+    label: group.name,
+  }));
 
   useEffect(() => {
     if (editingFeed) {
@@ -253,14 +257,20 @@ export function EditFeedDialog() {
               <label className="text-[13px] font-medium" id="edit-feed-group-label">
                 {t("feed.add.groupLabel")}
               </label>
-              <Select value={groupId} onValueChange={(v) => { if (v) setGroupId(v); }}>
+              <Select
+                items={groupItems}
+                value={groupId || null}
+                onValueChange={(v) => {
+                  if (v) setGroupId(v);
+                }}
+              >
                 <SelectTrigger className="h-10" aria-labelledby="edit-feed-group-label">
                   <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {groups.map((group) => (
-                    <SelectItem key={group.id} value={group.id.toString()}>
-                      {group.name}
+                  {groupItems.map((group) => (
+                    <SelectItem key={group.value} value={group.value}>
+                      {group.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
