@@ -35,9 +35,11 @@ const ALLOWED_TAGS = [
   "hr",
   "figure",
   "figcaption",
+  "details",
+  "summary",
 ];
 
-const ALLOWED_ATTR = ["href", "src", "alt", "title", "class", "target", "rel"];
+const ALLOWED_ATTR = ["href", "src", "alt", "title", "class", "target", "rel", "open"];
 
 // Tags that are meaningful even when empty
 const SELF_CLOSING_TAGS = new Set(["br", "hr", "img", "td", "th", "li"]);
