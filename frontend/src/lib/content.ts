@@ -109,6 +109,9 @@ function sanitizeImages(root: DocumentFragment, articleUrl: string | null): void
 function removeEmptyWrappers(root: DocumentFragment): void {
   const elements = Array.from(root.querySelectorAll("*")).reverse();
   for (const element of elements) {
+    // An empty <summary> must survive: a <details> without one has no
+    // disclosure toggle and its content becomes unreachable.
+    if (element.tagName.toLowerCase() === "summary") continue;
     if (isEmptyElement(element)) {
       element.remove();
     }
