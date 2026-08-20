@@ -3,7 +3,7 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Bug, Download, Info, Keyboard, Palette } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -63,6 +63,20 @@ function AppearanceContent() {
   const { locale, articlePageSize, setLocale, setArticlePageSize } =
     usePreferencesStore();
 
+  const localeItems = supportedLocales.map((localeCode) => ({
+    value: localeCode,
+    label: localeLabels[localeCode] ?? localeCode,
+  }));
+  const articlePageSizeItems = articlePageSizeOptions.map((size) => ({
+    value: size.toString(),
+    label: String(size),
+  }));
+  const themeItems = [
+    { value: "light", label: t("settings.theme.light") },
+    { value: "dark", label: t("settings.theme.dark") },
+    { value: "system", label: t("settings.theme.system") },
+  ];
+
   return (
     <div className="space-y-5">
       {/* Language */}
@@ -73,14 +87,20 @@ function AppearanceContent() {
             {t("settings.language.description")}
           </p>
         </div>
-        <Select value={locale} onValueChange={(v) => { if (v) setLocale(v); }}>
+        <Select
+          items={localeItems}
+          value={locale}
+          onValueChange={(v) => {
+            if (v) setLocale(v);
+          }}
+        >
           <SelectTrigger className="w-auto gap-2 border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {supportedLocales.map((localeCode) => (
-              <SelectItem key={localeCode} value={localeCode}>
-                {localeLabels[localeCode] ?? localeCode}
+            {localeItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -98,6 +118,7 @@ function AppearanceContent() {
           </p>
         </div>
         <Select
+          items={articlePageSizeItems}
           value={articlePageSize.toString()}
           onValueChange={(value) => {
             if (!value) return;
@@ -111,9 +132,9 @@ function AppearanceContent() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {articlePageSizeOptions.map((size) => (
-              <SelectItem key={size} value={size.toString()}>
-                {size}
+            {articlePageSizeItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -128,14 +149,22 @@ function AppearanceContent() {
             {t("settings.theme.description")}
           </p>
         </div>
-        <Select value={theme} onValueChange={(v) => { if (v) setTheme(v); }}>
+        <Select
+          items={themeItems}
+          value={theme}
+          onValueChange={(v) => {
+            if (v) setTheme(v);
+          }}
+        >
           <SelectTrigger className="w-auto gap-2 border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="light">{t("settings.theme.light")}</SelectItem>
-            <SelectItem value="dark">{t("settings.theme.dark")}</SelectItem>
-            <SelectItem value="system">{t("settings.theme.system")}</SelectItem>
+            {themeItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -213,34 +242,24 @@ function AboutContent() {
               : t("settings.about.install")}
           </Button>
         )}
-        <Button
-          variant="outline"
-          size="sm"
-          render={
-            <a
-              href="https://github.com/0x2e/fusion"
-              target="_blank"
-              rel="noopener noreferrer"
-            />
-          }
+        <a
+          href="https://github.com/0x2e/fusion"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
         >
           <GithubIcon className="h-4 w-4" />
           {t("settings.about.github")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          render={
-            <a
-              href="https://github.com/0x2e/fusion/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-            />
-          }
+        </a>
+        <a
+          href="https://github.com/0x2e/fusion/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
         >
           <Bug className="h-4 w-4" />
           {t("settings.about.reportIssue")}
-        </Button>
+        </a>
       </div>
       <p className="mt-auto text-xs text-muted-foreground">
         {t("settings.about.license")}

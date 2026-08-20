@@ -8,7 +8,7 @@ import {
   X,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
@@ -25,7 +25,7 @@ import {
 import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useI18n } from "@/lib/i18n";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
@@ -183,25 +183,30 @@ export function ArticleDrawer() {
                   />
                   {starred ? t("article.action.unstar") : t("article.action.star")}
                 </Button>
-                <Button
-                  render={
-                    safeArticleLink ? (
-                      <a
-                        href={safeArticleLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    ) : undefined
-                  }
-                  variant="outline"
-                  size="sm"
-                  onClick={safeArticleLink ? undefined : handleOpenOriginal}
-                  disabled={!safeArticleLink}
-                  className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  {t("article.action.original")}
-                </Button>
+                {safeArticleLink ? (
+                  <a
+                    href={safeArticleLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground",
+                    )}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {t("article.action.original")}
+                  </a>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {t("article.action.original")}
+                  </Button>
+                )}
               </div>
 
               <SheetTitle className="sr-only">{article.title}</SheetTitle>
