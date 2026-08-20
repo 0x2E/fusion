@@ -35,9 +35,11 @@ const ALLOWED_TAGS = [
   "hr",
   "figure",
   "figcaption",
+  "details",
+  "summary",
 ];
 
-const ALLOWED_ATTR = ["href", "src", "alt", "title", "class", "target", "rel"];
+const ALLOWED_ATTR = ["href", "src", "alt", "title", "class", "target", "rel", "open"];
 
 // Tags that are meaningful even when empty
 const SELF_CLOSING_TAGS = new Set(["br", "hr", "img", "td", "th", "li"]);
@@ -107,6 +109,9 @@ function sanitizeImages(root: DocumentFragment, articleUrl: string | null): void
 function removeEmptyWrappers(root: DocumentFragment): void {
   const elements = Array.from(root.querySelectorAll("*")).reverse();
   for (const element of elements) {
+    // An empty <summary> must survive: a <details> without one has no
+    // disclosure toggle and its content becomes unreachable.
+    if (element.tagName.toLowerCase() === "summary") continue;
     if (isEmptyElement(element)) {
       element.remove();
     }
