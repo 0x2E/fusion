@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useUrlState } from "@/hooks/use-url-state";
-import { useUIStore } from "@/store";
+import { sidebarNodeKey, useSidebarNavStore, useUIStore } from "@/store";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import type { Feed } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
@@ -16,6 +16,9 @@ export function FeedItem({ feed }: FeedItemProps) {
   const { t } = useI18n();
   const { selectedFeedId, setSelectedFeed } = useUrlState();
   const { setEditFeedOpen } = useUIStore();
+  const feedKey = sidebarNodeKey.feed(feed.id);
+  const isFocused = useSidebarNavStore((s) => s.focusedKey === feedKey);
+  const setFocusedKey = useSidebarNavStore((s) => s.setFocusedKey);
 
   const isSelected = selectedFeedId === feed.id;
   const faviconUrl = getFaviconUrl(feed.link, feed.site_url);
@@ -26,14 +29,19 @@ export function FeedItem({ feed }: FeedItemProps) {
 
   return (
     <div
+      data-sidebar-key={feedKey}
       className={cn(
         "group flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
         isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
+        isFocused && "ring-2 ring-inset ring-ring",
       )}
     >
       <button
         type="button"
-        onClick={() => setSelectedFeed(feed.id)}
+        onClick={() => {
+          setFocusedKey(feedKey);
+          setSelectedFeed(feed.id);
+        }}
         className="flex min-w-0 flex-1 items-center gap-2 text-left"
       >
         <FeedFavicon src={faviconUrl} className="h-4 w-4" />

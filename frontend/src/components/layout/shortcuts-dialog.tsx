@@ -24,7 +24,7 @@ export function ShortcutsDialog() {
         { keys: "Cmd+K / Ctrl+K", action: t("shortcuts.action.toggleSearch") },
         { keys: "/", action: t("shortcuts.action.openSearch") },
         { keys: "Cmd+, / Ctrl+,", action: t("shortcuts.action.openSettings") },
-        { keys: "?", action: t("shortcuts.action.showHelp") },
+        { keys: "? / Shift+H", action: t("shortcuts.action.showHelp") },
         { keys: "Esc", action: t("shortcuts.action.closeDialog") },
       ],
     },
@@ -42,6 +42,17 @@ export function ShortcutsDialog() {
         { keys: "m", action: t("shortcuts.action.toggleRead") },
         { keys: "s / f", action: t("shortcuts.action.toggleStar") },
         { keys: "o / v", action: t("shortcuts.action.openOriginal") },
+      ],
+    },
+    {
+      title: t("shortcuts.section.sidebar"),
+      items: [
+        { keys: "Shift+N", action: t("shortcuts.action.focusNextItem") },
+        { keys: "Shift+P", action: t("shortcuts.action.focusPreviousItem") },
+        { keys: "Shift+J", action: t("shortcuts.action.openNextItem") },
+        { keys: "Shift+K", action: t("shortcuts.action.openPreviousItem") },
+        { keys: "Shift+O", action: t("shortcuts.action.openFocusedItem") },
+        { keys: "Shift+X", action: t("shortcuts.action.toggleGroup") },
       ],
     },
     {
