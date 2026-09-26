@@ -162,7 +162,7 @@ export function FeedGroupCard({
               onStartEditingGroup(group);
             }}
             className="rounded p-1 hover:bg-accent"
-            aria-label={t("feeds.toast.renamed")}
+            aria-label={t("feeds.renameGroup")}
           >
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </button>

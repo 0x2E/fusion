@@ -114,12 +114,20 @@ export function AddFeedDialog() {
       return;
     }
 
-    const selectedGroupId = groupId
-      ? parseInt(groupId, 10)
-      : (groups[0]?.id ?? 1);
-
     setIsSubmitting(true);
     try {
+      // Validate before creating so an unreachable or malformed URL fails
+      // here with a clear message instead of a "successful" empty feed.
+      const check = await feedAPI.validate({ url: url.trim() });
+      if ((check.data?.feeds ?? []).length === 0) {
+        toast.error(t("feed.toast.invalidFeed"));
+        return;
+      }
+
+      const selectedGroupId = groupId
+        ? parseInt(groupId, 10)
+        : (groups[0]?.id ?? 1);
+
       const request: CreateFeedRequest = {
         link: url.trim(),
         name: name.trim() || url.trim(),

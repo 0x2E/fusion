@@ -33,8 +33,10 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    // Handle 401 Unauthorized
-    if (response.status === 401 && onUnauthorized) {
+    // A 401 from the login endpoint means a wrong password, not an expired
+    // session. Redirecting there reloads the page and destroys the error
+    // toast before the user can see it.
+    if (response.status === 401 && onUnauthorized && endpoint !== "/sessions") {
       onUnauthorized();
     }
 
