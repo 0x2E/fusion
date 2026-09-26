@@ -33,9 +33,9 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    // A 401 from the login endpoint means a wrong password, not an expired
-    // session. Redirecting there reloads the page and destroys the error
-    // toast before the user can see it.
+    // A 401 from /sessions is handled by its callers (the login form shows an
+    // error toast, the route guard redirects); the global redirect here would
+    // reload the page and destroy that feedback.
     if (response.status === 401 && onUnauthorized && endpoint !== "/sessions") {
       onUnauthorized();
     }

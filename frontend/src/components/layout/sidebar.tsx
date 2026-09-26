@@ -1,11 +1,13 @@
 import { LogOut, Search, Settings, Rss } from "lucide-react";
-import { useNavigate, useLocation } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { FeedList } from "@/components/feed/feed-list";
 import { sessionAPI } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store";
+import { resetSessionGuard } from "@/routes/__root";
 
 export function Sidebar() {
   const { t } = useI18n();
@@ -18,10 +20,16 @@ export function Sidebar() {
   const handleSignOut = async () => {
     try {
       await sessionAPI.logout();
-    } finally {
-      queryClient.clear();
-      navigate({ to: "/login" });
+    } catch {
+      toast.error(t("sidebar.signOutFailed"));
+      return;
     }
+
+    queryClient.clear();
+    // A full-page navigation leaves this document so the route guard starts
+    // fresh; the SPA router would keep its cached "session verified" verdict.
+    resetSessionGuard();
+    window.location.assign("/login");
   };
 
   return (

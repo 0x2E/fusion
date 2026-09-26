@@ -82,6 +82,7 @@ export const zhMessages: PartialMessages = {
   "sidebar.search": "搜索",
   "sidebar.settings": "设置",
   "sidebar.signOut": "退出登录",
+  "sidebar.signOutFailed": "退出登录失败",
   "group.add.description": "创建新分组以整理你的订阅。",
   "group.add.placeholder": "分组名称",
   "group.add.title": "添加分组",

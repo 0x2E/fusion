@@ -111,3 +111,40 @@ func TestValidateFeedUnreachableURLReturnsNoFeeds(t *testing.T) {
 		t.Fatalf("expected 0 feeds for unreachable URL, got %d", len(body.Data.Feeds))
 	}
 }
+
+// Discovery probes common paths on the host, so a feed elsewhere on the host
+// makes /feeds/validate return a non-empty list even though the entered URL is
+// not a feed itself. The frontend must therefore match the entered URL against
+// the returned links instead of treating a non-empty list as approval.
+func TestValidateFeedReturnsCommonPathFeedForInvalidPath(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/feed.xml":
+			w.Header().Set("Content-Type", "application/rss+xml")
+			_, _ = fmt.Fprint(w, `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>Tech Daily</title><link>https://example.com</link>
+<item><guid>g1</guid><title>Item</title><link>https://example.com/1</link></item>
+</channel></rss>`)
+		default:
+			w.Header().Set("Content-Type", "application/xml")
+			_, _ = fmt.Fprint(w, `<?xml version="1.0"?><rss><channel><title>Broken`)
+		}
+	}))
+	defer server.Close()
+
+	h := &Handler{config: &config.Config{AllowPrivateFeeds: true}}
+
+	code, body := postValidateFeed(t, h, server.URL+"/broken.xml")
+	if code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", code)
+	}
+	found := false
+	for _, feed := range body.Data.Feeds {
+		if feed.Link == server.URL+"/feed.xml" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected discovery to surface %q for a broken entered path, got %+v", server.URL+"/feed.xml", body.Data.Feeds)
+	}
+}

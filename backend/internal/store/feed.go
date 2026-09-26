@@ -531,8 +531,8 @@ func (s *Store) UpdateFeedNameIfDefault(id int64, name, link string) error {
 	_, err := s.db.Exec(`
 		UPDATE feeds
 		SET name = :name, updated_at = unixepoch()
-		WHERE id = :id AND (TRIM(name) = '' OR name = :link)
-	`, sql.Named("name", name), sql.Named("link", link), sql.Named("id", id))
+		WHERE id = :id AND (TRIM(name) = '' OR TRIM(name) = TRIM(:link))
+	`, sql.Named("name", name), sql.Named("link", strings.TrimSpace(link)), sql.Named("id", id))
 	return err
 }
 

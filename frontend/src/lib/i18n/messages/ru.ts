@@ -82,6 +82,7 @@ export const ruMessages: PartialMessages = {
   "sidebar.search": "Поиск",
   "sidebar.settings": "Настройки",
   "sidebar.signOut": "Выйти",
+  "sidebar.signOutFailed": "Не удалось выйти",
   "group.add.description": "Создайте группу для организации ваших лент.",
   "group.add.placeholder": "Название группы",
   "group.add.title": "Добавить группу",

@@ -82,6 +82,7 @@ export const ptMessages: PartialMessages = {
   "sidebar.search": "Pesquisar",
   "sidebar.settings": "Configuracoes",
   "sidebar.signOut": "Sair",
+  "sidebar.signOutFailed": "Falha ao sair",
   "group.add.description": "Crie um novo grupo para organizar seus feeds.",
   "group.add.placeholder": "Nome do grupo",
   "group.add.title": "Adicionar grupo",

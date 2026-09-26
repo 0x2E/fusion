@@ -630,6 +630,21 @@ func TestUpdateFeedNameIfDefault(t *testing.T) {
 		}
 	})
 
+	t.Run("backfills when name differs from link only by whitespace", func(t *testing.T) {
+		link := "https://example.com/feed4.xml"
+		feed := mustCreateFeed(t, store, group.ID, "  "+link+"  ", link, "", "")
+		if err := store.UpdateFeedNameIfDefault(feed.ID, "Tech Daily", link); err != nil {
+			t.Fatalf("UpdateFeedNameIfDefault() failed: %v", err)
+		}
+		updated, err := store.GetFeed(feed.ID)
+		if err != nil {
+			t.Fatalf("GetFeed() failed: %v", err)
+		}
+		if updated.Name != "Tech Daily" {
+			t.Fatalf("expected name %q, got %q", "Tech Daily", updated.Name)
+		}
+	})
+
 	t.Run("keeps custom name", func(t *testing.T) {
 		link := "https://example.com/feed2.xml"
 		feed := mustCreateFeed(t, store, group.ID, "My Custom Name", link, "", "")
