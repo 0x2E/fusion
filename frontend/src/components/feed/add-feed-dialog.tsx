@@ -145,7 +145,11 @@ export function AddFeedDialog() {
       let link = entered;
       let title = "";
       if (match) {
+        // Prefer the discovered link: the entered URL may differ in ways the
+        // normalization ignores (trailing slash) that not every server accepts.
+        link = match.link;
         title = match.title.trim();
+        setUrl(link);
       } else if (feeds.length === 1) {
         link = feeds[0].link;
         title = feeds[0].title.trim();
@@ -154,6 +158,9 @@ export function AddFeedDialog() {
         setDetectedFeeds(feeds);
         setIsFeedSelectOpen(true);
         return;
+      }
+      if (!name.trim() && title) {
+        setName(title);
       }
 
       const selectedGroupId = groupId

@@ -983,6 +983,9 @@ components:
       properties:
         url:
           type: string
+        proxy:
+          type: string
+          description: Optional HTTP proxy used for feed discovery and title fetching
 
     DiscoveredFeed:
       type: object
