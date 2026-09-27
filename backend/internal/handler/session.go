@@ -199,6 +199,23 @@ func (h *Handler) createSession(c *gin.Context) {
 	})
 }
 
+// sessionStatus reports whether the request carries a valid session cookie.
+// The frontend route guard probes it before rendering protected pages.
+func (h *Handler) sessionStatus(c *gin.Context) {
+	if h.allowAnonAPI {
+		c.Status(http.StatusNoContent)
+		return
+	}
+
+	sessionID, err := c.Cookie("session")
+	if err != nil || !h.isSessionValid(sessionID) {
+		unauthorizedError(c)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
 func (h *Handler) logout(c *gin.Context) {
 	sessionID, err := c.Cookie("session")
 	if err == nil {

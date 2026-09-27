@@ -29,6 +29,8 @@ export const sessionAPI = {
   login: (data: LoginRequest) =>
     api.post<APIResponse<{ message: string }>>("/sessions", data),
 
+  status: () => api.get<void>("/sessions"),
+
   logout: () => api.delete<void>("/sessions"),
 };
 

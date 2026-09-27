@@ -27,6 +27,7 @@ type ParsedItem struct {
 
 type FetchResult struct {
 	Items           []*ParsedItem
+	FeedTitle       string
 	SiteURL         string
 	HTTPStatus      int
 	NotModified     bool
@@ -103,6 +104,7 @@ func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration,
 	}
 
 	result.Items = items
+	result.FeedTitle = strings.TrimSpace(parsedFeed.Title)
 	result.SiteURL = siteURL
 	return result, nil
 }

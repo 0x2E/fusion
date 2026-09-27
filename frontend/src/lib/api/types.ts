@@ -105,6 +105,7 @@ export interface UpdateFeedRequest {
 
 export interface ValidateFeedRequest {
   url: string;
+  proxy?: string;
 }
 
 export interface DiscoveredFeed {

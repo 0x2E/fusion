@@ -519,6 +519,23 @@ func (s *Store) UpdateFeedSiteURLIfEmpty(id int64, siteURL string) error {
 	return err
 }
 
+// UpdateFeedNameIfDefault backfills the feed name from the feed's own title,
+// but only while the name still holds its default value (empty or equal to
+// the feed link), so user-provided names are never overwritten.
+func (s *Store) UpdateFeedNameIfDefault(id int64, name, link string) error {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil
+	}
+
+	_, err := s.db.Exec(`
+		UPDATE feeds
+		SET name = :name, updated_at = unixepoch()
+		WHERE id = :id AND (TRIM(name) = '' OR TRIM(name) = TRIM(:link))
+	`, sql.Named("name", name), sql.Named("link", strings.TrimSpace(link)), sql.Named("id", id))
+	return err
+}
+
 // BatchCreateFeedsInput holds input for batch feed creation.
 type BatchCreateFeedsInput struct {
 	GroupID int64

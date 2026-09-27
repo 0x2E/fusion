@@ -21,6 +21,20 @@ security:
   - sessionCookie: []
 paths:
   /sessions:
+    get:
+      tags: [Sessions]
+      summary: Check session status
+      description: |
+        Reports whether the request carries a valid session cookie.
+        Returns 204 when authenticated (or when auth is disabled, i.e. an
+        empty password with no OIDC configured) and 401 otherwise. The
+        response body is always empty and carries no session information.
+      security: []
+      responses:
+        "204":
+          description: Valid session (or auth disabled)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags: [Sessions]
       summary: Login with password
@@ -969,6 +983,9 @@ components:
       properties:
         url:
           type: string
+        proxy:
+          type: string
+          description: Optional HTTP proxy used for feed discovery and title fetching
 
     DiscoveredFeed:
       type: object

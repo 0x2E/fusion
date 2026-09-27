@@ -33,8 +33,10 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    // Handle 401 Unauthorized
-    if (response.status === 401 && onUnauthorized) {
+    // A 401 from /sessions is handled by its callers (the login form shows an
+    // error toast, the route guard redirects); the global redirect here would
+    // reload the page and destroy that feedback.
+    if (response.status === 401 && onUnauthorized && endpoint !== "/sessions") {
       onUnauthorized();
     }
 

@@ -101,6 +101,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 	api := r.Group("/api")
 	{
 		api.POST("/sessions", h.login)
+		api.GET("/sessions", h.sessionStatus)
 		api.DELETE("/sessions", h.logout)
 
 		// OIDC routes (public, no auth middleware)

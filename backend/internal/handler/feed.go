@@ -34,7 +34,8 @@ type updateFeedRequest struct {
 }
 
 type validateFeedRequest struct {
-	URL string `json:"url" binding:"required"`
+	URL   string `json:"url" binding:"required"`
+	Proxy string `json:"proxy"`
 }
 
 type discoveredFeed struct {
@@ -205,6 +206,7 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	}
 
 	target := strings.TrimSpace(req.URL)
+	proxy := strings.TrimSpace(req.Proxy)
 	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
 	if err := httpc.ValidateRequestURL(c.Request.Context(), target, allowPrivateFeeds); err != nil {
 		badRequestError(c, "invalid url")
@@ -214,7 +216,11 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
-	found, err := feedfinder.Find(ctx, target, nil)
+	var finderOptions *feedfinder.Options
+	if proxy != "" {
+		finderOptions = &feedfinder.Options{RequestProxy: &proxy}
+	}
+	found, err := feedfinder.Find(ctx, target, finderOptions)
 	if err != nil {
 		slog.Warn("feed discovery failed", "url", target, "error", err)
 	}
@@ -231,7 +237,7 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	}
 
 	if len(feeds) == 0 {
-		title, parseErr := h.parseFeedTitle(ctx, target)
+		title, parseErr := h.parseFeedTitle(ctx, target, proxy)
 		if parseErr == nil {
 			feeds = append(feeds, discoveredFeed{Title: title, Link: target})
 		}
@@ -263,10 +269,10 @@ func normalizeDiscoveredFeeds(found []feedfinder.Feed) []discoveredFeed {
 	return result
 }
 
-func (h *Handler) parseFeedTitle(ctx context.Context, target string) (string, error) {
+func (h *Handler) parseFeedTitle(ctx context.Context, target, proxy string) (string, error) {
 	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
 
-	client, err := httpc.NewClient(30*time.Second, "", allowPrivateFeeds)
+	client, err := httpc.NewClient(30*time.Second, proxy, allowPrivateFeeds)
 	if err != nil {
 		return "", err
 	}
