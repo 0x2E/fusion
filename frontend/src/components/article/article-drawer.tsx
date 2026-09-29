@@ -30,6 +30,7 @@ import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+import { useReadStatePins } from "@/store";
 
 export function ArticleDrawer() {
   const { t } = useI18n();
@@ -54,6 +55,12 @@ export function ArticleDrawer() {
   const markUnread = useMarkItemsUnread();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
+
+  const { pinRead, unpinRead } = useReadStatePins({
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+    articleFilter,
+  });
 
   const articleIds = articles.map((a) => a.id);
 
@@ -90,8 +97,10 @@ export function ArticleDrawer() {
     try {
       if (article.unread) {
         await markRead.mutateAsync([article.id]);
+        pinRead([article.id]);
       } else {
         await markUnread.mutateAsync([article.id]);
+        unpinRead([article.id]);
       }
     } catch (error) {
       console.error("Failed to toggle read status:", error);

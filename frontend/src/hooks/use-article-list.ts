@@ -5,6 +5,7 @@ import {
   useBookmarkLookup,
   useStarredItems,
 } from "@/queries/bookmarks";
+import { useArticlePinsStore, articleListKey } from "@/store";
 import type { Bookmark, Item } from "@/lib/api";
 import type { ArticleFilter } from "@/lib/article-filter";
 
@@ -16,6 +17,7 @@ interface ArticleListFilters {
 
 export function useArticleList(filters: ArticleListFilters) {
   const isStarredMode = filters.articleFilter === "starred";
+  const isUnreadMode = filters.articleFilter === "unread";
 
   // Items are unused in starred mode (bookmarks ARE the articles there), so
   // skip the request entirely.
@@ -23,7 +25,7 @@ export function useArticleList(filters: ArticleListFilters) {
     {
       feedId: filters.feedId,
       groupId: filters.groupId,
-      unread: filters.articleFilter === "unread" ? true : undefined,
+      unread: isUnreadMode ? true : undefined,
     },
     !isStarredMode,
   );
@@ -37,12 +39,29 @@ export function useArticleList(filters: ArticleListFilters) {
     isStarredMode,
   );
 
+  // Pinned ids for this exact list keep just-marked-read rows visible in the
+  // unread view so the marking can be undone in place (see article-pins.ts).
+  const pinsKey = articleListKey(
+    filters.feedId,
+    filters.groupId,
+    filters.articleFilter,
+  );
+  const pinnedIds = useArticlePinsStore((s) => s.pins[pinsKey]);
+
   const items = useMemo(
     () => itemsQuery.data?.pages.flatMap((p) => p.data) ?? [],
     [itemsQuery.data],
   );
 
-  const articles: Item[] = isStarredMode ? starred.items : items;
+  const visibleItems = useMemo(() => {
+    if (!isUnreadMode || !pinnedIds || pinnedIds.size === 0) {
+      return items;
+    }
+
+    return items.filter((item) => item.unread || pinnedIds.has(item.id));
+  }, [items, isUnreadMode, pinnedIds]);
+
+  const articles: Item[] = isStarredMode ? starred.items : visibleItems;
 
   // Bookmark resolution for star state + un-starring. In starred mode every
   // displayed article is itself a bookmark, so resolve from the starred data
