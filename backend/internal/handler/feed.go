@@ -11,6 +11,7 @@ import (
 
 	"github.com/0x2E/feedfinder"
 	"github.com/0x2E/fusion/internal/pkg/httpc"
+	"github.com/0x2E/fusion/internal/pull"
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
 	"github.com/mmcdole/gofeed"
@@ -261,7 +262,7 @@ func normalizeDiscoveredFeeds(found []feedfinder.Feed) []discoveredFeed {
 
 		seen[link] = struct{}{}
 		result = append(result, discoveredFeed{
-			Title: strings.TrimSpace(feed.Title),
+			Title: pull.NormalizeTitle(feed.Title),
 			Link:  link,
 		})
 	}
@@ -302,7 +303,7 @@ func (h *Handler) parseFeedTitle(ctx context.Context, target, proxy string) (str
 		return "", nil
 	}
 
-	return strings.TrimSpace(parsedFeed.Title), nil
+	return pull.NormalizeTitle(parsedFeed.Title), nil
 }
 
 func (h *Handler) refreshFeed(c *gin.Context) {

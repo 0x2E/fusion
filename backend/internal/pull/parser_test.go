@@ -165,45 +165,112 @@ func TestFallbackGUIDUsesSourcePubDateWhenProvided(t *testing.T) {
 		t.Fatalf("expected different GUID when source pub date differs, got %q", g1)
 	}
 }
-
 func TestNormalizeTitle(t *testing.T) {
 	tests := []struct {
 		name string
 		raw  string
 		want string
 	}{
-		{name: "plain title unchanged", raw: "Belief => Actions => Results", want: "Belief => Actions => Results"},
+		// #97: one more strict decode of what gofeed produced
 		{name: "entity decoded once", raw: "Belief =&gt; Actions =&gt; Results", want: "Belief => Actions => Results"},
-		{name: "named and numeric entities decoded", raw: "A &amp; B &#8212; C &quot;D&quot;", want: `A & B — C "D"`},
-		{name: "tags stripped", raw: "Announcing <b>Go</b> 1.24 &mdash; <i>notes</i>", want: "Announcing Go 1.24 — notes"},
-		{name: "entity-encoded tags stay visible", raw: "Use &lt;b&gt; for bold", want: "Use <b> for bold"},
-		{name: "double-escaped entity decoded once", raw: "AT&amp;amp;T &amp;lt;tag&amp;gt;", want: "AT&amp;T &lt;tag&gt;"},
-		{name: "whitespace collapsed edges trimmed", raw: "  <b>  spaced  </b>  ", want: "spaced"},
+		{name: "named and numeric entities", raw: "A &amp; B &#8212; C &quot;D&quot;", want: `A & B — C "D"`},
+		{name: "double-escaped entity peels one layer", raw: "&amp;gt;", want: "&gt;"},
+		{name: "entity before text", raw: "&mdash; summary", want: "— summary"},
+
+		// plain text with ampersands and angle brackets must stay literal
+		{name: "angle bracket text untouched", raw: "std::vector<int> primer", want: "std::vector<int> primer"},
+		{name: "generic type text untouched", raw: "Vec<T> and Option<T>", want: "Vec<T> and Option<T>"},
+		{name: "tight brackets untouched", raw: "why a<b>c is unstable", want: "why a<b>c is unstable"},
+		{name: "unclosed tag-like text untouched", raw: "read the <article", want: "read the <article"},
+		{name: "comment-like text untouched", raw: "why <!-- matters", want: "why <!-- matters"},
+		{name: "math comparisons untouched", raw: "score < 3, I <3 code, a<=b", want: "score < 3, I <3 code, a<=b"},
+		{name: "bare ampersand words untouched", raw: "AT&T, Barnes & Noble, R&D", want: "AT&T, Barnes & Noble, R&D"},
+
+		// HTML5 legacy no-semicolon references must never fire
+		{name: "legacy micro prefix stays literal", raw: "kernels &microkernels", want: "kernels &microkernels"},
+		{name: "legacy copy prefix stays literal", raw: "GPL &copyleft", want: "GPL &copyleft"},
+		{name: "legacy para prefix stays literal", raw: "functions &parameters", want: "functions &parameters"},
+		{name: "legacy sect prefix stays literal", raw: "see &section 3", want: "see &section 3"},
+		{name: "legacy not prefix stays literal", raw: "all or &nothing", want: "all or &nothing"},
+		{name: "no semicolon stays literal", raw: "&copy 2026, &#61", want: "&copy 2026, &#61"},
+		{name: "ampersand without candidate stays literal", raw: "a & b; c", want: "a & b; c"},
+
+		// tag-like input is not stripped: single-layer markup keeps showing as
+		// characters, exactly like it did before this normalization existed
+		{name: "single-layer markup untouched", raw: "Hello<br>World", want: "Hello<br>World"},
+		{name: "script-like text untouched", raw: "Hello <script>alert(1)</script>", want: "Hello <script>alert(1)</script>"},
+
+		{name: "whitespace trimmed", raw: "  trimmed  ", want: "trimmed"},
 		{name: "empty", raw: "", want: ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := normalizeTitle(tt.raw); got != tt.want {
-				t.Fatalf("normalizeTitle(%q) = %q, want %q", tt.raw, got, tt.want)
+			if got := NormalizeTitle(tt.raw); got != tt.want {
+				t.Fatalf("NormalizeTitle(%q) = %q, want %q", tt.raw, got, tt.want)
 			}
 		})
 	}
 }
 
+func TestNormalizeTitleIdempotent(t *testing.T) {
+	// Idempotence holds for ordinary input but NOT for recombination cases:
+	// "&amp;gt;" -> "&gt;" -> ">" (decoding &amp; re-synthesizes a new
+	// candidate). That mirrors every entity decoder including browsers. The
+	// contract is exactly one application at ingest; any future backfill must
+	// also be single-pass, never loop-until-stable.
+	inputs := []string{
+		"Belief =&gt; Actions =&gt; Results",
+		"A &amp; B",
+		"Use &lt;b&gt; for bold",
+		"std::vector<int> primer",
+		"kernels &microkernels",
+	}
+	for _, raw := range inputs {
+		once := NormalizeTitle(raw)
+		if twice := NormalizeTitle(once); twice != once {
+			t.Fatalf("NormalizeTitle not idempotent: %q -> %q -> %q", raw, once, twice)
+		}
+	}
+}
+
+func TestMapItemFallbackGUIDHashesRawTitle(t *testing.T) {
+	now := time.Now()
+	item := &gofeed.Item{
+		Title:           "Belief =&gt; Actions =&gt; Results",
+		PublishedParsed: &now,
+	}
+
+	first := mapItem(item, nil)
+	second := mapItem(item, nil)
+
+	if first.GUID != second.GUID {
+		t.Fatalf("fallback GUID must be stable across pulls, got %q and %q", first.GUID, second.GUID)
+	}
+	if first.Title != "Belief => Actions => Results" {
+		t.Fatalf("stored title = %q, want normalized form", first.Title)
+	}
+	if first.GUID != fallbackGUID(item.Title, item.Content, now.Unix(), true) {
+		t.Fatal("fallback GUID must hash the raw title, not the normalized one")
+	}
+}
+
+// TestFetchAndParseNormalizesHTMLTitles uses the exact byte shapes that make
+// gofeed hand titles over with one entity layer still encoded: Atom
+// type="html" with double-escaped references (the #97 report) and RSS titles
+// wrapped in CDATA. Single-escaped plain titles must keep passing through
+// unchanged so an identity NormalizeTitle cannot satisfy this test.
 func TestFetchAndParseNormalizesHTMLTitles(t *testing.T) {
-	// Mirrors the feed shape from #97: Atom type="html" titles arrive from
-	// gofeed with escaped entities and markup still embedded.
 	feedXML := `<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>Example &amp; Blog</title>
+  <title>Example &amp;amp; Blog</title>
   <entry>
-    <title type="html">Belief =&gt; Actions =&gt; Results</title>
+    <title type="html">Belief =&amp;gt; Actions =&amp;gt; Results</title>
     <id>urn:entry-1</id>
     <updated>2026-01-01T00:00:00Z</updated>
   </entry>
   <entry>
-    <title type="html">A &lt;b&gt;bold&lt;/b&gt; title &amp;amp; more</title>
+    <title>Plain std::vector&lt;int&gt; primer</title>
     <id>urn:entry-2</id>
     <updated>2026-01-02T00:00:00Z</updated>
   </entry>
@@ -226,9 +293,7 @@ func TestFetchAndParseNormalizesHTMLTitles(t *testing.T) {
 
 	wantTitles := []string{
 		"Belief => Actions => Results",
-		// gofeed decodes type="html" entities into real tags; normalizeTitle
-		// then strips them, yielding the text content a browser would show.
-		"A bold title & more",
+		"Plain std::vector<int> primer",
 	}
 	if len(result.Items) != len(wantTitles) {
 		t.Fatalf("got %d items, want %d", len(result.Items), len(wantTitles))
@@ -237,5 +302,35 @@ func TestFetchAndParseNormalizesHTMLTitles(t *testing.T) {
 		if result.Items[i].Title != want {
 			t.Fatalf("item %d title = %q, want %q", i, result.Items[i].Title, want)
 		}
+	}
+}
+
+func TestFetchAndParseNormalizesCDATATitles(t *testing.T) {
+	feedXML := `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>CDATA Demo</title>
+    <item>
+      <title><![CDATA[Inside CDATA: 5 &lt; 10 &amp;&amp; ok => y]]></title>
+      <guid>cdata-1</guid>
+      <pubDate>Thu, 01 Jan 2026 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/rss+xml")
+		_, _ = w.Write([]byte(feedXML))
+	}))
+	defer server.Close()
+
+	result, err := FetchAndParse(context.Background(), &model.Feed{Link: server.URL}, 5*time.Second, true)
+	if err != nil {
+		t.Fatalf("FetchAndParse() failed: %v", err)
+	}
+
+	want := "Inside CDATA: 5 < 10 && ok => y"
+	if len(result.Items) != 1 || result.Items[0].Title != want {
+		t.Fatalf("title = %q, want %q", result.Items[0].Title, want)
 	}
 }

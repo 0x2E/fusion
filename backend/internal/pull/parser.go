@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"html"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -14,7 +15,6 @@ import (
 	"github.com/0x2E/fusion/internal/model"
 	"github.com/0x2E/fusion/internal/pkg/httpc"
 	"github.com/mmcdole/gofeed"
-	"golang.org/x/net/html"
 )
 
 // ParsedItem represents a feed item after parsing and field mapping.
@@ -105,7 +105,7 @@ func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration,
 	}
 
 	result.Items = items
-	result.FeedTitle = normalizeTitle(parsedFeed.Title)
+	result.FeedTitle = NormalizeTitle(parsedFeed.Title)
 	result.SiteURL = siteURL
 	return result, nil
 }
@@ -185,29 +185,61 @@ func normalizeSiteURL(raw string) string {
 	return parsed.String()
 }
 
-// normalizeTitle reduces a feed title to plain text. HTML-aware titles (Atom
-// type="html", RSS CDATA) can still carry markup or escaped entities after XML
-// decoding, which the UI then shows verbatim (#97). Stripping tags before
-// entity decoding keeps entity-encoded text visible while removing real markup;
-// the HTML tokenizer decodes entities exactly once, matching browser semantics.
-func normalizeTitle(raw string) string {
+// maxTitleEntityLen caps how far NormalizeTitle scans for a ';' after an '&'.
+// The longest HTML5 named reference is ~31 characters; 64 leaves headroom.
+const maxTitleEntityLen = 64
+
+// NormalizeTitle applies one more semicolon-terminated character-reference
+// decode on top of the XML decoding gofeed already performed. HTML-aware
+// titles arrive with a second entity layer still encoded when the publisher
+// double-escaped (Atom type="html") or wrapped the title in CDATA (#97), so
+// `Belief =&gt; Actions` reaches storage as the publisher intended.
+//
+// Titles are plain text, so tag-like input is left untouched: running an HTML
+// tokenizer here would eat legitimate text such as "vector<int>" or an
+// unclosed "<article". References must end in ';' and never decode through
+// HTML5 legacy no-semicolon prefixes, keeping plain words after an ampersand
+// ("&parameters", "&section") literal, matching gofeed's own DecodeEntities.
+func NormalizeTitle(raw string) string {
 	raw = strings.TrimSpace(raw)
-	if !strings.ContainsAny(raw, "<&") {
+	if !strings.Contains(raw, "&") {
 		return raw
 	}
 
-	var text strings.Builder
-	tokenizer := html.NewTokenizer(strings.NewReader(raw))
-	for {
-		tt := tokenizer.Next()
-		if tt == html.ErrorToken {
-			break
+	var b strings.Builder
+	b.Grow(len(raw))
+	for i := 0; i < len(raw); {
+		if raw[i] != '&' {
+			b.WriteByte(raw[i])
+			i++
+			continue
 		}
-		if tt == html.TextToken {
-			text.Write(tokenizer.Text())
+
+		semi := strings.IndexByte(raw[i:], ';')
+		if semi <= 1 || semi > maxTitleEntityLen {
+			b.WriteByte('&')
+			i++
+			continue
 		}
+
+		cand := raw[i : i+semi+1]
+		if strings.ContainsAny(cand, " \t\r\n<") {
+			b.WriteByte('&')
+			i++
+			continue
+		}
+
+		decoded := html.UnescapeString(cand)
+		if decoded == cand || decoded == html.UnescapeString(cand[:len(cand)-1])+";" {
+			b.WriteByte('&')
+			i++
+			continue
+		}
+
+		b.WriteString(decoded)
+		i += len(cand)
 	}
-	return strings.TrimSpace(text.String())
+	return strings.TrimSpace(b.String())
 }
 
 // mapItem converts gofeed.Item to ParsedItem following mapping rules:
@@ -254,7 +286,7 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 
 	return &ParsedItem{
 		GUID:    guid,
-		Title:   normalizeTitle(item.Title),
+		Title:   NormalizeTitle(item.Title),
 		Link:    link,
 		Content: content,
 		PubDate: pubDate,
