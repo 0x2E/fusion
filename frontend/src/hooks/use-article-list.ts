@@ -54,11 +54,14 @@ export function useArticleList(filters: ArticleListFilters) {
   );
 
   const visibleItems = useMemo(() => {
-    if (!isUnreadMode || !pinnedIds || pinnedIds.size === 0) {
-      return items;
-    }
+    if (!isUnreadMode) return items;
 
-    return items.filter((item) => item.unread || pinnedIds.has(item.id));
+    // The unread view always shows exactly `unread || pinned`: with no pins
+    // left (none written yet, or cleared on leaving the list) rows already
+    // marked read must drop out of the cache-driven display.
+    return items.filter(
+      (item) => item.unread || (pinnedIds?.has(item.id) ?? false),
+    );
   }, [items, isUnreadMode, pinnedIds]);
 
   const articles: Item[] = isStarredMode ? starred.items : visibleItems;
