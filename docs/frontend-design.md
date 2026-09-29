@@ -100,6 +100,21 @@ This keeps list context stable while opening/closing article detail.
   - cache invalidation after mutations
 - Zustand stores transient UI state only (dialogs, mobile sidebar, edit targets)
 
+### Read-state changes: grayed rows are an undo affordance, not stale UI
+
+Marking an item read in the **unread** view keeps the row in the list, grayed out, instead of removing it. This is deliberate: the row can be toggled back to unread in place, without hunting it down in the all view. Items marked read from any other view (all, starred, search) are committed immediately.
+
+The "still undoable" state is scoped to the exact list being viewed (feed + group + filter identity):
+
+- Read-state mutations update cached items in place and deliberately never invalidate item list queries — list membership stays frozen at fetch time.
+- The unread view renders `unread || pinned`. Pins are per-list-identity view state (`frontend/src/store/article-pins.ts`), written only when marking read inside an unread view.
+- Leaving the list — switching filter or feed/group scope, or unmounting the reading view — clears the pins and commits: read rows drop out of the unread view without a refetch. The all view still shows them, so undo remains possible after the fact.
+- Keyboard navigation is unaffected: pinned gray rows stay in the article id list, keeping `j`/`k` indices stable.
+
+Known edge: marking an item unread from the all view does not insert it into an already-cached unread list; cache staleness/refetch covers it eventually.
+
+Before filing "marked-read items still show up in the unread list" as a bug, check which half is reported: grayed rows while staying in the same unread list are this design working; rows surviving a filter/scope switch was the actual defect, fixed by the pin scoping (#262, #266).
+
 ## 8. Search and bookmarks
 
 ### Unified search
