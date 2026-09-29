@@ -14,6 +14,7 @@ import (
 	"github.com/0x2E/fusion/internal/model"
 	"github.com/0x2E/fusion/internal/pkg/httpc"
 	"github.com/mmcdole/gofeed"
+	"golang.org/x/net/html"
 )
 
 // ParsedItem represents a feed item after parsing and field mapping.
@@ -104,7 +105,7 @@ func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration,
 	}
 
 	result.Items = items
-	result.FeedTitle = strings.TrimSpace(parsedFeed.Title)
+	result.FeedTitle = normalizeTitle(parsedFeed.Title)
 	result.SiteURL = siteURL
 	return result, nil
 }
@@ -184,6 +185,31 @@ func normalizeSiteURL(raw string) string {
 	return parsed.String()
 }
 
+// normalizeTitle reduces a feed title to plain text. HTML-aware titles (Atom
+// type="html", RSS CDATA) can still carry markup or escaped entities after XML
+// decoding, which the UI then shows verbatim (#97). Stripping tags before
+// entity decoding keeps entity-encoded text visible while removing real markup;
+// the HTML tokenizer decodes entities exactly once, matching browser semantics.
+func normalizeTitle(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if !strings.ContainsAny(raw, "<&") {
+		return raw
+	}
+
+	var text strings.Builder
+	tokenizer := html.NewTokenizer(strings.NewReader(raw))
+	for {
+		tt := tokenizer.Next()
+		if tt == html.ErrorToken {
+			break
+		}
+		if tt == html.TextToken {
+			text.Write(tokenizer.Text())
+		}
+	}
+	return strings.TrimSpace(text.String())
+}
+
 // mapItem converts gofeed.Item to ParsedItem following mapping rules:
 // - guid: prefer GUID, fallback to Link
 // - content: prefer Content, fallback to Description
@@ -228,7 +254,7 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 
 	return &ParsedItem{
 		GUID:    guid,
-		Title:   item.Title,
+		Title:   normalizeTitle(item.Title),
 		Link:    link,
 		Content: content,
 		PubDate: pubDate,

@@ -165,3 +165,77 @@ func TestFallbackGUIDUsesSourcePubDateWhenProvided(t *testing.T) {
 		t.Fatalf("expected different GUID when source pub date differs, got %q", g1)
 	}
 }
+
+func TestNormalizeTitle(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{name: "plain title unchanged", raw: "Belief => Actions => Results", want: "Belief => Actions => Results"},
+		{name: "entity decoded once", raw: "Belief =&gt; Actions =&gt; Results", want: "Belief => Actions => Results"},
+		{name: "named and numeric entities decoded", raw: "A &amp; B &#8212; C &quot;D&quot;", want: `A & B — C "D"`},
+		{name: "tags stripped", raw: "Announcing <b>Go</b> 1.24 &mdash; <i>notes</i>", want: "Announcing Go 1.24 — notes"},
+		{name: "entity-encoded tags stay visible", raw: "Use &lt;b&gt; for bold", want: "Use <b> for bold"},
+		{name: "double-escaped entity decoded once", raw: "AT&amp;amp;T &amp;lt;tag&amp;gt;", want: "AT&amp;T &lt;tag&gt;"},
+		{name: "whitespace collapsed edges trimmed", raw: "  <b>  spaced  </b>  ", want: "spaced"},
+		{name: "empty", raw: "", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := normalizeTitle(tt.raw); got != tt.want {
+				t.Fatalf("normalizeTitle(%q) = %q, want %q", tt.raw, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFetchAndParseNormalizesHTMLTitles(t *testing.T) {
+	// Mirrors the feed shape from #97: Atom type="html" titles arrive from
+	// gofeed with escaped entities and markup still embedded.
+	feedXML := `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Example &amp; Blog</title>
+  <entry>
+    <title type="html">Belief =&gt; Actions =&gt; Results</title>
+    <id>urn:entry-1</id>
+    <updated>2026-01-01T00:00:00Z</updated>
+  </entry>
+  <entry>
+    <title type="html">A &lt;b&gt;bold&lt;/b&gt; title &amp;amp; more</title>
+    <id>urn:entry-2</id>
+    <updated>2026-01-02T00:00:00Z</updated>
+  </entry>
+</feed>`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/atom+xml")
+		_, _ = w.Write([]byte(feedXML))
+	}))
+	defer server.Close()
+
+	result, err := FetchAndParse(context.Background(), &model.Feed{Link: server.URL}, 5*time.Second, true)
+	if err != nil {
+		t.Fatalf("FetchAndParse() failed: %v", err)
+	}
+
+	if result.FeedTitle != "Example & Blog" {
+		t.Fatalf("feed title = %q, want %q", result.FeedTitle, "Example & Blog")
+	}
+
+	wantTitles := []string{
+		"Belief => Actions => Results",
+		// gofeed decodes type="html" entities into real tags; normalizeTitle
+		// then strips them, yielding the text content a browser would show.
+		"A bold title & more",
+	}
+	if len(result.Items) != len(wantTitles) {
+		t.Fatalf("got %d items, want %d", len(result.Items), len(wantTitles))
+	}
+	for i, want := range wantTitles {
+		if result.Items[i].Title != want {
+			t.Fatalf("item %d title = %q, want %q", i, result.Items[i].Title, want)
+		}
+	}
+}
