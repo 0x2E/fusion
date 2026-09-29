@@ -261,6 +261,11 @@ func normalizeDiscoveredFeeds(found []feedfinder.Feed) []discoveredFeed {
 		}
 
 		seen[link] = struct{}{}
+		// feedfinder mixes gofeed-parsed feed titles with page <title>/<link>
+		// text the HTML finder already decoded once; Feed carries no source
+		// marker, so page-derived names take one extra decode here. That is
+		// the same bounded residual as item titles and keeps both name sources
+		// on one form.
 		result = append(result, discoveredFeed{
 			Title: pull.NormalizeTitle(feed.Title),
 			Link:  link,

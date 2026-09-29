@@ -200,8 +200,12 @@ const maxTitleEntityLen = 64
 // unclosed "<article". References must end in ';' and never decode through
 // HTML5 legacy no-semicolon prefixes, keeping plain words after an ampersand
 // ("&parameters", "&section") literal, matching gofeed's own DecodeEntities.
+//
+// The scan is a single left-to-right pass: "&amp;amp;gt;" becomes
+// "&amp;gt;", never a second decode of the recombined result. Edge trimming
+// removes ASCII whitespace only, so meaningful &nbsp;/&ensp;/&emsp; survive.
 func NormalizeTitle(raw string) string {
-	raw = strings.TrimSpace(raw)
+	raw = strings.Trim(raw, " \t\r\n")
 	if !strings.Contains(raw, "&") {
 		return raw
 	}
@@ -222,10 +226,26 @@ func NormalizeTitle(raw string) string {
 			continue
 		}
 
+		// Anything but a single run of name characters up to the ';'
+		// (whitespace, '<', or a second '&') means this '&' is literal.
+		// Rescanning from the next byte keeps a trailing real reference
+		// decodable: "&amp&gt;" -> "&amp>".
 		cand := raw[i : i+semi+1]
-		if strings.ContainsAny(cand, " \t\r\n<") {
+		if strings.ContainsAny(cand[1:], " \t\r\n<&") {
 			b.WriteByte('&')
 			i++
+			continue
+		}
+
+		if cand[1] == '#' {
+			text, ok := decodeNumericRef(cand)
+			if !ok {
+				b.WriteByte('&')
+				i++
+				continue
+			}
+			b.WriteString(text)
+			i += len(cand)
 			continue
 		}
 
@@ -239,7 +259,32 @@ func NormalizeTitle(raw string) string {
 		b.WriteString(decoded)
 		i += len(cand)
 	}
-	return strings.TrimSpace(b.String())
+	return strings.Trim(b.String(), " \t\r\n")
+}
+
+// decodeNumericRef validates and decodes &#NNN; / &#xHH; forms itself:
+// stdlib UnescapeString turns digit-less forms like "&#x;" into U+FFFD
+// instead of leaving them literal, and silently wraps code points beyond
+// 0x10FFFF through its int32 accumulation. In-range values are delegated
+// back to UnescapeString so the HTML5 Windows-1252 mapping for 0x80-0x9F
+// stays consistent with gofeed's decoding layer. ok=false means the span is
+// not a well-formed numeric reference and must stay literal.
+func decodeNumericRef(cand string) (string, bool) {
+	numPart := cand[2 : len(cand)-1]
+	base := 10
+	if len(numPart) > 1 && (numPart[0] == 'x' || numPart[0] == 'X') {
+		base = 16
+		numPart = numPart[1:]
+	}
+
+	n, err := strconv.ParseUint(numPart, base, 64)
+	if err != nil || n == 0 || n > 0x10FFFF || (n >= 0xD800 && n <= 0xDFFF) {
+		if err != nil {
+			return "", false
+		}
+		return "\uFFFD", true
+	}
+	return html.UnescapeString(cand), true
 }
 
 // mapItem converts gofeed.Item to ParsedItem following mapping rules:

@@ -200,7 +200,35 @@ func TestNormalizeTitle(t *testing.T) {
 		{name: "single-layer markup untouched", raw: "Hello<br>World", want: "Hello<br>World"},
 		{name: "script-like text untouched", raw: "Hello <script>alert(1)</script>", want: "Hello <script>alert(1)</script>"},
 
-		{name: "whitespace trimmed", raw: "  trimmed  ", want: "trimmed"},
+		{name: "ascii whitespace trimmed", raw: "  trimmed  ", want: "trimmed"},
+		{name: "nbsp preserved at edges", raw: "&nbsp;Hello&nbsp;", want: "\u00a0Hello\u00a0"},
+		{name: "nbsp only", raw: "&nbsp;", want: "\u00a0"},
+		{name: "ensp emsp preserved", raw: "&ensp;x&emsp;", want: "\u2002x\u2003"},
+		{name: "newline in middle decodes", raw: "Hello&NewLine;World", want: "Hello\nWorld"},
+
+		// a second '&' inside the candidate span is not a single reference
+		{name: "legacy then real reference", raw: "&amp&gt;", want: "&amp>"},
+		{name: "legacy query then real reference", raw: "&copy=1&gt;", want: "&copy=1>"},
+		{name: "bare ampersand then reference", raw: "&&gt;", want: "&>"},
+
+		// numeric references: digit-less stay literal, out-of-range/surrogate
+		// and zero become U+FFFD instead of stdlib's wrap-around
+		{name: "hex empty literal", raw: "&#x;", want: "&#x;"},
+		{name: "hex empty upper literal", raw: "&#X;", want: "&#X;"},
+		{name: "digits empty literal", raw: "&#;", want: "&#;"},
+		{name: "overflow hex becomes replacement", raw: "&#x100000041;", want: "\uFFFD"},
+		{name: "null ref becomes replacement", raw: "&#0;", want: "\uFFFD"},
+		{name: "surrogate ref becomes replacement", raw: "&#xD800;", want: "\uFFFD"},
+		{name: "padded hex decodes", raw: "&#x00000041;", want: "A"},
+		{name: "windows1252 mapping kept", raw: "&#151;", want: "\u2014"},
+
+		// pins for behavior that is already correct
+		{name: "case variants decode", raw: "&GT; &Gt; &gt;", want: "> \u226b >"},
+		{name: "not vs notin", raw: "&not; &notin;", want: "\u00ac \u2209"},
+		{name: "notit literal", raw: "&notit;", want: "&notit;"},
+		{name: "section with semicolon literal", raw: "&section;", want: "&section;"},
+		{name: "longest named entity decodes", raw: "&CounterClockwiseContourIntegral;", want: "\u2233"},
+		{name: "one layer only on triple", raw: "&amp;amp;gt;", want: "&amp;gt;"},
 		{name: "empty", raw: "", want: ""},
 	}
 
@@ -210,6 +238,18 @@ func TestNormalizeTitle(t *testing.T) {
 				t.Fatalf("NormalizeTitle(%q) = %q, want %q", tt.raw, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestNormalizeTitleSecondApplicationPeelsAnotherLayer(t *testing.T) {
+	// The contract is exactly one application: recombination results decode
+	// again on a second pass. Pin this so nobody "fixes" it into a loop.
+	once := NormalizeTitle("&amp;gt;")
+	if once != "&gt;" {
+		t.Fatalf("first pass = %q, want %q", once, "&gt;")
+	}
+	if twice := NormalizeTitle(once); twice != ">" {
+		t.Fatalf("second pass = %q, want %q", twice, ">")
 	}
 }
 
