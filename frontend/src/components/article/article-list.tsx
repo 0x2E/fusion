@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,11 @@ import { useGroups } from "@/queries/groups";
 import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { useI18n } from "@/lib/i18n";
+import {
+  articleListKey,
+  useArticlePinsStore,
+  useReadStatePins,
+} from "@/store";
 import type { Item } from "@/lib/api";
 
 export function ArticleList() {
@@ -51,10 +56,39 @@ export function ArticleList() {
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
+  const { pinRead, unpinRead } = useReadStatePins({
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+    articleFilter,
+  });
+
+  const pinsKey = articleListKey(selectedFeedId, selectedGroupId, articleFilter);
+  const clearPins = useArticlePinsStore((s) => s.clearPins);
+
+  // Leaving this exact list (filter/feed/group change or unmount) commits the
+  // read markings: pinned rows stop being shown in the unread view. Only the
+  // list itself clears pins — the drawer stays mounted on other pages and must
+  // not commit on its own lifecycle.
+  useEffect(() => {
+    return () => {
+      clearPins(pinsKey);
+    };
+  }, [pinsKey, clearPins]);
+
   const articleIds = articles.map((a) => a.id);
   useArticleNavigation(articleIds, {
     enabled: selectedArticleId === null,
   });
+
+  // When every loaded row has been read away (hidden from the unread view),
+  // keep pulling deeper pages instead of dead-ending on an empty list while
+  // the server still has unread items.
+  useEffect(() => {
+    if (isLoading || isLoadingMore) return;
+    if (articles.length === 0 && hasMore) {
+      fetchNextPage();
+    }
+  }, [articles.length, hasMore, isLoading, isLoadingMore, fetchNextPage]);
 
   let title = t("article.list.all");
   if (selectedFeedId) {
@@ -75,14 +109,16 @@ export function ArticleList() {
       try {
         if (article.unread) {
           await markItemsRead.mutateAsync([article.id]);
+          pinRead([article.id]);
         } else {
           await markItemsUnread.mutateAsync([article.id]);
+          unpinRead([article.id]);
         }
       } catch (error) {
         console.error("Failed to toggle read status:", error);
       }
     },
-    [markItemsRead, markItemsUnread],
+    [markItemsRead, markItemsUnread, pinRead, unpinRead],
   );
 
   const handleToggleStar = useCallback(
@@ -113,6 +149,7 @@ export function ArticleList() {
 
     try {
       await markItemsRead.mutateAsync(unreadIds);
+      pinRead(unreadIds);
     } catch (error) {
       console.error("Failed to mark all as read:", error);
     }
@@ -155,10 +192,10 @@ export function ArticleList() {
           </Tabs>
         )}
 
-        {/* Article list */}
+            {/* Article list */}
         <ScrollArea className="min-h-0 flex-1">
           <div>
-            {isLoading && articles.length === 0 ? (
+            {isLoading || (articles.length === 0 && hasMore) ? (
               <div className="space-y-2 p-2">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div
