@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Bug, Download, Info, Keyboard, Palette } from "lucide-react";
@@ -21,10 +21,7 @@ import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { localeLabels, useI18n } from "@/lib/i18n";
 import { ensureLocaleMessages } from "@/lib/i18n/messages";
 import { APIError, settingsAPI, type UpdateSettingsRequest } from "@/lib/api";
-import {
-  markPreferencesAsUserOwned,
-  waitForSettingsSeed,
-} from "@/lib/settings-sync";
+import { waitForSettingsSeed } from "@/lib/settings-sync";
 import type { AppLocale } from "@/store/preferences";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +34,15 @@ function GithubIcon({ className }: { className?: string }) {
 }
 
 type SettingsTab = "appearance" | "about";
+
+// Module scope so the counters survive unmounting the appearance tab or the
+// dialog itself: a late-failing save from an old mount must not revert a
+// newer change made on a new one.
+const changeGenerations = { locale: 0, pageSize: 0, theme: 0 };
+
+// The locale apply waits for its message catalog; only the most recent pick
+// should proceed once the catalog resolves.
+let latestLocalePick: string | null = null;
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -86,25 +92,23 @@ function AppearanceContent() {
 
   // Applies the change locally right away and persists just that key. Each
   // field carries a generation counter so a stale in-flight save (awaited
-  // catalog load, seed, or slow PATCH) neither sends nor reverts after a
-  // newer change has superseded it. On a failed save the key is reverted so
-  // the UI does not drift from the server (a stale local value would be
-  // overwritten on the next page load anyway).
-  const changeGenerations = useRef({ locale: 0, pageSize: 0, theme: 0 });
-
+  // seed or slow PATCH) neither sends nor reverts after a newer change has
+  // superseded it. On a failed save the key is reverted so the UI does not
+  // drift from the server (a stale local value would be overwritten on the
+  // next page load anyway).
   const applySetting = async (
-    field: keyof typeof changeGenerations.current,
+    field: keyof typeof changeGenerations,
     patch: UpdateSettingsRequest,
     apply: () => void,
     revert: () => void,
   ) => {
-    const generation = ++changeGenerations.current[field];
+    const generation = ++changeGenerations[field];
     apply();
     try {
       // Let a first-load seed finish first so it cannot land on top of this
       // change; a superseded change skips the request entirely.
       await waitForSettingsSeed();
-      if (changeGenerations.current[field] !== generation) {
+      if (changeGenerations[field] !== generation) {
         return;
       }
       await settingsAPI.update(patch);
@@ -113,7 +117,7 @@ function AppearanceContent() {
       if (error instanceof APIError && error.status === 401) {
         return;
       }
-      if (changeGenerations.current[field] !== generation) {
+      if (changeGenerations[field] !== generation) {
         return;
       }
       revert();
@@ -136,14 +140,13 @@ function AppearanceContent() {
           value={locale}
           onValueChange={(v) => {
             if (!v) return;
-            markPreferencesAsUserOwned();
             const previous = locale;
-            const generation = ++changeGenerations.current.locale;
+            latestLocalePick = v;
             // Load the catalog first so the switch does not flash English; a
             // failed load applies (and saves) nothing.
             ensureLocaleMessages(v as AppLocale)
               .then(() => {
-                if (changeGenerations.current.locale !== generation) {
+                if (latestLocalePick !== v) {
                   return;
                 }
                 void applySetting(
@@ -186,7 +189,6 @@ function AppearanceContent() {
             if (!value) return;
             const parsed = Number.parseInt(value, 10);
             if (Number.isNaN(parsed)) return;
-            markPreferencesAsUserOwned();
             const previous = articlePageSize;
             void applySetting(
               "pageSize",

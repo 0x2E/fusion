@@ -39,12 +39,6 @@ function markPreferencesOrigin(origin: "user" | "sync") {
   localStorage.setItem(PREFERENCES_ORIGIN_KEY, origin);
 }
 
-// Called when the user explicitly changes locale or page size, making the
-// current blob values eligible for seeding.
-export function markPreferencesAsUserOwned() {
-  markPreferencesOrigin("user");
-}
-
 // A first-load seed may still be in flight when the user changes a setting;
 // user writes wait for it so the seed cannot land on top of them.
 let seedPromise: Promise<unknown> = Promise.resolve();
@@ -105,67 +99,72 @@ export async function pullRemoteSettings(): Promise<void> {
     return;
   }
 
-  if (readPreferencesOrigin() === null) {
-    markPreferencesOrigin(
-      localStorage.getItem("fusion-preferences") !== null ? "user" : "sync",
-    );
-  }
+  try {
+    if (readPreferencesOrigin() === null) {
+      markPreferencesOrigin(
+        localStorage.getItem("fusion-preferences") !== null ? "user" : "sync",
+      );
+    }
 
-  seedUnsetSettings(settings);
+    seedUnsetSettings(settings);
 
-  const preferences = usePreferencesStore.getState();
-  if (
-    settings.article_page_size !== null &&
-    isArticlePageSize(settings.article_page_size) &&
-    settings.article_page_size !== preferences.articlePageSize
-  ) {
-    usePreferencesStore
-      .getState()
-      .setArticlePageSize(settings.article_page_size);
-  }
+    const preferences = usePreferencesStore.getState();
+    if (
+      settings.article_page_size !== null &&
+      isArticlePageSize(settings.article_page_size) &&
+      settings.article_page_size !== preferences.articlePageSize
+    ) {
+      usePreferencesStore
+        .getState()
+        .setArticlePageSize(settings.article_page_size);
+    }
 
-  const storedTheme = localStorage.getItem("theme");
-  if (
-    settings.theme !== null &&
-    (THEMES as readonly string[]).includes(settings.theme) &&
-    settings.theme !== storedTheme
-  ) {
-    dispatchRemoteTheme(settings.theme);
-  }
+    const storedTheme = localStorage.getItem("theme");
+    if (
+      settings.theme !== null &&
+      (THEMES as readonly string[]).includes(settings.theme) &&
+      settings.theme !== storedTheme
+    ) {
+      dispatchRemoteTheme(settings.theme);
+    }
 
-  if (
-    settings.locale !== null &&
-    isSupportedLocale(settings.locale) &&
-    settings.locale !== preferences.locale
-  ) {
-    try {
+    if (
+      settings.locale !== null &&
+      isSupportedLocale(settings.locale) &&
+      settings.locale !== preferences.locale
+    ) {
       // Load the catalog first so the switch does not flash English. A failed
       // catalog load keeps the local locale; the sync retries on the next
       // page load and must not fail the navigation.
       await ensureLocaleMessages(settings.locale);
       usePreferencesStore.getState().setLocale(settings.locale);
-    } catch {
-      // keep local locale
     }
+  } catch {
+    // Storage failures (quota exceeded, read-only storage) and anything else
+    // after a successful GET must keep local values and not fail the route;
+    // the sync retries on the next page load.
   }
 }
 
-// A server null means the user never saved a preference. A user-owned local
-// blob predates (or was chosen after) the backend sync, so upload its values
-// once; values this browser only defaulted to stay null server-side.
+// A server null means the user never saved a preference. Only a blob that
+// already existed when sync first ran counts as user choices: one written by
+// applying server values holds defaults this browser never chose. The theme
+// is separate — next-themes only writes its key through an explicit pick, so
+// the key's presence alone qualifies the value (including a pick whose save
+// never completed).
 function seedUnsetSettings(settings: Settings): void {
-  if (readPreferencesOrigin() !== "user") {
-    return;
+  const seed: UpdateSettingsRequest = {};
+
+  if (readPreferencesOrigin() === "user") {
+    const preferences = usePreferencesStore.getState();
+    if (settings.locale === null) {
+      seed.locale = preferences.locale;
+    }
+    if (settings.article_page_size === null) {
+      seed.article_page_size = preferences.articlePageSize;
+    }
   }
 
-  const seed: UpdateSettingsRequest = {};
-  const preferences = usePreferencesStore.getState();
-  if (settings.locale === null) {
-    seed.locale = preferences.locale;
-  }
-  if (settings.article_page_size === null) {
-    seed.article_page_size = preferences.articlePageSize;
-  }
   const storedTheme = localStorage.getItem("theme");
   if (
     settings.theme === null &&
