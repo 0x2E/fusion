@@ -40,9 +40,9 @@ type SettingsTab = "appearance" | "about";
 // newer change made on a new one.
 const changeGenerations = { locale: 0, pageSize: 0, theme: 0 };
 
-// The locale apply waits for its message catalog; only the most recent pick
-// should proceed once the catalog resolves.
-let latestLocalePick: string | null = null;
+function beginChange(field: keyof typeof changeGenerations): number {
+  return ++changeGenerations[field];
+}
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -90,19 +90,19 @@ function AppearanceContent() {
     { value: "system", label: t("settings.theme.system") },
   ];
 
-  // Applies the change locally right away and persists just that key. Each
-  // field carries a generation counter so a stale in-flight save (awaited
-  // seed or slow PATCH) neither sends nor reverts after a newer change has
-  // superseded it. On a failed save the key is reverted so the UI does not
-  // drift from the server (a stale local value would be overwritten on the
-  // next page load anyway).
+  // Applies the change locally right away and persists just that key. The
+  // generation (taken synchronously when the user makes the change) ensures
+  // a stale in-flight save (awaited catalog load, seed, or slow PATCH)
+  // neither sends nor reverts after a newer change has superseded it. On a
+  // failed save the key is reverted so the UI does not drift from the server
+  // (a stale local value would be overwritten on the next page load anyway).
   const applySetting = async (
     field: keyof typeof changeGenerations,
+    generation: number,
     patch: UpdateSettingsRequest,
     apply: () => void,
     revert: () => void,
   ) => {
-    const generation = ++changeGenerations[field];
     apply();
     try {
       // Let a first-load seed finish first so it cannot land on top of this
@@ -141,16 +141,19 @@ function AppearanceContent() {
           onValueChange={(v) => {
             if (!v) return;
             const previous = locale;
-            latestLocalePick = v;
+            // Take the generation synchronously so it also covers the
+            // catalog wait, not just the save.
+            const generation = beginChange("locale");
             // Load the catalog first so the switch does not flash English; a
             // failed load applies (and saves) nothing.
             ensureLocaleMessages(v as AppLocale)
               .then(() => {
-                if (latestLocalePick !== v) {
+                if (changeGenerations.locale !== generation) {
                   return;
                 }
                 void applySetting(
                   "locale",
+                  generation,
                   { locale: v },
                   () => setLocale(v),
                   () => setLocale(previous),
@@ -192,6 +195,7 @@ function AppearanceContent() {
             const previous = articlePageSize;
             void applySetting(
               "pageSize",
+              beginChange("pageSize"),
               { article_page_size: parsed },
               () => setArticlePageSize(parsed),
               () => setArticlePageSize(previous),
@@ -224,12 +228,17 @@ function AppearanceContent() {
           value={theme}
           onValueChange={(v) => {
             if (!v) return;
-            const previous = theme;
             void applySetting(
               "theme",
+              beginChange("theme"),
               { theme: v },
               () => setTheme(v),
-              () => setTheme(previous ?? "system"),
+              // A failed save deliberately keeps the pick: next-themes has
+              // already persisted it, and reverting would write the implicit
+              // default ("system") into storage, which the sync would later
+              // upload as if the user had chosen it. Keeping the pick lets
+              // the next load's seed retry saving exactly what was picked.
+              () => {},
             );
           }}
         >

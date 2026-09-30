@@ -89,6 +89,20 @@ export async function pullRemoteSettings(): Promise<void> {
   }
   settingsPulled = true;
 
+  // Classify before the first await: a failed GET must not defer this to a
+  // later load, after user edits have created the blob and turned this
+  // browser's defaults into "user" values. Nothing else can write the blob
+  // yet — beforeLoad has not rendered any UI.
+  try {
+    if (readPreferencesOrigin() === null) {
+      markPreferencesOrigin(
+        localStorage.getItem("fusion-preferences") !== null ? "user" : "sync",
+      );
+    }
+  } catch {
+    // Storage failure: classification retries on the next page load.
+  }
+
   let settings: Settings | undefined;
   try {
     settings = (await settingsAPI.get()).data;
@@ -100,12 +114,6 @@ export async function pullRemoteSettings(): Promise<void> {
   }
 
   try {
-    if (readPreferencesOrigin() === null) {
-      markPreferencesOrigin(
-        localStorage.getItem("fusion-preferences") !== null ? "user" : "sync",
-      );
-    }
-
     seedUnsetSettings(settings);
 
     const preferences = usePreferencesStore.getState();
@@ -149,9 +157,9 @@ export async function pullRemoteSettings(): Promise<void> {
 // A server null means the user never saved a preference. Only a blob that
 // already existed when sync first ran counts as user choices: one written by
 // applying server values holds defaults this browser never chose. The theme
-// is separate — next-themes only writes its key through an explicit pick, so
-// the key's presence alone qualifies the value (including a pick whose save
-// never completed).
+// key only ever holds a value next-themes wrote for an explicit pick (a
+// failed save deliberately keeps the pick instead of writing the implicit
+// default back), so its presence alone qualifies the value.
 function seedUnsetSettings(settings: Settings): void {
   const seed: UpdateSettingsRequest = {};
 
