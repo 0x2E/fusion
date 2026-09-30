@@ -98,3 +98,11 @@ export const usePreferencesStore = create<PreferencesState>()(
 export function getPreferredLocale(): AppLocale {
   return usePreferencesStore.getState().locale;
 }
+
+export function isSupportedLocale(locale: string): locale is AppLocale {
+  return localeSet.has(locale as AppLocale);
+}
+
+export function isArticlePageSize(size: number): size is ArticlePageSize {
+  return articlePageSizeSet.has(size);
+}

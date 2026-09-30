@@ -58,6 +58,7 @@ export const enMessages = {
   "settings.language.description": "Select your preferred language",
   "settings.language.label": "Language",
   "settings.shortcuts.description": "View all available keyboard shortcuts",
+  "settings.syncFailed": "Failed to save the setting. The previous value was restored.",
   "settings.shortcuts.label": "Keyboard Shortcuts",
   "settings.shortcuts.open": "View",
   "settings.tab.about": "About",

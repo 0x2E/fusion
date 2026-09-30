@@ -68,6 +68,15 @@ type Item struct {
 	CreatedAt int64  `json:"created_at"`
 }
 
+// Settings holds the user's synced preferences. A nil field means the user
+// has never explicitly chosen a value (clients fall back to their own default).
+type Settings struct {
+	Locale          *string `json:"locale"`
+	ArticlePageSize *int64  `json:"article_page_size"`
+	Theme           *string `json:"theme"`
+	UpdatedAt       int64   `json:"updated_at"`
+}
+
 // Bookmark represents a saved item snapshot.
 type Bookmark struct {
 	ID       int64  `json:"id"`

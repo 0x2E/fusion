@@ -1,0 +1,162 @@
+package handler
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+)
+
+type settingsEnvelope struct {
+	Data struct {
+		Locale          *string `json:"locale"`
+		ArticlePageSize *int64  `json:"article_page_size"`
+		Theme           *string `json:"theme"`
+		UpdatedAt       int64   `json:"updated_at"`
+	} `json:"data"`
+}
+
+func decodeSettings(t *testing.T, w *httptest.ResponseRecorder) settingsEnvelope {
+	t.Helper()
+
+	var envelope settingsEnvelope
+	if err := json.Unmarshal(w.Body.Bytes(), &envelope); err != nil {
+		t.Fatalf("decode settings response failed: %v (body: %s)", err, w.Body.String())
+	}
+	return envelope
+}
+
+// newSettingsTestRouter returns the full router plus a valid session cookie.
+func newSettingsTestRouter(t *testing.T) (*gin.Engine, *http.Cookie) {
+	t.Helper()
+
+	h, _ := newFeverTestHandler(t) // password: "secret"
+	r := h.SetupRouter()
+
+	w := performRequest(r, http.MethodPost, "/api/sessions", mustJSONBody(t, map[string]string{"password": "secret"}), nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("login failed: %d %s", w.Code, w.Body.String())
+	}
+
+	cookies := w.Result().Cookies()
+	if len(cookies) == 0 {
+		t.Fatal("expected a session cookie after login")
+	}
+	return r, cookies[0]
+}
+
+func TestGetSettingsEmpty(t *testing.T) {
+	r, cookie := newSettingsTestRouter(t)
+
+	w := performRequest(r, http.MethodGet, "/api/settings", nil, nil, cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	settings := decodeSettings(t, w).Data
+	if settings.Locale != nil || settings.ArticlePageSize != nil || settings.Theme != nil {
+		t.Errorf("expected all-null settings, got %+v", settings)
+	}
+}
+
+func TestSettingsRequireAuth(t *testing.T) {
+	r, _ := newSettingsTestRouter(t)
+
+	for _, method := range []string{http.MethodGet, http.MethodPatch} {
+		w := performRequest(r, method, "/api/settings", nil, nil)
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("%s without cookie: expected 401, got %d", method, w.Code)
+		}
+	}
+}
+
+func TestUpdateSettingsSingleField(t *testing.T) {
+	r, cookie := newSettingsTestRouter(t)
+
+	w := performRequest(r, http.MethodPatch, "/api/settings", strings.NewReader(`{"locale":"de"}`), nil, cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("PATCH locale: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	settings := decodeSettings(t, w).Data
+	if settings.Locale == nil || *settings.Locale != "de" {
+		t.Errorf("PATCH locale: expected locale=de in response, got %+v", settings)
+	}
+
+	w = performRequest(r, http.MethodPatch, "/api/settings", strings.NewReader(`{"theme":"dark"}`), nil, cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("PATCH theme: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	settings = decodeSettings(t, w).Data
+	if settings.Locale == nil || *settings.Locale != "de" {
+		t.Errorf("PATCH theme: expected locale to survive, got %+v", settings)
+	}
+	if settings.Theme == nil || *settings.Theme != "dark" {
+		t.Errorf("PATCH theme: expected theme=dark, got %+v", settings)
+	}
+
+	w = performRequest(r, http.MethodGet, "/api/settings", nil, nil, cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET after updates: expected 200, got %d", w.Code)
+	}
+	settings = decodeSettings(t, w).Data
+	if settings.UpdatedAt == 0 {
+		t.Error("expected updated_at to be set once a preference is stored")
+	}
+}
+
+func TestUpdateSettingsValidation(t *testing.T) {
+	r, cookie := newSettingsTestRouter(t)
+
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{"invalid locale", `{"locale":"xx"}`, "invalid locale"},
+		{"empty locale", `{"locale":""}`, "invalid locale"},
+		{"locale wrong type", `{"locale":5}`, "invalid request"},
+		{"invalid page size", `{"article_page_size":15}`, "invalid article_page_size"},
+		{"page size as string", `{"article_page_size":"20"}`, "invalid request"},
+		{"zero page size", `{"article_page_size":0}`, "invalid article_page_size"},
+		{"invalid theme", `{"theme":"blue"}`, "invalid theme"},
+		{"empty theme", `{"theme":""}`, "invalid theme"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := performRequest(r, http.MethodPatch, "/api/settings", strings.NewReader(tt.body), nil, cookie)
+			if w.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+			}
+			var errBody struct {
+				Error string `json:"error"`
+			}
+			if err := json.Unmarshal(w.Body.Bytes(), &errBody); err != nil {
+				t.Fatalf("decode error body failed: %v", err)
+			}
+			if errBody.Error != tt.want {
+				t.Errorf("expected error %q, got %q", tt.want, errBody.Error)
+			}
+		})
+	}
+}
+
+func TestUpdateSettingsEmptyBody(t *testing.T) {
+	r, cookie := newSettingsTestRouter(t)
+
+	w := performRequest(r, http.MethodPatch, "/api/settings", strings.NewReader(`{}`), nil, cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	settings := decodeSettings(t, w).Data
+	if settings.Locale != nil || settings.ArticlePageSize != nil || settings.Theme != nil {
+		t.Errorf("expected empty PATCH to be a no-op, got %+v", settings)
+	}
+	if settings.UpdatedAt != 0 {
+		t.Errorf("expected empty PATCH not to create the row, got updated_at=%d", settings.UpdatedAt)
+	}
+}

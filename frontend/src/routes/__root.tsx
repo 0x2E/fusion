@@ -1,5 +1,10 @@
 import { createRootRoute, Outlet, redirect } from "@tanstack/react-router";
 import { APIError, sessionAPI } from "@/lib/api";
+import {
+  pullRemoteSettings,
+  resetSettingsPull,
+  useRemoteThemeSync,
+} from "@/lib/settings-sync";
 
 // A positive probe is cached for the lifetime of the document so SPA
 // navigations don't re-hit the network; a fresh page load re-checks. A session
@@ -11,6 +16,7 @@ let sessionVerified = false;
 // ever changed back to an in-app (SPA) one.
 export function resetSessionGuard() {
   sessionVerified = false;
+  resetSettingsPull();
 }
 
 async function hasValidSession(): Promise<boolean> {
@@ -40,10 +46,16 @@ export const Route = createRootRoute({
     if (!(await hasValidSession())) {
       throw redirect({ to: "/login" });
     }
+
+    // Applies synced preferences before the first authenticated screen
+    // renders; page size participates in the article query keys, so applying
+    // it later would restart queries that already started loading.
+    await pullRemoteSettings();
   },
   component: RootLayout,
 });
 
 function RootLayout() {
+  useRemoteThemeSync();
   return <Outlet />;
 }

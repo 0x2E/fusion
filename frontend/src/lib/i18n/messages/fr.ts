@@ -60,6 +60,7 @@ export const frMessages: PartialMessages = {
   "settings.language.description": "Sélectionnez la langue d'affichage",
   "settings.language.label": "Langue",
   "settings.shortcuts.description": "Voir tous les raccourcis clavier disponibles",
+  "settings.syncFailed": "Échec de l'enregistrement du paramètre. La valeur précédente a été restaurée.",
   "settings.shortcuts.label": "Raccourcis clavier",
   "settings.shortcuts.open": "Voir",
   "settings.tab.about": "À propos",

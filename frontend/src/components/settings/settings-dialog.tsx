@@ -19,6 +19,9 @@ import {
 } from "@/store";
 import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { localeLabels, useI18n } from "@/lib/i18n";
+import { ensureLocaleMessages } from "@/lib/i18n/messages";
+import { APIError, settingsAPI, type UpdateSettingsRequest } from "@/lib/api";
+import type { AppLocale } from "@/store/preferences";
 import { cn } from "@/lib/utils";
 
 function GithubIcon({ className }: { className?: string }) {
@@ -77,6 +80,27 @@ function AppearanceContent() {
     { value: "system", label: t("settings.theme.system") },
   ];
 
+  // Applies the change locally right away and persists just that key. On a
+  // failed save the key is reverted so the UI does not drift from the server
+  // (a stale local value would be overwritten on the next page load anyway).
+  const applySetting = async (
+    patch: UpdateSettingsRequest,
+    apply: () => void,
+    revert: () => void,
+  ) => {
+    apply();
+    try {
+      await settingsAPI.update(patch);
+    } catch (error) {
+      // The global 401 interceptor is already redirecting; no toast needed.
+      if (error instanceof APIError && error.status === 401) {
+        return;
+      }
+      revert();
+      toast.error(t("settings.syncFailed"));
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Language */}
@@ -91,7 +115,16 @@ function AppearanceContent() {
           items={localeItems}
           value={locale}
           onValueChange={(v) => {
-            if (v) setLocale(v);
+            if (!v) return;
+            const previous = locale;
+            // Load the catalog first so the switch does not flash English.
+            void ensureLocaleMessages(v as AppLocale).then(() => {
+              void applySetting(
+                { locale: v },
+                () => setLocale(v),
+                () => setLocale(previous),
+              );
+            });
           }}
         >
           <SelectTrigger className="w-auto gap-2 border-border">
@@ -123,9 +156,13 @@ function AppearanceContent() {
           onValueChange={(value) => {
             if (!value) return;
             const parsed = Number.parseInt(value, 10);
-            if (!Number.isNaN(parsed)) {
-              setArticlePageSize(parsed);
-            }
+            if (Number.isNaN(parsed)) return;
+            const previous = articlePageSize;
+            void applySetting(
+              { article_page_size: parsed },
+              () => setArticlePageSize(parsed),
+              () => setArticlePageSize(previous),
+            );
           }}
         >
           <SelectTrigger className="w-auto gap-2 border-border">
@@ -153,7 +190,13 @@ function AppearanceContent() {
           items={themeItems}
           value={theme}
           onValueChange={(v) => {
-            if (v) setTheme(v);
+            if (!v) return;
+            const previous = theme;
+            void applySetting(
+              { theme: v },
+              () => setTheme(v),
+              () => setTheme(previous ?? "system"),
+            );
           }}
         >
           <SelectTrigger className="w-auto gap-2 border-border">

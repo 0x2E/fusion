@@ -14,7 +14,7 @@
 | Build               | Vite                     |
 | Router              | TanStack Router          |
 | Data fetching/cache | TanStack Query           |
-| State               | Zustand (UI-only state)  |
+| State               | Zustand (UI state + preference cache) |
 | UI system           | shadcn/ui (Base UI) + Tailwind CSS |
 
 ## 3. Route map
@@ -98,7 +98,13 @@ This keeps list context stable while opening/closing article detail.
   - cursor-based pagination for items and bookmarks (opaque `next_cursor` passed as the `before` query param; `next_cursor` is null when no more pages exist)
   - optimistic read/unread updates
   - cache invalidation after mutations
-- Zustand stores transient UI state only (dialogs, mobile sidebar, edit targets)
+- Zustand stores transient UI state (dialogs, mobile sidebar, edit targets).
+  The preferences store is the exception: it is a localStorage-backed local
+  cache of the user's synced settings (`lib/settings-sync.ts` pulls the
+  server values once per page load before the first authenticated screen
+  renders, server non-null values win, and each settings-dialog change
+  PATCHes only the changed key). Theme lives in next-themes' own
+  localStorage key and is mirrored through the same sync.
 
 ### Read-state changes: grayed rows are an undo affordance, not stale UI
 

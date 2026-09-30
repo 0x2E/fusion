@@ -61,6 +61,23 @@ export interface Bookmark {
   created_at: number;
 }
 
+// User preferences synced via the backend. A null field means the user has
+// never explicitly chosen a value; clients fall back to their own defaults.
+export interface Settings {
+  locale: string | null;
+  article_page_size: number | null;
+  theme: string | null;
+  updated_at: number;
+}
+
+// Only the fields being changed are sent; a missing field leaves the stored
+// value unchanged (indistinguishable from an explicit null on the wire).
+export interface UpdateSettingsRequest {
+  locale?: string;
+  article_page_size?: number;
+  theme?: string;
+}
+
 // API response wrappers
 export interface APIResponse<T> {
   data?: T;

@@ -11,7 +11,7 @@ func TestMigrate(t *testing.T) {
 	defer closeStore(t, store)
 
 	// Verify all expected tables exist
-	tables := []string{"groups", "feeds", "feed_fetch_state", "items", "bookmarks", "schema_migrations", "items_fts"}
+	tables := []string{"groups", "feeds", "feed_fetch_state", "items", "bookmarks", "settings", "schema_migrations", "items_fts"}
 	for _, table := range tables {
 		var count int
 		query := "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=:table"
