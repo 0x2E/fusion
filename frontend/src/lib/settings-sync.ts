@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
 import { settingsAPI, type Settings, type UpdateSettingsRequest } from "@/lib/api";
 import { ensureLocaleMessages } from "@/lib/i18n/messages";
@@ -23,36 +23,70 @@ export function resetSettingsPull() {
   settingsPulled = false;
 }
 
+// The persisted preferences blob is written by both user choices and this
+// sync (any store write persists both keys). The marker records which side
+// owns it: only a user-owned blob may seed the server, so values that merely
+// defaulted on this browser are never promoted to explicit choices on a
+// later load. Evaluated once, when the pull first runs.
+const PREFERENCES_ORIGIN_KEY = "fusion-preferences-origin";
+
+function readPreferencesOrigin(): "user" | "sync" | null {
+  const value = localStorage.getItem(PREFERENCES_ORIGIN_KEY);
+  return value === "user" || value === "sync" ? value : null;
+}
+
+function markPreferencesOrigin(origin: "user" | "sync") {
+  localStorage.setItem(PREFERENCES_ORIGIN_KEY, origin);
+}
+
+// Called when the user explicitly changes locale or page size, making the
+// current blob values eligible for seeding.
+export function markPreferencesAsUserOwned() {
+  markPreferencesOrigin("user");
+}
+
+// A first-load seed may still be in flight when the user changes a setting;
+// user writes wait for it so the seed cannot land on top of them.
+let seedPromise: Promise<unknown> = Promise.resolve();
+
+export function waitForSettingsSeed(): Promise<unknown> {
+  return seedPromise;
+}
+
 // beforeLoad runs outside the ThemeProvider, so the theme application waits
-// for a mounted listener under it. RootLayout is mounted for the whole
-// document (including /login), and the pull can complete either before or
-// after its first mount, so both paths must work.
+// for a mounted listener under it. The pending value is one-shot: next-themes
+// recreates its setTheme callback on every theme change, so re-running an
+// effect that re-applies a stale pending value would fight the user's own
+// theme picks and cross-tab storage sync.
 let pendingRemoteTheme: string | null = null;
 const themeListeners = new Set<(theme: string) => void>();
 
-function queueRemoteTheme(theme: string) {
-  pendingRemoteTheme = theme;
-  for (const listener of themeListeners) {
-    listener(theme);
+function dispatchRemoteTheme(theme: string) {
+  if (themeListeners.size > 0) {
+    for (const listener of themeListeners) {
+      listener(theme);
+    }
+    return;
   }
+  pendingRemoteTheme = theme;
 }
 
-// Applies a remotely-pulled theme once a listener is (or becomes) available.
-// Values are restricted to next-themes' preference names; resolvedTheme is
-// never used, so "system" is not frozen to the OS value at sync time.
 export function useRemoteThemeSync() {
-  const { setTheme } = useTheme();
+  const setThemeRef = useRef(useTheme().setTheme);
+  setThemeRef.current = useTheme().setTheme;
 
   useEffect(() => {
-    if (pendingRemoteTheme) {
-      setTheme(pendingRemoteTheme);
+    if (pendingRemoteTheme !== null) {
+      const theme = pendingRemoteTheme;
+      pendingRemoteTheme = null;
+      setThemeRef.current(theme);
     }
-    const listener = (theme: string) => setTheme(theme);
+    const listener = (theme: string) => setThemeRef.current(theme);
     themeListeners.add(listener);
     return () => {
       themeListeners.delete(listener);
     };
-  }, [setTheme]);
+  }, []);
 }
 
 export async function pullRemoteSettings(): Promise<void> {
@@ -71,18 +105,15 @@ export async function pullRemoteSettings(): Promise<void> {
     return;
   }
 
+  if (readPreferencesOrigin() === null) {
+    markPreferencesOrigin(
+      localStorage.getItem("fusion-preferences") !== null ? "user" : "sync",
+    );
+  }
+
   seedUnsetSettings(settings);
 
   const preferences = usePreferencesStore.getState();
-  if (
-    settings.locale !== null &&
-    isSupportedLocale(settings.locale) &&
-    settings.locale !== preferences.locale
-  ) {
-    // Load the catalog first so the switch does not flash English.
-    await ensureLocaleMessages(settings.locale);
-    usePreferencesStore.getState().setLocale(settings.locale);
-  }
   if (
     settings.article_page_size !== null &&
     isArticlePageSize(settings.article_page_size) &&
@@ -99,26 +130,48 @@ export async function pullRemoteSettings(): Promise<void> {
     (THEMES as readonly string[]).includes(settings.theme) &&
     settings.theme !== storedTheme
   ) {
-    queueRemoteTheme(settings.theme);
+    dispatchRemoteTheme(settings.theme);
+  }
+
+  if (
+    settings.locale !== null &&
+    isSupportedLocale(settings.locale) &&
+    settings.locale !== preferences.locale
+  ) {
+    try {
+      // Load the catalog first so the switch does not flash English. A failed
+      // catalog load keeps the local locale; the sync retries on the next
+      // page load and must not fail the navigation.
+      await ensureLocaleMessages(settings.locale);
+      usePreferencesStore.getState().setLocale(settings.locale);
+    } catch {
+      // keep local locale
+    }
   }
 }
 
-// A server null means the user never saved a preference. Existing local
-// choices predate the backend sync, so upload them once; values this browser
-// only defaulted to (no stored key) stay null server-side.
+// A server null means the user never saved a preference. A user-owned local
+// blob predates (or was chosen after) the backend sync, so upload its values
+// once; values this browser only defaulted to stay null server-side.
 function seedUnsetSettings(settings: Settings): void {
-  const seed: UpdateSettingsRequest = {};
+  if (readPreferencesOrigin() !== "user") {
+    return;
+  }
 
+  const seed: UpdateSettingsRequest = {};
   const preferences = usePreferencesStore.getState();
-  const hasStoredPreferences = localStorage.getItem("fusion-preferences") !== null;
-  if (settings.locale === null && hasStoredPreferences) {
+  if (settings.locale === null) {
     seed.locale = preferences.locale;
   }
-  if (settings.article_page_size === null && hasStoredPreferences) {
+  if (settings.article_page_size === null) {
     seed.article_page_size = preferences.articlePageSize;
   }
   const storedTheme = localStorage.getItem("theme");
-  if (settings.theme === null && storedTheme !== null) {
+  if (
+    settings.theme === null &&
+    storedTheme !== null &&
+    (THEMES as readonly string[]).includes(storedTheme)
+  ) {
     seed.theme = storedTheme;
   }
 
@@ -126,5 +179,5 @@ function seedUnsetSettings(settings: Settings): void {
     return;
   }
   // Best effort: a failed seed simply retries on the next page load.
-  settingsAPI.update(seed).catch(() => {});
+  seedPromise = settingsAPI.update(seed).catch(() => undefined);
 }

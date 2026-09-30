@@ -1266,17 +1266,17 @@ components:
       properties:
         locale:
           type: string
-          enum: [en, zh, de, fr, es, ru, pt, sv]
+          enum: [en, zh, de, fr, es, ru, pt, sv, null]
           nullable: true
           description: UI language; null means never chosen.
         article_page_size:
           type: integer
-          enum: [10, 20, 30, 50, 100]
+          enum: [10, 20, 30, 50, 100, null]
           nullable: true
           description: Articles fetched per page; null means never chosen.
         theme:
           type: string
-          enum: [light, dark, system]
+          enum: [light, dark, system, null]
           nullable: true
           description: Color theme; null means never chosen.
         updated_at:
@@ -1300,12 +1300,15 @@ components:
         locale:
           type: string
           enum: [en, zh, de, fr, es, ru, pt, sv]
+          nullable: true
         article_page_size:
           type: integer
           enum: [10, 20, 30, 50, 100]
+          nullable: true
         theme:
           type: string
           enum: [light, dark, system]
+          nullable: true
 
     OIDCEnabledEnvelope:
       type: object

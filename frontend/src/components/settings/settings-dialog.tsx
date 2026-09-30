@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Bug, Download, Info, Keyboard, Palette } from "lucide-react";
@@ -21,6 +21,10 @@ import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { localeLabels, useI18n } from "@/lib/i18n";
 import { ensureLocaleMessages } from "@/lib/i18n/messages";
 import { APIError, settingsAPI, type UpdateSettingsRequest } from "@/lib/api";
+import {
+  markPreferencesAsUserOwned,
+  waitForSettingsSeed,
+} from "@/lib/settings-sync";
 import type { AppLocale } from "@/store/preferences";
 import { cn } from "@/lib/utils";
 
@@ -80,20 +84,36 @@ function AppearanceContent() {
     { value: "system", label: t("settings.theme.system") },
   ];
 
-  // Applies the change locally right away and persists just that key. On a
-  // failed save the key is reverted so the UI does not drift from the server
-  // (a stale local value would be overwritten on the next page load anyway).
+  // Applies the change locally right away and persists just that key. Each
+  // field carries a generation counter so a stale in-flight save (awaited
+  // catalog load, seed, or slow PATCH) neither sends nor reverts after a
+  // newer change has superseded it. On a failed save the key is reverted so
+  // the UI does not drift from the server (a stale local value would be
+  // overwritten on the next page load anyway).
+  const changeGenerations = useRef({ locale: 0, pageSize: 0, theme: 0 });
+
   const applySetting = async (
+    field: keyof typeof changeGenerations.current,
     patch: UpdateSettingsRequest,
     apply: () => void,
     revert: () => void,
   ) => {
+    const generation = ++changeGenerations.current[field];
     apply();
     try {
+      // Let a first-load seed finish first so it cannot land on top of this
+      // change; a superseded change skips the request entirely.
+      await waitForSettingsSeed();
+      if (changeGenerations.current[field] !== generation) {
+        return;
+      }
       await settingsAPI.update(patch);
     } catch (error) {
       // The global 401 interceptor is already redirecting; no toast needed.
       if (error instanceof APIError && error.status === 401) {
+        return;
+      }
+      if (changeGenerations.current[field] !== generation) {
         return;
       }
       revert();
@@ -116,15 +136,24 @@ function AppearanceContent() {
           value={locale}
           onValueChange={(v) => {
             if (!v) return;
+            markPreferencesAsUserOwned();
             const previous = locale;
-            // Load the catalog first so the switch does not flash English.
-            void ensureLocaleMessages(v as AppLocale).then(() => {
-              void applySetting(
-                { locale: v },
-                () => setLocale(v),
-                () => setLocale(previous),
-              );
-            });
+            const generation = ++changeGenerations.current.locale;
+            // Load the catalog first so the switch does not flash English; a
+            // failed load applies (and saves) nothing.
+            ensureLocaleMessages(v as AppLocale)
+              .then(() => {
+                if (changeGenerations.current.locale !== generation) {
+                  return;
+                }
+                void applySetting(
+                  "locale",
+                  { locale: v },
+                  () => setLocale(v),
+                  () => setLocale(previous),
+                );
+              })
+              .catch(() => toast.error(t("settings.syncFailed")));
           }}
         >
           <SelectTrigger className="w-auto gap-2 border-border">
@@ -157,8 +186,10 @@ function AppearanceContent() {
             if (!value) return;
             const parsed = Number.parseInt(value, 10);
             if (Number.isNaN(parsed)) return;
+            markPreferencesAsUserOwned();
             const previous = articlePageSize;
             void applySetting(
+              "pageSize",
               { article_page_size: parsed },
               () => setArticlePageSize(parsed),
               () => setArticlePageSize(previous),
@@ -193,6 +224,7 @@ function AppearanceContent() {
             if (!v) return;
             const previous = theme;
             void applySetting(
+              "theme",
               { theme: v },
               () => setTheme(v),
               () => setTheme(previous ?? "system"),
