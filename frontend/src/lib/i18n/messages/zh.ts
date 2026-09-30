@@ -60,7 +60,7 @@ export const zhMessages: PartialMessages = {
   "settings.language.description": "选择你偏好的语言",
   "settings.language.label": "语言",
   "settings.shortcuts.description": "查看所有可用的键盘快捷键",
-  "settings.syncFailed": "保存设置失败，已恢复之前的值。",
+  "settings.syncFailed": "保存设置失败。",
   "settings.shortcuts.label": "键盘快捷键",
   "settings.shortcuts.open": "查看",
   "settings.tab.about": "关于",

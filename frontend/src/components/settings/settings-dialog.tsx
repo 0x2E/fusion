@@ -93,9 +93,9 @@ function AppearanceContent() {
   // Applies the change locally right away and persists just that key. The
   // generation (taken synchronously when the user makes the change) ensures
   // a stale in-flight save (awaited catalog load, seed, or slow PATCH)
-  // neither sends nor reverts after a newer change has superseded it. On a
-  // failed save the key is reverted so the UI does not drift from the server
-  // (a stale local value would be overwritten on the next page load anyway).
+  // neither sends nor errors after a newer change has superseded it. On a
+  // failed save locale and page size revert to their previous value; theme
+  // deliberately keeps the pick (see its handler).
   const applySetting = async (
     field: keyof typeof changeGenerations,
     generation: number,
@@ -159,7 +159,11 @@ function AppearanceContent() {
                   () => setLocale(previous),
                 );
               })
-              .catch(() => toast.error(t("settings.syncFailed")));
+              .catch(() => {
+                if (changeGenerations.locale === generation) {
+                  toast.error(t("settings.syncFailed"));
+                }
+              });
           }}
         >
           <SelectTrigger className="w-auto gap-2 border-border">
@@ -236,8 +240,9 @@ function AppearanceContent() {
               // A failed save deliberately keeps the pick: next-themes has
               // already persisted it, and reverting would write the implicit
               // default ("system") into storage, which the sync would later
-              // upload as if the user had chosen it. Keeping the pick lets
-              // the next load's seed retry saving exactly what was picked.
+              // upload as if the user had chosen it. The kept pick is only
+              // retried while the server theme is null — a non-null server
+              // theme still wins on the next load.
               () => {},
             );
           }}

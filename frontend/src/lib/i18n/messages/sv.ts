@@ -60,7 +60,7 @@ export const svMessages: PartialMessages = {
   "settings.language.description": "Valj ditt foredragna sprak",
   "settings.language.label": "Sprak",
   "settings.shortcuts.description": "Visa alla tillgangliga kortkommandon",
-  "settings.syncFailed": "Det gick inte att spara inställningen. Det tidigare värdet har återställts.",
+  "settings.syncFailed": "Det gick inte att spara inställningen.",
   "settings.shortcuts.label": "Kortkommandon",
   "settings.shortcuts.open": "Visa",
   "settings.tab.about": "Om",

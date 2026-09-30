@@ -60,7 +60,7 @@ export const ptMessages: PartialMessages = {
   "settings.language.description": "Selecione seu idioma preferido",
   "settings.language.label": "Idioma",
   "settings.shortcuts.description": "Ver todos os atalhos de teclado disponiveis",
-  "settings.syncFailed": "Falha ao salvar a configuração. O valor anterior foi restaurado.",
+  "settings.syncFailed": "Falha ao salvar a configuração.",
   "settings.shortcuts.label": "Atalhos de teclado",
   "settings.shortcuts.open": "Ver",
   "settings.tab.about": "Sobre",
