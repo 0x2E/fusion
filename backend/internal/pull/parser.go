@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"html"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -104,7 +105,7 @@ func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration,
 	}
 
 	result.Items = items
-	result.FeedTitle = strings.TrimSpace(parsedFeed.Title)
+	result.FeedTitle = NormalizeTitle(parsedFeed.Title)
 	result.SiteURL = siteURL
 	return result, nil
 }
@@ -184,6 +185,108 @@ func normalizeSiteURL(raw string) string {
 	return parsed.String()
 }
 
+// maxTitleEntityLen caps how far NormalizeTitle scans for a ';' after an '&'.
+// The longest HTML5 named reference is ~31 characters; 64 leaves headroom.
+const maxTitleEntityLen = 64
+
+// NormalizeTitle applies one more semicolon-terminated character-reference
+// decode on top of the XML decoding gofeed already performed. HTML-aware
+// titles arrive with a second entity layer still encoded when the publisher
+// double-escaped (Atom type="html") or wrapped the title in CDATA (#97), so
+// `Belief =&gt; Actions` reaches storage as the publisher intended.
+//
+// Titles are plain text, so tag-like input is left untouched: running an HTML
+// tokenizer here would eat legitimate text such as "vector<int>" or an
+// unclosed "<article". References must end in ';' and never decode through
+// HTML5 legacy no-semicolon prefixes, keeping plain words after an ampersand
+// ("&parameters", "&section") literal, matching gofeed's own DecodeEntities.
+//
+// The scan is a single left-to-right pass: "&amp;amp;gt;" becomes
+// "&amp;gt;", never a second decode of the recombined result. Edge trimming
+// removes ASCII whitespace only, so meaningful &nbsp;/&ensp;/&emsp; survive.
+func NormalizeTitle(raw string) string {
+	raw = strings.Trim(raw, " \t\r\n")
+	if !strings.Contains(raw, "&") {
+		return raw
+	}
+
+	var b strings.Builder
+	b.Grow(len(raw))
+	for i := 0; i < len(raw); {
+		if raw[i] != '&' {
+			b.WriteByte(raw[i])
+			i++
+			continue
+		}
+
+		semi := strings.IndexByte(raw[i:], ';')
+		if semi <= 1 || semi > maxTitleEntityLen {
+			b.WriteByte('&')
+			i++
+			continue
+		}
+
+		// Anything but a single run of name characters up to the ';'
+		// (whitespace, '<', or a second '&') means this '&' is literal.
+		// Rescanning from the next byte keeps a trailing real reference
+		// decodable: "&amp&gt;" -> "&amp>".
+		cand := raw[i : i+semi+1]
+		if strings.ContainsAny(cand[1:], " \t\r\n<&") {
+			b.WriteByte('&')
+			i++
+			continue
+		}
+
+		if cand[1] == '#' {
+			text, ok := decodeNumericRef(cand)
+			if !ok {
+				b.WriteByte('&')
+				i++
+				continue
+			}
+			b.WriteString(text)
+			i += len(cand)
+			continue
+		}
+
+		decoded := html.UnescapeString(cand)
+		if decoded == cand || decoded == html.UnescapeString(cand[:len(cand)-1])+";" {
+			b.WriteByte('&')
+			i++
+			continue
+		}
+
+		b.WriteString(decoded)
+		i += len(cand)
+	}
+	return strings.Trim(b.String(), " \t\r\n")
+}
+
+// decodeNumericRef validates and decodes &#NNN; / &#xHH; forms itself:
+// stdlib UnescapeString turns digit-less forms like "&#x;" into U+FFFD
+// instead of leaving them literal, and silently wraps code points beyond
+// 0x10FFFF through its int32 accumulation. In-range values are delegated
+// back to UnescapeString so the HTML5 Windows-1252 mapping for 0x80-0x9F
+// stays consistent with gofeed's decoding layer. ok=false means the span is
+// not a well-formed numeric reference and must stay literal.
+func decodeNumericRef(cand string) (string, bool) {
+	numPart := cand[2 : len(cand)-1]
+	base := 10
+	if len(numPart) > 1 && (numPart[0] == 'x' || numPart[0] == 'X') {
+		base = 16
+		numPart = numPart[1:]
+	}
+
+	n, err := strconv.ParseUint(numPart, base, 64)
+	if err != nil || n == 0 || n > 0x10FFFF || (n >= 0xD800 && n <= 0xDFFF) {
+		if err != nil {
+			return "", false
+		}
+		return "\uFFFD", true
+	}
+	return html.UnescapeString(cand), true
+}
+
 // mapItem converts gofeed.Item to ParsedItem following mapping rules:
 // - guid: prefer GUID, fallback to Link
 // - content: prefer Content, fallback to Description
@@ -228,7 +331,7 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 
 	return &ParsedItem{
 		GUID:    guid,
-		Title:   item.Title,
+		Title:   NormalizeTitle(item.Title),
 		Link:    link,
 		Content: content,
 		PubDate: pubDate,
