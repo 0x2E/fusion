@@ -18,7 +18,8 @@ func TestGetSettingsEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetSettings() failed: %v", err)
 	}
-	if settings.Locale != nil || settings.ArticlePageSize != nil || settings.Theme != nil {
+	if settings.Locale != nil || settings.ArticlePageSize != nil || settings.Theme != nil ||
+		settings.AutoMarkRead != nil {
 		t.Errorf("expected all-nil settings on empty database, got %+v", settings)
 	}
 }
@@ -74,6 +75,7 @@ func TestUpdateSettingsAllFields(t *testing.T) {
 		Locale:          strPtr("zh"),
 		ArticlePageSize: int64Ptr(50),
 		Theme:           strPtr("system"),
+		AutoMarkRead:    strPtr("open"),
 	})
 	if err != nil {
 		t.Fatalf("UpdateSettings(all fields) failed: %v", err)
@@ -83,9 +85,32 @@ func TestUpdateSettingsAllFields(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetSettings() failed: %v", err)
 	}
-	want := &model.Settings{Locale: strPtr("zh"), ArticlePageSize: int64Ptr(50), Theme: strPtr("system"), UpdatedAt: settings.UpdatedAt}
-	if *settings.Locale != *want.Locale || *settings.ArticlePageSize != *want.ArticlePageSize || *settings.Theme != *want.Theme {
+	want := &model.Settings{Locale: strPtr("zh"), ArticlePageSize: int64Ptr(50), Theme: strPtr("system"), AutoMarkRead: strPtr("open"), UpdatedAt: settings.UpdatedAt}
+	if *settings.Locale != *want.Locale || *settings.ArticlePageSize != *want.ArticlePageSize ||
+		*settings.Theme != *want.Theme || *settings.AutoMarkRead != *want.AutoMarkRead {
 		t.Errorf("got %+v, want %+v", settings, want)
+	}
+}
+
+// The all-nil short circuit in UpdateSettings must know every column, or a
+// PATCH carrying only this field is silently dropped.
+func TestUpdateSettingsAutoMarkReadOnly(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	if err := store.UpdateSettings(UpdateSettingsParams{AutoMarkRead: strPtr("5")}); err != nil {
+		t.Fatalf("UpdateSettings(auto_mark_read) failed: %v", err)
+	}
+
+	settings, err := store.GetSettings()
+	if err != nil {
+		t.Fatalf("GetSettings() failed: %v", err)
+	}
+	if settings.AutoMarkRead == nil || *settings.AutoMarkRead != "5" {
+		t.Fatalf("expected auto_mark_read=\"5\", got %+v", settings)
+	}
+	if settings.Locale != nil {
+		t.Errorf("expected locale to stay unset, got %v", *settings.Locale)
 	}
 }
 

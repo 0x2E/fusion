@@ -13,10 +13,10 @@ import (
 func (s *Store) GetSettings() (*model.Settings, error) {
 	settings := &model.Settings{}
 	err := s.db.QueryRow(`
-		SELECT locale, article_page_size, theme, updated_at
+		SELECT locale, article_page_size, theme, auto_mark_read, updated_at
 		FROM settings
 		WHERE id = 1
-	`).Scan(&settings.Locale, &settings.ArticlePageSize, &settings.Theme, &settings.UpdatedAt)
+	`).Scan(&settings.Locale, &settings.ArticlePageSize, &settings.Theme, &settings.AutoMarkRead, &settings.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return settings, nil
@@ -32,6 +32,7 @@ type UpdateSettingsParams struct {
 	Locale          *string
 	ArticlePageSize *int64
 	Theme           *string
+	AutoMarkRead    *string
 }
 
 // UpdateSettings upserts the singleton settings row. Fields set to nil keep
@@ -39,22 +40,25 @@ type UpdateSettingsParams struct {
 // NULL there means "not provided in this request"). A nil pointer argument is
 // passed through to SQL as NULL by database/sql.
 func (s *Store) UpdateSettings(params UpdateSettingsParams) error {
-	if params.Locale == nil && params.ArticlePageSize == nil && params.Theme == nil {
+	if params.Locale == nil && params.ArticlePageSize == nil && params.Theme == nil &&
+		params.AutoMarkRead == nil {
 		return nil
 	}
 
 	_, err := s.db.Exec(`
-		INSERT INTO settings (id, locale, article_page_size, theme)
-		VALUES (1, :locale, :article_page_size, :theme)
+		INSERT INTO settings (id, locale, article_page_size, theme, auto_mark_read)
+		VALUES (1, :locale, :article_page_size, :theme, :auto_mark_read)
 		ON CONFLICT (id) DO UPDATE SET
 			locale = COALESCE(excluded.locale, settings.locale),
 			article_page_size = COALESCE(excluded.article_page_size, settings.article_page_size),
 			theme = COALESCE(excluded.theme, settings.theme),
+			auto_mark_read = COALESCE(excluded.auto_mark_read, settings.auto_mark_read),
 			updated_at = unixepoch()
 	`,
 		sql.Named("locale", params.Locale),
 		sql.Named("article_page_size", params.ArticlePageSize),
 		sql.Named("theme", params.Theme),
+		sql.Named("auto_mark_read", params.AutoMarkRead),
 	)
 	if err != nil {
 		return fmt.Errorf("update settings: %w", err)

@@ -1262,7 +1262,7 @@ components:
 
     Settings:
       type: object
-      required: [locale, article_page_size, theme, updated_at]
+      required: [locale, article_page_size, theme, auto_mark_read, updated_at]
       properties:
         locale:
           type: string
@@ -1280,6 +1280,11 @@ components:
           enum: [light, dark, system, null]
           nullable: true
           description: Color theme; null means never chosen.
+        auto_mark_read:
+          type: string
+          enum: [off, open, "5", "10", "30", null]
+          nullable: true
+          description: Auto mark-read for opened articles; off disables, open marks immediately, the numeric values are delays in seconds; null means never chosen (clients default to off).
         updated_at:
           type: integer
           format: int64
@@ -1296,7 +1301,8 @@ components:
       description: >-
         All fields optional; absent (or null) means "leave unchanged". Locale
         and theme are validated against the shipped catalogs / theme names;
-        article_page_size accepts any integer the items API can serve.
+        article_page_size accepts any integer the items API can serve;
+        auto_mark_read is validated against its enum.
       properties:
         locale:
           type: string
@@ -1310,6 +1316,10 @@ components:
         theme:
           type: string
           enum: [light, dark, system]
+          nullable: true
+        auto_mark_read:
+          type: string
+          enum: [off, open, "5", "10", "30"]
           nullable: true
 
     OIDCEnabledEnvelope:

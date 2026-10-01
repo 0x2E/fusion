@@ -4,6 +4,7 @@ import { settingsAPI, type Settings, type UpdateSettingsRequest } from "@/lib/ap
 import { ensureLocaleMessages } from "@/lib/i18n/messages";
 import {
   isArticlePageSize,
+  isAutoMarkRead,
   isSupportedLocale,
   usePreferencesStore,
 } from "@/store/preferences";
@@ -125,6 +126,14 @@ export async function pullRemoteSettings(): Promise<void> {
       usePreferencesStore
         .getState()
         .setArticlePageSize(settings.article_page_size);
+    }
+
+    if (
+      settings.auto_mark_read !== null &&
+      isAutoMarkRead(settings.auto_mark_read) &&
+      settings.auto_mark_read !== preferences.autoMarkRead
+    ) {
+      usePreferencesStore.getState().setAutoMarkRead(settings.auto_mark_read);
     }
 
     const storedTheme = localStorage.getItem("theme");

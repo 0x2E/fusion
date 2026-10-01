@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { Bug, Download, Info, Keyboard, Palette } from "lucide-react";
+import { Bug, Download, Info, Keyboard, Settings as SettingsIcon } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  autoMarkReadOptions,
   articlePageSizeOptions,
   supportedLocales,
   usePreferencesStore,
@@ -33,15 +34,56 @@ function GithubIcon({ className }: { className?: string }) {
   );
 }
 
-type SettingsTab = "appearance" | "about";
+type SettingsTab = "general" | "about";
 
-// Module scope so the counters survive unmounting the appearance tab or the
-// dialog itself: a late-failing save from an old mount must not revert a
-// newer change made on a new one.
-const changeGenerations = { locale: 0, pageSize: 0, theme: 0 };
+// Module scope so the counters survive unmounting a tab or the dialog
+// itself: a late-failing save from an old mount must not revert a newer
+// change made on a new one.
+const changeGenerations = { locale: 0, pageSize: 0, theme: 0, autoMarkRead: 0 };
 
 function beginChange(field: keyof typeof changeGenerations): number {
   return ++changeGenerations[field];
+}
+
+// Applies the change locally right away and persists just that key. The
+// generation (taken synchronously when the user makes the change) ensures a
+// stale in-flight save (awaited catalog load, seed, or slow PATCH) neither
+// sends nor errors after a newer change has superseded it. On a failed save
+// the caller's revert runs; a 401 is already being handled by the global
+// interceptor.
+function useApplySetting() {
+  const { t } = useI18n();
+
+  return useCallback(
+    async (
+      field: keyof typeof changeGenerations,
+      generation: number,
+      patch: UpdateSettingsRequest,
+      apply: () => void,
+      revert: () => void,
+    ) => {
+      apply();
+      try {
+        // Let a first-load seed finish first so it cannot land on top of
+        // this change; a superseded change skips the request entirely.
+        await waitForSettingsSeed();
+        if (changeGenerations[field] !== generation) {
+          return;
+        }
+        await settingsAPI.update(patch);
+      } catch (error) {
+        if (error instanceof APIError && error.status === 401) {
+          return;
+        }
+        if (changeGenerations[field] !== generation) {
+          return;
+        }
+        revert();
+        toast.error(t("settings.syncFailed"));
+      }
+    },
+    [t],
+  );
 }
 
 interface NavItemProps {
@@ -68,13 +110,23 @@ function NavItem({ icon, label, active, onClick }: NavItemProps) {
   );
 }
 
-function AppearanceContent() {
+// One flat pane while the preference count is small; split into named
+// clusters (e.g. Appearance / Reading) only once a cluster has enough rows
+// to carry its own tab (~5), not before.
+function GeneralContent() {
   const { t } = useI18n();
   const { theme, setTheme } = useTheme();
   const setSettingsOpen = useUIStore((s) => s.setSettingsOpen);
   const setShortcutsOpen = useUIStore((s) => s.setShortcutsOpen);
-  const { locale, articlePageSize, setLocale, setArticlePageSize } =
-    usePreferencesStore();
+  const {
+    locale,
+    articlePageSize,
+    autoMarkRead,
+    setLocale,
+    setArticlePageSize,
+    setAutoMarkRead,
+  } = usePreferencesStore();
+  const applySetting = useApplySetting();
 
   const localeItems = supportedLocales.map((localeCode) => ({
     value: localeCode,
@@ -84,46 +136,22 @@ function AppearanceContent() {
     value: size.toString(),
     label: String(size),
   }));
+  const autoMarkReadItems = autoMarkReadOptions.map((option) => ({
+    value: option,
+    label:
+      option === "off"
+        ? t("settings.autoMarkRead.off")
+        : option === "open"
+          ? t("settings.autoMarkRead.open")
+          : t("settings.autoMarkRead.afterSeconds", {
+              seconds: Number.parseInt(option, 10),
+            }),
+  }));
   const themeItems = [
     { value: "light", label: t("settings.theme.light") },
     { value: "dark", label: t("settings.theme.dark") },
     { value: "system", label: t("settings.theme.system") },
   ];
-
-  // Applies the change locally right away and persists just that key. The
-  // generation (taken synchronously when the user makes the change) ensures
-  // a stale in-flight save (awaited catalog load, seed, or slow PATCH)
-  // neither sends nor errors after a newer change has superseded it. On a
-  // failed save locale and page size revert to their previous value; theme
-  // deliberately keeps the pick (see its handler).
-  const applySetting = async (
-    field: keyof typeof changeGenerations,
-    generation: number,
-    patch: UpdateSettingsRequest,
-    apply: () => void,
-    revert: () => void,
-  ) => {
-    apply();
-    try {
-      // Let a first-load seed finish first so it cannot land on top of this
-      // change; a superseded change skips the request entirely.
-      await waitForSettingsSeed();
-      if (changeGenerations[field] !== generation) {
-        return;
-      }
-      await settingsAPI.update(patch);
-    } catch (error) {
-      // The global 401 interceptor is already redirecting; no toast needed.
-      if (error instanceof APIError && error.status === 401) {
-        return;
-      }
-      if (changeGenerations[field] !== generation) {
-        return;
-      }
-      revert();
-      toast.error(t("settings.syncFailed"));
-    }
-  };
 
   return (
     <div className="space-y-5">
@@ -179,6 +207,47 @@ function AppearanceContent() {
         </Select>
       </div>
 
+      {/* Theme */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium">{t("settings.theme.label")}</p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.theme.description")}
+          </p>
+        </div>
+        <Select
+          items={themeItems}
+          value={theme}
+          onValueChange={(v) => {
+            if (!v) return;
+            void applySetting(
+              "theme",
+              beginChange("theme"),
+              { theme: v },
+              () => setTheme(v),
+              // A failed save deliberately keeps the pick: next-themes has
+              // already persisted it, and reverting would write the implicit
+              // default ("system") into storage, which the sync would later
+              // upload as if the user had chosen it. The kept pick is only
+              // retried while the server theme is null — a non-null server
+              // theme still wins on the next load.
+              () => {},
+            );
+          }}
+        >
+          <SelectTrigger className="w-auto gap-2 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {themeItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Articles per load */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
@@ -219,31 +288,28 @@ function AppearanceContent() {
         </Select>
       </div>
 
-      {/* Theme */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-medium">{t("settings.theme.label")}</p>
+      {/* Auto mark as read */}
+      <div className="flex items-center justify-between gap-6">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-medium">
+            {t("settings.autoMarkRead.label")}
+          </p>
           <p className="text-[13px] text-muted-foreground">
-            {t("settings.theme.description")}
+            {t("settings.autoMarkRead.description")}
           </p>
         </div>
         <Select
-          items={themeItems}
-          value={theme}
+          items={autoMarkReadItems}
+          value={autoMarkRead}
           onValueChange={(v) => {
             if (!v) return;
+            const previous = autoMarkRead;
             void applySetting(
-              "theme",
-              beginChange("theme"),
-              { theme: v },
-              () => setTheme(v),
-              // A failed save deliberately keeps the pick: next-themes has
-              // already persisted it, and reverting would write the implicit
-              // default ("system") into storage, which the sync would later
-              // upload as if the user had chosen it. The kept pick is only
-              // retried while the server theme is null — a non-null server
-              // theme still wins on the next load.
-              () => {},
+              "autoMarkRead",
+              beginChange("autoMarkRead"),
+              { auto_mark_read: v },
+              () => setAutoMarkRead(v),
+              () => setAutoMarkRead(previous),
             );
           }}
         >
@@ -251,7 +317,7 @@ function AppearanceContent() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {themeItems.map((item) => (
+            {autoMarkReadItems.map((item) => (
               <SelectItem key={item.value} value={item.value}>
                 {item.label}
               </SelectItem>
@@ -362,10 +428,10 @@ function AboutContent() {
 export function SettingsDialog() {
   const { t } = useI18n();
   const { isSettingsOpen, setSettingsOpen } = useUIStore();
-  const [activeTab, setActiveTab] = useState<SettingsTab>("appearance");
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
   const tabTitles: Record<SettingsTab, string> = {
-    appearance: t("settings.tab.appearance"),
+    general: t("settings.tab.general"),
     about: t("settings.tab.about"),
   };
 
@@ -379,10 +445,10 @@ export function SettingsDialog() {
           </h2>
           <nav className="flex gap-0.5 sm:mt-2 sm:flex-col">
             <NavItem
-              icon={<Palette className="h-4 w-4" />}
-              label={t("settings.tab.appearance")}
-              active={activeTab === "appearance"}
-              onClick={() => setActiveTab("appearance")}
+              icon={<SettingsIcon className="h-4 w-4" />}
+              label={t("settings.tab.general")}
+              active={activeTab === "general"}
+              onClick={() => setActiveTab("general")}
             />
             <NavItem
               icon={<Info className="h-4 w-4" />}
@@ -400,7 +466,7 @@ export function SettingsDialog() {
           </h2>
 
           <div className="flex-1 overflow-y-auto">
-            {activeTab === "appearance" && <AppearanceContent />}
+            {activeTab === "general" && <GeneralContent />}
             {activeTab === "about" && <AboutContent />}
           </div>
         </div>

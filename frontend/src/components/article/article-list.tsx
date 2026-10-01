@@ -108,8 +108,10 @@ export function ArticleList() {
 
       try {
         if (article.unread) {
-          await markItemsRead.mutateAsync([article.id]);
+          // Pin before the request so the optimistic unread flip cannot
+          // drop the row (still visible for undo) before the pin lands.
           pinRead([article.id]);
+          await markItemsRead.mutateAsync([article.id]);
         } else {
           await markItemsUnread.mutateAsync([article.id]);
           unpinRead([article.id]);
