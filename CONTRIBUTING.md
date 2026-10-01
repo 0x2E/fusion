@@ -42,10 +42,15 @@ go build -o /dev/null ./cmd/fusion
 
 ```shell
 cd frontend
-npx tsc -b --noEmit
-pnpm lint
+pnpm typecheck
+pnpm test
+pnpm run check:i18n
 pnpm build
 ```
+
+`pnpm lint` currently cannot start: `typescript-eslint` does not support
+TypeScript 7 yet (typescript-eslint/typescript-eslint#10940). Re-add it to
+the checklist once upstream support lands.
 
 If your change is scoped, you can run a smaller test subset first, but run the relevant final checks before requesting review.
 
