@@ -86,7 +86,14 @@ export interface APIResponse<T> {
   error?: string;
 }
 
-export interface ListAPIResponse<T> {
+// Group and feed lists: small, fully returned in one response
+export interface ListResponse<T> {
+  data: T[];
+  total: number;
+}
+
+// Item and bookmark lists: cursor-paginated (see docs/api-conventions.md)
+export interface PaginatedListResponse<T> {
   data: T[];
   total: number;
   next_cursor: string | null;
@@ -136,14 +143,18 @@ export interface ValidateFeedResponse {
   feeds: DiscoveredFeed[];
 }
 
-export interface CreateBookmarkRequest {
-  item_id?: number;
-  link: string;
-  title: string;
-  content: string;
-  pub_date: number;
-  feed_name: string;
-}
+// Two mutually exclusive modes: either reference an item by id (the backend
+// snapshots all fields from it and ignores everything else — preferred), or
+// provide a full snapshot for bookmarks without an backing item.
+export type CreateBookmarkRequest =
+  | { item_id: number }
+  | {
+      link: string;
+      title: string;
+      content: string;
+      feed_name: string;
+      pub_date?: number;
+    };
 
 export interface MarkItemsReadRequest {
   ids: number[];
@@ -155,7 +166,7 @@ export interface ListItemsParams {
   unread?: boolean;
   limit?: number;
   before?: string;
-  order_by?: string;
+  order_by?: "pub_date" | "created_at";
 }
 
 export interface ListBookmarksParams {

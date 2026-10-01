@@ -9,7 +9,7 @@ import {
   bookmarkAPI,
   type Bookmark,
   type Item,
-  type ListAPIResponse,
+  type PaginatedListResponse,
 } from "@/lib/api";
 import {
   normalizeBookmarkFilters,
@@ -17,7 +17,6 @@ import {
   type BookmarkFilters,
   type NormalizedBookmarkFilters,
 } from "./keys";
-import { useFeedLookup } from "./feeds";
 import { usePreferencesStore } from "@/store";
 
 // The lookup query (star icons + sidebar count) fetches a large first page so
@@ -25,7 +24,7 @@ import { usePreferencesStore } from "@/store";
 // backend per-request cap, so it is the natural chunk size.
 const BOOKMARK_LOOKUP_PAGE_SIZE = 100;
 
-type BookmarkListResponse = ListAPIResponse<Bookmark>;
+type BookmarkListResponse = PaginatedListResponse<Bookmark>;
 export type BookmarksInfiniteData = InfiniteData<BookmarkListResponse, string | null>;
 
 export function resolveBookmarkItemId(bookmark: Bookmark): number {
@@ -149,19 +148,12 @@ export function useStarredItems(
 
 export function useCreateBookmark() {
   const qc = useQueryClient();
-  const { getFeedById } = useFeedLookup();
 
   return useMutation({
     mutationFn: async (item: Item) => {
-      const feed = getFeedById(item.feed_id);
-      const res = await bookmarkAPI.create({
-        item_id: item.id,
-        link: item.link,
-        title: item.title,
-        content: item.content,
-        pub_date: item.pub_date,
-        feed_name: feed?.name ?? "Unknown",
-      });
+      // item_id mode: the backend snapshots link/title/content/feed_name
+      // from the item itself, which is always fresher than client copies.
+      const res = await bookmarkAPI.create({ item_id: item.id });
       return res.data!;
     },
     onSuccess: (bookmark) => {
