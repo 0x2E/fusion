@@ -207,7 +207,8 @@ export interface SearchResponse {
 export interface BatchCreateFeedsResponse {
   created: number;
   failed: number;
-  errors?: string[];
+  // Always present on the wire; null when every feed was created.
+  errors: string[] | null;
 }
 
 // OIDC
