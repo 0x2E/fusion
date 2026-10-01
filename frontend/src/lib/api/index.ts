@@ -22,6 +22,8 @@ import type {
   SearchResponse,
   OIDCStatusResponse,
   OIDCLoginResponse,
+  Settings,
+  UpdateSettingsRequest,
 } from "./types";
 
 // Session APIs
@@ -123,6 +125,14 @@ export const bookmarkAPI = {
     api.post<APIResponse<Bookmark>>("/bookmarks", data),
 
   delete: (id: number) => api.delete<void>(`/bookmarks/${id}`),
+};
+
+// Settings APIs
+export const settingsAPI = {
+  get: () => api.get<APIResponse<Settings>>("/settings"),
+
+  update: (data: UpdateSettingsRequest) =>
+    api.patch<APIResponse<Settings>>("/settings", data),
 };
 
 // Search APIs

@@ -60,6 +60,7 @@ export const deMessages: PartialMessages = {
   "settings.language.description": "Bevorzugte Sprache auswahlen",
   "settings.language.label": "Sprache",
   "settings.shortcuts.description": "Alle verfugbaren Tastaturkurzel anzeigen",
+  "settings.syncFailed": "Einstellung konnte nicht gespeichert werden.",
   "settings.shortcuts.label": "Tastaturkurzel",
   "settings.shortcuts.open": "Anzeigen",
   "settings.tab.about": "Info",

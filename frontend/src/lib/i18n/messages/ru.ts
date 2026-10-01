@@ -60,6 +60,7 @@ export const ruMessages: PartialMessages = {
   "settings.language.description": "Выберите предпочтительный язык",
   "settings.language.label": "Язык",
   "settings.shortcuts.description": "Показать все доступные горячие клавиши",
+  "settings.syncFailed": "Не удалось сохранить настройку.",
   "settings.shortcuts.label": "Горячие клавиши",
   "settings.shortcuts.open": "Показать",
   "settings.tab.about": "О приложении",

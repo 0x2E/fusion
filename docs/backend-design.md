@@ -127,6 +127,18 @@ erDiagram
 - `link` is unique
 - `item_id` is nullable to preserve snapshots after source item deletion
 
+### settings
+
+- Single row (`id = 1`; fusion is single-user): `locale`, `article_page_size`, `theme`, `updated_at`
+- All preference columns are nullable; `NULL` means the user never explicitly
+  chose a value, and no API path ever writes `NULL`
+- Value validation lives in the handler (the only write path), not in SQL
+  `CHECK` constraints: allow-lists change with product decisions and SQLite
+  cannot `ALTER` a `CHECK` in place, so schema-level enums would turn every
+  adjustment into a table rebuild. `article_page_size` is a free integer in
+  the range the items API serves (`1..maxListLimit`); the five-option picker
+  is a frontend UI choice only
+
 ## 6. Data integrity and cascade strategy
 
 - Cascade rules are explicit in store transactions for group/feed/item/bookmark lifecycles:
@@ -145,6 +157,8 @@ This keeps behavior explicit and avoids hidden DB-level side effects.
 - Items: list/get/mark read/mark unread
 - Search: feed + item search
 - Bookmarks: list/get/create/delete
+- Settings: get/patch (partial update; absent field leaves the stored value
+  unchanged, there is deliberately no way to clear a preference back to null)
 
 Detailed contract: `docs/openapi.yaml`.
 

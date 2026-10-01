@@ -17,6 +17,7 @@ tags:
   - name: Items
   - name: Search
   - name: Bookmarks
+  - name: Settings
 security:
   - sessionCookie: []
 paths:
@@ -662,6 +663,53 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /settings:
+    get:
+      tags: [Settings]
+      summary: Get settings
+      description: >-
+        Returns the user's synced preferences. All preference fields are
+        always present; a null value means the user has never explicitly
+        chosen one (clients fall back to their own defaults).
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags: [Settings]
+      summary: Update settings
+      description: >-
+        Partial update: a field that is absent from the request body leaves
+        the stored value unchanged (a JSON null is indistinguishable from an
+        absent field and behaves the same). There is no way to clear a
+        preference back to null. An empty object is a valid no-op.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSettingsRequest"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
 components:
   securitySchemes:
     sessionCookie:
@@ -1211,6 +1259,58 @@ components:
       properties:
         enabled:
           type: boolean
+
+    Settings:
+      type: object
+      required: [locale, article_page_size, theme, updated_at]
+      properties:
+        locale:
+          type: string
+          enum: [en, zh, de, fr, es, ru, pt, sv, null]
+          nullable: true
+          description: UI language; null means never chosen.
+        article_page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          nullable: true
+          description: Articles fetched per page (any value the items API can serve); null means never chosen.
+        theme:
+          type: string
+          enum: [light, dark, system, null]
+          nullable: true
+          description: Color theme; null means never chosen.
+        updated_at:
+          type: integer
+          format: int64
+
+    SettingsEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Settings"
+
+    UpdateSettingsRequest:
+      type: object
+      description: >-
+        All fields optional; absent (or null) means "leave unchanged". Locale
+        and theme are validated against the shipped catalogs / theme names;
+        article_page_size accepts any integer the items API can serve.
+      properties:
+        locale:
+          type: string
+          enum: [en, zh, de, fr, es, ru, pt, sv]
+          nullable: true
+        article_page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          nullable: true
+        theme:
+          type: string
+          enum: [light, dark, system]
+          nullable: true
 
     OIDCEnabledEnvelope:
       type: object

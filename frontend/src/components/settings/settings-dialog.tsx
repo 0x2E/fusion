@@ -19,6 +19,10 @@ import {
 } from "@/store";
 import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { localeLabels, useI18n } from "@/lib/i18n";
+import { ensureLocaleMessages } from "@/lib/i18n/messages";
+import { APIError, settingsAPI, type UpdateSettingsRequest } from "@/lib/api";
+import { waitForSettingsSeed } from "@/lib/settings-sync";
+import type { AppLocale } from "@/store/preferences";
 import { cn } from "@/lib/utils";
 
 function GithubIcon({ className }: { className?: string }) {
@@ -30,6 +34,15 @@ function GithubIcon({ className }: { className?: string }) {
 }
 
 type SettingsTab = "appearance" | "about";
+
+// Module scope so the counters survive unmounting the appearance tab or the
+// dialog itself: a late-failing save from an old mount must not revert a
+// newer change made on a new one.
+const changeGenerations = { locale: 0, pageSize: 0, theme: 0 };
+
+function beginChange(field: keyof typeof changeGenerations): number {
+  return ++changeGenerations[field];
+}
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -77,6 +90,41 @@ function AppearanceContent() {
     { value: "system", label: t("settings.theme.system") },
   ];
 
+  // Applies the change locally right away and persists just that key. The
+  // generation (taken synchronously when the user makes the change) ensures
+  // a stale in-flight save (awaited catalog load, seed, or slow PATCH)
+  // neither sends nor errors after a newer change has superseded it. On a
+  // failed save locale and page size revert to their previous value; theme
+  // deliberately keeps the pick (see its handler).
+  const applySetting = async (
+    field: keyof typeof changeGenerations,
+    generation: number,
+    patch: UpdateSettingsRequest,
+    apply: () => void,
+    revert: () => void,
+  ) => {
+    apply();
+    try {
+      // Let a first-load seed finish first so it cannot land on top of this
+      // change; a superseded change skips the request entirely.
+      await waitForSettingsSeed();
+      if (changeGenerations[field] !== generation) {
+        return;
+      }
+      await settingsAPI.update(patch);
+    } catch (error) {
+      // The global 401 interceptor is already redirecting; no toast needed.
+      if (error instanceof APIError && error.status === 401) {
+        return;
+      }
+      if (changeGenerations[field] !== generation) {
+        return;
+      }
+      revert();
+      toast.error(t("settings.syncFailed"));
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Language */}
@@ -91,7 +139,31 @@ function AppearanceContent() {
           items={localeItems}
           value={locale}
           onValueChange={(v) => {
-            if (v) setLocale(v);
+            if (!v) return;
+            const previous = locale;
+            // Take the generation synchronously so it also covers the
+            // catalog wait, not just the save.
+            const generation = beginChange("locale");
+            // Load the catalog first so the switch does not flash English; a
+            // failed load applies (and saves) nothing.
+            ensureLocaleMessages(v as AppLocale)
+              .then(() => {
+                if (changeGenerations.locale !== generation) {
+                  return;
+                }
+                void applySetting(
+                  "locale",
+                  generation,
+                  { locale: v },
+                  () => setLocale(v),
+                  () => setLocale(previous),
+                );
+              })
+              .catch(() => {
+                if (changeGenerations.locale === generation) {
+                  toast.error(t("settings.syncFailed"));
+                }
+              });
           }}
         >
           <SelectTrigger className="w-auto gap-2 border-border">
@@ -123,9 +195,15 @@ function AppearanceContent() {
           onValueChange={(value) => {
             if (!value) return;
             const parsed = Number.parseInt(value, 10);
-            if (!Number.isNaN(parsed)) {
-              setArticlePageSize(parsed);
-            }
+            if (Number.isNaN(parsed)) return;
+            const previous = articlePageSize;
+            void applySetting(
+              "pageSize",
+              beginChange("pageSize"),
+              { article_page_size: parsed },
+              () => setArticlePageSize(parsed),
+              () => setArticlePageSize(previous),
+            );
           }}
         >
           <SelectTrigger className="w-auto gap-2 border-border">
@@ -153,7 +231,20 @@ function AppearanceContent() {
           items={themeItems}
           value={theme}
           onValueChange={(v) => {
-            if (v) setTheme(v);
+            if (!v) return;
+            void applySetting(
+              "theme",
+              beginChange("theme"),
+              { theme: v },
+              () => setTheme(v),
+              // A failed save deliberately keeps the pick: next-themes has
+              // already persisted it, and reverting would write the implicit
+              // default ("system") into storage, which the sync would later
+              // upload as if the user had chosen it. The kept pick is only
+              // retried while the server theme is null — a non-null server
+              // theme still wins on the next load.
+              () => {},
+            );
           }}
         >
           <SelectTrigger className="w-auto gap-2 border-border">

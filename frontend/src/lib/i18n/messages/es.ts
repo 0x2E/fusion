@@ -60,6 +60,7 @@ export const esMessages: PartialMessages = {
   "settings.language.description": "Selecciona tu idioma preferido",
   "settings.language.label": "Idioma",
   "settings.shortcuts.description": "Ver todos los atajos de teclado disponibles",
+  "settings.syncFailed": "No se pudo guardar el ajuste.",
   "settings.shortcuts.label": "Atajos de teclado",
   "settings.shortcuts.open": "Ver",
   "settings.tab.about": "Acerca de",
