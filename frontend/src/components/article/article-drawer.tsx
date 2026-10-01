@@ -123,8 +123,11 @@ export function ArticleDrawer() {
     if (!readArticle || !canToggleRead) return;
     try {
       if (readArticle.unread) {
-        await markRead.mutateAsync([readArticle.id]);
+        // Pin before the request: the optimistic unread flip drops the row
+        // from the unread list (and with it this drawer's content) until
+        // the pin lands — the await would flash a blank pane.
         pinRead([readArticle.id]);
+        await markRead.mutateAsync([readArticle.id]);
       } else {
         await markUnread.mutateAsync([readArticle.id]);
         unpinRead([readArticle.id]);
