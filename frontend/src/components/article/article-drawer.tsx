@@ -91,10 +91,15 @@ export function ArticleDrawer() {
   const autoMarkRead = usePreferencesStore((s) => s.autoMarkRead);
   const autoMarkDelayMs = autoMarkReadDelayMs(autoMarkRead);
 
+  // Arm from the in-hand row (list/bookmark cache), not the detail refetch:
+  // in starred mode the fetched detail can disagree with the row the user is
+  // looking at and would silently cancel or start countdowns.
+  const armArticle = storeArticle ?? fetchedArticle ?? null;
+
   useAutoMarkRead({
     target:
-      article && canToggleRead && article.unread && autoMarkDelayMs !== null
-        ? { id: article.id, unread: true }
+      armArticle && armArticle.id > 0 && autoMarkDelayMs !== null
+        ? { id: armArticle.id, unread: armArticle.unread }
         : null,
     delayMs: autoMarkDelayMs ?? 0,
     // mutate and pinRead must share one synchronous turn (see hook docs).

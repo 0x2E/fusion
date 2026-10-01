@@ -82,7 +82,7 @@ func TestUpdateSettingsExplicitNullLeavesValueUnchanged(t *testing.T) {
 		t.Fatalf("PATCH locale: expected 200, got %d: %s", w.Code, w.Body.String())
 	}
 
-	w = performRequest(r, http.MethodPatch, "/api/settings", strings.NewReader(`{"locale":null,"theme":"dark"}`), nil, cookie)
+	w = performRequest(r, http.MethodPatch, "/api/settings", strings.NewReader(`{"locale":null,"theme":"dark","auto_mark_read":null}`), nil, cookie)
 	if w.Code != http.StatusOK {
 		t.Fatalf("PATCH null locale: expected 200, got %d: %s", w.Code, w.Body.String())
 	}
@@ -93,6 +93,9 @@ func TestUpdateSettingsExplicitNullLeavesValueUnchanged(t *testing.T) {
 	}
 	if settings.Theme == nil || *settings.Theme != "dark" {
 		t.Errorf("expected theme=dark, got %+v", settings)
+	}
+	if settings.AutoMarkRead != nil {
+		t.Errorf("expected explicit null to leave auto_mark_read unchanged, got %+v", settings)
 	}
 }
 
