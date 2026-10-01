@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { BookOpen, Bug, Download, Info, Keyboard, Palette } from "lucide-react";
+import { Bug, Download, Info, Keyboard, Settings as SettingsIcon } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -34,7 +34,7 @@ function GithubIcon({ className }: { className?: string }) {
   );
 }
 
-type SettingsTab = "appearance" | "reading" | "about";
+type SettingsTab = "general" | "about";
 
 // Module scope so the counters survive unmounting a tab or the dialog
 // itself: a late-failing save from an old mount must not revert a newer
@@ -110,15 +110,42 @@ function NavItem({ icon, label, active, onClick }: NavItemProps) {
   );
 }
 
-function AppearanceContent() {
+// One flat pane while the preference count is small; split into named
+// clusters (e.g. Appearance / Reading) only once a cluster has enough rows
+// to carry its own tab (~5), not before.
+function GeneralContent() {
   const { t } = useI18n();
   const { theme, setTheme } = useTheme();
-  const { locale, setLocale } = usePreferencesStore();
+  const setSettingsOpen = useUIStore((s) => s.setSettingsOpen);
+  const setShortcutsOpen = useUIStore((s) => s.setShortcutsOpen);
+  const {
+    locale,
+    articlePageSize,
+    autoMarkRead,
+    setLocale,
+    setArticlePageSize,
+    setAutoMarkRead,
+  } = usePreferencesStore();
   const applySetting = useApplySetting();
 
   const localeItems = supportedLocales.map((localeCode) => ({
     value: localeCode,
     label: localeLabels[localeCode] ?? localeCode,
+  }));
+  const articlePageSizeItems = articlePageSizeOptions.map((size) => ({
+    value: size.toString(),
+    label: String(size),
+  }));
+  const autoMarkReadItems = autoMarkReadOptions.map((option) => ({
+    value: option,
+    label:
+      option === "off"
+        ? t("settings.autoMarkRead.off")
+        : option === "open"
+          ? t("settings.autoMarkRead.open")
+          : t("settings.autoMarkRead.afterSeconds", {
+              seconds: Number.parseInt(option, 10),
+            }),
   }));
   const themeItems = [
     { value: "light", label: t("settings.theme.light") },
@@ -221,36 +248,6 @@ function AppearanceContent() {
         </Select>
       </div>
 
-    </div>
-  );
-}
-
-function ReadingContent() {
-  const { t } = useI18n();
-  const setSettingsOpen = useUIStore((s) => s.setSettingsOpen);
-  const setShortcutsOpen = useUIStore((s) => s.setShortcutsOpen);
-  const { articlePageSize, autoMarkRead, setArticlePageSize, setAutoMarkRead } =
-    usePreferencesStore();
-  const applySetting = useApplySetting();
-
-  const articlePageSizeItems = articlePageSizeOptions.map((size) => ({
-    value: size.toString(),
-    label: String(size),
-  }));
-  const autoMarkReadItems = autoMarkReadOptions.map((option) => ({
-    value: option,
-    label:
-      option === "off"
-        ? t("settings.autoMarkRead.off")
-        : option === "open"
-          ? t("settings.autoMarkRead.open")
-          : t("settings.autoMarkRead.afterSeconds", {
-              seconds: Number.parseInt(option, 10),
-            }),
-  }));
-
-  return (
-    <div className="space-y-5">
       {/* Articles per load */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
@@ -431,11 +428,10 @@ function AboutContent() {
 export function SettingsDialog() {
   const { t } = useI18n();
   const { isSettingsOpen, setSettingsOpen } = useUIStore();
-  const [activeTab, setActiveTab] = useState<SettingsTab>("appearance");
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
   const tabTitles: Record<SettingsTab, string> = {
-    appearance: t("settings.tab.appearance"),
-    reading: t("settings.tab.reading"),
+    general: t("settings.tab.general"),
     about: t("settings.tab.about"),
   };
 
@@ -449,16 +445,10 @@ export function SettingsDialog() {
           </h2>
           <nav className="flex gap-0.5 sm:mt-2 sm:flex-col">
             <NavItem
-              icon={<Palette className="h-4 w-4" />}
-              label={t("settings.tab.appearance")}
-              active={activeTab === "appearance"}
-              onClick={() => setActiveTab("appearance")}
-            />
-            <NavItem
-              icon={<BookOpen className="h-4 w-4" />}
-              label={t("settings.tab.reading")}
-              active={activeTab === "reading"}
-              onClick={() => setActiveTab("reading")}
+              icon={<SettingsIcon className="h-4 w-4" />}
+              label={t("settings.tab.general")}
+              active={activeTab === "general"}
+              onClick={() => setActiveTab("general")}
             />
             <NavItem
               icon={<Info className="h-4 w-4" />}
@@ -476,8 +466,7 @@ export function SettingsDialog() {
           </h2>
 
           <div className="flex-1 overflow-y-auto">
-            {activeTab === "appearance" && <AppearanceContent />}
-            {activeTab === "reading" && <ReadingContent />}
+            {activeTab === "general" && <GeneralContent />}
             {activeTab === "about" && <AboutContent />}
           </div>
         </div>
