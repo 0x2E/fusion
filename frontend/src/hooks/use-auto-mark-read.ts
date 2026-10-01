@@ -7,12 +7,14 @@ interface AutoMarkReadTarget {
 
 interface UseAutoMarkReadOptions {
   // Must stay non-null for the whole visit (while the drawer is open on a
-  // markable article), regardless of unread flips: gating it on unread makes
-  // the id appear to change mid-visit, which resets the one-shot latch below
-  // and reintroduces both the rollback re-arm loop and the lost
-  // mark-unread veto.
+  // markable article), regardless of unread flips or the feature being off:
+  // gating it on either makes the id appear to change mid-visit, which
+  // resets the one-shot latch below and reintroduces both the rollback
+  // re-arm loop and the lost mark-unread veto.
   target: AutoMarkReadTarget | null;
-  delayMs: number;
+  // Null disables the feature without ending the visit (unlike a null
+  // target, it must not clear the veto).
+  delayMs: number | null;
   onMarkRead: (id: number) => void;
   hasPendingMutation: () => boolean;
 }
@@ -34,8 +36,8 @@ const PENDING_RETRY_MS = 500;
  *   turns delay 0 into a request loop.
  * - Observing the article read at any point during the visit vetoes firing
  *   for the rest of it, even if unread flips back (auto-mark rollback, or a
- *   manual read toggle undone before the deadline). The veto clears only on
- *   a real leave: another id, or a null target (drawer closed).
+ *   manual read toggle undone before the deadline). The veto clears on a
+ *   real leave only: the drawer closing, or moving to another article.
  * - "Still unread?" is read from refs at fire time, so a manual mark-read
  *   before the deadline makes firing a no-op.
  * - A pending read/unread mutation retries after a beat instead of
@@ -63,12 +65,22 @@ export function useAutoMarkRead({
   callbacksRef.current = { onMarkRead, hasPendingMutation };
   const vetoedIdRef = useRef<number | null>(null);
 
-  // Declared before the timer effect so a veto is already recorded when the
-  // timer effect evaluates its arm condition on the same render.
+  // Declared before the timer effect so a veto is already recorded or
+  // cleared when the timer effect evaluates its arm condition on the same
+  // render.
   useEffect(() => {
     if (target === null) {
+      // Drawer closed: every future open is a fresh visit.
       vetoedIdRef.current = null;
-    } else if (!target.unread) {
+      return;
+    }
+    if (vetoedIdRef.current !== null && vetoedIdRef.current !== target.id) {
+      // Moving to another article is a leave for the vetoed one; without
+      // this clear, next/previous navigation would stick the veto to its
+      // article forever.
+      vetoedIdRef.current = null;
+    }
+    if (!target.unread) {
       vetoedIdRef.current = target.id;
     }
   });
@@ -76,10 +88,13 @@ export function useAutoMarkRead({
   const targetId = target?.id;
 
   useEffect(() => {
-    if (targetId === undefined || targetId === null || !target?.unread) {
-      return;
-    }
-    if (vetoedIdRef.current === targetId) {
+    if (
+      targetId === undefined ||
+      targetId === null ||
+      delayMs === null ||
+      !target?.unread ||
+      vetoedIdRef.current === targetId
+    ) {
       return;
     }
     const id = targetId;

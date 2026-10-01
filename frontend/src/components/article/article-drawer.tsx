@@ -82,7 +82,12 @@ export function ArticleDrawer() {
   const article: Item | null =
     (isStarredMode ? fetchedArticle ?? storeArticle : storeArticle ?? fetchedArticle) ??
     null;
-  const canToggleRead = article !== null && article.id > 0;
+  // Read state comes from the in-hand row (list/bookmark cache), not the
+  // detail refetch: in starred mode the fetched detail can disagree with the
+  // row, and the header toggle, the auto-mark timer, and the veto must all
+  // watch the same unread bit or a manual mark-unread gets overwritten.
+  const readArticle = storeArticle ?? fetchedArticle ?? null;
+  const canToggleRead = readArticle !== null && readArticle.id > 0;
   const feed = article ? getFeedById(article.feed_id) : null;
   const bookmark = article ? getBookmarkByItemId(article.id) : null;
   const starred = article ? isItemStarred(article.id) : false;
@@ -91,17 +96,15 @@ export function ArticleDrawer() {
   const autoMarkRead = usePreferencesStore((s) => s.autoMarkRead);
   const autoMarkDelayMs = autoMarkReadDelayMs(autoMarkRead);
 
-  // Arm from the in-hand row (list/bookmark cache), not the detail refetch:
-  // in starred mode the fetched detail can disagree with the row the user is
-  // looking at and would silently cancel or start countdowns.
-  const armArticle = storeArticle ?? fetchedArticle ?? null;
-
+  // The target is not gated on the setting: null means the drawer left the
+  // article, which is exactly the event that must clear the veto. "Feature
+  // off" travels as delayMs === null instead.
   useAutoMarkRead({
     target:
-      armArticle && armArticle.id > 0 && autoMarkDelayMs !== null
-        ? { id: armArticle.id, unread: armArticle.unread }
+      readArticle && readArticle.id > 0
+        ? { id: readArticle.id, unread: readArticle.unread }
         : null,
-    delayMs: autoMarkDelayMs ?? 0,
+    delayMs: autoMarkDelayMs,
     // mutate and pinRead must share one synchronous turn (see hook docs).
     onMarkRead: (id) => {
       markRead.mutate([id]);
@@ -117,14 +120,14 @@ export function ArticleDrawer() {
   };
 
   const handleToggleRead = async () => {
-    if (!article || !canToggleRead) return;
+    if (!readArticle || !canToggleRead) return;
     try {
-      if (article.unread) {
-        await markRead.mutateAsync([article.id]);
-        pinRead([article.id]);
+      if (readArticle.unread) {
+        await markRead.mutateAsync([readArticle.id]);
+        pinRead([readArticle.id]);
       } else {
-        await markUnread.mutateAsync([article.id]);
-        unpinRead([article.id]);
+        await markUnread.mutateAsync([readArticle.id]);
+        unpinRead([readArticle.id]);
       }
     } catch (error) {
       console.error("Failed to toggle read status:", error);
@@ -196,12 +199,12 @@ export function ArticleDrawer() {
                   disabled={!canToggleRead}
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
-                  {article.unread ? (
+                  {(readArticle?.unread ?? false) ? (
                     <Circle className="h-4 w-4 text-muted-foreground" />
                   ) : (
                     <CircleCheck className="h-4 w-4 text-primary" />
                   )}
-                  {article.unread
+                  {(readArticle?.unread ?? false)
                     ? t("article.action.markRead")
                     : t("article.action.markUnread")}
                 </Button>
