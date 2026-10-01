@@ -70,6 +70,7 @@ export const zhMessages: PartialMessages = {
   "settings.shortcuts.open": "查看",
   "settings.tab.about": "关于",
   "settings.tab.appearance": "外观",
+  "settings.tab.reading": "阅读",
   "settings.theme.dark": "深色",
   "settings.theme.description": "选择你的主题",
   "settings.theme.label": "主题",

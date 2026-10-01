@@ -70,6 +70,7 @@ export const deMessages: PartialMessages = {
   "settings.shortcuts.open": "Anzeigen",
   "settings.tab.about": "Info",
   "settings.tab.appearance": "Darstellung",
+  "settings.tab.reading": "Lesen",
   "settings.theme.dark": "Dunkel",
   "settings.theme.description": "Farbschema auswahlen",
   "settings.theme.label": "Design",

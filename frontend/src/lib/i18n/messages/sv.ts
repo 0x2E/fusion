@@ -70,6 +70,7 @@ export const svMessages: PartialMessages = {
   "settings.shortcuts.open": "Visa",
   "settings.tab.about": "Om",
   "settings.tab.appearance": "Utseende",
+  "settings.tab.reading": "Läsning",
   "settings.theme.dark": "Mork",
   "settings.theme.description": "Valj fargtema",
   "settings.theme.label": "Tema",

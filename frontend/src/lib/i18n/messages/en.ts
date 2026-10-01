@@ -68,6 +68,7 @@ export const enMessages = {
   "settings.shortcuts.open": "View",
   "settings.tab.about": "About",
   "settings.tab.appearance": "Appearance",
+  "settings.tab.reading": "Reading",
   "settings.theme.dark": "Dark",
   "settings.theme.description": "Choose your color theme",
   "settings.theme.label": "Theme",

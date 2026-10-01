@@ -70,6 +70,7 @@ export const esMessages: PartialMessages = {
   "settings.shortcuts.open": "Ver",
   "settings.tab.about": "Acerca de",
   "settings.tab.appearance": "Apariencia",
+  "settings.tab.reading": "Lectura",
   "settings.theme.dark": "Oscuro",
   "settings.theme.description": "Elige tu tema de color",
   "settings.theme.label": "Tema",

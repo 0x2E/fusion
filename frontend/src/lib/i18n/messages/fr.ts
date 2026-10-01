@@ -70,6 +70,7 @@ export const frMessages: PartialMessages = {
   "settings.shortcuts.open": "Voir",
   "settings.tab.about": "À propos",
   "settings.tab.appearance": "Apparence",
+  "settings.tab.reading": "Lecture",
   "settings.theme.dark": "Sombre",
   "settings.theme.description": "Choisissez votre thème",
   "settings.theme.label": "Thème",

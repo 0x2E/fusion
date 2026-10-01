@@ -70,6 +70,7 @@ export const ruMessages: PartialMessages = {
   "settings.shortcuts.open": "Показать",
   "settings.tab.about": "О приложении",
   "settings.tab.appearance": "Внешний вид",
+  "settings.tab.reading": "Чтение",
   "settings.theme.dark": "Темная",
   "settings.theme.description": "Выберите цветовую тему",
   "settings.theme.label": "Тема",
