@@ -45,108 +45,41 @@ backend/
 
 ## 5. Database schema (current)
 
-Source of truth:
+Source of truth: `backend/internal/store/migrations/` (applied in numeric
+order; each file's comments carry the rationale for that change). The list
+below names tables and their role only — do not maintain a field inventory
+here, it duplicates the migrations and rots.
 
-- `backend/internal/store/migrations/001_initial.sql`
-- `backend/internal/store/migrations/002_feed_fetch_state.sql`
+- `groups` — unique `name`; default group is `id=1`.
+- `feeds` — unique `link`; `group_id` association.
+- `feed_fetch_state` — per-feed runtime pull state, 1:1 with `feeds` via
+  `feed_id` (`ON DELETE CASCADE`); exposed through the API as
+  `feed.fetch_state.*`.
+- `items` — unique `(feed_id, guid)`; unread partial index, `pub_date` and
+  `(feed_id, unread)` indexes.
+- `items_fts` — FTS5 virtual table (`title`, `content`), kept in sync with
+  `items` by triggers.
+- `bookmarks` — content snapshots; `link` unique; `item_id` and `feed_id`
+  are nullable soft associations, so snapshots survive source deletions
+  (rationale in migration 003).
+- `settings` — single row (`id = 1`); nullable preference columns where
+  `NULL` means "never explicitly chosen"; validation lives in the handler,
+  not SQL `CHECK`s (rationale in migration 004).
 
-Legacy compatibility: when an old pre-`schema_migrations` database is detected,
-backend first creates a timestamped `.bak` backup, builds a fresh temporary
-database with the current schema, imports legacy `groups/feeds/items` data,
+Legacy compatibility: when an old pre-`schema_migrations` database is
+detected, backend first creates a timestamped `.bak` backup, builds a fresh
+temporary database with the current schema, imports legacy `groups/feeds/items` data,
 atomically swaps files, then records baseline version `1`.
-
-### groups
-
-- `id`, `name`, `created_at`, `updated_at`
-- `name` is unique
-- Default group: `id=1`, `name='Default'`
-
-### feeds
-
-- Core: `id`, `group_id`, `name`, `link`, `site_url`
-- Runtime control: `suspended`
-- Network: `proxy`
-- Meta: `created_at`, `updated_at`
-- Unique: `link`
-
-### feed_fetch_state
-
-- Per-feed runtime fetch state keyed by `feed_id`
-- Conditional request metadata: `etag`, `last_modified`
-- HTTP cache hints: `cache_control`, `expires_at`, `retry_after_until`
-- Scheduler state: `last_checked_at`, `next_check_at`
-- Outcome state: `last_http_status`, `last_success_at`, `last_error_at`, `last_error`, `consecutive_failures`
-- `feed_id` references `feeds(id)` with `ON DELETE CASCADE`
-- API shape: runtime fields are exposed under `feed.fetch_state.*`.
-
-### Feed runtime state map
-
-```mermaid
-erDiagram
-    FEEDS ||--|| FEED_FETCH_STATE : has
-
-    FEEDS {
-        int id PK
-        int group_id
-        string name
-        string link
-        bool suspended
-    }
-
-    FEED_FETCH_STATE {
-        int feed_id PK,FK
-        string etag
-        string last_modified
-        string cache_control
-        int expires_at
-        int retry_after_until
-        int last_checked_at
-        int next_check_at
-        int last_http_status
-        int last_success_at
-        int last_error_at
-        string last_error
-        int consecutive_failures
-    }
-```
-
-### items
-
-- `id`, `feed_id`, `guid`, `title`, `link`, `content`, `pub_date`, `unread`, `created_at`
-- Unique: `(feed_id, guid)`
-- Indexes: unread partial index, `pub_date` index, `(feed_id, unread)` index
-
-### items full-text search
-
-- Virtual table: `items_fts` (FTS5 on `title`, `content`)
-- Triggers keep `items_fts` synchronized with `items`
-
-### bookmarks
-
-- Snapshot table: `item_id`, `link`, `title`, `content`, `pub_date`, `feed_name`, `created_at`
-- `link` is unique
-- `item_id` is nullable to preserve snapshots after source item deletion
-
-### settings
-
-- Single row (`id = 1`; fusion is single-user): `locale`, `article_page_size`, `theme`, `updated_at`
-- All preference columns are nullable; `NULL` means the user never explicitly
-  chose a value, and no API path ever writes `NULL`
-- Value validation lives in the handler (the only write path), not in SQL
-  `CHECK` constraints: allow-lists change with product decisions and SQLite
-  cannot `ALTER` a `CHECK` in place, so schema-level enums would turn every
-  adjustment into a table rebuild. `article_page_size` is a free integer in
-  the range the items API serves (`1..maxListLimit`); the five-option picker
-  is a frontend UI choice only
 
 ## 6. Data integrity and cascade strategy
 
-- Cascade rules are explicit in store transactions for group/feed/item/bookmark lifecycles:
+- Group/feed/item lifecycles use explicit store transactions:
   - Delete group: move feeds to group `1`, then delete group.
   - Delete feed: set matching bookmarks `item_id=NULL`, delete items, then delete feed.
-- `feed_fetch_state` uses a direct foreign key to `feeds(id)` for guaranteed runtime-state cleanup.
-
-This keeps behavior explicit and avoids hidden DB-level side effects.
+- Two deliberate foreign-key exceptions: `feed_fetch_state.feed_id` cascades
+  (runtime state must not outlive its feed) and `bookmarks.feed_id` is set to
+  `NULL` (snapshots must survive their feed). Every other deletion effect is
+  explicit application logic.
 
 ## 7. API surface (high level)
 
