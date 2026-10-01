@@ -8,13 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// These allow-lists mirror the SQL CHECK constraints and the frontend
-// constants (supportedLocales / articlePageSizeOptions in the preferences
-// store, and the theme literals in the settings dialog).
+// Locale and theme are closed sets by contract (shipped catalogs and
+// next-themes' preference names). The page size is a free value within the
+// range the items API can serve (maxListLimit); the five-option list is only
+// a frontend UI choice, so a future custom-value picker needs no backend
+// change. These allow-lists mirror the frontend constants in the preferences
+// store and the settings dialog.
 var (
-	validLocales          = []string{"en", "zh", "de", "fr", "es", "ru", "pt", "sv"}
-	validArticlePageSizes = []int64{10, 20, 30, 50, 100}
-	validThemes           = []string{"light", "dark", "system"}
+	validLocales = []string{"en", "zh", "de", "fr", "es", "ru", "pt", "sv"}
+	validThemes  = []string{"light", "dark", "system"}
 )
 
 // A missing field and an explicit null are indistinguishable after JSON
@@ -69,7 +71,8 @@ func validateSettingsUpdate(req *updateSettingsRequest) error {
 	if req.Locale != nil && !slices.Contains(validLocales, *req.Locale) {
 		return fmt.Errorf("invalid locale")
 	}
-	if req.ArticlePageSize != nil && !slices.Contains(validArticlePageSizes, *req.ArticlePageSize) {
+	if req.ArticlePageSize != nil &&
+		(*req.ArticlePageSize < 1 || *req.ArticlePageSize > maxListLimit) {
 		return fmt.Errorf("invalid article_page_size")
 	}
 	if req.Theme != nil && !slices.Contains(validThemes, *req.Theme) {

@@ -1271,9 +1271,10 @@ components:
           description: UI language; null means never chosen.
         article_page_size:
           type: integer
-          enum: [10, 20, 30, 50, 100, null]
+          minimum: 1
+          maximum: 100
           nullable: true
-          description: Articles fetched per page; null means never chosen.
+          description: Articles fetched per page (any value the items API can serve); null means never chosen.
         theme:
           type: string
           enum: [light, dark, system, null]
@@ -1293,9 +1294,9 @@ components:
     UpdateSettingsRequest:
       type: object
       description: >-
-        All fields optional; absent (or null) means "leave unchanged". The
-        enum allow-lists are shared with the Settings schema and enforced by
-        a SQL CHECK constraint.
+        All fields optional; absent (or null) means "leave unchanged". Locale
+        and theme are validated against the shipped catalogs / theme names;
+        article_page_size accepts any integer the items API can serve.
       properties:
         locale:
           type: string
@@ -1303,7 +1304,8 @@ components:
           nullable: true
         article_page_size:
           type: integer
-          enum: [10, 20, 30, 50, 100]
+          minimum: 1
+          maximum: 100
           nullable: true
         theme:
           type: string

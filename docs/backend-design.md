@@ -132,9 +132,12 @@ erDiagram
 - Single row (`id = 1`; fusion is single-user): `locale`, `article_page_size`, `theme`, `updated_at`
 - All preference columns are nullable; `NULL` means the user never explicitly
   chose a value, and no API path ever writes `NULL`
-- The enum allow-lists live in three places (SQL `CHECK`, handler
-  validation, frontend constants) and SQLite cannot `ALTER` a `CHECK` in
-  place, so extending one means a table rebuild migration
+- Value validation lives in the handler (the only write path), not in SQL
+  `CHECK` constraints: allow-lists change with product decisions and SQLite
+  cannot `ALTER` a `CHECK` in place, so schema-level enums would turn every
+  adjustment into a table rebuild. `article_page_size` is a free integer in
+  the range the items API serves (`1..maxListLimit`); the five-option picker
+  is a frontend UI choice only
 
 ## 6. Data integrity and cascade strategy
 

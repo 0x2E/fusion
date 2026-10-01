@@ -148,9 +148,10 @@ func TestUpdateSettingsValidation(t *testing.T) {
 		{"invalid locale", `{"locale":"xx"}`, "invalid locale"},
 		{"empty locale", `{"locale":""}`, "invalid locale"},
 		{"locale wrong type", `{"locale":5}`, "invalid request"},
-		{"invalid page size", `{"article_page_size":15}`, "invalid article_page_size"},
+		{"page size below range", `{"article_page_size":0}`, "invalid article_page_size"},
+		{"page size above range", `{"article_page_size":101}`, "invalid article_page_size"},
+		{"negative page size", `{"article_page_size":-10}`, "invalid article_page_size"},
 		{"page size as string", `{"article_page_size":"20"}`, "invalid request"},
-		{"zero page size", `{"article_page_size":0}`, "invalid article_page_size"},
 		{"invalid theme", `{"theme":"blue"}`, "invalid theme"},
 		{"empty theme", `{"theme":""}`, "invalid theme"},
 	}
@@ -171,6 +172,28 @@ func TestUpdateSettingsValidation(t *testing.T) {
 				t.Errorf("expected error %q, got %q", tt.want, errBody.Error)
 			}
 		})
+	}
+}
+
+func TestUpdateSettingsCustomPageSize(t *testing.T) {
+	r, cookie := newSettingsTestRouter(t)
+
+	// The five-option list is a frontend UI choice; any value the items API
+	// can serve (1..maxListLimit) must roundtrip.
+	w := performRequest(r, http.MethodPatch, "/api/settings", strings.NewReader(`{"article_page_size":25}`), nil, cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("PATCH custom page size: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	settings := decodeSettings(t, w).Data
+	if settings.ArticlePageSize == nil || *settings.ArticlePageSize != 25 {
+		t.Errorf("expected article_page_size=25, got %+v", settings)
+	}
+
+	w = performRequest(r, http.MethodGet, "/api/settings", nil, nil, cookie)
+	settings = decodeSettings(t, w).Data
+	if settings.ArticlePageSize == nil || *settings.ArticlePageSize != 25 {
+		t.Errorf("expected article_page_size=25 after GET, got %+v", settings)
 	}
 }
 
