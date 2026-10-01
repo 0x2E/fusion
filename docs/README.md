@@ -1,6 +1,6 @@
 # Documentation Index
 
-- `openapi.yaml`: current HTTP API contract (source of truth)
+- `api-conventions.md`: cross-cutting HTTP API rules (auth, envelopes, cursors, errors, status codes). The endpoint inventory lives in `backend/internal/handler/handler.go` (`SetupRouter`); payload shapes in `backend/internal/model/model.go`.
 - `fever-api.md`: Fever API compatibility contract (`/fever*` endpoints)
 - `backend-design.md`: backend architecture and operational notes
 - `frontend-design.md`: frontend architecture and interaction model

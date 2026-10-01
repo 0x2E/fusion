@@ -116,7 +116,7 @@ Legacy env names (`DB`, `PASSWORD`, `PORT`) are still accepted for backward comp
 
 ## Documentation
 
-- API contract (OpenAPI): [`docs/openapi.yaml`](./docs/openapi.yaml)
+- API conventions (the route inventory lives in `backend/internal/handler/handler.go`): [`docs/api-conventions.md`](./docs/api-conventions.md)
 - Fever API compatibility: [`docs/fever-api.md`](./docs/fever-api.md)
 - Backend design: [`docs/backend-design.md`](./docs/backend-design.md)
 - Frontend design: [`docs/frontend-design.md`](./docs/frontend-design.md)

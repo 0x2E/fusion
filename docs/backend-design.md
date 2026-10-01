@@ -160,7 +160,7 @@ This keeps behavior explicit and avoids hidden DB-level side effects.
 - Settings: get/patch (partial update; absent field leaves the stored value
   unchanged, there is deliberately no way to clear a preference back to null)
 
-Detailed contract: `docs/openapi.yaml`.
+Detailed contract: route registration in `internal/handler/handler.go` (`SetupRouter`), payload shapes in `internal/model/model.go`, cross-cutting conventions in `docs/api-conventions.md`.
 
 ### Breaking API change (feed runtime fields)
 
