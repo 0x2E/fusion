@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  autoMarkReadOptions,
   articlePageSizeOptions,
   supportedLocales,
   usePreferencesStore,
@@ -38,7 +39,7 @@ type SettingsTab = "appearance" | "about";
 // Module scope so the counters survive unmounting the appearance tab or the
 // dialog itself: a late-failing save from an old mount must not revert a
 // newer change made on a new one.
-const changeGenerations = { locale: 0, pageSize: 0, theme: 0 };
+const changeGenerations = { locale: 0, pageSize: 0, theme: 0, autoMarkRead: 0 };
 
 function beginChange(field: keyof typeof changeGenerations): number {
   return ++changeGenerations[field];
@@ -73,7 +74,7 @@ function AppearanceContent() {
   const { theme, setTheme } = useTheme();
   const setSettingsOpen = useUIStore((s) => s.setSettingsOpen);
   const setShortcutsOpen = useUIStore((s) => s.setShortcutsOpen);
-  const { locale, articlePageSize, setLocale, setArticlePageSize } =
+  const { locale, articlePageSize, autoMarkRead, setLocale, setArticlePageSize, setAutoMarkRead } =
     usePreferencesStore();
 
   const localeItems = supportedLocales.map((localeCode) => ({
@@ -83,6 +84,17 @@ function AppearanceContent() {
   const articlePageSizeItems = articlePageSizeOptions.map((size) => ({
     value: size.toString(),
     label: String(size),
+  }));
+  const autoMarkReadItems = autoMarkReadOptions.map((option) => ({
+    value: option,
+    label:
+      option === "off"
+        ? t("settings.autoMarkRead.off")
+        : option === "open"
+          ? t("settings.autoMarkRead.open")
+          : t("settings.autoMarkRead.afterSeconds", {
+              seconds: Number.parseInt(option, 10),
+            }),
   }));
   const themeItems = [
     { value: "light", label: t("settings.theme.light") },
@@ -211,6 +223,44 @@ function AppearanceContent() {
           </SelectTrigger>
           <SelectContent>
             {articlePageSizeItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Auto mark as read */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium">
+            {t("settings.autoMarkRead.label")}
+          </p>
+          <p className="max-w-[280px] text-[13px] text-muted-foreground sm:max-w-none">
+            {t("settings.autoMarkRead.description")}
+          </p>
+        </div>
+        <Select
+          items={autoMarkReadItems}
+          value={autoMarkRead}
+          onValueChange={(v) => {
+            if (!v) return;
+            const previous = autoMarkRead;
+            void applySetting(
+              "autoMarkRead",
+              beginChange("autoMarkRead"),
+              { auto_mark_read: v },
+              () => setAutoMarkRead(v),
+              () => setAutoMarkRead(previous),
+            );
+          }}
+        >
+          <SelectTrigger className="w-auto gap-2 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {autoMarkReadItems.map((item) => (
               <SelectItem key={item.value} value={item.value}>
                 {item.label}
               </SelectItem>

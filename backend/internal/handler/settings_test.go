@@ -15,6 +15,7 @@ type settingsEnvelope struct {
 		Locale          *string `json:"locale"`
 		ArticlePageSize *int64  `json:"article_page_size"`
 		Theme           *string `json:"theme"`
+		AutoMarkRead    *string `json:"auto_mark_read"`
 		UpdatedAt       int64   `json:"updated_at"`
 	} `json:"data"`
 }
@@ -57,13 +58,16 @@ func TestGetSettingsEmpty(t *testing.T) {
 	}
 
 	settings := decodeSettings(t, w).Data
-	if settings.Locale != nil || settings.ArticlePageSize != nil || settings.Theme != nil {
+	if settings.Locale != nil || settings.ArticlePageSize != nil || settings.Theme != nil ||
+		settings.AutoMarkRead != nil {
 		t.Errorf("expected all-null settings, got %+v", settings)
 	}
 
 	// Pointer decoding cannot distinguish a missing key from a JSON null, so
-	// assert on the raw body that all three keys are explicitly present.
-	for _, key := range []string{`"locale":null`, `"article_page_size":null`, `"theme":null`} {
+	// assert on the raw body that all four keys are explicitly present.
+	for _, key := range []string{
+		`"locale":null`, `"article_page_size":null`, `"theme":null`, `"auto_mark_read":null`,
+	} {
 		if !strings.Contains(w.Body.String(), key) {
 			t.Errorf("expected body to contain %s, got %s", key, w.Body.String())
 		}
@@ -154,6 +158,10 @@ func TestUpdateSettingsValidation(t *testing.T) {
 		{"page size as string", `{"article_page_size":"20"}`, "invalid request"},
 		{"invalid theme", `{"theme":"blue"}`, "invalid theme"},
 		{"empty theme", `{"theme":""}`, "invalid theme"},
+		{"invalid auto mark read", `{"auto_mark_read":"sometimes"}`, "invalid auto_mark_read"},
+		{"empty auto mark read", `{"auto_mark_read":""}`, "invalid auto_mark_read"},
+		{"auto mark read wrong type", `{"auto_mark_read":5}`, "invalid request"},
+		{"auto mark read numeric delay not in set", `{"auto_mark_read":"15"}`, "invalid auto_mark_read"},
 	}
 
 	for _, tt := range tests {
@@ -206,10 +214,48 @@ func TestUpdateSettingsEmptyBody(t *testing.T) {
 	}
 
 	settings := decodeSettings(t, w).Data
-	if settings.Locale != nil || settings.ArticlePageSize != nil || settings.Theme != nil {
+	if settings.Locale != nil || settings.ArticlePageSize != nil || settings.Theme != nil ||
+		settings.AutoMarkRead != nil {
 		t.Errorf("expected empty PATCH to be a no-op, got %+v", settings)
 	}
 	if settings.UpdatedAt != 0 {
 		t.Errorf("expected empty PATCH not to create the row, got updated_at=%d", settings.UpdatedAt)
+	}
+}
+
+// A PATCH that only sets auto_mark_read used to be swallowed by the store's
+// all-nil short circuit (which only knew the original three fields).
+func TestUpdateSettingsAutoMarkReadSingleField(t *testing.T) {
+	r, cookie := newSettingsTestRouter(t)
+
+	w := performRequest(r, http.MethodPatch, "/api/settings", strings.NewReader(`{"auto_mark_read":"10"}`), nil, cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("PATCH auto_mark_read: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	settings := decodeSettings(t, w).Data
+	if settings.AutoMarkRead == nil || *settings.AutoMarkRead != "10" {
+		t.Fatalf("expected auto_mark_read=\"10\" in response, got %+v", settings)
+	}
+	if settings.UpdatedAt == 0 {
+		t.Error("expected the row to be created by a new-field-only PATCH")
+	}
+
+	// Round-trip through GET, and confirm the value survives an unrelated PATCH.
+	w = performRequest(r, http.MethodGet, "/api/settings", nil, nil, cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	settings = decodeSettings(t, w).Data
+	if settings.AutoMarkRead == nil || *settings.AutoMarkRead != "10" {
+		t.Errorf("expected auto_mark_read=\"10\" after GET, got %+v", settings)
+	}
+
+	w = performRequest(r, http.MethodPatch, "/api/settings", strings.NewReader(`{"locale":"de"}`), nil, cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("PATCH locale: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	settings = decodeSettings(t, w).Data
+	if settings.AutoMarkRead == nil || *settings.AutoMarkRead != "10" {
+		t.Errorf("expected auto_mark_read to survive an unrelated PATCH, got %+v", settings)
 	}
 }

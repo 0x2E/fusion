@@ -24,13 +24,15 @@ import {
 } from "@/queries/bookmarks";
 import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
+import { useAutoMarkRead } from "@/hooks/use-auto-mark-read";
 import { useI18n } from "@/lib/i18n";
 import { cn, formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
-import { useReadStatePins } from "@/store";
+import { useReadStatePins, usePreferencesStore } from "@/store";
+import { autoMarkReadDelayMs } from "@/store/preferences";
 
 export function ArticleDrawer() {
   const { t } = useI18n();
@@ -85,6 +87,23 @@ export function ArticleDrawer() {
   const bookmark = article ? getBookmarkByItemId(article.id) : null;
   const starred = article ? isItemStarred(article.id) : false;
   const safeArticleLink = article ? toSafeExternalUrl(article.link) : null;
+
+  const autoMarkRead = usePreferencesStore((s) => s.autoMarkRead);
+  const autoMarkDelayMs = autoMarkReadDelayMs(autoMarkRead);
+
+  useAutoMarkRead({
+    target:
+      article && canToggleRead && article.unread && autoMarkDelayMs !== null
+        ? { id: article.id, unread: true }
+        : null,
+    delayMs: autoMarkDelayMs ?? 0,
+    // mutate and pinRead must share one synchronous turn (see hook docs).
+    onMarkRead: (id) => {
+      markRead.mutate([id]);
+      pinRead([id]);
+    },
+    hasPendingMutation: () => markRead.isPending || markUnread.isPending,
+  });
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {

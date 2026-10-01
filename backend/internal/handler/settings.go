@@ -15,8 +15,9 @@ import (
 // change. These allow-lists mirror the frontend constants in the preferences
 // store and the settings dialog.
 var (
-	validLocales = []string{"en", "zh", "de", "fr", "es", "ru", "pt", "sv"}
-	validThemes  = []string{"light", "dark", "system"}
+	validLocales      = []string{"en", "zh", "de", "fr", "es", "ru", "pt", "sv"}
+	validThemes       = []string{"light", "dark", "system"}
+	validAutoMarkRead = []string{"off", "open", "5", "10", "30"}
 )
 
 // A missing field and an explicit null are indistinguishable after JSON
@@ -25,6 +26,7 @@ type updateSettingsRequest struct {
 	Locale          *string `json:"locale"`
 	ArticlePageSize *int64  `json:"article_page_size"`
 	Theme           *string `json:"theme"`
+	AutoMarkRead    *string `json:"auto_mark_read"`
 }
 
 func (h *Handler) getSettings(c *gin.Context) {
@@ -53,6 +55,7 @@ func (h *Handler) updateSettings(c *gin.Context) {
 		Locale:          req.Locale,
 		ArticlePageSize: req.ArticlePageSize,
 		Theme:           req.Theme,
+		AutoMarkRead:    req.AutoMarkRead,
 	}); err != nil {
 		internalError(c, err, "update settings")
 		return
@@ -77,6 +80,9 @@ func validateSettingsUpdate(req *updateSettingsRequest) error {
 	}
 	if req.Theme != nil && !slices.Contains(validThemes, *req.Theme) {
 		return fmt.Errorf("invalid theme")
+	}
+	if req.AutoMarkRead != nil && !slices.Contains(validAutoMarkRead, *req.AutoMarkRead) {
+		return fmt.Errorf("invalid auto_mark_read")
 	}
 	return nil
 }

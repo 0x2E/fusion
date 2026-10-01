@@ -67,6 +67,7 @@ export interface Settings {
   locale: string | null;
   article_page_size: number | null;
   theme: string | null;
+  auto_mark_read: string | null;
   updated_at: number;
 }
 
@@ -76,6 +77,7 @@ export interface UpdateSettingsRequest {
   locale?: string;
   article_page_size?: number;
   theme?: string;
+  auto_mark_read?: string;
 }
 
 // API response wrappers
