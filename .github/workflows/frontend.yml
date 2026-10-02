@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  i18n:
+  check:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -34,3 +34,9 @@ jobs:
       - name: Check i18n dictionaries
         working-directory: frontend
         run: pnpm run check:i18n
+      - name: Typecheck
+        working-directory: frontend
+        run: pnpm run typecheck
+      - name: Unit tests
+        working-directory: frontend
+        run: pnpm run test

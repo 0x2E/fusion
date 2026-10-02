@@ -1,7 +1,8 @@
 import { api } from "./client";
 import type {
   APIResponse,
-  ListAPIResponse,
+  ListResponse,
+  PaginatedListResponse,
   LoginRequest,
   Group,
   Feed,
@@ -45,7 +46,7 @@ export const oidcAPI = {
 
 // Group APIs
 export const groupAPI = {
-  list: () => api.get<ListAPIResponse<Group>>("/groups"),
+  list: () => api.get<ListResponse<Group>>("/groups"),
 
   get: (id: number) => api.get<APIResponse<Group>>(`/groups/${id}`),
 
@@ -60,7 +61,7 @@ export const groupAPI = {
 
 // Feed APIs
 export const feedAPI = {
-  list: () => api.get<ListAPIResponse<Feed>>("/feeds"),
+  list: () => api.get<ListResponse<Feed>>("/feeds"),
 
   get: (id: number) => api.get<APIResponse<Feed>>(`/feeds/${id}`),
 
@@ -94,7 +95,7 @@ export const itemAPI = {
     if (params?.order_by) query.set("order_by", params.order_by);
 
     const queryString = query.toString();
-    return api.get<ListAPIResponse<Item>>(
+    return api.get<PaginatedListResponse<Item>>(
       `/items${queryString ? `?${queryString}` : ""}`,
     );
   },
@@ -116,7 +117,7 @@ export const bookmarkAPI = {
     if (params.group_id) query.set("group_id", params.group_id.toString());
     query.set("limit", (params.limit ?? 50).toString());
     if (params.before) query.set("before", params.before);
-    return api.get<ListAPIResponse<Bookmark>>(`/bookmarks?${query}`);
+    return api.get<PaginatedListResponse<Bookmark>>(`/bookmarks?${query}`);
   },
 
   get: (id: number) => api.get<APIResponse<Bookmark>>(`/bookmarks/${id}`),

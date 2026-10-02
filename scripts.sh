@@ -21,6 +21,22 @@ test_backend() {
   (cd backend && go test ./...)
 }
 
+test_frontend() {
+  echo "testing frontend"
+  (
+    cd frontend
+    pnpm install --frozen-lockfile --prefer-offline
+    pnpm run typecheck
+    pnpm run test
+    pnpm run check:i18n
+  )
+}
+
+test_all() {
+  test_backend
+  test_frontend
+}
+
 build_frontend() {
   echo "building frontend"
   version=$(resolve_version)
@@ -120,7 +136,9 @@ usage() {
 Usage: ./scripts.sh <command>
 
 Commands:
+  test                     Run backend and frontend tests
   test-backend             Run backend tests
+  test-frontend            Run frontend typecheck, tests, and i18n check
   build-frontend           Build frontend bundle
   build-backend [os] [arch] [output]
                            Build backend binary
@@ -130,8 +148,14 @@ EOF
 }
 
 case "${1:-}" in
-"test" | "test-backend")
+"test")
+  test_all
+  ;;
+"test-backend")
   test_backend
+  ;;
+"test-frontend")
+  test_frontend
   ;;
 "build-frontend")
   build_frontend

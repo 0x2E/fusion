@@ -1,12 +1,17 @@
 # Contributing to Fusion
 
-Thanks for contributing.
+Thanks for your interest in Fusion.
+
+Fusion is maintained by a small team working closely with coding agents, and
+the sustainable way to contribute is [issues](https://github.com/0x2E/fusion/issues):
+report bugs, propose features, or ask questions there. There is no need to
+open pull requests.
 
 Fusion values simple, maintainable changes over complex abstractions.
 
-## 1. Before you start
+## 1. Reporting problems
 
-- Search existing issues/PRs first.
+- Search existing issues first to avoid duplicates.
 - For bugs, include reproducible steps, expected behavior, and actual behavior.
 - For features, explain the concrete use case and user value.
 
@@ -27,7 +32,7 @@ cd frontend && pnpm install
 
 Backend uses Go modules and installs dependencies automatically via `go` tooling.
 
-## 3. Validation checklist (required before PR)
+## 3. Validation checklist (for local changes)
 
 ### Backend
 
@@ -42,23 +47,20 @@ go build -o /dev/null ./cmd/fusion
 
 ```shell
 cd frontend
-npx tsc -b --noEmit
-pnpm lint
+pnpm typecheck
+pnpm test
+pnpm run check:i18n
 pnpm build
 ```
 
-If your change is scoped, you can run a smaller test subset first, but run the relevant final checks before requesting review.
+`pnpm lint` currently cannot start: `typescript-eslint` does not support
+TypeScript 7 yet (typescript-eslint/typescript-eslint#10940). Re-add it to
+the checklist once upstream support lands.
 
-## 4. Pull request expectations
+If your change is scoped, you can run a smaller test subset first, but run
+the relevant final checks before committing.
 
-- Keep PRs focused. One PR should solve one clear problem.
-- Explain why the change is needed, not only what changed.
-- Include screenshots/GIFs for UI changes.
-- Link related issue(s).
-- Mark as Draft if not ready for review.
-- If you use AI tools, review and validate outputs carefully before submission.
-
-## 5. Code style guidelines
+## 4. Code style guidelines
 
 - Prefer readable, self-explanatory naming.
 - Avoid over-engineering.
