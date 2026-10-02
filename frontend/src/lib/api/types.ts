@@ -145,7 +145,7 @@ export interface ValidateFeedResponse {
 
 // Two mutually exclusive modes: either reference an item by id (the backend
 // snapshots all fields from it and ignores everything else — preferred), or
-// provide a full snapshot for bookmarks without an backing item.
+// provide a full snapshot for bookmarks without a backing item.
 export type CreateBookmarkRequest =
   | { item_id: number }
   | {

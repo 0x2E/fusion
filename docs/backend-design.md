@@ -61,7 +61,7 @@ here, it duplicates the migrations and rots.
   `items` by triggers.
 - `bookmarks` — content snapshots; `link` unique; `item_id` and `feed_id`
   are nullable soft associations, so snapshots survive source deletions
-  (rationale in migration 003).
+  (see migrations 001 and 003 for the rationale).
 - `settings` — single row (`id = 1`); nullable preference columns where
   `NULL` means "never explicitly chosen"; validation lives in the handler,
   not SQL `CHECK`s (rationale in migration 004).
@@ -76,10 +76,14 @@ atomically swaps files, then records baseline version `1`.
 - Group/feed/item lifecycles use explicit store transactions:
   - Delete group: move feeds to group `1`, then delete group.
   - Delete feed: set matching bookmarks `item_id=NULL`, delete items, then delete feed.
-- Two deliberate foreign-key exceptions: `feed_fetch_state.feed_id` cascades
-  (runtime state must not outlive its feed) and `bookmarks.feed_id` is set to
-  `NULL` (snapshots must survive their feed). Every other deletion effect is
-  explicit application logic.
+- The declared foreign-key `ON DELETE` actions are the safety net around
+  those transactions: `feeds.group_id` RESTRICT (a non-empty group cannot
+  be deleted at the DB level; the app moves feeds away first, so this
+  never fires in practice), `items.feed_id` CASCADE (redundant with the
+  explicit delete path but guarantees no orphaned items),
+  `feed_fetch_state.feed_id` CASCADE (runtime state must not outlive its
+  feed), and `bookmarks.item_id` / `bookmarks.feed_id` SET NULL (snapshot
+  content must survive source deletions).
 
 ## 7. API surface (high level)
 

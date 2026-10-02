@@ -1,18 +1,24 @@
 # API Conventions
 
 The HTTP contract lives in the code: route inventory in
-`backend/internal/handler/handler.go` (`SetupRouter`), payload shapes in
-`backend/internal/model/model.go` (JSON tags), and the frontend call surface in
-`frontend/src/lib/api/index.ts`. This page records only the cross-cutting rules
-that are distributed across handlers, so they do not need to be rediscovered
-per endpoint. If code and this page disagree, the code wins — fix the page.
+`backend/internal/handler/handler.go` (`SetupRouter`), response shapes in
+`backend/internal/model/model.go` (JSON tags), request bodies in the
+handler files (`createFeedRequest`, `createBookmarkRequest`, ...), and the
+frontend call surface in `frontend/src/lib/api/index.ts`. This page
+records only the cross-cutting rules that are distributed across handlers,
+so they do not need to be rediscovered per endpoint. If code and this page
+disagree, the code wins — fix the page.
 
 ## Base path and authentication
 
-- All endpoints are under `/api`. The Fever compatibility API (`/fever*`) is
-  separate: see `docs/fever-api.md`.
+- All endpoints are under `/api`. Two exceptions: the Fever compatibility
+  API (`/fever*`, see `docs/fever-api.md`) and a bare `GET /oidc/callback`
+  registered only when OIDC is configured, for deployments whose redirect
+  URI omits `/api`.
 - Authentication is a session cookie named `session` (`POST /api/sessions`
   with `{"password": ...}` sets it; `DELETE /api/sessions` clears it, 204).
+- Anonymous mode: when both password and OIDC are unconfigured, the auth
+  middleware lets every request through.
 - Login attempts are rate limited: excess attempts get `429` with a
   `Retry-After` header (seconds).
 - OIDC: `GET /api/oidc/enabled` always exists; `/api/oidc/login` and
@@ -35,13 +41,17 @@ per endpoint. If code and this page disagree, the code wins — fix the page.
 - Cursor format: `"<value>_<id>"` (two int64s, underscore-separated). The
   value is `pub_date` (unix) for items and `created_at` (unix) for bookmarks;
   `id` breaks ties.
+- The items cursor is keyed on `pub_date`, so `before` is only valid with
+  the default ordering: combining `order_by=created_at` with `before` is
+  rejected with 400. Only the first page can use `created_at`.
 - Ordering is always DESC. Items support `order_by=pub_date|created_at`
   (default `pub_date`); any other value silently falls back to `pub_date`.
-- `limit` is capped at 100 (`maxListLimit` in `backend/internal/handler/item.go`).
+- `limit` is capped at 100 on every endpoint that accepts one (items,
+  bookmarks, search); `maxListLimit` in `backend/internal/handler/item.go`.
 
 ## Errors
 
-Always `{"error": "<message>"}`:
+Handlers report failures as `{"error": "<message>"}`:
 
 - `400` — invalid input (message varies)
 - `401` — `"unauthorized"`
@@ -49,12 +59,16 @@ Always `{"error": "<message>"}`:
 - `429` — `"too many login attempts"` (plus `Retry-After`)
 - `500` — `"internal server error"` (details are logged server-side only)
 
+Three cases return the status with an empty body instead: unknown routes
+(404), CORS origin rejection (403), and panic recovery (500).
+
 ## Status codes
 
-- `200` — reads and creates (body present)
+- `200` — any response with a body: reads, creates, and updates
+- `204` — body-less success: mark items read/unread, all deletes, logout,
+  and the `GET /api/sessions` validity probe (valid → 204, invalid → 401)
 - `202` — feed refresh requests (`/feeds/refresh`, `/feeds/{id}/refresh`):
   refresh happens asynchronously, no body
-- `204` — body-less mutations: mark items read/unread, all deletes, logout
 
 ## Request quirks worth knowing
 

@@ -10,7 +10,7 @@
 
 - This project is an open-source, lightweight RSS reader and aggregator.
 - Prioritize simplicity and maintainability over complexity.
-- HTTP API facts live in code: routes in `backend/internal/handler/handler.go` (`SetupRouter`), payload shapes in `backend/internal/model/model.go` (mirrored by `frontend/src/lib/api/types.ts`); cross-cutting conventions in `docs/api-conventions.md`.
+- HTTP API facts live in code: routes in `backend/internal/handler/handler.go` (`SetupRouter`), response shapes in `backend/internal/model/model.go` and request bodies in the handler files (both mirrored by `frontend/src/lib/api/types.ts`); cross-cutting conventions in `docs/api-conventions.md`.
 
 ## Code Standards
 
