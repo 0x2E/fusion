@@ -136,7 +136,7 @@ Example:
 
 ## Contributing
 
-Contributions are welcome. Please read [Contributing Guidelines](./CONTRIBUTING.md) before opening a PR.
+Please report bugs and propose features via [issues](https://github.com/0x2E/fusion/issues) — there is no need to open pull requests. See [Contributing](./CONTRIBUTING.md) for local development.
 
 ## Credits
 
