@@ -11,7 +11,7 @@
     "build": "tsr generate && tsc -b && vite build",
     "check:i18n": "node scripts/check-i18n.mjs",
     "lint": "eslint .",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsr generate && tsc -b --noEmit",
     "test": "vitest run",
     "preview": "vite preview"
   },
