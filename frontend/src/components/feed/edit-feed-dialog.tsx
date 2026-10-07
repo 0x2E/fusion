@@ -39,7 +39,7 @@ import {
   DEFAULT_PULL_INTERVAL,
   FALLBACK_REFRESH_INTERVALS,
   formatInterval,
-  refreshIntervalKey,
+  intervalOptions,
 } from "@/lib/refresh-interval";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -56,7 +56,7 @@ export function EditFeedDialog() {
   const [groupId, setGroupId] = useState<string>("");
   const [proxy, setProxy] = useState("");
   const [suspended, setSuspended] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState<string>("default");
+  const [refreshInterval, setRefreshInterval] = useState<string>("");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -72,7 +72,10 @@ export function EditFeedDialog() {
 
   const { data: appInfo } = useAppInfo();
   const globalPullInterval = appInfo?.pull_interval ?? DEFAULT_PULL_INTERVAL;
-  const intervalOptions = appInfo?.allowed_refresh_intervals ?? FALLBACK_REFRESH_INTERVALS;
+  const options = intervalOptions(
+    globalPullInterval,
+    appInfo?.allowed_refresh_intervals ?? FALLBACK_REFRESH_INTERVALS,
+  );
 
   useEffect(() => {
     if (editingFeed) {
@@ -81,10 +84,10 @@ export function EditFeedDialog() {
       setGroupId(editingFeed.group_id.toString());
       setProxy(editingFeed.proxy ?? "");
       setSuspended(editingFeed.suspended);
-      // The backend only stores whitelisted values or NULL; treat anything
-      // else (e.g. legacy 0) as the global default.
+      // NULL (or a legacy 0) stays "untouched" (empty): the Select shows the
+      // live global fallback, and an untouched save sends nothing.
       const stored = editingFeed.refresh_interval_seconds;
-      setRefreshInterval(stored && stored > 0 ? stored.toString() : "default");
+      setRefreshInterval(stored && stored > 0 ? stored.toString() : "");
       setIsAdvancedOpen(!!editingFeed.proxy || stored != null);
       setIsMobileErrorTooltipOpen(false);
     }
@@ -96,7 +99,7 @@ export function EditFeedDialog() {
     setGroupId("");
     setProxy("");
     setSuspended(false);
-    setRefreshInterval("default");
+    setRefreshInterval("");
     setIsAdvancedOpen(false);
     setIsDeleteOpen(false);
   };
@@ -146,15 +149,13 @@ export function EditFeedDialog() {
         request.proxy = newProxy;
       }
 
-      if (refreshInterval === "default") {
-        if (editingFeed.refresh_interval_seconds != null) {
-          request.refresh_interval_seconds = 0;
-        }
-      } else {
-        const newVal = parseInt(refreshInterval, 10);
-        if (editingFeed.refresh_interval_seconds !== newVal) {
-          request.refresh_interval_seconds = newVal;
-        }
+      // The global-interval entry means "follow the global setting" and is
+      // stored as NULL (cleared via 0); anything else is an explicit override.
+      const stored = editingFeed.refresh_interval_seconds;
+      const selected = parseInt(refreshInterval || String(globalPullInterval), 10);
+      if (selected !== (stored && stored > 0 ? stored : globalPullInterval)) {
+        request.refresh_interval_seconds =
+          selected === globalPullInterval ? 0 : selected;
       }
 
       if (Object.keys(request).length === 0) {
@@ -341,19 +342,17 @@ export function EditFeedDialog() {
                   <label className="text-[13px] font-medium" id="edit-feed-refresh-label">
                     {t("feed.add.refreshFrequencyLabel")}
                   </label>
-                  <Select value={refreshInterval} onValueChange={(v) => v && setRefreshInterval(v)}>
+                  <Select
+                    value={refreshInterval || String(globalPullInterval)}
+                    onValueChange={(v) => v && setRefreshInterval(v)}
+                  >
                     <SelectTrigger className="h-10" aria-labelledby="edit-feed-refresh-label">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">
-                        {t("feed.add.refreshFrequencyDefault", {
-                          interval: formatInterval(globalPullInterval),
-                        })}
-                      </SelectItem>
-                      {intervalOptions.map((seconds) => (
+                      {options.map((seconds) => (
                         <SelectItem key={seconds} value={seconds.toString()}>
-                          {t(refreshIntervalKey(seconds))}
+                          {formatInterval(seconds)}
                         </SelectItem>
                       ))}
                     </SelectContent>
