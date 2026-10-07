@@ -108,6 +108,7 @@ export const ptMessages: PartialMessages = {
   "feed.add.title": "Adicionar feed",
   "feed.add.urlLabel": "URL do feed",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
+  "feed.add.refreshFrequencyLabel": "Frequência de atualização",
   "feed.add.validateTitle": "Validar URL do feed",
   "feed.edit.deleteConfirm.description":
     'Tem certeza de que deseja cancelar a inscricao de "{name}"? Todos os artigos deste feed serao excluidos.',

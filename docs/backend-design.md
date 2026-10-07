@@ -94,10 +94,28 @@ This section only records history.
 
 ### Scheduler
 
-Tuning knobs (`FUSION_PULL_INTERVAL`, `FUSION_PULL_CONCURRENCY`,
-`FUSION_PULL_TIMEOUT`, `FUSION_PULL_MAX_BACKOFF`) and their defaults are
-listed in [`.env.example`](../.env.example) — the behavioral rules below
-are what the knobs mean.
+The pull loop sleeps until the earliest due time across non-suspended feeds
+(the larger of `next_check_at` and `retry_after_until` per feed), and is
+woken immediately whenever scheduling state changes: feeds created, updated,
+or deleted, and any pull that rewrites `next_check_at` (including manual
+refresh). The sleep is capped at `FUSION_PULL_INTERVAL`, so a stale
+`next_check_at` delays re-evaluation by at most one global interval. Tuning
+knobs (`FUSION_PULL_INTERVAL`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_TIMEOUT`,
+`FUSION_PULL_MAX_BACKOFF`) and their defaults are listed in
+[`.env.example`](../.env.example) — the behavioral rules below are what the
+knobs mean.
+
+### Per-feed interval override
+
+- A feed may carry `refresh_interval_seconds` (closed set, exposed by
+  `GET /api/app`); `NULL` means "use `FUSION_PULL_INTERVAL`".
+- An explicit override always wins: changing `FUSION_PULL_INTERVAL` (or
+  relying on its default) only re-schedules feeds stored as `NULL`, never
+  feeds with an override.
+- Wherever the rules below say "interval", read the feed's effective
+  interval: its override when set, else the global one.
+- Changing or clearing an override makes the feed due immediately and drops
+  any `retry_after_until` hold, so the new cadence starts from now.
 
 ### Next-check bound
 

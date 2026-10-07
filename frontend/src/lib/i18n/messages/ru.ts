@@ -108,6 +108,7 @@ export const ruMessages: PartialMessages = {
   "feed.add.title": "Добавить ленту",
   "feed.add.urlLabel": "URL ленты",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
+  "feed.add.refreshFrequencyLabel": "Частота обновления",
   "feed.add.validateTitle": "Проверить URL ленты",
   "feed.edit.deleteConfirm.description":
     "Вы уверены, что хотите отписаться от \"{name}\"? Все статьи этой ленты будут удалены.",

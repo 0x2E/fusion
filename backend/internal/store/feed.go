@@ -10,82 +10,26 @@ import (
 	"github.com/0x2E/fusion/internal/pullpolicy"
 )
 
-func (s *Store) ListFeeds() ([]*model.Feed, error) {
-	rows, err := s.db.Query(`
-		SELECT f.id, f.group_id, f.name, f.link, f.site_url,
-		       f.suspended, f.proxy, f.created_at, f.updated_at,
-		       COALESCE(fs.etag, ''), COALESCE(fs.last_modified, ''), COALESCE(fs.cache_control, ''),
-		       COALESCE(fs.expires_at, 0), COALESCE(fs.last_checked_at, 0), COALESCE(fs.next_check_at, 0),
-		       COALESCE(fs.last_http_status, 0), COALESCE(fs.retry_after_until, 0), COALESCE(fs.last_success_at, 0),
-		       COALESCE(fs.last_error_at, 0), COALESCE(fs.last_error, ''), COALESCE(fs.consecutive_failures, 0),
-		       COALESCE(SUM(CASE WHEN i.unread = 1 THEN 1 ELSE 0 END), 0) AS unread_count,
-		       COALESCE(COUNT(i.id), 0) AS item_count
-		FROM feeds f
-		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
-		LEFT JOIN items i ON i.feed_id = f.id
-		GROUP BY f.id, f.group_id, f.name, f.link, f.site_url,
-		         f.suspended, f.proxy, f.created_at, f.updated_at,
-		         fs.etag, fs.last_modified, fs.cache_control, fs.expires_at, fs.last_checked_at,
-		         fs.next_check_at, fs.last_http_status, fs.retry_after_until, fs.last_success_at,
-		         fs.last_error_at, fs.last_error, fs.consecutive_failures
-		ORDER BY f.id
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// feedSelectColumns is the shared feed + fetch-state projection used by every
+// feed read. ListFeeds appends the two item-count aggregates on top of it.
+const feedSelectColumns = `f.id, f.group_id, f.name, f.link, f.site_url,
+	       f.suspended, f.proxy, f.refresh_interval_seconds, f.created_at, f.updated_at,
+	       COALESCE(fs.etag, ''), COALESCE(fs.last_modified, ''), COALESCE(fs.cache_control, ''),
+	       COALESCE(fs.expires_at, 0), COALESCE(fs.last_checked_at, 0), COALESCE(fs.next_check_at, 0),
+	       COALESCE(fs.last_http_status, 0), COALESCE(fs.retry_after_until, 0), COALESCE(fs.last_success_at, 0),
+	       COALESCE(fs.last_error_at, 0), COALESCE(fs.last_error, ''), COALESCE(fs.consecutive_failures, 0)`
 
-	feeds := []*model.Feed{}
-	for rows.Next() {
-		f := &model.Feed{}
-		var suspended int
-		if err := rows.Scan(
-			&f.ID,
-			&f.GroupID,
-			&f.Name,
-			&f.Link,
-			&f.SiteURL,
-			&suspended,
-			&f.Proxy,
-			&f.CreatedAt,
-			&f.UpdatedAt,
-			&f.FetchState.ETag,
-			&f.FetchState.LastModified,
-			&f.FetchState.CacheControl,
-			&f.FetchState.ExpiresAt,
-			&f.FetchState.LastCheckedAt,
-			&f.FetchState.NextCheckAt,
-			&f.FetchState.LastHTTPStatus,
-			&f.FetchState.RetryAfterUntil,
-			&f.FetchState.LastSuccessAt,
-			&f.FetchState.LastErrorAt,
-			&f.FetchState.LastError,
-			&f.FetchState.ConsecutiveFailures,
-			&f.UnreadCount,
-			&f.ItemCount,
-		); err != nil {
-			return nil, err
-		}
-		f.Suspended = intToBool(suspended)
-		feeds = append(feeds, f)
-	}
-	return feeds, rows.Err()
+type rowScanner interface {
+	Scan(dest ...any) error
 }
 
-func (s *Store) GetFeed(id int64) (*model.Feed, error) {
+// scanFeed reads the feedSelectColumns projection, plus item counts when
+// withCounts is set, and normalizes NULL and 0/1 columns into the model.
+func scanFeed(row rowScanner, withCounts bool) (*model.Feed, error) {
 	f := &model.Feed{}
 	var suspended int
-	err := s.db.QueryRow(`
-		SELECT f.id, f.group_id, f.name, f.link, f.site_url,
-		       f.suspended, f.proxy, f.created_at, f.updated_at,
-		       COALESCE(fs.etag, ''), COALESCE(fs.last_modified, ''), COALESCE(fs.cache_control, ''),
-		       COALESCE(fs.expires_at, 0), COALESCE(fs.last_checked_at, 0), COALESCE(fs.next_check_at, 0),
-		       COALESCE(fs.last_http_status, 0), COALESCE(fs.retry_after_until, 0), COALESCE(fs.last_success_at, 0),
-		       COALESCE(fs.last_error_at, 0), COALESCE(fs.last_error, ''), COALESCE(fs.consecutive_failures, 0)
-		FROM feeds f
-		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
-		WHERE f.id = :id
-	`, sql.Named("id", id)).Scan(
+	var refreshIntervalSeconds sql.NullInt64
+	dest := []any{
 		&f.ID,
 		&f.GroupID,
 		&f.Name,
@@ -93,6 +37,7 @@ func (s *Store) GetFeed(id int64) (*model.Feed, error) {
 		&f.SiteURL,
 		&suspended,
 		&f.Proxy,
+		&refreshIntervalSeconds,
 		&f.CreatedAt,
 		&f.UpdatedAt,
 		&f.FetchState.ETag,
@@ -107,19 +52,115 @@ func (s *Store) GetFeed(id int64) (*model.Feed, error) {
 		&f.FetchState.LastErrorAt,
 		&f.FetchState.LastError,
 		&f.FetchState.ConsecutiveFailures,
-	)
+	}
+	if withCounts {
+		dest = append(dest, &f.UnreadCount, &f.ItemCount)
+	}
+	if err := row.Scan(dest...); err != nil {
+		return nil, err
+	}
+	f.Suspended = intToBool(suspended)
+	if refreshIntervalSeconds.Valid {
+		f.RefreshIntervalSeconds = &refreshIntervalSeconds.Int64
+	}
+	return f, nil
+}
+
+func (s *Store) ListFeeds() ([]*model.Feed, error) {
+	rows, err := s.db.Query(`
+		SELECT ` + feedSelectColumns + `,
+		       COALESCE(SUM(CASE WHEN i.unread = 1 THEN 1 ELSE 0 END), 0) AS unread_count,
+		       COALESCE(COUNT(i.id), 0) AS item_count
+		FROM feeds f
+		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
+		LEFT JOIN items i ON i.feed_id = f.id
+		GROUP BY f.id, f.group_id, f.name, f.link, f.site_url,
+		         f.suspended, f.proxy, f.refresh_interval_seconds, f.created_at, f.updated_at,
+		         fs.etag, fs.last_modified, fs.cache_control, fs.expires_at, fs.last_checked_at,
+		         fs.next_check_at, fs.last_http_status, fs.retry_after_until, fs.last_success_at,
+		         fs.last_error_at, fs.last_error, fs.consecutive_failures
+		ORDER BY f.id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	feeds := []*model.Feed{}
+	for rows.Next() {
+		f, err := scanFeed(rows, true)
+		if err != nil {
+			return nil, err
+		}
+		feeds = append(feeds, f)
+	}
+	return feeds, rows.Err()
+}
+
+func (s *Store) GetFeed(id int64) (*model.Feed, error) {
+	row := s.db.QueryRow(`
+		SELECT `+feedSelectColumns+`
+		FROM feeds f
+		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
+		WHERE f.id = :id
+	`, sql.Named("id", id))
+	f, err := scanFeed(row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: feed", ErrNotFound)
 		}
 		return nil, fmt.Errorf("get feed: %w", err)
 	}
-
-	f.Suspended = intToBool(suspended)
 	return f, nil
 }
 
-func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string) (*model.Feed, error) {
+// ListDueFeeds returns non-suspended feeds whose next_check_at has passed.
+// It skips the item-count join used by ListFeeds; callers still apply
+// pullpolicy.ShouldSkip as the authoritative skip decision, which also covers
+// retry-after holds and legacy zero-state rows.
+func (s *Store) ListDueFeeds(now int64) ([]*model.Feed, error) {
+	rows, err := s.db.Query(`
+		SELECT `+feedSelectColumns+`
+		FROM feeds f
+		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
+		WHERE f.suspended = 0 AND COALESCE(fs.next_check_at, 0) <= :now
+		ORDER BY f.id
+	`, sql.Named("now", now))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	feeds := []*model.Feed{}
+	for rows.Next() {
+		f, err := scanFeed(rows, false)
+		if err != nil {
+			return nil, err
+		}
+		feeds = append(feeds, f)
+	}
+	return feeds, rows.Err()
+}
+
+// NextWakeTime returns the earliest unix time at which any non-suspended feed
+// becomes pullable, accounting for both next_check_at and retry_after_until
+// (ShouldSkip skips a feed while either is in the future). ok is false when
+// there are no non-suspended feeds; a returned 0 means "due immediately".
+func (s *Store) NextWakeTime() (next int64, ok bool, err error) {
+	var null sql.NullInt64
+	err = s.db.QueryRow(`
+		SELECT MIN(MAX(COALESCE(fs.next_check_at, 0), COALESCE(fs.retry_after_until, 0)))
+		FROM feeds f
+		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
+		WHERE f.suspended = 0
+	`).Scan(&null)
+	if err != nil || !null.Valid {
+		return 0, false, err
+	}
+	return null.Int64, true, nil
+}
+
+func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string, refreshIntervalSeconds *int64) (*model.Feed, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
@@ -127,10 +168,10 @@ func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string) (*m
 	defer tx.Rollback()
 
 	result, err := tx.Exec(`
-		INSERT INTO feeds (group_id, name, link, site_url, proxy)
-		VALUES (:group_id, :name, :link, :site_url, :proxy)
+		INSERT INTO feeds (group_id, name, link, site_url, proxy, refresh_interval_seconds)
+		VALUES (:group_id, :name, :link, :site_url, :proxy, :refresh_interval_seconds)
 	`, sql.Named("group_id", groupID), sql.Named("name", name), sql.Named("link", link),
-		sql.Named("site_url", siteURL), sql.Named("proxy", proxy))
+		sql.Named("site_url", siteURL), sql.Named("proxy", proxy), sql.Named("refresh_interval_seconds", refreshIntervalSeconds))
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +234,11 @@ type UpdateFeedParams struct {
 	SiteURL   *string
 	Suspended *bool
 	Proxy     *string
+	// RefreshIntervalSeconds sets a per-feed override; ClearRefreshInterval
+	// resets it to NULL (global interval). ClearRefreshInterval wins when both
+	// are set.
+	RefreshIntervalSeconds *int64
+	ClearRefreshInterval   bool
 }
 
 // UpdateFeed performs partial update of feed fields using a single dynamic UPDATE query.
@@ -223,6 +269,13 @@ func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 	if params.Proxy != nil {
 		setClauses = append(setClauses, "proxy = :proxy")
 		args = append(args, sql.Named("proxy", *params.Proxy))
+	}
+	switch {
+	case params.ClearRefreshInterval:
+		setClauses = append(setClauses, "refresh_interval_seconds = NULL")
+	case params.RefreshIntervalSeconds != nil:
+		setClauses = append(setClauses, "refresh_interval_seconds = :refresh_interval_seconds")
+		args = append(args, sql.Named("refresh_interval_seconds", *params.RefreshIntervalSeconds))
 	}
 
 	if len(setClauses) == 0 {
@@ -297,6 +350,19 @@ func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 				last_error = '',
 				consecutive_failures = 0,
 				updated_at = unixepoch()
+		`, sql.Named("feed_id", id)); err != nil {
+			return err
+		}
+	}
+
+	// A changed interval takes effect on the next scheduler pass: make the
+	// feed due now and drop any Retry-After hold, which would otherwise keep
+	// winning over the reset in pullpolicy.ShouldSkip.
+	if params.ClearRefreshInterval || params.RefreshIntervalSeconds != nil {
+		if _, err := tx.Exec(`
+			UPDATE feed_fetch_state
+			SET next_check_at = unixepoch(), retry_after_until = 0, updated_at = unixepoch()
+			WHERE feed_id = :feed_id
 		`, sql.Named("feed_id", id)); err != nil {
 			return err
 		}

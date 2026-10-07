@@ -24,6 +24,7 @@ type Handler struct {
 	puller       interface {
 		RefreshFeed(ctx context.Context, feedID int64) error
 		RefreshAll(ctx context.Context) (int, error)
+		Wake()
 	}
 	sessions  map[string]int64        // sessionID -> unix expiry seconds
 	mu        sync.RWMutex            // protects sessions state
@@ -38,6 +39,7 @@ type Handler struct {
 func New(store *store.Store, config *config.Config, puller interface {
 	RefreshFeed(ctx context.Context, feedID int64) error
 	RefreshAll(ctx context.Context) (int, error)
+	Wake()
 }) (*Handler, error) {
 	// Hash password at startup for later verification
 	passwordHash, err := auth.HashPassword(config.Password)
@@ -131,6 +133,8 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.DELETE("/feeds/:id", h.deleteFeed)
 			auth.POST("/feeds/validate", h.validateFeed)
 			auth.POST("/feeds/:id/refresh", h.refreshFeed)
+
+			auth.GET("/app", h.getAppInfo)
 
 			auth.GET("/items", h.listItems)
 			auth.GET("/items/:id", h.getItem)

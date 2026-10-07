@@ -106,6 +106,7 @@ export const enMessages = {
   "feed.add.title": "Add Feed",
   "feed.add.urlLabel": "Feed URL",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
+  "feed.add.refreshFrequencyLabel": "Refresh Frequency",
   "feed.add.validateTitle": "Validate feed URL",
   "feed.edit.deleteConfirm.description":
     'Are you sure you want to unsubscribe from "{name}"? All items from this feed will be deleted.',

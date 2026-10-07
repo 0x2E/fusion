@@ -24,6 +24,7 @@ import {
 import { useUIStore } from "@/store";
 import { useGroups } from "@/queries/groups";
 import { useCreateFeed } from "@/queries/feeds";
+import { useAppInfo } from "@/queries/app";
 import {
   feedAPI,
   type CreateFeedRequest,
@@ -31,6 +32,12 @@ import {
 } from "@/lib/api";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
+import {
+  DEFAULT_PULL_INTERVAL,
+  FALLBACK_REFRESH_INTERVALS,
+  formatInterval,
+  intervalOptions,
+} from "@/lib/refresh-interval";
 import { cn } from "@/lib/utils";
 
 export function AddFeedDialog() {
@@ -39,10 +46,18 @@ export function AddFeedDialog() {
   const { data: groups = [] } = useGroups();
   const createFeed = useCreateFeed();
 
+  const { data: appInfo, isLoading: appInfoLoading } = useAppInfo();
+  const globalPullInterval = appInfo?.pull_interval ?? DEFAULT_PULL_INTERVAL;
+  const options = intervalOptions(
+    globalPullInterval,
+    appInfo?.allowed_refresh_intervals ?? FALLBACK_REFRESH_INTERVALS,
+  );
+
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [groupId, setGroupId] = useState<string>("");
   const [proxy, setProxy] = useState("");
+  const [refreshInterval, setRefreshInterval] = useState<string>("");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -58,6 +73,7 @@ export function AddFeedDialog() {
     setName("");
     setGroupId("");
     setProxy("");
+    setRefreshInterval("");
     setIsAdvancedOpen(false);
     setDetectedFeeds([]);
     setIsFeedSelectOpen(false);
@@ -175,6 +191,10 @@ export function AddFeedDialog() {
 
       if (proxy.trim()) {
         request.proxy = proxy.trim();
+      }
+
+      if (refreshInterval && refreshInterval !== String(globalPullInterval)) {
+        request.refresh_interval_seconds = parseInt(refreshInterval, 10);
       }
 
       await createFeed.mutateAsync(request);
@@ -300,6 +320,31 @@ export function AddFeedDialog() {
                 {t("feed.add.advanced")}
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-1.5 pl-5 pt-3">
+                <div className="space-y-1.5">
+                  <label className="text-[13px] font-medium" id="add-feed-refresh-label">
+                    {t("feed.add.refreshFrequencyLabel")}
+                  </label>
+                  <Select
+                    items={options.map((seconds) => ({
+                      value: seconds.toString(),
+                      label: formatInterval(seconds),
+                    }))}
+                    disabled={appInfoLoading}
+                    value={refreshInterval || String(globalPullInterval)}
+                    onValueChange={(v) => v && setRefreshInterval(v)}
+                  >
+                    <SelectTrigger className="h-10" aria-labelledby="add-feed-refresh-label">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {options.map((seconds) => (
+                        <SelectItem key={seconds} value={seconds.toString()}>
+                          {formatInterval(seconds)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <label htmlFor="add-feed-proxy" className="text-[13px] font-medium">
                   {t("feed.add.proxyLabel")}
                 </label>

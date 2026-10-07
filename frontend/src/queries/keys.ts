@@ -40,6 +40,10 @@ export function normalizeBookmarkFilters(
 }
 
 export const queryKeys = {
+  app: {
+    all: ["app"] as const,
+    info: () => [...queryKeys.app.all, "info"] as const,
+  },
   groups: {
     all: ["groups"] as const,
     list: () => [...queryKeys.groups.all, "list"] as const,

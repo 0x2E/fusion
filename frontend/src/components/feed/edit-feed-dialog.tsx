@@ -31,9 +31,16 @@ import {
 import { useUIStore } from "@/store";
 import { useGroups } from "@/queries/groups";
 import { useUpdateFeed, useDeleteFeed } from "@/queries/feeds";
+import { useAppInfo } from "@/queries/app";
 import type { UpdateFeedRequest } from "@/lib/api";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
+import {
+  DEFAULT_PULL_INTERVAL,
+  FALLBACK_REFRESH_INTERVALS,
+  formatInterval,
+  intervalOptions,
+} from "@/lib/refresh-interval";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -49,6 +56,7 @@ export function EditFeedDialog() {
   const [groupId, setGroupId] = useState<string>("");
   const [proxy, setProxy] = useState("");
   const [suspended, setSuspended] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState<string>("");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -62,6 +70,13 @@ export function EditFeedDialog() {
     label: group.name,
   }));
 
+  const { data: appInfo, isLoading: appInfoLoading } = useAppInfo();
+  const globalPullInterval = appInfo?.pull_interval ?? DEFAULT_PULL_INTERVAL;
+  const options = intervalOptions(
+    globalPullInterval,
+    appInfo?.allowed_refresh_intervals ?? FALLBACK_REFRESH_INTERVALS,
+  );
+
   useEffect(() => {
     if (editingFeed) {
       setUrl(editingFeed.link);
@@ -69,7 +84,11 @@ export function EditFeedDialog() {
       setGroupId(editingFeed.group_id.toString());
       setProxy(editingFeed.proxy ?? "");
       setSuspended(editingFeed.suspended);
-      setIsAdvancedOpen(!!editingFeed.proxy);
+      // NULL (or a legacy 0) stays "untouched" (empty): the Select shows the
+      // live global fallback, and an untouched save sends nothing.
+      const stored = editingFeed.refresh_interval_seconds;
+      setRefreshInterval(stored && stored > 0 ? stored.toString() : "");
+      setIsAdvancedOpen(!!editingFeed.proxy || stored != null);
       setIsMobileErrorTooltipOpen(false);
     }
   }, [editingFeed]);
@@ -80,6 +99,7 @@ export function EditFeedDialog() {
     setGroupId("");
     setProxy("");
     setSuspended(false);
+    setRefreshInterval("");
     setIsAdvancedOpen(false);
     setIsDeleteOpen(false);
   };
@@ -127,6 +147,15 @@ export function EditFeedDialog() {
       const newProxy = proxy.trim() || undefined;
       if (newProxy !== editingFeed.proxy) {
         request.proxy = newProxy;
+      }
+
+      // The global-interval entry means "follow the global setting" and is
+      // stored as NULL (cleared via 0); anything else is an explicit override.
+      const stored = editingFeed.refresh_interval_seconds;
+      const selected = parseInt(refreshInterval || String(globalPullInterval), 10);
+      if (selected !== (stored && stored > 0 ? stored : globalPullInterval)) {
+        request.refresh_interval_seconds =
+          selected === globalPullInterval ? 0 : selected;
       }
 
       if (Object.keys(request).length === 0) {
@@ -308,25 +337,52 @@ export function EditFeedDialog() {
                 />
                 {t("feed.add.advanced")}
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-1.5 pl-5 pt-3">
-                <label htmlFor="edit-feed-proxy" className="text-[13px] font-medium">
-                  {t("feed.add.proxyLabel")}
-                </label>
-                <Input
-                  id="edit-feed-proxy"
-                  name="feed-proxy"
-                  type="url"
-                  inputMode="url"
-                  placeholder={t("feed.add.proxyPlaceholder")}
-                  value={proxy}
-                  onChange={(e) => setProxy(e.target.value)}
-                  className="h-10"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("feed.add.proxyHint")}
-                </p>
+              <CollapsibleContent className="space-y-4 pl-5 pt-3">
+                <div className="space-y-1.5">
+                  <label className="text-[13px] font-medium" id="edit-feed-refresh-label">
+                    {t("feed.add.refreshFrequencyLabel")}
+                  </label>
+                  <Select
+                    items={options.map((seconds) => ({
+                      value: seconds.toString(),
+                      label: formatInterval(seconds),
+                    }))}
+                    disabled={appInfoLoading}
+                    value={refreshInterval || String(globalPullInterval)}
+                    onValueChange={(v) => v && setRefreshInterval(v)}
+                  >
+                    <SelectTrigger className="h-10" aria-labelledby="edit-feed-refresh-label">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {options.map((seconds) => (
+                        <SelectItem key={seconds} value={seconds.toString()}>
+                          {formatInterval(seconds)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="edit-feed-proxy" className="text-[13px] font-medium">
+                    {t("feed.add.proxyLabel")}
+                  </label>
+                  <Input
+                    id="edit-feed-proxy"
+                    name="feed-proxy"
+                    type="url"
+                    inputMode="url"
+                    placeholder={t("feed.add.proxyPlaceholder")}
+                    value={proxy}
+                    onChange={(e) => setProxy(e.target.value)}
+                    className="h-10"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("feed.add.proxyHint")}
+                  </p>
+                </div>
               </CollapsibleContent>
             </Collapsible>
           </div>

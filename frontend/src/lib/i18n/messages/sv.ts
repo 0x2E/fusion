@@ -108,6 +108,7 @@ export const svMessages: PartialMessages = {
   "feed.add.title": "Lagg till flode",
   "feed.add.urlLabel": "Flodes-URL",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
+  "feed.add.refreshFrequencyLabel": "Uppdateringsfrekvens",
   "feed.add.validateTitle": "Verifiera flodes-URL",
   "feed.edit.deleteConfirm.description":
     'Ar du saker pa att du vill avsluta prenumerationen pa "{name}"? Alla artiklar fran detta flode kommer att raderas.',

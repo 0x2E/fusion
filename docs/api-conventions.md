@@ -78,6 +78,11 @@ Three cases return the status with an empty body instead: unknown routes
   makes the server ignore all other fields.
 - `PATCH /api/items/-/read` and `-/unread` accept 1–1000 ids
   (`maxBatchUpdateIDs`).
+- `refresh_interval_seconds` (create and update feed): on **create**, absent
+  or `0` means "use the global interval" (stored as `NULL`, never as `0`);
+  on **update**, absent or `null` leaves the stored value unchanged and `0`
+  clears it back to the global interval; any other value must be in the
+  closed set returned by `GET /api/app` (`allowed_refresh_intervals`).
 - `PATCH /api/settings` is a partial update: an absent field leaves the stored
   value unchanged, and there is deliberately no way to clear a preference
   back to null. Closed sets: locale `en|zh|de|fr|es|ru|pt|sv`, theme

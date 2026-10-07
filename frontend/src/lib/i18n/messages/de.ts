@@ -108,6 +108,7 @@ export const deMessages: PartialMessages = {
   "feed.add.title": "Feed hinzufugen",
   "feed.add.urlLabel": "Feed-URL",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
+  "feed.add.refreshFrequencyLabel": "Aktualisierungsfrequenz",
   "feed.add.validateTitle": "Feed-URL prufen",
   "feed.edit.deleteConfirm.description":
     'Mochten Sie "{name}" wirklich abbestellen? Alle Artikel dieses Feeds werden geloscht.',
