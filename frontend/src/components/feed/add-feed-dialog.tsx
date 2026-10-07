@@ -332,7 +332,7 @@ export function AddFeedDialog() {
                     value={refreshInterval || String(globalPullInterval)}
                     onValueChange={(v) => v && setRefreshInterval(v)}
                   >
-                    <SelectTrigger className="h-10 w-full" aria-labelledby="add-feed-refresh-label">
+                    <SelectTrigger className="h-10" aria-labelledby="add-feed-refresh-label">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
