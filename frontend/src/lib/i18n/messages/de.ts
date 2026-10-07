@@ -89,6 +89,7 @@ export const deMessages: PartialMessages = {
   "sidebar.settings": "Einstellungen",
   "sidebar.signOut": "Abmelden",
   "sidebar.signOutFailed": "Abmelden fehlgeschlagen",
+  "sidebar.signOutConfirm": "Abmelden? Du musst dich erneut anmelden, um auf deine Feeds zuzugreifen.",
   "group.add.description": "Neue Gruppe erstellen, um Feeds zu organisieren.",
   "group.add.placeholder": "Gruppenname",
   "group.add.title": "Gruppe hinzufugen",

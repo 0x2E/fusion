@@ -89,6 +89,7 @@ export const svMessages: PartialMessages = {
   "sidebar.settings": "Installningar",
   "sidebar.signOut": "Logga ut",
   "sidebar.signOutFailed": "Kunde inte logga ut",
+  "sidebar.signOutConfirm": "Logga ut? Du måste logga in igen för att komma åt dina flöden.",
   "group.add.description": "Skapa en ny grupp for att organisera dina floden.",
   "group.add.placeholder": "Gruppnamn",
   "group.add.title": "Lagg till grupp",

@@ -87,6 +87,7 @@ export const enMessages = {
   "sidebar.settings": "Settings",
   "sidebar.signOut": "Sign out",
   "sidebar.signOutFailed": "Failed to sign out",
+  "sidebar.signOutConfirm": "Sign out? You will need to sign in again to access your feeds.",
   "group.add.description": "Create a new group to organize your feeds.",
   "group.add.placeholder": "Group name",
   "group.add.title": "Add Group",
