@@ -94,10 +94,23 @@ This section only records history.
 
 ### Scheduler
 
-Tuning knobs (`FUSION_PULL_INTERVAL`, `FUSION_PULL_CONCURRENCY`,
-`FUSION_PULL_TIMEOUT`, `FUSION_PULL_MAX_BACKOFF`) and their defaults are
-listed in [`.env.example`](../.env.example) — the behavioral rules below
-are what the knobs mean.
+The pull loop sleeps until the earliest due time across non-suspended feeds
+(the larger of `next_check_at` and `retry_after_until` per feed), and is
+woken immediately when feeds are created, updated, or deleted — so interval
+changes take effect without waiting out the previous sleep. Tuning knobs
+(`FUSION_PULL_INTERVAL`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_TIMEOUT`,
+`FUSION_PULL_MAX_BACKOFF`) and their defaults are listed in
+[`.env.example`](../.env.example) — the behavioral rules below are what the
+knobs mean.
+
+### Per-feed interval override
+
+- A feed may carry `refresh_interval_seconds` (closed set, exposed by
+  `GET /api/app`); `NULL` means "use `FUSION_PULL_INTERVAL`".
+- Wherever the rules below say "interval", read the feed's effective
+  interval: its override when set, else the global one.
+- Changing or clearing an override makes the feed due immediately and drops
+  any `retry_after_until` hold, so the new cadence starts from now.
 
 ### Next-check bound
 
