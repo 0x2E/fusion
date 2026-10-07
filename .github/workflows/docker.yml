@@ -17,7 +17,8 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # supersede stale main builds, but never cancel a release image mid-push
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   docker:
@@ -41,7 +42,8 @@ jobs:
             rook1e404/fusion
             ghcr.io/${{ env.REPOSITORY }}
           tags: |
-            # on release: tag with version (e.g., v1.2.3)
+            # on release: semver tags, e.g. v1.2.3 -> 1.2.3 (plus latest via the
+            # action's default flavor on non-prerelease tags)
             type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
             # on push to main: tag with main
             type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -67,7 +69,11 @@ jobs:
           gh release download "${{ github.event.release.tag_name }}" \
             --pattern "fusion-linux-amd64" \
             --pattern "fusion-linux-arm64" \
+            --pattern "checksums.txt" \
             --dir ./build
+          cd ./build
+          grep -E ' \./fusion-linux-(amd64|arm64)$' checksums.txt | sha256sum --strict -c -
+          test "$(grep -cE ' \./fusion-linux-(amd64|arm64)$' checksums.txt)" -eq 2
       - name: Verify prepared binaries
         run: |
           test -f ./build/fusion-linux-amd64
