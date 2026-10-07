@@ -343,6 +343,10 @@ export function EditFeedDialog() {
                     {t("feed.add.refreshFrequencyLabel")}
                   </label>
                   <Select
+                    items={options.map((seconds) => ({
+                      value: seconds.toString(),
+                      label: formatInterval(seconds),
+                    }))}
                     value={refreshInterval || String(globalPullInterval)}
                     onValueChange={(v) => v && setRefreshInterval(v)}
                   >
