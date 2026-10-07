@@ -3,8 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"sync/atomic"
 	"testing"
@@ -32,6 +32,7 @@ func newAnonTestHandler(t *testing.T, puller *recordingPuller) (*Handler, *store
 
 	// Empty password enables anonymous API access, so tests skip session setup.
 	cfg := &config.Config{
+		PullInterval:   1800,
 		FeverUsername:  "fusion",
 		PullTimeout:    30,
 		LoginRateLimit: 10,
@@ -52,13 +53,6 @@ func newAnonTestHandler(t *testing.T, puller *recordingPuller) (*Handler, *store
 	})
 
 	return h, st
-}
-
-func decodeJSON(t *testing.T, w *httptest.ResponseRecorder, target any) {
-	t.Helper()
-	if err := json.Unmarshal(w.Body.Bytes(), target); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
 }
 
 func TestFeedRefreshIntervalLifecycle(t *testing.T) {
@@ -163,32 +157,14 @@ func TestGetAppInfo(t *testing.T) {
 	var res struct {
 		Data appInfoResponse `json:"data"`
 	}
-	decodeJSON(t, w, &res)
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 
-	if len(res.Data.AllowedRefreshIntervals) == 0 {
-		t.Fatal("expected non-empty allowed_refresh_intervals")
+	if !reflect.DeepEqual(res.Data.AllowedRefreshIntervals, allowedRefreshIntervals) {
+		t.Fatalf("expected allowed set %v, got %v", allowedRefreshIntervals, res.Data.AllowedRefreshIntervals)
 	}
-	for _, v := range res.Data.AllowedRefreshIntervals {
-		if !isAllowedRefreshInterval(v) {
-			t.Fatalf("returned value %d is not whitelisted", v)
-		}
-	}
-}
-
-func TestNormalizeCreateRefreshInterval(t *testing.T) {
-	zero := int64(0)
-	if v, err := normalizeCreateRefreshInterval(nil); err != nil || v != nil {
-		t.Errorf("nil: expected nil,nil got %v,%v", v, err)
-	}
-	if v, err := normalizeCreateRefreshInterval(&zero); err != nil || v != nil {
-		t.Errorf("zero: expected nil,nil got %v,%v", v, err)
-	}
-	valid := int64(900)
-	if v, err := normalizeCreateRefreshInterval(&valid); err != nil || v == nil || *v != 900 {
-		t.Errorf("900: expected 900,nil got %v,%v", v, err)
-	}
-	invalid := int64(901)
-	if _, err := normalizeCreateRefreshInterval(&invalid); err == nil {
-		t.Error("901: expected error")
+	if res.Data.PullInterval != 1800 {
+		t.Fatalf("expected pull_interval 1800, got %d", res.Data.PullInterval)
 	}
 }

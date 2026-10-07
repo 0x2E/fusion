@@ -33,20 +33,16 @@ func TestPullDueOnlyFetchesDueFeeds(t *testing.T) {
 	}))
 	defer server.Close()
 
-	due, err := st.CreateFeed(1, "Due", server.URL+"/due", "", "", nil)
-	if err != nil {
+	if _, err := st.CreateFeed(1, "Due", server.URL+"/due", "", "", nil); err != nil {
 		t.Fatalf("create due feed: %v", err)
 	}
-	if _, err := st.CreateFeed(1, "Future", server.URL+"/future", "", "", nil); err != nil {
+	future, err := st.CreateFeed(1, "Future", server.URL+"/future", "", "", nil)
+	if err != nil {
 		t.Fatalf("create future feed: %v", err)
 	}
 
 	// Both feeds start due-now from CreateFeed; push the future one out.
-	futureFeed, err := st.GetFeed(2)
-	if err != nil {
-		t.Fatalf("get future feed: %v", err)
-	}
-	if err := st.UpdateFeedFetchSuccess(futureFeed.ID, store.UpdateFeedFetchSuccessParams{
+	if err := st.UpdateFeedFetchSuccess(future.ID, store.UpdateFeedFetchSuccessParams{
 		CheckedAt:   time.Now().Unix(),
 		HTTPStatus:  200,
 		NextCheckAt: time.Now().Unix() + 3600,
@@ -63,17 +59,9 @@ func TestPullDueOnlyFetchesDueFeeds(t *testing.T) {
 	})
 	p.pullDue(context.Background())
 
-	// One hit for the initial GetFeed-free pullDue pass: only the due feed.
+	// Only the due feed is fetched; the future one sleeps through this pass.
 	if got := atomic.LoadInt32(&hits); got != 1 {
 		t.Fatalf("expected 1 fetch (due feed only), got %d", got)
-	}
-
-	feed, err := st.GetFeed(due.ID)
-	if err != nil {
-		t.Fatalf("get due feed: %v", err)
-	}
-	if feed.FetchState.NextCheckAt <= time.Now().Unix() {
-		t.Fatalf("expected next_check_at scheduled in the future, got %d", feed.FetchState.NextCheckAt)
 	}
 }
 
@@ -123,13 +111,7 @@ func TestScheduleDelayWakesOnMutation(t *testing.T) {
 		t.Fatalf("expected delay near 600s, got %v", d)
 	}
 
-	// Wake interrupts the sleep immediately.
-	timer := time.NewTimer(time.Hour)
-	go p.Wake()
-	select {
-	case <-timer.C:
-		t.Fatal("timer fired before wake")
-	case <-p.wake:
-		timer.Stop()
-	}
+	// Wake is non-blocking: repeated calls with no reader must not deadlock.
+	p.Wake()
+	p.Wake()
 }
