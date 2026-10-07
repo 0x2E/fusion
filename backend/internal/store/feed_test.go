@@ -224,7 +224,7 @@ func TestDeleteFeed(t *testing.T) {
 	feed := mustCreateFeed(t, store, group.ID, "Test Feed", "https://example.com/feed", "https://example.com", "")
 
 	item := mustCreateItem(t, store, feed.ID, "guid-1", "Item 1", "https://example.com/item1", "Content 1", time.Now().Unix())
-	bookmark := mustCreateBookmark(t, store, &item.ID, "https://example.com/item1", "Item 1", "Content 1", item.PubDate, "Test Feed")
+	bookmark := mustCreateBookmark(t, store, &item.ID, &item.FeedID, "https://example.com/item1", "Item 1", "Content 1", item.PubDate, "Test Feed")
 
 	if err := store.DeleteFeed(feed.ID); err != nil {
 		t.Fatalf("DeleteFeed() failed: %v", err)
@@ -607,4 +607,71 @@ func TestBatchCreateFeedsHandlesExistingAndInBatchDuplicates(t *testing.T) {
 	if len(feeds) != 3 {
 		t.Fatalf("expected total 3 feeds (1 existing + 2 new), got %d", len(feeds))
 	}
+}
+
+func TestUpdateFeedNameIfDefault(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Test Group")
+
+	t.Run("backfills when name equals link", func(t *testing.T) {
+		link := "https://example.com/feed1.xml"
+		feed := mustCreateFeed(t, store, group.ID, link, link, "", "")
+		if err := store.UpdateFeedNameIfDefault(feed.ID, "Tech Daily", link); err != nil {
+			t.Fatalf("UpdateFeedNameIfDefault() failed: %v", err)
+		}
+		updated, err := store.GetFeed(feed.ID)
+		if err != nil {
+			t.Fatalf("GetFeed() failed: %v", err)
+		}
+		if updated.Name != "Tech Daily" {
+			t.Fatalf("expected name %q, got %q", "Tech Daily", updated.Name)
+		}
+	})
+
+	t.Run("backfills when name differs from link only by whitespace", func(t *testing.T) {
+		link := "https://example.com/feed4.xml"
+		feed := mustCreateFeed(t, store, group.ID, "  "+link+"  ", link, "", "")
+		if err := store.UpdateFeedNameIfDefault(feed.ID, "Tech Daily", link); err != nil {
+			t.Fatalf("UpdateFeedNameIfDefault() failed: %v", err)
+		}
+		updated, err := store.GetFeed(feed.ID)
+		if err != nil {
+			t.Fatalf("GetFeed() failed: %v", err)
+		}
+		if updated.Name != "Tech Daily" {
+			t.Fatalf("expected name %q, got %q", "Tech Daily", updated.Name)
+		}
+	})
+
+	t.Run("keeps custom name", func(t *testing.T) {
+		link := "https://example.com/feed2.xml"
+		feed := mustCreateFeed(t, store, group.ID, "My Custom Name", link, "", "")
+		if err := store.UpdateFeedNameIfDefault(feed.ID, "Tech Daily", link); err != nil {
+			t.Fatalf("UpdateFeedNameIfDefault() failed: %v", err)
+		}
+		updated, err := store.GetFeed(feed.ID)
+		if err != nil {
+			t.Fatalf("GetFeed() failed: %v", err)
+		}
+		if updated.Name != "My Custom Name" {
+			t.Fatalf("expected name %q, got %q", "My Custom Name", updated.Name)
+		}
+	})
+
+	t.Run("empty title is a no-op", func(t *testing.T) {
+		link := "https://example.com/feed3.xml"
+		feed := mustCreateFeed(t, store, group.ID, link, link, "", "")
+		if err := store.UpdateFeedNameIfDefault(feed.ID, "  ", link); err != nil {
+			t.Fatalf("UpdateFeedNameIfDefault() failed: %v", err)
+		}
+		updated, err := store.GetFeed(feed.ID)
+		if err != nil {
+			t.Fatalf("GetFeed() failed: %v", err)
+		}
+		if updated.Name != link {
+			t.Fatalf("expected name %q, got %q", link, updated.Name)
+		}
+	})
 }

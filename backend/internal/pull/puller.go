@@ -242,6 +242,12 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 		}
 	}
 
+	if strings.TrimSpace(feed.Name) == "" || strings.TrimSpace(feed.Name) == strings.TrimSpace(feed.Link) {
+		if err := p.store.UpdateFeedNameIfDefault(feed.ID, result.FeedTitle, feed.Link); err != nil {
+			p.logger.Warn("failed to auto-fill feed name", "feed_id", feed.ID, "title", result.FeedTitle, "error", err)
+		}
+	}
+
 	p.logger.Info("feed pulled successfully", "feed_id", feed.ID, "feed_name", feed.Name, "new_items", newCount)
 }
 

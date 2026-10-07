@@ -110,7 +110,7 @@ func TestAuthMiddleware(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := newTestSessionHandler(t, "secret")
 			h.allowAnonAPI = tt.allowAnonAPI
-			if tt.token != "" {
+			if tt.token != "" && tt.expiresAt != 0 {
 				h.sessions[tt.token] = tt.expiresAt
 			}
 
@@ -135,6 +135,68 @@ func TestAuthMiddleware(t *testing.T) {
 			_, ok := h.sessions[tt.token]
 			if ok != tt.wantStillLive {
 				t.Fatalf("session exists = %v, want %v", ok, tt.wantStillLive)
+			}
+		})
+	}
+}
+
+func TestSessionStatus(t *testing.T) {
+	tests := []struct {
+		name         string
+		token        string
+		expiresAt    int64
+		allowAnonAPI bool
+		wantStatus   int
+	}{
+		{
+			name:       "no cookie",
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "session not in store",
+			token:      "unknown",
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "expired session",
+			token:      "expired",
+			expiresAt:  time.Now().Add(-time.Minute).Unix(),
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "valid session",
+			token:      "valid",
+			expiresAt:  time.Now().Add(time.Minute).Unix(),
+			wantStatus: http.StatusNoContent,
+		},
+		{
+			name:         "auth disabled",
+			allowAnonAPI: true,
+			wantStatus:   http.StatusNoContent,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := newTestSessionHandler(t, "secret")
+			h.allowAnonAPI = tt.allowAnonAPI
+			if tt.token != "" && tt.expiresAt != 0 {
+				h.sessions[tt.token] = tt.expiresAt
+			}
+
+			r := newTestRouter()
+			r.GET("/api/sessions", h.sessionStatus)
+			w := performRequest(
+				r,
+				http.MethodGet,
+				"/api/sessions",
+				nil,
+				nil,
+				&http.Cookie{Name: "session", Value: tt.token},
+			)
+
+			if w.Code != tt.wantStatus {
+				t.Fatalf("expected status %d, got %d", tt.wantStatus, w.Code)
 			}
 		})
 	}

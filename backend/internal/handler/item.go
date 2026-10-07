@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -60,19 +61,26 @@ func (h *Handler) listItems(c *gin.Context) {
 		params.Limit = 10
 	}
 
-	if offset := c.Query("offset"); offset != "" {
-		val, err := strconv.Atoi(offset)
-		if err != nil || val < 0 {
-			badRequestError(c, "invalid offset")
+	if before := c.Query("before"); before != "" {
+		pubDate, id, err := parseCursor(before)
+		if err != nil {
+			badRequestError(c, "invalid before")
 			return
 		}
-		params.Offset = val
+		params.BeforePubDate = &pubDate
+		params.BeforeID = &id
 	}
 
 	if orderBy := c.Query("order_by"); orderBy != "" {
 		params.OrderBy = orderBy
 	} else {
 		params.OrderBy = "pub_date"
+	}
+
+	// The cursor is keyed on pub_date, so it is only valid with the default ordering.
+	if params.BeforePubDate != nil && params.OrderBy == "created_at" {
+		badRequestError(c, "before cursor is only supported with default ordering (pub_date)")
+		return
 	}
 
 	items, err := h.store.ListItems(params)
@@ -87,7 +95,14 @@ func (h *Handler) listItems(c *gin.Context) {
 		return
 	}
 
-	listResponse(c, items, total)
+	// A non-null next_cursor signals the client may request another full page.
+	var nextCursor *string
+	if params.Limit > 0 && len(items) >= params.Limit {
+		last := items[len(items)-1]
+		nc := fmt.Sprintf("%d_%d", last.PubDate, last.ID)
+		nextCursor = &nc
+	}
+	paginatedListResponse(c, items, total, nextCursor)
 }
 
 func (h *Handler) getItem(c *gin.Context) {

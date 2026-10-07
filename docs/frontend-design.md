@@ -6,29 +6,17 @@
 - Keep state predictable by encoding major UI state in URL params.
 - Prioritize readability and simple information architecture.
 
-## 2. Tech stack
+## 2. Stack decisions
 
-| Area                | Choice                   |
-| ------------------- | ------------------------ |
-| Framework           | React 19 + TypeScript    |
-| Build               | Vite                     |
-| Router              | TanStack Router          |
-| Data fetching/cache | TanStack Query           |
-| State               | Zustand (UI-only state)  |
-| UI system           | shadcn/ui + Tailwind CSS |
+Dependencies live in `frontend/package.json` — do not restate them here.
+The choices worth knowing: TanStack Router because routes are typed files
+under `frontend/src/routes/` (the route inventory is those files, not a
+table here); TanStack Query owns server-state caching so Zustand holds
+only transient UI state; shadcn/ui components are vendored into
+`src/components/ui/` and regenerated via the CLI rather than hand-edited
+(see AGENTS.md).
 
-## 3. Route map
-
-| Route pattern              | Purpose                         |
-| -------------------------- | ------------------------------- |
-| `/`                        | Canonical redirect to `/unread` |
-| `/:filter`                 | Top-level reading view          |
-| `/feeds/:feedId/:filter`   | Feed-scoped reading view        |
-| `/groups/:groupId/:filter` | Group-scoped reading view       |
-| `/feeds`                   | Feed/group management           |
-| `/login`                   | Password/OIDC login             |
-
-## 4. URL-driven app state
+## 3. URL-driven app state
 
 Reading state is split between path params and search params:
 
@@ -45,9 +33,10 @@ Examples:
 - `/feeds/6/unread`
 - `/groups/3/starred?article=289`
 
-This keeps list context stable while opening/closing article detail.
+This keeps list context stable while opening/closing article detail. `g u` /
+`g a` / `g s` / `g f` view jumps are navigation sugar over the same URLs.
 
-## 5. Layout system
+## 4. Layout system
 
 ### Desktop
 
@@ -61,119 +50,61 @@ This keeps list context stable while opening/closing article detail.
 - Main content remains single-column
 - Modals/drawers share the same UI flow as desktop
 
-## 6. Core UI areas
+The reading view is an infinite list with filter tabs and per-card
+read/star quick actions; the article drawer shows sanitized full content
+(`lib/content.ts`) with source link and prev/next navigation; feed
+management (`/feeds`) hosts grouped feed/group CRUD, refresh-all, and
+OPML import/export. Component names map to these areas directly — browse
+`frontend/src/components/` for the implementation.
 
-### Sidebar
-
-- App branding
-- Search entry (`Cmd/Ctrl + K`)
-- Feed tree (All, groups, feeds)
-- Footer actions: Manage Feeds, Settings
-
-### Main reading view (`/:filter`, `/feeds/:feedId/:filter`, `/groups/:groupId/:filter`)
-
-- Header with page title and "Mark all as read"
-- Filter tabs: All / Unread / Starred
-- Infinite article list (load more)
-- Article cards with quick actions (read/unread, star)
-
-### Article drawer
-
-- Shows full article content (sanitized HTML)
-- Supports previous/next navigation
-- Includes source link and feed metadata
-
-### Feed management (`/feeds`)
-
-- Grouped feed list with search + status filter
-- Group actions: rename, delete (except default group)
-- Feed actions: edit
-- Bulk/system actions: refresh all, OPML import/export, add feed/group
-
-## 7. Data flow
+## 5. Data flow
 
 - API layer lives in `frontend/src/lib/api/`
 - Query logic lives in `frontend/src/queries/`
 - TanStack Query handles:
-  - infinite pagination for items
+  - cursor-based pagination for items and bookmarks (opaque `next_cursor` passed as the `before` query param; `next_cursor` is null when no more pages exist)
   - optimistic read/unread updates
   - cache invalidation after mutations
-- Zustand stores transient UI state only (dialogs, mobile sidebar, edit targets)
+- Zustand stores transient UI state (dialogs, mobile sidebar, edit targets).
+  The preferences store is the exception: it is a localStorage-backed local
+  cache of the user's synced settings (`lib/settings-sync.ts` pulls the
+  server values once per page load before the first authenticated screen
+  renders, server non-null values win, and each settings-dialog change
+  PATCHes only the changed key). Theme lives in next-themes' own
+  localStorage key and is mirrored through the same sync.
 
-## 8. Search and bookmarks
+### Read-state changes: grayed rows are an undo affordance, not stale UI
 
-### Unified search
+Marking an item read in the **unread** view keeps the row in the list, grayed out, instead of removing it. This is deliberate: the row can be toggled back to unread in place, without hunting it down in the all view. Items marked read from any other view (all, starred, search) are committed immediately.
 
-- Endpoint: `GET /api/search`
-- Searches feeds and items in one request
-- Results open feed context or article drawer
+The "still undoable" state is scoped to the exact list being viewed (feed + group + filter identity):
 
-### Starred model
+- Read-state mutations update cached items in place and deliberately never invalidate item list queries — list membership stays frozen at fetch time.
+- The unread view renders `unread || pinned`. Pins are per-list-identity view state (`frontend/src/store/article-pins.ts`), written only when marking read inside an unread view.
+- Leaving the list — switching filter or feed/group scope, or unmounting the reading view — clears the pins and commits: read rows drop out of the unread view without a refetch. The all view still shows them, so undo remains possible after the fact.
+- Keyboard navigation is unaffected: pinned gray rows stay in the article id list, keeping `j`/`k` indices stable.
 
-- "Starred" view is powered by bookmarks
-- Bookmarks are content snapshots, so starred items survive source deletion
+Known edge: marking an item unread from the all view does not insert it into an already-cached unread list; cache staleness/refetch covers it eventually.
 
-## 9. Keyboard interactions
+Star/bookmark changes are deliberately the opposite pattern: un-starring removes the row from the starred view immediately (optimistic removal from every bookmark list cache, then invalidation to reconcile — see `useDeleteBookmark`), because a bookmark toggle is its own undo and needs no lingering row. Only read-state changes defer list membership.
 
-Implemented shortcuts:
+Before filing "marked-read items still show up in the unread list" as a bug, check which half is reported: grayed rows while staying in the same unread list are this design working; rows surviving a filter/scope switch was the actual defect, fixed by the pin scoping (#262, #266).
 
-- `Cmd/Ctrl + K`: toggle search dialog
-- `Cmd/Ctrl + ,`: open settings dialog
-- `Esc`: close search/settings/article drawer
-- `/`: open search dialog
-- `?`: open keyboard shortcuts help
-- `j` / `n` / `ArrowDown`: next article
-- `k` / `p` / `ArrowUp`: previous article
-- `m`: toggle read/unread for current article
-- `s` / `f`: toggle star for current article
-- `o` / `v`: open current article in browser
-- `g u`: go to unread
-- `g a`: go to all
-- `g s`: go to starred
-- `g f`: go to feed management
+## 7. Search and bookmarks
 
-Shortcut help entry points:
+- Unified search (`GET /api/search`) returns feeds and items in one
+  request; results open the feed context or article drawer.
+- The "starred" view is powered by bookmarks, which are content
+  snapshots — starred items survive deletion of the source feed/item
+  (see the bookmarks rationale in `backend-design.md` §5).
 
-- Sidebar search button hint shows `Cmd+K / ?`
-- Search dialog Quick Actions includes a "Keyboard Shortcuts" item
-- Settings > Appearance includes a "Keyboard Shortcuts" section
+## 8. Keyboard interactions
 
-## 10. Authentication UX
+The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), read/star toggles, view jumps (`g u` / `g a` / `g s` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
+
+## 9. Authentication UX
 
 - Password login is available when password auth is enabled
 - If password is empty and OIDC is not configured, the UI is directly accessible without `/login`
 - When OIDC is enabled, login page shows "Sign in with OIDC"
 - OIDC callback failure is surfaced as `/login?error=oidc_failed`
-
-## 11. Key files
-
-- `frontend/src/routes/$filter.lazy.tsx`: top-level reading page
-- `frontend/src/routes/feeds_.$feedId.$filter.lazy.tsx`: feed-scoped reading page
-- `frontend/src/routes/groups.$groupId.$filter.lazy.tsx`: group-scoped reading page
-- `frontend/src/routes/feeds.lazy.tsx`: feed management page
-- `frontend/src/routes/login.lazy.tsx`: login page
-- `frontend/src/components/article/article-page.tsx`: shared reading page wrapper
-- `frontend/src/components/article/article-list.tsx`: list + tabs + bulk read
-- `frontend/src/components/article/article-drawer.tsx`: article detail
-- `frontend/src/components/feed/feed-list.tsx`: sidebar feed tree
-
-## 12. Route file naming note
-
-TanStack file-based routes can infer parent-child nesting from file names. We intentionally keep management page `/feeds` and reading page `/feeds/:feedId/:filter` as separate route trees.
-
-- `frontend/src/routes/feeds.lazy.tsx` maps to management page `/feeds`
-- `frontend/src/routes/feeds_.$feedId.$filter.lazy.tsx` maps to reading page `/feeds/:feedId/:filter`
-
-The `feeds_` prefix is a routing implementation detail to avoid accidental nesting under the management page route while preserving the final URL path as `/feeds/...`.
-
-## 13. Release verification checklist
-
-- Type check: `cd frontend && npx tsc -b --noEmit`
-- Lint: `cd frontend && pnpm lint`
-- Production build: `cd frontend && pnpm build`
-- Smoke test flows:
-  - login/logout
-  - search open + result navigation
-  - feed/group selection and URL sync
-  - read/unread + starred updates
-  - `/feeds` page operations (add/edit/delete/import/export)

@@ -67,6 +67,10 @@ export function AddFeedDialog() {
   const [isValidating, setIsValidating] = useState(false);
   const [detectedFeeds, setDetectedFeeds] = useState<DiscoveredFeed[]>([]);
   const [isFeedSelectOpen, setIsFeedSelectOpen] = useState(false);
+  const groupItems = groups.map((group) => ({
+    value: group.id.toString(),
+    label: group.name,
+  }));
 
   const resetForm = () => {
     setUrl("");
@@ -97,12 +101,17 @@ export function AddFeedDialog() {
     toast.success(t("feed.toast.detected"));
   };
 
+  const validateRequest = (target: string) => ({
+    url: target,
+    ...(proxy.trim() ? { proxy: proxy.trim() } : {}),
+  });
+
   const handleValidate = async () => {
     if (!url.trim()) return;
 
     setIsValidating(true);
     try {
-      const response = await feedAPI.validate({ url: url.trim() });
+      const response = await feedAPI.validate(validateRequest(url.trim()));
       const feeds = response.data?.feeds ?? [];
 
       if (feeds.length === 0) {
@@ -130,15 +139,57 @@ export function AddFeedDialog() {
       return;
     }
 
-    const selectedGroupId = groupId
-      ? parseInt(groupId, 10)
-      : (groups[0]?.id ?? 1);
-
     setIsSubmitting(true);
     try {
+      // Validate before creating so an unreachable or malformed URL fails
+      // here with a clear message instead of a "successful" empty feed.
+      const check = await feedAPI.validate(validateRequest(url.trim()));
+      const feeds = check.data?.feeds ?? [];
+      if (feeds.length === 0) {
+        toast.error(t("feed.toast.invalidFeed"));
+        return;
+      }
+
+      // Discovery also reports feeds found elsewhere on the host (common
+      // paths, service matchers), so a non-empty list does not prove the
+      // entered URL itself is a feed. Only proceed when the entered URL
+      // matched; otherwise adopt a single unambiguous discovery, or make the
+      // user pick when several were found.
+      const entered = url.trim();
+      const normalizeUrl = (value: string) =>
+        value.trim().replace(/\/+$/, "").toLowerCase();
+      const match = feeds.find(
+        (f) => normalizeUrl(f.link) === normalizeUrl(entered),
+      );
+
+      let link = entered;
+      let title = "";
+      if (match) {
+        // Prefer the discovered link: the entered URL may differ in ways the
+        // normalization ignores (trailing slash) that not every server accepts.
+        link = match.link;
+        title = match.title.trim();
+        setUrl(link);
+      } else if (feeds.length === 1) {
+        link = feeds[0].link;
+        title = feeds[0].title.trim();
+        setUrl(link);
+      } else {
+        setDetectedFeeds(feeds);
+        setIsFeedSelectOpen(true);
+        return;
+      }
+      if (!name.trim() && title) {
+        setName(title);
+      }
+
+      const selectedGroupId = groupId
+        ? parseInt(groupId, 10)
+        : (groups[0]?.id ?? 1);
+
       const request: CreateFeedRequest = {
-        link: url.trim(),
-        name: name.trim() || url.trim(),
+        link,
+        name: name.trim() || title || link,
         group_id: selectedGroupId,
       };
 
@@ -241,14 +292,20 @@ export function AddFeedDialog() {
               <label className="text-[13px] font-medium" id="add-feed-group-label">
                 {t("feed.add.groupLabel")}
               </label>
-              <Select value={groupId} onValueChange={setGroupId}>
+              <Select
+                items={groupItems}
+                value={groupId || null}
+                onValueChange={(v) => {
+                  if (v) setGroupId(v);
+                }}
+              >
                 <SelectTrigger className="h-10" aria-labelledby="add-feed-group-label">
                   <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {groups.map((group) => (
-                    <SelectItem key={group.id} value={group.id.toString()}>
-                      {group.name}
+                  {groupItems.map((group) => (
+                    <SelectItem key={group.value} value={group.value}>
+                      {group.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

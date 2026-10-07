@@ -69,14 +69,30 @@ type Item struct {
 	CreatedAt int64  `json:"created_at"`
 }
 
+// Settings holds the user's synced preferences. A nil field means the user
+// has never explicitly chosen a value (clients fall back to their own default).
+type Settings struct {
+	Locale          *string `json:"locale"`
+	ArticlePageSize *int64  `json:"article_page_size"`
+	Theme           *string `json:"theme"`
+	AutoMarkRead    *string `json:"auto_mark_read"`
+	UpdatedAt       int64   `json:"updated_at"`
+}
+
 // Bookmark represents a saved item snapshot.
 type Bookmark struct {
-	ID        int64  `json:"id"`
-	ItemID    *int64 `json:"item_id"` // nullable
-	Link      string `json:"link"`
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	PubDate   int64  `json:"pub_date"`
-	FeedName  string `json:"feed_name"`
-	CreatedAt int64  `json:"created_at"`
+	ID       int64  `json:"id"`
+	ItemID   *int64 `json:"item_id"` // nullable
+	Link     string `json:"link"`
+	Title    string `json:"title"`
+	Content  string `json:"content"`
+	PubDate  int64  `json:"pub_date"`
+	FeedName string `json:"feed_name"`
+	// FeedID is a soft association to the source feed used for filtering. It is
+	// nil for orphaned bookmarks whose feed/item no longer exists; the bookmark
+	// itself always survives such deletions (it is a content snapshot).
+	FeedID *int64 `json:"feed_id"`
+	// Unread mirrors the linked item's unread state (false for orphans).
+	Unread    bool  `json:"unread"`
+	CreatedAt int64 `json:"created_at"`
 }

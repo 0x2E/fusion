@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   Circle,
   CircleCheck,
@@ -9,30 +8,31 @@ import {
   X,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
 import {
   useItem,
-  useItems,
   useMarkItemsRead,
   useMarkItemsUnread,
 } from "@/queries/items";
 import { useFeedLookup } from "@/queries/feeds";
 import {
-  useBookmarkLookup,
   useCreateBookmark,
   useDeleteBookmark,
-  useStarredItems,
 } from "@/queries/bookmarks";
+import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
+import { useAutoMarkRead } from "@/hooks/use-auto-mark-read";
 import { useI18n } from "@/lib/i18n";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+import { useReadStatePins, usePreferencesStore } from "@/store";
+import { autoMarkReadDelayMs } from "@/store/preferences";
 
 export function ArticleDrawer() {
   const { t } = useI18n();
@@ -45,33 +45,29 @@ export function ArticleDrawer() {
     articleFilter,
   } = useUrlState();
   const { getFeedById } = useFeedLookup();
-  const isStarredMode = articleFilter === "starred";
 
-  const itemsQuery = useItems({
-    feedId: selectedFeedId,
-    groupId: selectedGroupId,
-    unread: articleFilter === "unread" ? true : undefined,
-  });
-  const articles = useMemo(
-    () => itemsQuery.data?.pages.flatMap((p) => p.data) ?? [],
-    [itemsQuery.data],
-  );
-  const starredArticles = useStarredItems({
-    feedId: selectedFeedId,
-    groupId: selectedGroupId,
-  });
-  const listArticles = isStarredMode ? starredArticles : articles;
+  const { articles, isStarredMode, isItemStarred, getBookmarkByItemId } =
+    useArticleList({
+      feedId: selectedFeedId,
+      groupId: selectedGroupId,
+      articleFilter,
+    });
 
   const markRead = useMarkItemsRead();
   const markUnread = useMarkItemsUnread();
-  const { isItemStarred, getBookmarkByItemId } = useBookmarkLookup();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
-  const articleIds = listArticles.map((a) => a.id);
+  const { pinRead, unpinRead } = useReadStatePins({
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+    articleFilter,
+  });
+
+  const articleIds = articles.map((a) => a.id);
 
   const storeArticle = selectedArticleId
-    ? (listArticles.find((i) => i.id === selectedArticleId) ?? null)
+    ? (articles.find((i) => i.id === selectedArticleId) ?? null)
     : null;
 
   const shouldFetchArticle =
@@ -86,12 +82,36 @@ export function ArticleDrawer() {
   const article: Item | null =
     (isStarredMode ? fetchedArticle ?? storeArticle : storeArticle ?? fetchedArticle) ??
     null;
-  const canToggleRead =
-    article !== null && article.id > 0 && (!isStarredMode || fetchedArticle !== undefined);
+  // Read state comes from the in-hand row (list/bookmark cache), not the
+  // detail refetch: in starred mode the fetched detail can disagree with the
+  // row, and the header toggle, the auto-mark timer, and the veto must all
+  // watch the same unread bit or a manual mark-unread gets overwritten.
+  const readArticle = storeArticle ?? fetchedArticle ?? null;
+  const canToggleRead = readArticle !== null && readArticle.id > 0;
   const feed = article ? getFeedById(article.feed_id) : null;
   const bookmark = article ? getBookmarkByItemId(article.id) : null;
   const starred = article ? isItemStarred(article.id) : false;
   const safeArticleLink = article ? toSafeExternalUrl(article.link) : null;
+
+  const autoMarkRead = usePreferencesStore((s) => s.autoMarkRead);
+  const autoMarkDelayMs = autoMarkReadDelayMs(autoMarkRead);
+
+  // The target is not gated on the setting: null means the drawer left the
+  // article, which is exactly the event that must clear the veto. "Feature
+  // off" travels as delayMs === null instead.
+  useAutoMarkRead({
+    target:
+      readArticle && readArticle.id > 0
+        ? { id: readArticle.id, unread: readArticle.unread }
+        : null,
+    delayMs: autoMarkDelayMs,
+    // mutate and pinRead must share one synchronous turn (see hook docs).
+    onMarkRead: (id) => {
+      markRead.mutate([id]);
+      pinRead([id]);
+    },
+    hasPendingMutation: () => markRead.isPending || markUnread.isPending,
+  });
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -100,12 +120,17 @@ export function ArticleDrawer() {
   };
 
   const handleToggleRead = async () => {
-    if (!article || !canToggleRead) return;
+    if (!readArticle || !canToggleRead) return;
     try {
-      if (article.unread) {
-        await markRead.mutateAsync([article.id]);
+      if (readArticle.unread) {
+        // Pin before the request: the optimistic unread flip drops the row
+        // from the unread list (and with it this drawer's content) until
+        // the pin lands — the await would flash a blank pane.
+        pinRead([readArticle.id]);
+        await markRead.mutateAsync([readArticle.id]);
       } else {
-        await markUnread.mutateAsync([article.id]);
+        await markUnread.mutateAsync([readArticle.id]);
+        unpinRead([readArticle.id]);
       }
     } catch (error) {
       console.error("Failed to toggle read status:", error);
@@ -162,7 +187,7 @@ export function ArticleDrawer() {
     <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-[max(720px,50vw)] p-0"
+        className="data-[side=right]:w-full data-[side=right]:sm:max-w-[max(840px,60vw)] p-0"
         showCloseButton={false}
       >
         {article && (
@@ -177,12 +202,12 @@ export function ArticleDrawer() {
                   disabled={!canToggleRead}
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
-                  {article.unread ? (
+                  {(readArticle?.unread ?? false) ? (
                     <Circle className="h-4 w-4 text-muted-foreground" />
                   ) : (
                     <CircleCheck className="h-4 w-4 text-primary" />
                   )}
-                  {article.unread
+                  {(readArticle?.unread ?? false)
                     ? t("article.action.markRead")
                     : t("article.action.markUnread")}
                 </Button>
@@ -197,30 +222,30 @@ export function ArticleDrawer() {
                   />
                   {starred ? t("article.action.unstar") : t("article.action.star")}
                 </Button>
-                <Button
-                  asChild={Boolean(safeArticleLink)}
-                  variant="outline"
-                  size="sm"
-                  onClick={safeArticleLink ? undefined : handleOpenOriginal}
-                  disabled={!safeArticleLink}
-                  className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
-                >
-                  {safeArticleLink ? (
-                    <a
-                      href={safeArticleLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      {t("article.action.original")}
-                    </a>
-                  ) : (
-                    <>
-                      <ExternalLink className="h-4 w-4" />
-                      {t("article.action.original")}
-                    </>
-                  )}
-                </Button>
+                {safeArticleLink ? (
+                  <a
+                    href={safeArticleLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground",
+                    )}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {t("article.action.original")}
+                  </a>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {t("article.action.original")}
+                  </Button>
+                )}
               </div>
 
               <SheetTitle className="sr-only">{article.title}</SheetTitle>
@@ -283,7 +308,7 @@ export function ArticleDrawer() {
                 </div>
 
                 <div
-                  className="prose prose-neutral mt-6 min-w-0 max-w-none break-words dark:prose-invert"
+                  className="typeset typeset-article mt-6 min-w-0 max-w-none"
                   dangerouslySetInnerHTML={{
                     __html: processArticleContent(
                       article.content,

@@ -16,7 +16,7 @@ export function FeedList() {
   const { data: groups = [], isLoading } = useGroups();
   const { feeds, getFeedsByGroup } = useFeedLookup();
   const { getTotalUnreadCount } = useUnreadCounts();
-  const { bookmarks } = useBookmarkLookup();
+  const { total: starredTotal } = useBookmarkLookup();
   const {
     selectedFeedId,
     selectedGroupId,
@@ -30,12 +30,12 @@ export function FeedList() {
   const isTopLevelSelected =
     isOnHomePage && selectedFeedId === null && selectedGroupId === null;
   const totalUnread = getTotalUnreadCount();
-  const starredCount = bookmarks.length;
+  const starredCount = starredTotal;
 
   const topFilters: Array<{
     value: "all" | "unread" | "starred";
     label: string;
-    count: number;
+    count?: number;
     icon: typeof Inbox;
   }> = [
     {
@@ -53,7 +53,6 @@ export function FeedList() {
     {
       value: "all",
       label: t("article.filter.all"),
-      count: totalUnread,
       icon: Layers,
     },
   ];
@@ -88,9 +87,11 @@ export function FeedList() {
             >
               <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1">{label}</span>
-              <span className="shrink-0 text-[11px] text-muted-foreground">
-                {count}
-              </span>
+              {typeof count === "number" && (
+                <span className="shrink-0 text-[11px] text-muted-foreground">
+                  {count}
+                </span>
+              )}
             </button>
           ))}
         </div>

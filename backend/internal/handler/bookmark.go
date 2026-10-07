@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -19,8 +20,25 @@ type createBookmarkRequest struct {
 }
 
 func (h *Handler) listBookmarks(c *gin.Context) {
-	limit := 50
-	offset := 0
+	params := store.ListBookmarksParams{}
+
+	if feedID := c.Query("feed_id"); feedID != "" {
+		id, err := strconv.ParseInt(feedID, 10, 64)
+		if err != nil {
+			badRequestError(c, "invalid feed_id")
+			return
+		}
+		params.FeedID = &id
+	}
+
+	if groupID := c.Query("group_id"); groupID != "" {
+		id, err := strconv.ParseInt(groupID, 10, 64)
+		if err != nil {
+			badRequestError(c, "invalid group_id")
+			return
+		}
+		params.GroupID = &id
+	}
 
 	if limitStr := c.Query("limit"); limitStr != "" {
 		val, err := strconv.Atoi(limitStr)
@@ -31,31 +49,41 @@ func (h *Handler) listBookmarks(c *gin.Context) {
 		if val > maxListLimit {
 			val = maxListLimit
 		}
-		limit = val
+		params.Limit = val
+	} else {
+		params.Limit = 50
 	}
 
-	if offsetStr := c.Query("offset"); offsetStr != "" {
-		val, err := strconv.Atoi(offsetStr)
-		if err != nil || val < 0 {
-			badRequestError(c, "invalid offset")
+	if before := c.Query("before"); before != "" {
+		createdAt, id, err := parseCursor(before)
+		if err != nil {
+			badRequestError(c, "invalid before")
 			return
 		}
-		offset = val
+		params.BeforeCreatedAt = &createdAt
+		params.BeforeID = &id
 	}
 
-	bookmarks, err := h.store.ListBookmarks(limit, offset)
+	bookmarks, err := h.store.ListBookmarks(params)
 	if err != nil {
 		internalError(c, err, "list bookmarks")
 		return
 	}
 
-	total, err := h.store.CountBookmarks()
+	total, err := h.store.CountBookmarks(params)
 	if err != nil {
 		internalError(c, err, "count bookmarks")
 		return
 	}
 
-	listResponse(c, bookmarks, total)
+	// A non-null next_cursor signals the client may request another full page.
+	var nextCursor *string
+	if params.Limit > 0 && len(bookmarks) >= params.Limit {
+		last := bookmarks[len(bookmarks)-1]
+		nc := fmt.Sprintf("%d_%d", last.CreatedAt, last.ID)
+		nextCursor = &nc
+	}
+	paginatedListResponse(c, bookmarks, total, nextCursor)
 }
 
 func (h *Handler) getBookmark(c *gin.Context) {
@@ -86,6 +114,7 @@ func (h *Handler) createBookmark(c *gin.Context) {
 	}
 
 	var link, title, content, feedName string
+	var feedID *int64
 	var pubDate int64
 
 	// If item_id provided, auto-fill bookmark fields from item
@@ -111,6 +140,7 @@ func (h *Handler) createBookmark(c *gin.Context) {
 		content = item.Content
 		pubDate = item.PubDate
 		feedName = feed.Name
+		feedID = &item.FeedID
 	} else {
 		if req.Link == "" || req.Title == "" || req.Content == "" || req.FeedName == "" {
 			badRequestError(c, "missing required fields")
@@ -123,7 +153,7 @@ func (h *Handler) createBookmark(c *gin.Context) {
 		feedName = req.FeedName
 	}
 
-	bookmark, err := h.store.CreateBookmark(req.ItemID, link, title, content, pubDate, feedName)
+	bookmark, err := h.store.CreateBookmark(req.ItemID, feedID, link, title, content, pubDate, feedName)
 	if err != nil {
 		internalError(c, err, "create bookmark")
 		return

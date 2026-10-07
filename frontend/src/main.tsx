@@ -16,6 +16,16 @@ import "./index.css";
 const router = createRouter({ routeTree });
 
 registerPWA();
+
+// A page restored from the back-forward cache (e.g. via the back button after
+// signing out) shows the pre-logout state and skips route guards; reload it so
+// the session check runs again.
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) {
+    window.location.reload();
+  }
+});
+
 setUnauthorizedCallback(() => {
   window.location.href = "/login";
 });

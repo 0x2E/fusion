@@ -57,7 +57,28 @@ export interface Bookmark {
   content: string;
   pub_date: number;
   feed_name: string;
+  feed_id: number | null;
+  unread: boolean;
   created_at: number;
+}
+
+// User preferences synced via the backend. A null field means the user has
+// never explicitly chosen a value; clients fall back to their own defaults.
+export interface Settings {
+  locale: string | null;
+  article_page_size: number | null;
+  theme: string | null;
+  auto_mark_read: string | null;
+  updated_at: number;
+}
+
+// Only the fields being changed are sent; a missing field leaves the stored
+// value unchanged (indistinguishable from an explicit null on the wire).
+export interface UpdateSettingsRequest {
+  locale?: string;
+  article_page_size?: number;
+  theme?: string;
+  auto_mark_read?: string;
 }
 
 // API response wrappers
@@ -66,9 +87,17 @@ export interface APIResponse<T> {
   error?: string;
 }
 
-export interface ListAPIResponse<T> {
+// Group and feed lists: small, fully returned in one response
+export interface ListResponse<T> {
   data: T[];
   total: number;
+}
+
+// Item and bookmark lists: cursor-paginated (see docs/api-conventions.md)
+export interface PaginatedListResponse<T> {
+  data: T[];
+  total: number;
+  next_cursor: string | null;
 }
 
 // Request types
@@ -105,6 +134,7 @@ export interface UpdateFeedRequest {
 
 export interface ValidateFeedRequest {
   url: string;
+  proxy?: string;
 }
 
 export interface DiscoveredFeed {
@@ -116,14 +146,18 @@ export interface ValidateFeedResponse {
   feeds: DiscoveredFeed[];
 }
 
-export interface CreateBookmarkRequest {
-  item_id?: number;
-  link: string;
-  title: string;
-  content: string;
-  pub_date: number;
-  feed_name: string;
-}
+// Two mutually exclusive modes: either reference an item by id (the backend
+// snapshots all fields from it and ignores everything else — preferred), or
+// provide a full snapshot for bookmarks without a backing item.
+export type CreateBookmarkRequest =
+  | { item_id: number }
+  | {
+      link: string;
+      title: string;
+      content: string;
+      feed_name: string;
+      pub_date?: number;
+    };
 
 export interface MarkItemsReadRequest {
   ids: number[];
@@ -134,14 +168,15 @@ export interface ListItemsParams {
   group_id?: number;
   unread?: boolean;
   limit?: number;
-  offset?: number;
-  order_by?: string;
+  before?: string;
+  order_by?: "pub_date" | "created_at";
 }
 
-export interface ImportOpmlResponse {
-  imported: number;
-  failed: number;
-  errors?: string[];
+export interface ListBookmarksParams {
+  feed_id?: number;
+  group_id?: number;
+  limit?: number;
+  before?: string;
 }
 
 export interface BatchCreateFeedsRequest {
@@ -175,7 +210,8 @@ export interface SearchResponse {
 export interface BatchCreateFeedsResponse {
   created: number;
   failed: number;
-  errors?: string[];
+  // Always present on the wire; null when every feed was created.
+  errors: string[] | null;
 }
 
 export interface AppInfoResponse {

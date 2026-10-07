@@ -16,29 +16,33 @@ import {
   type NormalizedItemFilters,
 } from "./keys";
 import { usePreferencesStore } from "@/store";
+import type { BookmarksInfiniteData } from "./bookmarks";
 
 type ItemListResponse = Awaited<ReturnType<typeof itemAPI.list>>;
-type ItemsInfiniteData = InfiniteData<ItemListResponse, number>;
+type ItemsInfiniteData = InfiniteData<ItemListResponse, string | null>;
 type ItemsMutationContext = {
   prevItemLists: Array<[readonly unknown[], ItemsInfiniteData | undefined]>;
   prevItemDetails: Array<readonly [number, Item | undefined]>;
   prevFeeds: Feed[] | undefined;
+  prevBookmarkLists: Array<
+    [readonly unknown[], BookmarksInfiniteData | undefined]
+  >;
 };
 
 function buildListItemsParams(
   filters: NormalizedItemFilters,
-  offset: number,
+  cursor: string | null,
   pageSize: number,
 ): ListItemsParams {
   const params: ListItemsParams = {
     limit: pageSize,
-    offset,
-    order_by: "pub_date:desc",
+    order_by: "pub_date",
   };
 
   if (filters.feedId) params.feed_id = filters.feedId;
   if (filters.groupId) params.group_id = filters.groupId;
   if (filters.unread) params.unread = true;
+  if (cursor) params.before = cursor;
 
   return params;
 }
@@ -51,11 +55,8 @@ export const itemQueries = {
       queryKey: [...queryKeys.items.lists(), normalizedFilters, pageSize],
       queryFn: async ({ pageParam }) =>
         itemAPI.list(buildListItemsParams(normalizedFilters, pageParam, pageSize)),
-      initialPageParam: 0,
-      getNextPageParam: (lastPage, allPages) => {
-        const fetched = allPages.reduce((n, p) => n + p.data.length, 0);
-        return fetched < lastPage.total ? fetched : undefined;
-      },
+      initialPageParam: null as string | null,
+      getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     });
   },
   detail: (itemId: number) =>
@@ -68,9 +69,9 @@ export const itemQueries = {
     }),
 };
 
-export function useItems(filters: ItemFilters) {
+export function useItems(filters: ItemFilters, enabled = true) {
   const articlePageSize = usePreferencesStore((state) => state.articlePageSize);
-  return useInfiniteQuery(itemQueries.list(filters, articlePageSize));
+  return useInfiniteQuery({ ...itemQueries.list(filters, articlePageSize), enabled });
 }
 
 export function useItem(itemId: number | null, enabled = true) {
@@ -93,6 +94,9 @@ function snapshotItemsMutationState(
         [id, qc.getQueryData<Item>(queryKeys.items.detail(id))] as const,
     ),
     prevFeeds: qc.getQueryData<Feed[]>(queryKeys.feeds.list()),
+    prevBookmarkLists: qc.getQueriesData<BookmarksInfiniteData>({
+      queryKey: queryKeys.bookmarks.lists(),
+    }),
   };
 }
 
@@ -159,6 +163,34 @@ function applyOptimisticItemReadState(
       }),
     );
   }
+
+  // Mirror the read-state change into bookmark caches so the starred view (which
+  // renders bookmarks as articles) reflects the toggle without a refetch.
+  qc.setQueriesData<BookmarksInfiniteData>(
+    { queryKey: queryKeys.bookmarks.lists() },
+    (old) => {
+      if (!old) return old;
+      let changed = false;
+      const pages = old.pages.map((page) => {
+        let pageChanged = false;
+        const newData = page.data.map((bookmark) => {
+          if (
+            bookmark.item_id != null &&
+            idSet.has(bookmark.item_id) &&
+            bookmark.unread !== targetUnread
+          ) {
+            pageChanged = true;
+            return { ...bookmark, unread: targetUnread };
+          }
+          return bookmark;
+        });
+        if (!pageChanged) return page;
+        changed = true;
+        return { ...page, data: newData };
+      });
+      return changed ? { ...old, pages } : old;
+    },
+  );
 }
 
 function rollbackItemsMutation(
@@ -177,6 +209,10 @@ function rollbackItemsMutation(
 
   if (context.prevFeeds) {
     qc.setQueryData(queryKeys.feeds.list(), context.prevFeeds);
+  }
+
+  for (const [key, data] of context.prevBookmarkLists) {
+    qc.setQueryData(key, data);
   }
 }
 

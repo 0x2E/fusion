@@ -12,6 +12,7 @@ import (
 
 	"github.com/0x2E/feedfinder"
 	"github.com/0x2E/fusion/internal/pkg/httpc"
+	"github.com/0x2E/fusion/internal/pull"
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
 	"github.com/mmcdole/gofeed"
@@ -37,7 +38,8 @@ type updateFeedRequest struct {
 }
 
 type validateFeedRequest struct {
-	URL string `json:"url" binding:"required"`
+	URL   string `json:"url" binding:"required"`
+	Proxy string `json:"proxy"`
 }
 
 type discoveredFeed struct {
@@ -254,6 +256,7 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	}
 
 	target := strings.TrimSpace(req.URL)
+	proxy := strings.TrimSpace(req.Proxy)
 	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
 	if err := httpc.ValidateRequestURL(c.Request.Context(), target, allowPrivateFeeds); err != nil {
 		badRequestError(c, "invalid url")
@@ -263,7 +266,11 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
-	found, err := feedfinder.Find(ctx, target, nil)
+	var finderOptions *feedfinder.Options
+	if proxy != "" {
+		finderOptions = &feedfinder.Options{RequestProxy: &proxy}
+	}
+	found, err := feedfinder.Find(ctx, target, finderOptions)
 	if err != nil {
 		slog.Warn("feed discovery failed", "url", target, "error", err)
 	}
@@ -280,7 +287,7 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	}
 
 	if len(feeds) == 0 {
-		title, parseErr := h.parseFeedTitle(ctx, target)
+		title, parseErr := h.parseFeedTitle(ctx, target, proxy)
 		if parseErr == nil {
 			feeds = append(feeds, discoveredFeed{Title: title, Link: target})
 		}
@@ -303,8 +310,13 @@ func normalizeDiscoveredFeeds(found []feedfinder.Feed) []discoveredFeed {
 		}
 
 		seen[link] = struct{}{}
+		// feedfinder mixes gofeed-parsed feed titles with page <title>/<link>
+		// text the HTML finder already decoded once; Feed carries no source
+		// marker, so page-derived names take one extra decode here. That is
+		// the same bounded residual as item titles and keeps both name sources
+		// on one form.
 		result = append(result, discoveredFeed{
-			Title: strings.TrimSpace(feed.Title),
+			Title: pull.NormalizeTitle(feed.Title),
 			Link:  link,
 		})
 	}
@@ -312,10 +324,10 @@ func normalizeDiscoveredFeeds(found []feedfinder.Feed) []discoveredFeed {
 	return result
 }
 
-func (h *Handler) parseFeedTitle(ctx context.Context, target string) (string, error) {
+func (h *Handler) parseFeedTitle(ctx context.Context, target, proxy string) (string, error) {
 	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
 
-	client, err := httpc.NewClient(30*time.Second, "", allowPrivateFeeds)
+	client, err := httpc.NewClient(30*time.Second, proxy, allowPrivateFeeds)
 	if err != nil {
 		return "", err
 	}
@@ -345,7 +357,7 @@ func (h *Handler) parseFeedTitle(ctx context.Context, target string) (string, er
 		return "", nil
 	}
 
-	return strings.TrimSpace(parsedFeed.Title), nil
+	return pull.NormalizeTitle(parsedFeed.Title), nil
 }
 
 func (h *Handler) refreshFeed(c *gin.Context) {

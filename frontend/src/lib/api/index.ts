@@ -1,7 +1,8 @@
 import { api } from "./client";
 import type {
   APIResponse,
-  ListAPIResponse,
+  ListResponse,
+  PaginatedListResponse,
   LoginRequest,
   Group,
   Feed,
@@ -16,19 +17,23 @@ import type {
   CreateBookmarkRequest,
   MarkItemsReadRequest,
   ListItemsParams,
-  ImportOpmlResponse,
+  ListBookmarksParams,
   BatchCreateFeedsRequest,
   BatchCreateFeedsResponse,
   SearchResponse,
   OIDCStatusResponse,
   OIDCLoginResponse,
   AppInfoResponse,
+  Settings,
+  UpdateSettingsRequest,
 } from "./types";
 
 // Session APIs
 export const sessionAPI = {
   login: (data: LoginRequest) =>
     api.post<APIResponse<{ message: string }>>("/sessions", data),
+
+  status: () => api.get<void>("/sessions"),
 
   logout: () => api.delete<void>("/sessions"),
 };
@@ -42,7 +47,7 @@ export const oidcAPI = {
 
 // Group APIs
 export const groupAPI = {
-  list: () => api.get<ListAPIResponse<Group>>("/groups"),
+  list: () => api.get<ListResponse<Group>>("/groups"),
 
   get: (id: number) => api.get<APIResponse<Group>>(`/groups/${id}`),
 
@@ -57,7 +62,7 @@ export const groupAPI = {
 
 // Feed APIs
 export const feedAPI = {
-  list: () => api.get<ListAPIResponse<Feed>>("/feeds"),
+  list: () => api.get<ListResponse<Feed>>("/feeds"),
 
   get: (id: number) => api.get<APIResponse<Feed>>(`/feeds/${id}`),
 
@@ -87,11 +92,11 @@ export const itemAPI = {
     if (params?.unread !== undefined)
       query.set("unread", params.unread.toString());
     if (params?.limit) query.set("limit", params.limit.toString());
-    if (params?.offset) query.set("offset", params.offset.toString());
+    if (params?.before) query.set("before", params.before);
     if (params?.order_by) query.set("order_by", params.order_by);
 
     const queryString = query.toString();
-    return api.get<ListAPIResponse<Item>>(
+    return api.get<PaginatedListResponse<Item>>(
       `/items${queryString ? `?${queryString}` : ""}`,
     );
   },
@@ -107,12 +112,13 @@ export const itemAPI = {
 
 // Bookmark APIs
 export const bookmarkAPI = {
-  list: (limit = 50, offset = 0) => {
-    const query = new URLSearchParams({
-      limit: limit.toString(),
-      offset: offset.toString(),
-    });
-    return api.get<ListAPIResponse<Bookmark>>(`/bookmarks?${query}`);
+  list: (params: ListBookmarksParams = {}) => {
+    const query = new URLSearchParams();
+    if (params.feed_id) query.set("feed_id", params.feed_id.toString());
+    if (params.group_id) query.set("group_id", params.group_id.toString());
+    query.set("limit", (params.limit ?? 50).toString());
+    if (params.before) query.set("before", params.before);
+    return api.get<PaginatedListResponse<Bookmark>>(`/bookmarks?${query}`);
   },
 
   get: (id: number) => api.get<APIResponse<Bookmark>>(`/bookmarks/${id}`),
@@ -121,6 +127,14 @@ export const bookmarkAPI = {
     api.post<APIResponse<Bookmark>>("/bookmarks", data),
 
   delete: (id: number) => api.delete<void>(`/bookmarks/${id}`),
+};
+
+// Settings APIs
+export const settingsAPI = {
+  get: () => api.get<APIResponse<Settings>>("/settings"),
+
+  update: (data: UpdateSettingsRequest) =>
+    api.patch<APIResponse<Settings>>("/settings", data),
 };
 
 // Search APIs
@@ -134,31 +148,6 @@ export const searchAPI = {
 // App APIs
 export const appAPI = {
   getInfo: () => api.get<APIResponse<AppInfoResponse>>("/app"),
-};
-
-// OPML APIs
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
-
-export const opmlAPI = {
-  import: async (file: File): Promise<APIResponse<ImportOpmlResponse>> => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const response = await fetch(`${API_BASE}/opml/import`, {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ error: "Unknown error" }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-
-    return response.json();
-  },
 };
 
 export * from "./types";
