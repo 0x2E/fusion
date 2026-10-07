@@ -96,9 +96,11 @@ This section only records history.
 
 The pull loop sleeps until the earliest due time across non-suspended feeds
 (the larger of `next_check_at` and `retry_after_until` per feed), and is
-woken immediately when feeds are created, updated, or deleted — so interval
-changes take effect without waiting out the previous sleep. Tuning knobs
-(`FUSION_PULL_INTERVAL`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_TIMEOUT`,
+woken immediately whenever scheduling state changes: feeds created, updated,
+or deleted, and any pull that rewrites `next_check_at` (including manual
+refresh). The sleep is capped at `FUSION_PULL_INTERVAL`, so a stale
+`next_check_at` delays re-evaluation by at most one global interval. Tuning
+knobs (`FUSION_PULL_INTERVAL`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_TIMEOUT`,
 `FUSION_PULL_MAX_BACKOFF`) and their defaults are listed in
 [`.env.example`](../.env.example) — the behavioral rules below are what the
 knobs mean.
