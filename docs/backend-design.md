@@ -107,6 +107,9 @@ knobs mean.
 
 - A feed may carry `refresh_interval_seconds` (closed set, exposed by
   `GET /api/app`); `NULL` means "use `FUSION_PULL_INTERVAL`".
+- An explicit override always wins: changing `FUSION_PULL_INTERVAL` (or
+  relying on its default) only re-schedules feeds stored as `NULL`, never
+  feeds with an override.
 - Wherever the rules below say "interval", read the feed's effective
   interval: its override when set, else the global one.
 - Changing or clearing an override makes the feed due immediately and drops
