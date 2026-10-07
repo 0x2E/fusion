@@ -78,10 +78,6 @@ func TestFeedRefreshIntervalLifecycle(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("create feed: expected 200, got %d: %s", w.Code, w.Body.String())
 	}
-	if puller.wakes.Load() == 0 {
-		t.Error("expected create feed to wake the puller")
-	}
-
 	feeds, err := st.ListFeeds()
 	if err != nil || len(feeds) != 1 {
 		t.Fatalf("list feeds: %v (len=%d)", err, len(feeds))
@@ -90,6 +86,8 @@ func TestFeedRefreshIntervalLifecycle(t *testing.T) {
 		t.Fatalf("expected stored interval %d, got %v", interval, got)
 	}
 	feedPath = "/api/feeds/" + strconv.FormatInt(feeds[0].ID, 10)
+
+	wakesAfterCreate := puller.wakes.Load()
 
 	// 0 on update clears the override back to NULL.
 	clearBody := mustJSONBody(t, gin.H{"refresh_interval_seconds": 0})
@@ -103,6 +101,11 @@ func TestFeedRefreshIntervalLifecycle(t *testing.T) {
 	}
 	if got := feeds[0].RefreshIntervalSeconds; got != nil {
 		t.Fatalf("expected cleared interval, got %v", *got)
+	}
+	// Updates wake the scheduler synchronously (there is no refresh job to
+	// do it); creation does not — the initial pull's RefreshFeed wakes.
+	if puller.wakes.Load() != wakesAfterCreate+1 {
+		t.Fatalf("expected exactly one wake from the update, got %d", puller.wakes.Load()-wakesAfterCreate)
 	}
 
 	// Non-whitelisted values are rejected on both create and update.

@@ -144,20 +144,20 @@ func (s *Store) ListDueFeeds(now int64) ([]*model.Feed, error) {
 
 // NextWakeTime returns the earliest unix time at which any non-suspended feed
 // becomes pullable, accounting for both next_check_at and retry_after_until
-// (ShouldSkip skips a feed while either is in the future). Returns 0 when
-// there are no non-suspended feeds.
-func (s *Store) NextWakeTime() (int64, error) {
-	var next sql.NullInt64
-	err := s.db.QueryRow(`
+// (ShouldSkip skips a feed while either is in the future). ok is false when
+// there are no non-suspended feeds; a returned 0 means "due immediately".
+func (s *Store) NextWakeTime() (next int64, ok bool, err error) {
+	var null sql.NullInt64
+	err = s.db.QueryRow(`
 		SELECT MIN(MAX(COALESCE(fs.next_check_at, 0), COALESCE(fs.retry_after_until, 0)))
 		FROM feeds f
 		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
 		WHERE f.suspended = 0
-	`).Scan(&next)
-	if err != nil {
-		return 0, err
+	`).Scan(&null)
+	if err != nil || !null.Valid {
+		return 0, false, err
 	}
-	return next.Int64, nil
+	return null.Int64, true, nil
 }
 
 func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string, refreshIntervalSeconds *int64) (*model.Feed, error) {

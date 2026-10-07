@@ -70,7 +70,7 @@ export function EditFeedDialog() {
     label: group.name,
   }));
 
-  const { data: appInfo } = useAppInfo();
+  const { data: appInfo, isLoading: appInfoLoading } = useAppInfo();
   const globalPullInterval = appInfo?.pull_interval ?? DEFAULT_PULL_INTERVAL;
   const options = intervalOptions(
     globalPullInterval,
@@ -347,6 +347,7 @@ export function EditFeedDialog() {
                       value: seconds.toString(),
                       label: formatInterval(seconds),
                     }))}
+                    disabled={appInfoLoading}
                     value={refreshInterval || String(globalPullInterval)}
                     onValueChange={(v) => v && setRefreshInterval(v)}
                   >

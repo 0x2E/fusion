@@ -67,9 +67,9 @@ func (p *Puller) Start(ctx context.Context) error {
 	p.logger.Info("pull service started", "interval", p.interval, "timeout", p.timeout, "concurrency", p.config.PullConcurrency)
 
 	for {
-		p.pullDue(ctx)
+		dispatched := p.pullDue(ctx)
 
-		timer := time.NewTimer(p.scheduleDelay())
+		timer := time.NewTimer(p.scheduleDelay(dispatched > 0))
 		select {
 		case <-ctx.Done():
 			timer.Stop()
@@ -83,35 +83,45 @@ func (p *Puller) Start(ctx context.Context) error {
 }
 
 // scheduleDelay returns how long the scheduler can sleep before any feed is
-// due again, based on the fetch state persisted by the last pull.
-func (p *Puller) scheduleDelay() time.Duration {
-	next, err := p.store.NextWakeTime()
-	if err != nil {
-		p.logger.Error("failed to compute next wake time", "error", err)
+// due again, based on the fetch state persisted by the last pull. The sleep
+// is capped at the global interval so a stale next_check_at (missed wake,
+// host suspend, NTP step) delays re-evaluation by at most one interval.
+func (p *Puller) scheduleDelay(dispatched bool) time.Duration {
+	next, ok, err := p.store.NextWakeTime()
+	if err != nil || !ok {
+		if err != nil {
+			p.logger.Error("failed to compute next wake time", "error", err)
+		}
+		// No non-suspended feeds; re-check after the global interval.
 		return p.interval
 	}
-	if next <= 0 {
-		// No non-suspended feeds; re-check after the global interval.
+	if dispatched && next <= time.Now().Unix() {
+		// Feeds were pulled this pass but the earliest due time is still in
+		// the past: their fetch-state persist failed. Retry after the global
+		// interval instead of hammering origins every second.
 		return p.interval
 	}
 	delay := time.Until(time.Unix(next, 0))
 	if delay < minScheduleDelay {
 		return minScheduleDelay
 	}
+	if delay > p.interval {
+		return p.interval
+	}
 	return delay
 }
 
 // pullDue fetches the feeds whose next_check_at has passed, concurrently with
-// semaphore limiting.
-func (p *Puller) pullDue(ctx context.Context) {
+// semaphore limiting. It returns how many feeds were dispatched.
+func (p *Puller) pullDue(ctx context.Context) int {
 	now := time.Now().Unix()
 	feeds, err := p.store.ListDueFeeds(now)
 	if err != nil {
 		p.logger.Error("failed to list due feeds", "error", err)
-		return
+		return 0
 	}
 
-	_, _ = p.dispatchFeeds(ctx, feeds, func(feed *model.Feed) bool {
+	count, _ := p.dispatchFeeds(ctx, feeds, func(feed *model.Feed) bool {
 		state := pullpolicy.FeedRuntimeState{
 			Suspended:           feed.Suspended,
 			RetryAfterUntil:     feed.FetchState.RetryAfterUntil,
@@ -122,6 +132,7 @@ func (p *Puller) pullDue(ctx context.Context) {
 		}
 		return !pullpolicy.ShouldSkip(now, state, p.effectiveInterval(feed), p.maxBackoff)
 	})
+	return count
 }
 
 // pullFeed fetches single feed and saves new items.
@@ -276,6 +287,7 @@ func (p *Puller) RefreshAll(ctx context.Context) (int, error) {
 		return count, err
 	}
 
+	p.Wake()
 	return count, nil
 }
 
@@ -321,5 +333,8 @@ func (p *Puller) RefreshFeed(ctx context.Context, feedID int64) error {
 	defer p.concurrency.Release(1)
 
 	p.pullFeed(ctx, feed)
+	// Manual refresh rewrites next_check_at (possibly earlier than the
+	// sleeping timer's deadline); every writer outside pullDue must wake.
+	p.Wake()
 	return nil
 }

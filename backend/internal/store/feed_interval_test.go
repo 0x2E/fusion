@@ -146,9 +146,9 @@ func TestListDueFeedsAndNextWakeTime(t *testing.T) {
 		t.Error("expected suspended feed to be excluded")
 	}
 
-	next, err := s.NextWakeTime()
-	if err != nil {
-		t.Fatalf("next wake time: %v", err)
+	next, ok, err := s.NextWakeTime()
+	if err != nil || !ok {
+		t.Fatalf("next wake time: ok=%v err=%v", ok, err)
 	}
 	// The past-due feed is the earliest wake time (the scheduler clamps the
 	// sleep to its minimum instead of spinning).
@@ -158,12 +158,50 @@ func TestListDueFeedsAndNextWakeTime(t *testing.T) {
 
 	// Once nothing is past due, the Retry-After hold pushes the wake time out.
 	setFetchState(t, s, due.ID, now+3600, 0)
-	next, err = s.NextWakeTime()
-	if err != nil {
-		t.Fatalf("next wake time: %v", err)
+	next, ok, err = s.NextWakeTime()
+	if err != nil || !ok {
+		t.Fatalf("next wake time: ok=%v err=%v", ok, err)
 	}
 	if next < now+500 || next > now+700 {
 		t.Fatalf("expected next wake near %d from retry hold, got %d", now+600, next)
+	}
+}
+
+func TestNextWakeTimeEmptyAndZeroState(t *testing.T) {
+	s, _ := setupTestDB(t)
+	defer closeStore(t, s)
+
+	// No feeds at all: ok=false so the scheduler falls back to the interval.
+	if _, ok, err := s.NextWakeTime(); err != nil || ok {
+		t.Fatalf("expected ok=false with no feeds, got ok=%v err=%v", ok, err)
+	}
+
+	group, err := s.CreateGroup("G")
+	if err != nil {
+		t.Fatalf("create group: %v", err)
+	}
+	feed, err := s.CreateFeed(group.ID, "F", "https://example.com/f", "", "", nil)
+	if err != nil {
+		t.Fatalf("create feed: %v", err)
+	}
+
+	// A zero next_check_at (legacy never-pulled row) means "due immediately",
+	// not "no feeds": ok=true with next=0.
+	setFetchState(t, s, feed.ID, 0, 0)
+	next, ok, err := s.NextWakeTime()
+	if err != nil || !ok {
+		t.Fatalf("expected ok=true for zero-state row, got ok=%v err=%v", ok, err)
+	}
+	if next != 0 {
+		t.Fatalf("expected next=0 for zero-state row, got %d", next)
+	}
+
+	// Suspended feeds do not count.
+	if err := s.UpdateFeed(feed.ID, UpdateFeedParams{Suspended: ptrBool(true)}); err != nil {
+		t.Fatalf("suspend feed: %v", err)
+	}
+	if _, ok, err := s.NextWakeTime(); err != nil || ok {
+		t.Fatalf("expected ok=false when only feed is suspended, got ok=%v err=%v", ok, err)
 	}
 }
 

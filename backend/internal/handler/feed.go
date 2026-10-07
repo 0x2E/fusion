@@ -158,9 +158,8 @@ func (h *Handler) createFeed(c *gin.Context) {
 		internalError(c, err, "create feed")
 		return
 	}
-	h.puller.Wake()
 
-	// Trigger initial pull in background.
+	// Trigger initial pull in background; it wakes the scheduler when done.
 	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
 	go func(feedID int64) {
 		ctx, cancel := context.WithTimeout(context.Background(), refreshTimeout)
@@ -472,7 +471,6 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 		internalError(c, err, "batch create feeds")
 		return
 	}
-	h.puller.Wake()
 
 	// Trigger initial pull for each new feed in background.
 	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
