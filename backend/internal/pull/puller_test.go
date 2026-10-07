@@ -207,7 +207,7 @@ func TestRefreshFeedBackfillsNameFromTitle(t *testing.T) {
 			}
 			defer st.Close()
 
-			feed, err := st.CreateFeed(1, feedName, server.URL, "", "")
+			feed, err := st.CreateFeed(1, feedName, server.URL, "", "", nil)
 			if err != nil {
 				t.Fatalf("create feed: %v", err)
 			}

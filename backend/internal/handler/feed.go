@@ -52,7 +52,8 @@ type validateFeedResponse struct {
 }
 
 type appInfoResponse struct {
-	PullInterval int `json:"pull_interval"`
+	PullInterval            int     `json:"pull_interval"`
+	AllowedRefreshIntervals []int64 `json:"allowed_refresh_intervals"`
 }
 
 type batchCreateFeedsRequest struct {
@@ -66,29 +67,41 @@ type batchCreateFeedItem struct {
 	SiteURL string `json:"site_url"`
 }
 
-var allowedRefreshIntervals = map[int64]bool{
-	900:   true,
-	1800:  true,
-	3600:  true,
-	7200:  true,
-	21600: true,
-	43200: true,
-	86400: true,
+// allowedRefreshIntervals is the closed set of per-feed refresh overrides.
+// It is exposed through GET /api/app so the frontend renders the same list
+// the backend validates against.
+var allowedRefreshIntervals = []int64{900, 1800, 3600, 7200, 21600, 43200, 86400}
+
+func isAllowedRefreshInterval(v int64) bool {
+	for _, allowed := range allowedRefreshIntervals {
+		if v == allowed {
+			return true
+		}
+	}
+	return false
 }
 
-func validateRefreshInterval(v *int64) error {
+func invalidRefreshIntervalError() error {
+	return fmt.Errorf("invalid refresh_interval_seconds: must be one of %v", allowedRefreshIntervals)
+}
+
+// normalizeCreateRefreshInterval maps the request semantics to storage: nil or
+// 0 means "use the global interval" and is stored as NULL; any other value
+// must be whitelisted.
+func normalizeCreateRefreshInterval(v *int64) (*int64, error) {
 	if v == nil || *v == 0 {
-		return nil
+		return nil, nil
 	}
-	if !allowedRefreshIntervals[*v] {
-		return fmt.Errorf("invalid refresh_interval_seconds: must be one of 900, 1800, 3600, 7200, 21600, 43200, 86400")
+	if !isAllowedRefreshInterval(*v) {
+		return nil, invalidRefreshIntervalError()
 	}
-	return nil
+	return v, nil
 }
 
 func (h *Handler) getAppInfo(c *gin.Context) {
 	dataResponse(c, appInfoResponse{
-		PullInterval: h.config.PullInterval,
+		PullInterval:            h.config.PullInterval,
+		AllowedRefreshIntervals: allowedRefreshIntervals,
 	})
 }
 
@@ -134,16 +147,18 @@ func (h *Handler) createFeed(c *gin.Context) {
 		badRequestError(c, "invalid link")
 		return
 	}
-	if err := validateRefreshInterval(req.RefreshIntervalSeconds); err != nil {
+	refreshInterval, err := normalizeCreateRefreshInterval(req.RefreshIntervalSeconds)
+	if err != nil {
 		badRequestError(c, err.Error())
 		return
 	}
 
-	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy, req.RefreshIntervalSeconds)
+	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy, refreshInterval)
 	if err != nil {
 		internalError(c, err, "create feed")
 		return
 	}
+	h.puller.Wake()
 
 	// Trigger initial pull in background.
 	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
@@ -170,10 +185,6 @@ func (h *Handler) updateFeed(c *gin.Context) {
 		badRequestError(c, "invalid request")
 		return
 	}
-	if err := validateRefreshInterval(req.RefreshIntervalSeconds); err != nil {
-		badRequestError(c, err.Error())
-		return
-	}
 
 	params := store.UpdateFeedParams{}
 	if req.GroupID != nil {
@@ -198,10 +209,14 @@ func (h *Handler) updateFeed(c *gin.Context) {
 	if req.Proxy != nil {
 		params.Proxy = req.Proxy
 	}
+	// refresh_interval_seconds on update: absent = keep, 0 = clear back to the
+	// global interval, other values must be whitelisted.
 	if req.RefreshIntervalSeconds != nil {
 		if *req.RefreshIntervalSeconds == 0 {
-			nilInterval := int64(-1)
-			params.RefreshIntervalSeconds = &nilInterval
+			params.ClearRefreshInterval = true
+		} else if !isAllowedRefreshInterval(*req.RefreshIntervalSeconds) {
+			badRequestError(c, invalidRefreshIntervalError().Error())
+			return
 		} else {
 			params.RefreshIntervalSeconds = req.RefreshIntervalSeconds
 		}
@@ -215,6 +230,7 @@ func (h *Handler) updateFeed(c *gin.Context) {
 		internalError(c, err, "update feed")
 		return
 	}
+	h.puller.Wake()
 
 	feed, err := h.store.GetFeed(id)
 	if err != nil {
@@ -244,6 +260,7 @@ func (h *Handler) deleteFeed(c *gin.Context) {
 		internalError(c, err, "delete feed")
 		return
 	}
+	h.puller.Wake()
 
 	c.Status(http.StatusNoContent)
 }
@@ -455,6 +472,7 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 		internalError(c, err, "batch create feeds")
 		return
 	}
+	h.puller.Wake()
 
 	// Trigger initial pull for each new feed in background.
 	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second

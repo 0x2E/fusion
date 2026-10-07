@@ -15,6 +15,10 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
+// minScheduleDelay bounds the scheduler sleep so a stale next_check_at (e.g.
+// after a failed fetch-state write) cannot spin the loop hot.
+const minScheduleDelay = time.Second
+
 type Puller struct {
 	store       *store.Store
 	config      *config.Config
@@ -23,6 +27,7 @@ type Puller struct {
 	timeout     time.Duration
 	maxBackoff  time.Duration
 	concurrency *semaphore.Weighted
+	wake        chan struct{}
 }
 
 func (p *Puller) effectiveInterval(feed *model.Feed) time.Duration {
@@ -41,66 +46,71 @@ func New(st *store.Store, cfg *config.Config) *Puller {
 		timeout:     time.Duration(cfg.PullTimeout) * time.Second,
 		maxBackoff:  time.Duration(cfg.PullMaxBackoff) * time.Second,
 		concurrency: semaphore.NewWeighted(int64(cfg.PullConcurrency)),
+		wake:        make(chan struct{}, 1),
 	}
 }
 
-// Start begins periodic feed pulling. Blocks until context is cancelled.
+// Wake prompts the scheduler to re-evaluate due feeds immediately. HTTP
+// handlers call it after feed mutations (create/update/delete) so interval
+// changes take effect without waiting out the previous sleep.
+func (p *Puller) Wake() {
+	select {
+	case p.wake <- struct{}{}:
+	default:
+	}
+}
+
+// Start runs the pull scheduler until the context is cancelled. Each pass
+// pulls the feeds that are due (per their next_check_at), then sleeps until
+// the earliest next due time, or until Wake fires.
 func (p *Puller) Start(ctx context.Context) error {
 	p.logger.Info("pull service started", "interval", p.interval, "timeout", p.timeout, "concurrency", p.config.PullConcurrency)
 
-	p.pullAll(ctx)
-
-	tickerInterval := p.interval
-	ticker := time.NewTicker(tickerInterval)
-	defer ticker.Stop()
-
 	for {
+		p.pullDue(ctx)
+
+		timer := time.NewTimer(p.scheduleDelay())
 		select {
 		case <-ctx.Done():
+			timer.Stop()
 			p.logger.Info("pull service stopping")
 			return ctx.Err()
-		case <-ticker.C:
-			p.pullAll(ctx)
-		}
-
-		newInterval := p.computeMinInterval()
-		if newInterval != tickerInterval {
-			tickerInterval = newInterval
-			ticker.Reset(tickerInterval)
-			p.logger.Info("adjusted pull ticker", "interval", tickerInterval)
+		case <-timer.C:
+		case <-p.wake:
+			timer.Stop()
 		}
 	}
 }
 
-func (p *Puller) computeMinInterval() time.Duration {
-	feeds, err := p.store.ListFeeds()
+// scheduleDelay returns how long the scheduler can sleep before any feed is
+// due again, based on the fetch state persisted by the last pull.
+func (p *Puller) scheduleDelay() time.Duration {
+	next, err := p.store.NextWakeTime()
 	if err != nil {
-		p.logger.Error("failed to list feeds for ticker computation", "error", err)
+		p.logger.Error("failed to compute next wake time", "error", err)
 		return p.interval
 	}
-
-	minInterval := p.interval
-	for _, feed := range feeds {
-		if feed.Suspended {
-			continue
-		}
-		effective := p.effectiveInterval(feed)
-		if effective < minInterval {
-			minInterval = effective
-		}
+	if next <= 0 {
+		// No non-suspended feeds; re-check after the global interval.
+		return p.interval
 	}
-	return minInterval
+	delay := time.Until(time.Unix(next, 0))
+	if delay < minScheduleDelay {
+		return minScheduleDelay
+	}
+	return delay
 }
 
-// pullAll fetches all feeds concurrently with semaphore limiting.
-func (p *Puller) pullAll(ctx context.Context) {
-	feeds, err := p.store.ListFeeds()
+// pullDue fetches the feeds whose next_check_at has passed, concurrently with
+// semaphore limiting.
+func (p *Puller) pullDue(ctx context.Context) {
+	now := time.Now().Unix()
+	feeds, err := p.store.ListDueFeeds(now)
 	if err != nil {
-		p.logger.Error("failed to list feeds", "error", err)
+		p.logger.Error("failed to list due feeds", "error", err)
 		return
 	}
 
-	now := time.Now().Unix()
 	_, _ = p.dispatchFeeds(ctx, feeds, func(feed *model.Feed) bool {
 		state := pullpolicy.FeedRuntimeState{
 			Suspended:           feed.Suspended,
@@ -110,8 +120,7 @@ func (p *Puller) pullAll(ctx context.Context) {
 			LastErrorAt:         feed.FetchState.LastErrorAt,
 			LastCheckedAt:       feed.FetchState.LastCheckedAt,
 		}
-		interval := p.effectiveInterval(feed)
-		return !pullpolicy.ShouldSkip(now, state, interval, p.maxBackoff)
+		return !pullpolicy.ShouldSkip(now, state, p.effectiveInterval(feed), p.maxBackoff)
 	})
 }
 
