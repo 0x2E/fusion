@@ -18,6 +18,9 @@ export function Sidebar() {
   const isFeedsPage = pathname === "/feeds";
 
   const handleSignOut = async () => {
+    if (!window.confirm(t("sidebar.signOutConfirm"))) {
+      return;
+    }
     try {
       await sessionAPI.logout();
     } catch {

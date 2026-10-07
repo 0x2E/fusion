@@ -89,6 +89,7 @@ export const frMessages: PartialMessages = {
   "sidebar.settings": "Paramètres",
   "sidebar.signOut": "Se déconnecter",
   "sidebar.signOutFailed": "Echec de la deconnexion",
+  "sidebar.signOutConfirm": "Se déconnecter ? Vous devrez vous reconnecter pour accéder à vos flux.",
   "group.add.description": "Créez un nouveau groupe pour organiser vos flux.",
   "group.add.placeholder": "Nom du groupe",
   "group.add.title": "Ajouter un groupe",

@@ -89,6 +89,7 @@ export const esMessages: PartialMessages = {
   "sidebar.settings": "Configuracion",
   "sidebar.signOut": "Cerrar sesión",
   "sidebar.signOutFailed": "Error al cerrar sesión",
+  "sidebar.signOutConfirm": "¿Cerrar sesión? Tendrás que iniciar sesión de nuevo para acceder a tus feeds.",
   "group.add.description": "Crea un nuevo grupo para organizar tus feeds.",
   "group.add.placeholder": "Nombre del grupo",
   "group.add.title": "Agregar grupo",
