@@ -10,7 +10,8 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # never cancel mid-run: a killed `gh release create`/upload leaves partial assets
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -25,11 +26,14 @@ jobs:
         uses: ./.github/actions/setup-toolchains
         with:
           setup-node: "true"
+      - name: Test
+        run: ./scripts.sh test
       - name: Build release artifacts
         run: ./scripts.sh release
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${GITHUB_REF_NAME} ./dist/*.zip ./dist/fusion-linux-* ./dist/checksums.txt \
-            --draft --generate-notes
+          tag="${GITHUB_REF_NAME}"
+          gh release view "$tag" || gh release create "$tag" --draft --generate-notes
+          gh release upload "$tag" ./dist/*.zip ./dist/fusion-linux-* ./dist/checksums.txt --clobber

@@ -2,20 +2,6 @@
 
 set -eu
 
-resolve_version() {
-  if [ -n "${FUSION_VERSION:-}" ]; then
-    printf '%s\n' "$FUSION_VERSION"
-    return
-  fi
-
-  if git describe --tags --abbrev=0 >/dev/null 2>&1; then
-    git describe --tags --abbrev=0
-    return
-  fi
-
-  git rev-parse --short HEAD
-}
-
 test_backend() {
   echo "testing backend"
   (cd backend && go test ./...)
@@ -39,13 +25,11 @@ test_all() {
 
 build_frontend() {
   echo "building frontend"
-  version=$(resolve_version)
-  echo "Using fusion version string: ${version}"
 
   (
     cd frontend
     pnpm install --frozen-lockfile --prefer-offline
-    VITE_FUSION_VERSION="$version" pnpm run build
+    pnpm run build
   )
 
   echo "syncing frontend build artifacts for backend embed"
