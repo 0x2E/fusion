@@ -16,6 +16,7 @@
 
 - Follow best practices without over-engineering.
 - Default to no backward-compatibility work unless explicitly requested; if a change may break data formats, public APIs, or migrations, clearly state the impact.
+- Docs answer why, code says what: never copy facts that live in a file (versions, routes, dependencies, env defaults) into documentation — link to the source instead. See `docs/README.md`.
 - Write self-explanatory code with clear naming.
 - Add comments in English only when they provide non-obvious value:
   - **DO write comments for:**

@@ -124,7 +124,7 @@ Legacy env names (`DB`, `PASSWORD`, `PORT`) are still accepted for backward comp
 
 ## Development
 
-- Requirements: Go `1.25+`, Node.js `24+`, pnpm
+- Requirements: Go and Node.js versions are pinned by [`backend/go.mod`](./backend/go.mod) and [`frontend/package.json`](./frontend/package.json) (`engines`); plus pnpm
 - Helpful commands are in [`scripts.sh`](./scripts.sh)
 - Frontend i18n key check: `cd frontend && pnpm run check:i18n`
 

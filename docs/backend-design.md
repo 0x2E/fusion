@@ -15,33 +15,25 @@ Fusion backend runs two long-lived services in one process:
 
 Both services share the same SQLite store.
 
-## 3. Tech stack
+## 3. Stack decisions
 
-| Area           | Choice                                |
-| -------------- | ------------------------------------- |
-| Language       | Go 1.25                               |
-| HTTP framework | Gin                                   |
-| Database       | SQLite (`modernc.org/sqlite`)         |
-| Migrations     | Embedded SQL files                    |
-| Feed parser    | `github.com/mmcdole/gofeed`           |
-| Feed discovery | `github.com/0x2E/feedfinder`          |
-| Auth           | Password session auth + optional OIDC |
+Dependencies live in `backend/go.mod` — do not restate them here. The
+choices that are not obvious from the file list:
+
+- Pure-Go SQLite driver (`modernc.org/sqlite`) so releases are
+  `CGO_ENABLED=0` static binaries (see `scripts.sh`).
+- Explicit SQL with named parameters, no ORM.
+- Feed scheduling math is a pure package (`pullpolicy`) so it can be
+  tested without a store or clock.
 
 ## 4. Module layout
 
-```text
-backend/
-├── cmd/fusion/main.go           # process startup and lifecycle
-├── internal/
-│   ├── config/                  # env parsing
-│   ├── handler/                 # HTTP handlers + middleware
-│   ├── store/                   # SQL persistence + migrations
-│   ├── pull/                    # fetch/parse/schedule/backoff
-│   ├── pullpolicy/              # pure pull scheduling policy
-│   ├── auth/                    # password + OIDC helpers
-│   ├── model/                   # API/storage models
-│   └── pkg/httpc/               # HTTP client + SSRF guards
-```
+Directory structure mirrors `backend/` on disk — browse it directly. The
+responsibilities worth knowing that names do not convey: `pull` owns
+fetch/parse/backoff orchestration while `pullpolicy` is the pure
+decision logic; `internal/pkg/httpc` is the outbound HTTP client with
+SSRF guards (private-network blocking) built in; `store` embeds and
+applies the SQL migrations.
 
 ## 5. Database schema (current)
 
@@ -85,19 +77,12 @@ atomically swaps files, then records baseline version `1`.
   feed), and `bookmarks.item_id` / `bookmarks.feed_id` SET NULL (snapshot
   content must survive source deletions).
 
-## 7. API surface (high level)
+## 7. API surface
 
-- Sessions: login/logout
-- OIDC: enabled status, login URL, callback
-- Groups: list/get/create/update/delete
-- Feeds: list/get/create/update/delete/validate/batch create/refresh
-- Items: list/get/mark read/mark unread
-- Search: feed + item search
-- Bookmarks: list/get/create/delete
-- Settings: get/patch (partial update; absent field leaves the stored value
-  unchanged, there is deliberately no way to clear a preference back to null)
-
-Detailed contract: route registration in `internal/handler/handler.go` (`SetupRouter`), payload shapes in `internal/model/model.go`, cross-cutting conventions in `docs/api-conventions.md`.
+The endpoint inventory is the route registration in
+`internal/handler/handler.go` (`SetupRouter`); cross-cutting conventions
+(envelopes, cursors, errors, status codes) are in `docs/api-conventions.md`.
+This section only records history.
 
 ### Breaking API change (feed runtime fields)
 
@@ -109,10 +94,10 @@ Detailed contract: route registration in `internal/handler/handler.go` (`SetupRo
 
 ### Scheduler
 
-- Pull interval: `FUSION_PULL_INTERVAL` (default `1800s`)
-- Concurrency limit: `FUSION_PULL_CONCURRENCY` (default `10`)
-- Request timeout: `FUSION_PULL_TIMEOUT` (default `30s`)
-- Global max scheduling delay: `FUSION_PULL_MAX_BACKOFF` (default `48h`)
+Tuning knobs (`FUSION_PULL_INTERVAL`, `FUSION_PULL_CONCURRENCY`,
+`FUSION_PULL_TIMEOUT`, `FUSION_PULL_MAX_BACKOFF`) and their defaults are
+listed in [`.env.example`](../.env.example) — the behavioral rules below
+are what the knobs mean.
 
 ### Next-check bound
 
@@ -195,15 +180,16 @@ flowchart TD
 - CORS allowlist via `FUSION_CORS_ALLOWED_ORIGINS`
 - Trusted proxy list via `FUSION_TRUSTED_PROXIES`
 
-## 10. Observability and logs
+Logging is structured (`log/slog`) with level and format controlled by
+`FUSION_LOG_LEVEL` / `FUSION_LOG_FORMAT`; the full environment variable
+reference is [`.env.example`](../.env.example).
 
-- Structured logging via `log/slog`
-- Configurable log level (`FUSION_LOG_LEVEL`)
-- Configurable output format (`FUSION_LOG_FORMAT`: `auto`, `text`, `json`)
+## 10. Release verification
 
-## 11. Release verification checklist
+The standard checklist is [CONTRIBUTING.md](../CONTRIBUTING.md) (or
+`./scripts.sh test`). Release-only extras:
 
-- Backend tests: `cd backend && go test ./...`
-- Build check: `cd backend && go build -o /dev/null ./cmd/fusion`
-- Migration sanity check: start app on empty DB and ensure schema bootstraps correctly
-- API smoke tests: login, create feed, manual refresh, search, bookmark create/delete
+- Migration sanity check: start the app on an empty DB and confirm the
+  schema bootstraps.
+- API smoke pass: login, create feed, manual refresh, search, bookmark
+  create/delete.

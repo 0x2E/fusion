@@ -17,10 +17,10 @@ Fusion values simple, maintainable changes over complex abstractions.
 
 ## 2. Local setup
 
-Requirements:
+Requirements (versions are pinned in-repo, not here):
 
-- Go `1.25+`
-- Node.js `24+`
+- Go: [`backend/go.mod`](./backend/go.mod)
+- Node.js: [`frontend/package.json`](./frontend/package.json) (`engines`)
 - pnpm
 
 Install dependencies:
