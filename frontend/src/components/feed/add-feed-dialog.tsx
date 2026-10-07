@@ -24,16 +24,21 @@ import {
 import { useUIStore } from "@/store";
 import { useGroups } from "@/queries/groups";
 import { useCreateFeed } from "@/queries/feeds";
+import { useAppInfo } from "@/queries/app";
 import {
   feedAPI,
-  appAPI,
   type CreateFeedRequest,
   type DiscoveredFeed,
 } from "@/lib/api";
 import { toast } from "sonner";
-import { useI18n, type TranslationKey } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
+import {
+  DEFAULT_PULL_INTERVAL,
+  FALLBACK_REFRESH_INTERVALS,
+  formatInterval,
+  refreshIntervalKey,
+} from "@/lib/refresh-interval";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 
 export function AddFeedDialog() {
   const { t } = useI18n();
@@ -41,21 +46,9 @@ export function AddFeedDialog() {
   const { data: groups = [] } = useGroups();
   const createFeed = useCreateFeed();
 
-  const { data: appInfo } = useQuery({
-    queryKey: ["appInfo"],
-    queryFn: async () => {
-      const res = await appAPI.getInfo();
-      return res.data;
-    },
-    staleTime: Infinity,
-  });
-  const globalPullInterval = appInfo?.pull_interval ?? 1800;
-
-  function formatInterval(seconds: number): string {
-    if (seconds < 3600) return `${seconds / 60} min`;
-    if (seconds < 86400) return `${seconds / 3600}h`;
-    return `${seconds / 86400}d`;
-  }
+  const { data: appInfo } = useAppInfo();
+  const globalPullInterval = appInfo?.pull_interval ?? DEFAULT_PULL_INTERVAL;
+  const intervalOptions = appInfo?.allowed_refresh_intervals ?? FALLBACK_REFRESH_INTERVALS;
 
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
@@ -328,17 +321,19 @@ export function AddFeedDialog() {
                   <label className="text-[13px] font-medium" id="add-feed-refresh-label">
                     {t("feed.add.refreshFrequencyLabel")}
                   </label>
-                  <Select value={refreshInterval} onValueChange={setRefreshInterval}>
+                  <Select value={refreshInterval} onValueChange={(v) => v && setRefreshInterval(v)}>
                     <SelectTrigger className="h-10" aria-labelledby="add-feed-refresh-label">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="default">
-                        {t("feed.add.refreshFrequencyDefault", { interval: formatInterval(globalPullInterval) })}
+                        {t("feed.add.refreshFrequencyDefault", {
+                          interval: formatInterval(globalPullInterval),
+                        })}
                       </SelectItem>
-                      {[900, 1800, 3600, 7200, 21600, 43200, 86400].map((seconds) => (
+                      {intervalOptions.map((seconds) => (
                         <SelectItem key={seconds} value={seconds.toString()}>
-                          {t(`feed.add.refreshFrequency.${seconds}` as TranslationKey)}
+                          {t(refreshIntervalKey(seconds))}
                         </SelectItem>
                       ))}
                     </SelectContent>
