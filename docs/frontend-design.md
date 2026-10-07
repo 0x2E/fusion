@@ -6,29 +6,17 @@
 - Keep state predictable by encoding major UI state in URL params.
 - Prioritize readability and simple information architecture.
 
-## 2. Tech stack
+## 2. Stack decisions
 
-| Area                | Choice                   |
-| ------------------- | ------------------------ |
-| Framework           | React 19 + TypeScript    |
-| Build               | Vite                     |
-| Router              | TanStack Router          |
-| Data fetching/cache | TanStack Query           |
-| State               | Zustand (UI state + preference cache) |
-| UI system           | shadcn/ui (Base UI) + Tailwind CSS |
+Dependencies live in `frontend/package.json` — do not restate them here.
+The choices worth knowing: TanStack Router because routes are typed files
+under `frontend/src/routes/` (the route inventory is those files, not a
+table here); TanStack Query owns server-state caching so Zustand holds
+only transient UI state; shadcn/ui components are vendored into
+`src/components/ui/` and regenerated via the CLI rather than hand-edited
+(see AGENTS.md).
 
-## 3. Route map
-
-| Route pattern              | Purpose                         |
-| -------------------------- | ------------------------------- |
-| `/`                        | Canonical redirect to `/unread` |
-| `/:filter`                 | Top-level reading view          |
-| `/feeds/:feedId/:filter`   | Feed-scoped reading view        |
-| `/groups/:groupId/:filter` | Group-scoped reading view       |
-| `/feeds`                   | Feed/group management           |
-| `/login`                   | Password/OIDC login             |
-
-## 4. URL-driven app state
+## 3. URL-driven app state
 
 Reading state is split between path params and search params:
 
@@ -45,9 +33,10 @@ Examples:
 - `/feeds/6/unread`
 - `/groups/3/starred?article=289`
 
-This keeps list context stable while opening/closing article detail.
+This keeps list context stable while opening/closing article detail. `g u` /
+`g a` / `g s` / `g f` view jumps are navigation sugar over the same URLs.
 
-## 5. Layout system
+## 4. Layout system
 
 ### Desktop
 
@@ -61,36 +50,14 @@ This keeps list context stable while opening/closing article detail.
 - Main content remains single-column
 - Modals/drawers share the same UI flow as desktop
 
-## 6. Core UI areas
+The reading view is an infinite list with filter tabs and per-card
+read/star quick actions; the article drawer shows sanitized full content
+(`lib/content.ts`) with source link and prev/next navigation; feed
+management (`/feeds`) hosts grouped feed/group CRUD, refresh-all, and
+OPML import/export. Component names map to these areas directly — browse
+`frontend/src/components/` for the implementation.
 
-### Sidebar
-
-- App branding
-- Search entry (`Cmd/Ctrl + K`)
-- Feed tree (All, groups, feeds)
-- Footer actions: Manage Feeds, Settings
-
-### Main reading view (`/:filter`, `/feeds/:feedId/:filter`, `/groups/:groupId/:filter`)
-
-- Header with page title and "Mark all as read"
-- Filter tabs: All / Unread / Starred
-- Infinite article list (load more)
-- Article cards with quick actions (read/unread, star)
-
-### Article drawer
-
-- Shows full article content (sanitized HTML)
-- Supports previous/next navigation
-- Includes source link and feed metadata
-
-### Feed management (`/feeds`)
-
-- Grouped feed list with search + status filter
-- Group actions: rename, delete (except default group)
-- Feed actions: edit
-- Bulk/system actions: refresh all, OPML import/export, add feed/group
-
-## 7. Data flow
+## 5. Data flow
 
 - API layer lives in `frontend/src/lib/api/`
 - Query logic lives in `frontend/src/queries/`
@@ -123,24 +90,19 @@ Star/bookmark changes are deliberately the opposite pattern: un-starring removes
 
 Before filing "marked-read items still show up in the unread list" as a bug, check which half is reported: grayed rows while staying in the same unread list are this design working; rows surviving a filter/scope switch was the actual defect, fixed by the pin scoping (#262, #266).
 
-## 8. Search and bookmarks
+## 7. Search and bookmarks
 
-### Unified search
+- Unified search (`GET /api/search`) returns feeds and items in one
+  request; results open the feed context or article drawer.
+- The "starred" view is powered by bookmarks, which are content
+  snapshots — starred items survive deletion of the source feed/item
+  (see the bookmarks rationale in `backend-design.md` §5).
 
-- Endpoint: `GET /api/search`
-- Searches feeds and items in one request
-- Results open feed context or article drawer
-
-### Starred model
-
-- "Starred" view is powered by bookmarks
-- Bookmarks are content snapshots, so starred items survive source deletion
-
-## 9. Keyboard interactions
+## 8. Keyboard interactions
 
 The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), read/star toggles, view jumps (`g u` / `g a` / `g s` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
 
-## 10. Authentication UX
+## 9. Authentication UX
 
 - Password login is available when password auth is enabled
 - If password is empty and OIDC is not configured, the UI is directly accessible without `/login`

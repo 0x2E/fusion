@@ -96,4 +96,4 @@ Write APIs:
 
 - Saved items map to Fusion bookmarks.
 - `links`, `sparks`, and `kindlings` are not implemented.
-- This compatibility API is outside `/api`; it is intentionally not part of `docs/openapi.yaml`.
+- This compatibility API is outside `/api`; it is intentionally separate from the `/api` conventions documented in `docs/api-conventions.md`.

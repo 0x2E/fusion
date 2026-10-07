@@ -116,7 +116,7 @@ Legacy env names (`DB`, `PASSWORD`, `PORT`) are still accepted for backward comp
 
 ## Documentation
 
-- API contract (OpenAPI): [`docs/openapi.yaml`](./docs/openapi.yaml)
+- API conventions (the route inventory lives in `backend/internal/handler/handler.go`): [`docs/api-conventions.md`](./docs/api-conventions.md)
 - Fever API compatibility: [`docs/fever-api.md`](./docs/fever-api.md)
 - Backend design: [`docs/backend-design.md`](./docs/backend-design.md)
 - Frontend design: [`docs/frontend-design.md`](./docs/frontend-design.md)
@@ -124,9 +124,9 @@ Legacy env names (`DB`, `PASSWORD`, `PORT`) are still accepted for backward comp
 
 ## Development
 
-- Requirements: Go `1.25+`, Node.js `24+`, pnpm
+- Requirements: Go and Node.js versions are pinned by [`backend/go.mod`](./backend/go.mod) and [`frontend/package.json`](./frontend/package.json) (`engines`); plus pnpm
 - Helpful commands are in [`scripts.sh`](./scripts.sh)
-- Frontend i18n key check: `cd frontend && npm run check:i18n`
+- Frontend i18n key check: `cd frontend && pnpm run check:i18n`
 
 Example:
 
@@ -136,7 +136,7 @@ Example:
 
 ## Contributing
 
-Contributions are welcome. Please read [Contributing Guidelines](./CONTRIBUTING.md) before opening a PR.
+Please report bugs and propose features via [issues](https://github.com/0x2E/fusion/issues) — there is no need to open pull requests. See [Contributing](./CONTRIBUTING.md) for local development.
 
 ## Credits
 
