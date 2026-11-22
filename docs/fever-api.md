@@ -20,6 +20,11 @@ Fever clients should send:
 Username is configured by `FUSION_FEVER_USERNAME` (default: `fusion`).
 Password is your Fusion login password (`FUSION_PASSWORD`).
 
+Fever requires a configured password. In OIDC-only deployments (no password,
+OIDC enabled) the endpoint stays available but always returns `"auth": 0`.
+In anonymous mode (no password and no OIDC) Fever accepts the key derived from
+an empty password, matching the rest of the API being open. See `New` in `backend/internal/handler/handler.go`.
+
 Example (macOS):
 
 ```bash

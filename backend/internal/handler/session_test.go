@@ -40,11 +40,23 @@ func TestLogin(t *testing.T) {
 			wantStatus:     http.StatusBadRequest,
 		},
 		{
-			name:           "accepts empty password when configured",
-			passwordHashOf: "",
-			body:           `{"password":""}`,
+			name:           "accepts correct password when configured",
+			passwordHashOf: "secret",
+			body:           `{"password":"secret"}`,
 			wantStatus:     http.StatusOK,
 			wantCookie:     true,
+		},
+		{
+			name:           "rejects wrong password when configured",
+			passwordHashOf: "secret",
+			body:           `{"password":"wrong"}`,
+			wantStatus:     http.StatusUnauthorized,
+		},
+		{
+			name:           "rejects empty password when configured",
+			passwordHashOf: "secret",
+			body:           `{"password":""}`,
+			wantStatus:     http.StatusUnauthorized,
 		},
 	}
 
