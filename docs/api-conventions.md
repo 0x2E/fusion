@@ -15,10 +15,15 @@ disagree, the code wins — fix the page.
   API (`/fever*`, see `docs/fever-api.md`) and a bare `GET /oidc/callback`
   registered only when OIDC is configured, for deployments whose redirect
   URI omits `/api`.
-- Authentication is a session cookie named `session` (`POST /api/sessions`
-  with `{"password": ...}` sets it; `DELETE /api/sessions` clears it, 204).
-- Anonymous mode: when both password and OIDC are unconfigured, the auth
-  middleware lets every request through.
+- Authentication is a session cookie named `session`. `POST /api/sessions`
+  with `{"password": ...}` sets it and is registered only when a password is
+  configured; `DELETE /api/sessions` clears it, 204. `GET /api/sessions` is
+  the session validity probe and stays registered for OIDC-only deployments.
+- Anonymous mode: when neither a password nor OIDC is configured (a
+  whitespace-only password counts as unset), the auth middleware lets every
+  request through.
+- Fever (`/fever*`) is disabled in OIDC-only mode (no password configured) and
+  always answers `"auth": 0`; see `backend/internal/handler/handler.go` (`New`).
 - Login attempts are rate limited: excess attempts get `429` with a
   `Retry-After` header (seconds).
 - OIDC: `GET /api/oidc/enabled` always exists; `/api/oidc/login` and

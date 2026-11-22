@@ -16,12 +16,13 @@ import (
 )
 
 type Handler struct {
-	store        *store.Store
-	config       *config.Config
-	passwordHash string // bcrypt hash computed at startup
-	feverAPIKey  string // md5(username:password) used by Fever API
-	allowAnonAPI bool   // true when both password and OIDC auth are disabled
-	puller       interface {
+	store           *store.Store
+	config          *config.Config
+	passwordHash    string // bcrypt hash computed at startup
+	passwordEnabled bool   // true when a non-blank password is configured
+	feverAPIKey     string // md5(username:password) used by Fever API; empty disables Fever
+	allowAnonAPI    bool   // true when both password and OIDC auth are disabled
+	puller          interface {
 		RefreshFeed(ctx context.Context, feedID int64) error
 		RefreshAll(ctx context.Context) (int, error)
 		Wake()
@@ -41,21 +42,40 @@ func New(store *store.Store, config *config.Config, puller interface {
 	RefreshAll(ctx context.Context) (int, error)
 	Wake()
 }) (*Handler, error) {
-	// Hash password at startup for later verification
-	passwordHash, err := auth.HashPassword(config.Password)
-	if err != nil {
-		return nil, fmt.Errorf("hash password: %w", err)
+	passwordEnabled := strings.TrimSpace(config.Password) != ""
+	allowAnonAPI := !passwordEnabled && strings.TrimSpace(config.OIDCIssuer) == ""
+
+	var passwordHash string
+	if passwordEnabled {
+		hash, err := auth.HashPassword(config.Password)
+		if err != nil {
+			return nil, fmt.Errorf("hash password: %w", err)
+		}
+		passwordHash = hash
 	}
 
 	h := &Handler{
-		store:        store,
-		config:       config,
-		passwordHash: passwordHash,
-		feverAPIKey:  deriveFeverAPIKey(config.FeverUsername, config.Password),
-		allowAnonAPI: strings.TrimSpace(config.Password) == "" && strings.TrimSpace(config.OIDCIssuer) == "",
-		puller:       puller,
-		sessions:     make(map[string]int64),
-		limiter:      newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
+		store:           store,
+		config:          config,
+		passwordHash:    passwordHash,
+		passwordEnabled: passwordEnabled,
+		allowAnonAPI:    allowAnonAPI,
+		puller:          puller,
+		sessions:        make(map[string]int64),
+		limiter:         newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
+	}
+
+	switch {
+	case passwordEnabled:
+		h.feverAPIKey = deriveFeverAPIKey(config.FeverUsername, config.Password)
+	case allowAnonAPI:
+		// The whole API is already open in anonymous mode, so Fever keeps
+		// accepting the key derived from an empty password, as it always has.
+		h.feverAPIKey = deriveFeverAPIKey(config.FeverUsername, "")
+	default:
+		// Leave the key empty: verifyFeverAPIKey rejects every request when the
+		// expected key is empty, so no client can authenticate.
+		slog.Warn("Fever API is disabled because no password is set")
 	}
 
 	if h.allowAnonAPI {
@@ -102,7 +122,11 @@ func (h *Handler) SetupRouter() *gin.Engine {
 
 	api := r.Group("/api")
 	{
-		api.POST("/sessions", h.login)
+		// Password login only exists when a password is configured. OIDC-only
+		// deployments still need session status and logout.
+		if h.passwordEnabled {
+			api.POST("/sessions", h.login)
+		}
 		api.GET("/sessions", h.sessionStatus)
 		api.DELETE("/sessions", h.logout)
 
