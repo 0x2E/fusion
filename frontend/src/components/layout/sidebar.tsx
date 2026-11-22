@@ -1,17 +1,41 @@
-import { LogOut, Search, Settings, Rss } from "lucide-react";
+import { CircleAlert, LogOut, Search, Settings, Rss } from "lucide-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { FeedList } from "@/components/feed/feed-list";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { sessionAPI } from "@/lib/api";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type TranslationKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useAppInfo } from "@/queries/app";
 import { useUIStore } from "@/store";
 import { resetSessionGuard } from "@/routes/__root";
+
+// Notice codes from GET /api/app. Unknown codes are ignored so the backend can
+// ship new notices before the client knows their copy.
+const noticeMessages: Record<
+  string,
+  { title: TranslationKey; body: TranslationKey }
+> = {
+  oidc_allowed_user_unset: {
+    title: "sidebar.notices.oidcAllowedUserUnset.title",
+    body: "sidebar.notices.oidcAllowedUserUnset.body",
+  },
+};
 
 export function Sidebar() {
   const { t } = useI18n();
   const { setSearchOpen, setSettingsOpen } = useUIStore();
+  const { data: appInfo } = useAppInfo();
+  const notices = (appInfo?.notices ?? []).flatMap((code) => {
+    const message = noticeMessages[code];
+    return message ? [message] : [];
+  });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pathname } = useLocation();
@@ -47,6 +71,28 @@ export function Sidebar() {
           className="h-8 w-8 rounded-md"
         />
         <span className="text-base font-semibold">Fusion</span>
+        {notices.length > 0 && (
+          <Popover>
+            <PopoverTrigger
+              aria-label={t("sidebar.notices.label")}
+              className="ml-auto rounded-md p-1.5 text-amber-600 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              <CircleAlert className="h-4 w-4" />
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80 gap-3">
+              {/* One title names the popover; each notice carries its own heading. */}
+              <PopoverTitle className="sr-only">
+                {t("sidebar.notices.label")}
+              </PopoverTitle>
+              {notices.map((notice) => (
+                <div key={notice.title} className="flex flex-col gap-1">
+                  <h3 className="font-medium">{t(notice.title)}</h3>
+                  <p className="text-muted-foreground">{t(notice.body)}</p>
+                </div>
+              ))}
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
 
       {/* Search button */}

@@ -34,7 +34,7 @@ type Config struct {
 	OIDCIssuer       string // OIDC provider URL
 	OIDCClientID     string // OAuth2 client ID
 	OIDCClientSecret string // OAuth2 client secret
-	OIDCRedirectURI  string // Callback URL (required when OIDC is enabled)
+	OIDCRedirectURI  string // Callback URL; derived from the login request when empty
 	OIDCAllowedUser  string // Optional: restrict to specific user identity (email or sub)
 }
 

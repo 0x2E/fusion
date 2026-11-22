@@ -18,10 +18,11 @@ import (
 type Handler struct {
 	store           *store.Store
 	config          *config.Config
-	passwordHash    string // bcrypt hash computed at startup
-	passwordEnabled bool   // true when a non-blank password is configured
-	feverAPIKey     string // md5(username:password) used by Fever API; empty disables Fever
-	allowAnonAPI    bool   // true when both password and OIDC auth are disabled
+	passwordHash    string   // bcrypt hash computed at startup
+	passwordEnabled bool     // true when a non-blank password is configured
+	feverAPIKey     string   // md5(username:password) used by Fever API; empty disables Fever
+	allowAnonAPI    bool     // true when both password and OIDC auth are disabled
+	notices         []string // stable notice codes served by GET /api/app; copy lives in the frontend
 	puller          interface {
 		RefreshFeed(ctx context.Context, feedID int64) error
 		RefreshAll(ctx context.Context) (int, error)
@@ -60,6 +61,7 @@ func New(store *store.Store, config *config.Config, puller interface {
 		passwordHash:    passwordHash,
 		passwordEnabled: passwordEnabled,
 		allowAnonAPI:    allowAnonAPI,
+		notices:         []string{},
 		puller:          puller,
 		sessions:        make(map[string]int64),
 		limiter:         newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
@@ -83,22 +85,25 @@ func New(store *store.Store, config *config.Config, puller interface {
 	}
 
 	if config.OIDCIssuer != "" {
-		if strings.TrimSpace(config.OIDCRedirectURI) == "" {
-			return nil, fmt.Errorf("FUSION_OIDC_REDIRECT_URI is required when OIDC is enabled")
-		}
-
 		oidcAuth, err := auth.NewOIDC(
 			context.Background(),
 			config.OIDCIssuer,
 			config.OIDCClientID,
 			config.OIDCClientSecret,
-			config.OIDCRedirectURI,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("initialize OIDC: %w", err)
 		}
-		if config.OIDCAllowedUser != "" {
-			oidcAuth.SetAllowedUser(config.OIDCAllowedUser)
+		if allowedUser := strings.TrimSpace(config.OIDCAllowedUser); allowedUser != "" {
+			oidcAuth.SetAllowedUser(allowedUser)
+		} else {
+			// TODO(v1.5.0): turn this notice into a startup error instead, so a
+			// deployment cannot silently accept every account of its IdP.
+			h.notices = append(h.notices, noticeOIDCAllowedUserUnset)
+			slog.Warn(
+				"FUSION_OIDC_ALLOWED_USER is not set, so any account on the OIDC provider can sign in; a future version will require it",
+				"issuer", config.OIDCIssuer,
+			)
 		}
 		h.oidcAuth = oidcAuth
 		slog.Info("OIDC authentication enabled", "issuer", config.OIDCIssuer)

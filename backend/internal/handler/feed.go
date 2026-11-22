@@ -51,9 +51,14 @@ type validateFeedResponse struct {
 	Feeds []discoveredFeed `json:"feeds"`
 }
 
+// Notice codes served by GET /api/app. They are stable identifiers; all copy
+// lives in the frontend.
+const noticeOIDCAllowedUserUnset = "oidc_allowed_user_unset"
+
 type appInfoResponse struct {
-	PullInterval            int     `json:"pull_interval"`
-	AllowedRefreshIntervals []int64 `json:"allowed_refresh_intervals"`
+	PullInterval            int      `json:"pull_interval"`
+	AllowedRefreshIntervals []int64  `json:"allowed_refresh_intervals"`
+	Notices                 []string `json:"notices"`
 }
 
 type batchCreateFeedsRequest struct {
@@ -102,6 +107,7 @@ func (h *Handler) getAppInfo(c *gin.Context) {
 	dataResponse(c, appInfoResponse{
 		PullInterval:            h.config.PullInterval,
 		AllowedRefreshIntervals: allowedRefreshIntervals,
+		Notices:                 h.notices,
 	})
 }
 
