@@ -102,8 +102,8 @@ Then configure based on your goal:
   - Guide: [`docs/fever-api.md`](./docs/fever-api.md)
 - Use SSO for login (with or without a password)
   - Configure: `FUSION_OIDC_*`
-  - Set `FUSION_OIDC_REDIRECT_URI` to `https://<host>/api/oidc/callback`
-  - `https://<host>/oidc/callback` is accepted for compatibility
+  - The callback URL defaults to `scheme://<host>/api/oidc/callback`; set `FUSION_OIDC_REDIRECT_URI` when a reverse proxy does not forward the original `Host` and `X-Forwarded-Proto`
+  - Register that callback URL at your identity provider; `https://<host>/oidc/callback` is still accepted, but only when set explicitly in `FUSION_OIDC_REDIRECT_URI`
 - Tune feed pull behavior
   - Configure: `FUSION_PULL_INTERVAL`, `FUSION_PULL_TIMEOUT`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_MAX_BACKOFF`
   - Optional for private networks: `FUSION_ALLOW_PRIVATE_FEEDS`

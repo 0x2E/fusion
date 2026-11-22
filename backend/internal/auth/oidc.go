@@ -26,12 +26,13 @@ type OIDCAuthenticator struct {
 
 type stateEntry struct {
 	codeVerifier string
+	redirectURI  string
 	createdAt    time.Time
 }
 
 const stateMaxAge = 10 * time.Minute
 
-func NewOIDC(ctx context.Context, issuer, clientID, clientSecret, redirectURI string) (*OIDCAuthenticator, error) {
+func NewOIDC(ctx context.Context, issuer, clientID, clientSecret string) (*OIDCAuthenticator, error) {
 	provider, err := oidc.NewProvider(ctx, issuer)
 	if err != nil {
 		return nil, fmt.Errorf("oidc provider discovery: %w", err)
@@ -40,7 +41,6 @@ func NewOIDC(ctx context.Context, issuer, clientID, clientSecret, redirectURI st
 	oauth2Config := oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  redirectURI,
 		Endpoint:     provider.Endpoint(),
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
@@ -61,7 +61,9 @@ func (a *OIDCAuthenticator) SetAllowedUser(user string) {
 }
 
 // AuthURL generates an authorization URL with state and PKCE S256 challenge.
-func (a *OIDCAuthenticator) AuthURL() (authURL string, err error) {
+// The redirect URI can differ per request, so it is carried in the state entry
+// and sent again during the token exchange, where the IdP requires both to match.
+func (a *OIDCAuthenticator) AuthURL(redirectURI string) (authURL string, err error) {
 	state, err := randomString(32)
 	if err != nil {
 		return "", fmt.Errorf("generate state: %w", err)
@@ -73,11 +75,16 @@ func (a *OIDCAuthenticator) AuthURL() (authURL string, err error) {
 
 	a.mu.Lock()
 	a.cleanExpiredStates()
-	a.states[state] = stateEntry{codeVerifier: codeVerifier, createdAt: time.Now()}
+	a.states[state] = stateEntry{
+		codeVerifier: codeVerifier,
+		redirectURI:  redirectURI,
+		createdAt:    time.Now(),
+	}
 	a.mu.Unlock()
 
 	challenge := s256Challenge(codeVerifier)
 	url := a.oauth2Config.AuthCodeURL(state,
+		oauth2.SetAuthURLParam("redirect_uri", redirectURI),
 		oauth2.SetAuthURLParam("code_challenge", challenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 	)
@@ -103,6 +110,7 @@ func (a *OIDCAuthenticator) Callback(ctx context.Context, state, code string) (s
 
 	token, err := a.oauth2Config.Exchange(ctx, code,
 		oauth2.SetAuthURLParam("code_verifier", entry.codeVerifier),
+		oauth2.SetAuthURLParam("redirect_uri", entry.redirectURI),
 	)
 	if err != nil {
 		return "", fmt.Errorf("token exchange: %w", err)

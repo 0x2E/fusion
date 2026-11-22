@@ -32,6 +32,17 @@ disagree, the code wins — fix the page.
   configured. Login returns `{data: {auth_url}}` for the client to navigate to;
   the callback redirects (307) to `/` on success or `/login?error=oidc_failed`
   on failure.
+- OIDC redirect URI: `FUSION_OIDC_REDIRECT_URI` is used verbatim when set.
+  Otherwise `/api/oidc/login` derives `http(s)://<Host>/api/oidc/callback` from
+  the request (TLS or `X-Forwarded-Proto: https` means `https`, `Host` is never
+  taken from `X-Forwarded-Host`), stores it with the login state, and sends the
+  same value in the token exchange. The identity provider must have that URL
+  registered, so a spoofed `Host` only produces a failed login there. A reverse
+  proxy therefore has to pass the original `Host` and `X-Forwarded-Proto`;
+  otherwise set the variable.
+- `GET /api/app` carries `notices`: stable string codes for configuration
+  warnings that the client renders as copy. Unknown codes must be ignored, so
+  new codes can ship ahead of client releases.
 
 ## Response envelopes
 
