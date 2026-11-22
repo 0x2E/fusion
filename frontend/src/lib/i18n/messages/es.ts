@@ -83,6 +83,7 @@ export const esMessages: PartialMessages = {
   "login.oidcStartFailed": "No se pudo iniciar el inicio de sesion OIDC",
   "login.passwordPlaceholder": "Contrasena",
   "login.signIn": "Iniciar sesion",
+  "login.signInToContinue": "Inicia sesión para continuar",
   "login.signingIn": "Iniciando sesion...",
   "sidebar.manageFeeds": "Gestionar feeds",
   "sidebar.search": "Buscar",

@@ -83,6 +83,7 @@ export const svMessages: PartialMessages = {
   "login.oidcStartFailed": "Kunde inte starta OIDC-inloggning",
   "login.passwordPlaceholder": "Losenord",
   "login.signIn": "Logga in",
+  "login.signInToContinue": "Logga in för att fortsätta",
   "login.signingIn": "Loggar in...",
   "sidebar.manageFeeds": "Hantera floden",
   "sidebar.search": "Sok",

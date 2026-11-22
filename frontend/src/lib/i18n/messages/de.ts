@@ -83,6 +83,7 @@ export const deMessages: PartialMessages = {
   "login.oidcStartFailed": "OIDC-Anmeldung konnte nicht gestartet werden",
   "login.passwordPlaceholder": "Passwort",
   "login.signIn": "Anmelden",
+  "login.signInToContinue": "Anmelden, um fortzufahren",
   "login.signingIn": "Wird angemeldet...",
   "sidebar.manageFeeds": "Feeds verwalten",
   "sidebar.search": "Suchen",

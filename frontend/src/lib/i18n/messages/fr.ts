@@ -83,6 +83,7 @@ export const frMessages: PartialMessages = {
   "login.oidcStartFailed": "Impossible de lancer la connexion OIDC",
   "login.passwordPlaceholder": "Mot de passe",
   "login.signIn": "Se connecter",
+  "login.signInToContinue": "Connectez-vous pour continuer",
   "login.signingIn": "Connexion...",
   "sidebar.manageFeeds": "Gérer les flux",
   "sidebar.search": "Rechercher",

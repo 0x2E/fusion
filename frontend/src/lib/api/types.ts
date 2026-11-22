@@ -219,11 +219,13 @@ export interface AppInfoResponse {
   allowed_refresh_intervals: number[];
 }
 
-// OIDC
-export interface OIDCStatusResponse {
-  enabled: boolean;
+// Auth
+export interface AuthMethodsResponse {
+  password: boolean;
+  oidc: boolean;
 }
 
+// OIDC
 export interface OIDCLoginResponse {
   auth_url: string;
 }

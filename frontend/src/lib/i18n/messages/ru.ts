@@ -83,6 +83,7 @@ export const ruMessages: PartialMessages = {
   "login.oidcStartFailed": "Не удалось начать вход через OIDC",
   "login.passwordPlaceholder": "Пароль",
   "login.signIn": "Войти",
+  "login.signInToContinue": "Войдите, чтобы продолжить",
   "login.signingIn": "Вход...",
   "sidebar.manageFeeds": "Управление лентами",
   "sidebar.search": "Поиск",

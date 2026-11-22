@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { translate, useI18n } from "@/lib/i18n";
-import { oidcAPI, sessionAPI } from "@/lib/api";
+import {
+  authAPI,
+  oidcAPI,
+  sessionAPI,
+  type AuthMethodsResponse,
+} from "@/lib/api";
 import { defaultArticleFilter } from "@/lib/article-filter";
 
 export const Route = createLazyFileRoute("/login")({
@@ -18,7 +23,9 @@ function LoginPage() {
   const isMobile = useIsMobile();
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [oidcEnabled, setOidcEnabled] = useState(false);
+  const [authMethods, setAuthMethods] = useState<AuthMethodsResponse | null>(
+    null,
+  );
   const [oidcLoading, setOidcLoading] = useState(false);
 
   useEffect(() => {
@@ -28,17 +35,32 @@ function LoginPage() {
       window.history.replaceState({}, "", "/login");
     }
 
-    oidcAPI
-      .status()
+    authAPI
+      .methods()
       .then((res) => {
-        if (res.data?.enabled) {
-          setOidcEnabled(true);
+        const methods = res.data;
+        if (!methods) {
+          setAuthMethods({ password: true, oidc: false });
+          return;
         }
+
+        if (!methods.password && !methods.oidc) {
+          // Replace so Back does not return to /login and bounce forward again.
+          navigate({
+            to: "/$filter",
+            params: { filter: defaultArticleFilter },
+            replace: true,
+          });
+          return;
+        }
+
+        setAuthMethods(methods);
       })
       .catch(() => {
-        // Keep password login as fallback when OIDC status is unavailable.
+        // Fall back to password login when auth methods are unavailable.
+        setAuthMethods({ password: true, oidc: false });
       });
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,52 +105,58 @@ function LoginPage() {
           />
           <h1 className="text-2xl font-bold">Fusion</h1>
           <p className="text-sm text-muted-foreground">
-            {t("login.enterPassword")}
+            {authMethods &&
+              (authMethods.password
+                ? t("login.enterPassword")
+                : t("login.signInToContinue"))}
           </p>
         </div>
 
-        {oidcEnabled && (
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleOIDCLogin}
-              disabled={oidcLoading}
-            >
-              {oidcLoading ? t("login.oidcRedirecting") : t("login.oidcSignIn")}
-            </Button>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  {t("common.or")}
-                </span>
-              </div>
-            </div>
-          </>
+        {authMethods?.oidc && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleOIDCLogin}
+            disabled={oidcLoading}
+          >
+            {oidcLoading ? t("login.oidcRedirecting") : t("login.oidcSignIn")}
+          </Button>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            id="login-password"
-            name="password"
-            type="password"
-            placeholder={t("login.passwordPlaceholder")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-            autoComplete="current-password"
-            spellCheck={false}
-            aria-label={t("login.passwordPlaceholder")}
-            autoFocus={!isMobile}
-          />
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? t("login.signingIn") : t("login.signIn")}
-          </Button>
-        </form>
+        {authMethods?.oidc && authMethods.password && (
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                {t("common.or")}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {authMethods?.password && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              id="login-password"
+              name="password"
+              type="password"
+              placeholder={t("login.passwordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              autoComplete="current-password"
+              spellCheck={false}
+              aria-label={t("login.passwordPlaceholder")}
+              autoFocus={!isMobile}
+            />
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? t("login.signingIn") : t("login.signIn")}
+            </Button>
+          </form>
+        )}
       </div>
     </div>
   );

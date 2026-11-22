@@ -26,10 +26,12 @@ disagree, the code wins — fix the page.
   always answers `"auth": 0`; see `backend/internal/handler/handler.go` (`New`).
 - Login attempts are rate limited: excess attempts get `429` with a
   `Retry-After` header (seconds).
-- OIDC: `GET /api/oidc/enabled` always exists; `/api/oidc/login` and
-  `/api/oidc/callback` are registered only when OIDC is configured. Login
-  returns `{data: {auth_url}}` for the client to navigate to; the callback
-  redirects (307) to `/` on success or `/login?error=oidc_failed` on failure.
+- Auth discovery: `GET /api/auth/methods` is public and returns
+  `{data: {password, oidc}}` so clients can choose the login controls. OIDC:
+  `/api/oidc/login` and `/api/oidc/callback` are registered only when OIDC is
+  configured. Login returns `{data: {auth_url}}` for the client to navigate to;
+  the callback redirects (307) to `/` on success or `/login?error=oidc_failed`
+  on failure.
 
 ## Response envelopes
 
