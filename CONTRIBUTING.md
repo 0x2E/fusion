@@ -39,7 +39,7 @@ Backend uses Go modules and installs dependencies automatically via `go` tooling
 ```shell
 cd backend
 go test ./...
-goimports -w .
+go tool goimports -w .
 go build -o /dev/null ./cmd/fusion
 ```
 

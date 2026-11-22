@@ -14,3 +14,6 @@ backend/internal/web/dist/*
 # .env.example is an exception as it only contains dummy secrets.
 !.env.example
 backend/fusion
+
+# Local markdown issue tracker (see docs/agents/issue-tracker.md)
+.scratch/
