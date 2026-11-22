@@ -104,7 +104,9 @@ The app is keyboard-first. Shortcut categories: search/dialog toggles, article n
 
 ## 9. Authentication UX
 
-- Password login is available when password auth is enabled
-- If password is empty and OIDC is not configured, the UI is directly accessible without `/login`
-- When OIDC is enabled, login page shows "Sign in with OIDC"
+- The login page chooses its controls from `GET /api/auth/methods`
+  ([`login.lazy.tsx`](../frontend/src/routes/login.lazy.tsx)): the password
+  form and OIDC button render only for enabled methods, and the subtitle
+  follows the password form.
+- If neither method is enabled, the UI is directly accessible without `/login`.
 - OIDC callback failure is surfaced as `/login?error=oidc_failed`

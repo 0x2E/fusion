@@ -12,6 +12,6 @@ EXPOSE 8080
 VOLUME ["/data"]
 ENV DB="/data/fusion.db"
 HEALTHCHECK --interval=10s --timeout=3s --start-period=2s --retries=3 \
-  CMD wget -q -O /dev/null http://127.0.0.1:8080/api/oidc/enabled || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1:8080/api/auth/methods || exit 1
 # TODO: Temporarily run as root until legacy /data DB files owned by root are migrated.
 CMD [ "./fusion" ]

@@ -83,6 +83,7 @@ export const ptMessages: PartialMessages = {
   "login.oidcStartFailed": "Falha ao iniciar login OIDC",
   "login.passwordPlaceholder": "Senha",
   "login.signIn": "Entrar",
+  "login.signInToContinue": "Entre para continuar",
   "login.signingIn": "Entrando...",
   "sidebar.manageFeeds": "Gerenciar feeds",
   "sidebar.search": "Pesquisar",

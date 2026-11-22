@@ -7,8 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) oidcEnabled(c *gin.Context) {
-	dataResponse(c, gin.H{"enabled": h.oidcAuth != nil})
+func (h *Handler) authMethods(c *gin.Context) {
+	dataResponse(c, gin.H{
+		"password": h.passwordEnabled,
+		"oidc":     h.oidcAuth != nil,
+	})
 }
 
 func (h *Handler) oidcLogin(c *gin.Context) {

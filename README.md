@@ -88,8 +88,8 @@ See [Contributing](./CONTRIBUTING.md).
 
 Most users only need one setting to get started:
 
-- Set `FUSION_PASSWORD`.
-- For local trusted environments only: set `FUSION_ALLOW_EMPTY_PASSWORD=true` to run without auth when OIDC is also disabled.
+- Set `FUSION_PASSWORD`, or configure SSO with `FUSION_OIDC_*` (see below).
+- For local trusted environments only: set `FUSION_ALLOW_EMPTY_PASSWORD=true` to run without auth when neither a password nor OIDC is configured.
 
 Then configure based on your goal:
 
@@ -100,7 +100,7 @@ Then configure based on your goal:
 - Use mobile/desktop Fever clients (Reeder, Unread, FeedMe)
   - Configure: `FUSION_FEVER_USERNAME` (default: `fusion`)
   - Guide: [`docs/fever-api.md`](./docs/fever-api.md)
-- Use SSO instead of password-only login
+- Use SSO for login (with or without a password)
   - Configure: `FUSION_OIDC_*`
   - Set `FUSION_OIDC_REDIRECT_URI` to `https://<host>/api/oidc/callback`
   - `https://<host>/oidc/callback` is accepted for compatibility

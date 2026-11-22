@@ -130,8 +130,8 @@ func (h *Handler) SetupRouter() *gin.Engine {
 		api.GET("/sessions", h.sessionStatus)
 		api.DELETE("/sessions", h.logout)
 
-		// OIDC routes (public, no auth middleware)
-		api.GET("/oidc/enabled", h.oidcEnabled)
+		// Public auth discovery and OIDC routes (no auth middleware).
+		api.GET("/auth/methods", h.authMethods)
 		if h.oidcAuth != nil {
 			api.GET("/oidc/login", h.oidcLogin)
 			api.GET("/oidc/callback", h.oidcCallback)

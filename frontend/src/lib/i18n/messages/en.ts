@@ -81,6 +81,7 @@ export const enMessages = {
   "login.oidcStartFailed": "Failed to start OIDC login",
   "login.passwordPlaceholder": "Password",
   "login.signIn": "Sign in",
+  "login.signInToContinue": "Sign in to continue",
   "login.signingIn": "Signing in...",
   "sidebar.manageFeeds": "Manage Feeds",
   "sidebar.search": "Search",

@@ -83,6 +83,7 @@ export const zhMessages: PartialMessages = {
   "login.oidcStartFailed": "启动 OIDC 登录失败",
   "login.passwordPlaceholder": "密码",
   "login.signIn": "登录",
+  "login.signInToContinue": "登录以继续",
   "login.signingIn": "登录中...",
   "sidebar.manageFeeds": "管理订阅",
   "sidebar.search": "搜索",

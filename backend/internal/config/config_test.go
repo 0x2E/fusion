@@ -107,3 +107,43 @@ func TestLoadRejectsInvalidFusionPort(t *testing.T) {
 		t.Fatalf("expected error to mention invalid FUSION_PORT, got %v", err)
 	}
 }
+
+func TestLoadAuthConfiguration(t *testing.T) {
+	tests := []struct {
+		name       string
+		password   string
+		oidcIssuer string
+		allowEmpty string
+		wantErr    bool
+	}{
+		{name: "OIDC issuer without password", oidcIssuer: "https://id.example.com"},
+		{name: "whitespace-only OIDC issuer", oidcIssuer: "   ", wantErr: true},
+		{name: "neither password nor OIDC", wantErr: true},
+		{name: "anonymous mode allowed", allowEmpty: "true"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("FUSION_PASSWORD", tt.password)
+			t.Setenv("FUSION_OIDC_ISSUER", tt.oidcIssuer)
+			t.Setenv("FUSION_ALLOW_EMPTY_PASSWORD", tt.allowEmpty)
+
+			cfg, err := Load()
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected Load() to fail")
+				}
+				if !strings.Contains(err.Error(), "FUSION_PASSWORD") || !strings.Contains(err.Error(), "FUSION_OIDC_ISSUER") {
+					t.Fatalf("expected error to name both auth options, got %v", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Load() failed: %v", err)
+			}
+			if cfg.OIDCIssuer != tt.oidcIssuer {
+				t.Fatalf("expected OIDCIssuer %q, got %q", tt.oidcIssuer, cfg.OIDCIssuer)
+			}
+		})
+	}
+}

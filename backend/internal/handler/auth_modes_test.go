@@ -90,6 +90,36 @@ func decodeFeverAuth(t *testing.T, w *httptest.ResponseRecorder) float64 {
 	return payload.Auth
 }
 
+func assertAuthMethods(t *testing.T, router http.Handler, wantPassword, wantOIDC bool) {
+	t.Helper()
+
+	w := performRequest(router, http.MethodGet, "/api/auth/methods", nil, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected GET /api/auth/methods to return 200, got %d", w.Code)
+	}
+
+	var payload struct {
+		Data struct {
+			Password bool `json:"password"`
+			OIDC     bool `json:"oidc"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal auth methods response: %v (body: %s)", err, w.Body.String())
+	}
+	if payload.Data.Password != wantPassword || payload.Data.OIDC != wantOIDC {
+		t.Fatalf(
+			"expected auth methods password=%v oidc=%v, got password=%v oidc=%v",
+			wantPassword, wantOIDC, payload.Data.Password, payload.Data.OIDC,
+		)
+	}
+
+	w = performRequest(router, http.MethodGet, "/api/oidc/enabled", nil, nil)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected GET /api/oidc/enabled to be removed, got %d", w.Code)
+	}
+}
+
 func TestOIDCOnlyDisablesPasswordLoginAndFever(t *testing.T) {
 	discovery := newOIDCDiscoveryServer(t)
 
@@ -111,6 +141,7 @@ func TestOIDCOnlyDisablesPasswordLoginAndFever(t *testing.T) {
 				OIDCRedirectURI:  discovery.URL + "/api/oidc/callback",
 			})
 			router := h.SetupRouter()
+			assertAuthMethods(t, router, false, true)
 
 			// Password login must not be registered in OIDC-only mode.
 			w := performRequest(
@@ -161,6 +192,7 @@ func TestOIDCOnlyDisablesPasswordLoginAndFever(t *testing.T) {
 func TestPasswordConfiguredLoginAndFever(t *testing.T) {
 	h := newAuthModeTestHandler(t, &config.Config{Password: "secret"})
 	router := h.SetupRouter()
+	assertAuthMethods(t, router, true, false)
 
 	for _, body := range []string{`{"password":"wrong"}`, `{"password":""}`} {
 		w := performRequest(
@@ -201,9 +233,24 @@ func TestPasswordConfiguredLoginAndFever(t *testing.T) {
 	}
 }
 
+func TestPasswordAndOIDCConfigured(t *testing.T) {
+	discovery := newOIDCDiscoveryServer(t)
+	h := newAuthModeTestHandler(t, &config.Config{
+		Password:         "secret",
+		OIDCIssuer:       discovery.URL,
+		OIDCClientID:     "fusion",
+		OIDCClientSecret: "x",
+		OIDCRedirectURI:  discovery.URL + "/api/oidc/callback",
+	})
+	router := h.SetupRouter()
+
+	assertAuthMethods(t, router, true, true)
+}
+
 func TestAnonymousModeKeepsAPIAndFeverOpen(t *testing.T) {
 	h := newAuthModeTestHandler(t, &config.Config{})
 	router := h.SetupRouter()
+	assertAuthMethods(t, router, false, false)
 
 	w := performRequest(router, http.MethodGet, "/api/feeds", nil, nil)
 	if w.Code != http.StatusOK {
