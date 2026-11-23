@@ -69,6 +69,31 @@ func validatePublicHost(ctx context.Context, host string) error {
 	return nil
 }
 
+// validateDialAddress checks the resolved IP a dialer is about to connect to.
+// It runs from net.Dialer.ControlContext, where address is the actual ip:port
+// being dialed, so a second DNS lookup cannot return a private address after
+// ValidateRequestURL saw a public one.
+func validateDialAddress(address string, allowPrivate bool) error {
+	if allowPrivate {
+		return nil
+	}
+
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return fmt.Errorf("invalid dial address: %w", err)
+	}
+
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return fmt.Errorf("invalid dial address: %s", address)
+	}
+	if isPrivateOrLocalIP(ip) {
+		return fmt.Errorf("private host is not allowed")
+	}
+
+	return nil
+}
+
 func isPrivateOrLocalIP(ip net.IP) bool {
 	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast() || ip.IsMulticast() || ip.IsInterfaceLocalMulticast() || ip.IsUnspecified()
 }
