@@ -1,5 +1,12 @@
 import { useRef, useState } from "react";
-import { FileUp, Upload, X } from "lucide-react";
+import {
+  CircleCheck,
+  FileUp,
+  OctagonX,
+  TriangleAlert,
+  Upload,
+  X,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,17 +32,28 @@ export function ImportOpmlDialog() {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    created: number;
+    failed: number;
+    errors: string[];
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetState = () => {
     setFile(null);
     setIsDragging(false);
+    setImportResult(null);
   };
 
-  const handleClose = () => {
-    setImportOpmlOpen(false);
-    resetState();
+  const handleOpenChange = (open: boolean) => {
+    // Closing mid-import would let the late response repopulate the result
+    // view, so a reopened dialog would show a stale import.
+    if (!open && isImporting) return;
+    setImportOpmlOpen(open);
+    if (!open) resetState();
   };
+
+  const handleClose = () => handleOpenChange(false);
 
   const handleFileSelect = (selectedFile: File | null) => {
     if (!selectedFile) return;
@@ -146,22 +164,7 @@ export function ImportOpmlDialog() {
           queryClient.invalidateQueries({ queryKey: queryKeys.items.all }),
         ]);
 
-        if (created > 0) {
-          toast.success(t("opml.toast.imported", { count: created }));
-        }
-
-        if (failed > 0) {
-          const errorMsg = errors?.join(", ") || t("opml.toast.failed");
-          toast.warning(
-            t("opml.toast.failedItems", { count: failed, errors: errorMsg }),
-          );
-        }
-
-        if (created === 0 && failed === 0) {
-          toast.info(t("opml.toast.noNewFeeds"));
-        }
-
-        handleClose();
+        setImportResult({ created, failed, errors: errors ?? [] });
       }
     } catch (error) {
       toast.error(
@@ -173,7 +176,7 @@ export function ImportOpmlDialog() {
   };
 
   return (
-    <Dialog open={isImportOpmlOpen} onOpenChange={setImportOpmlOpen}>
+    <Dialog open={isImportOpmlOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         className="flex w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
         showCloseButton={false}
@@ -182,7 +185,12 @@ export function ImportOpmlDialog() {
           <DialogTitle className="text-base font-semibold">
             {t("opml.dialog.title")}
           </DialogTitle>
-          <Button variant="ghost" size="icon-sm" onClick={handleClose}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleClose}
+            disabled={isImporting}
+          >
             <span className="sr-only">{t("common.cancel")}</span>
             <X className="h-[18px] w-[18px] text-muted-foreground" />
           </Button>
@@ -199,61 +207,112 @@ export function ImportOpmlDialog() {
             onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
           />
 
-          <label
-            htmlFor={fileInputId}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            className={cn(
-              "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors",
-              isDragging
-                ? "border-primary bg-primary/5"
-                : "border-muted-foreground/25 hover:border-muted-foreground/50",
-              file && "border-primary bg-primary/5",
-            )}
-          >
-            {file ? (
-              <>
-                <FileUp className="mb-3 h-10 w-10 text-primary" />
-                <p className="text-sm font-medium">{file.name}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {(file.size / 1024).toFixed(1)} KB
-                </p>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="mt-2 h-auto p-0 text-xs"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setFile(null);
-                  }}
-                >
-                  {t("opml.dialog.chooseDifferentFile")}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-sm font-medium">
-                  {t("opml.dialog.dropHint")}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t("opml.dialog.supportHint")}
-                </p>
-              </>
-            )}
-          </label>
+          {importResult ? (
+            <div className="flex flex-col gap-3">
+              <div role="status" className="flex gap-3">
+                {importResult.failed === 0 ? (
+                  <CircleCheck className="mt-0.5 size-5 shrink-0 text-primary" />
+                ) : importResult.created > 0 ? (
+                  <TriangleAlert className="mt-0.5 size-5 shrink-0 text-amber-500" />
+                ) : (
+                  <OctagonX className="mt-0.5 size-5 shrink-0 text-destructive" />
+                )}
+                <div>
+                  <p className="text-sm font-medium">
+                    {t("opml.result.title")}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {importResult.failed > 0
+                      ? t("opml.result.summary", {
+                          created: importResult.created,
+                          failed: importResult.failed,
+                        })
+                      : t("opml.result.imported", {
+                          count: importResult.created,
+                        })}
+                  </p>
+                </div>
+              </div>
+              {importResult.errors.length > 0 && (
+                <ul className="max-h-64 divide-y overflow-y-auto overscroll-contain rounded-md border text-xs">
+                  {importResult.errors.map((error, index) => (
+                    <li
+                      key={`${index}-${error}`}
+                      className="px-3 py-2 break-words text-muted-foreground"
+                    >
+                      {error}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <label
+              htmlFor={fileInputId}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={cn(
+                "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors",
+                isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/25 hover:border-muted-foreground/50",
+                file && "border-primary bg-primary/5",
+              )}
+            >
+              {file ? (
+                <>
+                  <FileUp className="mb-3 h-10 w-10 text-primary" />
+                  <p className="text-sm font-medium">{file.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </p>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="mt-2 h-auto p-0 text-xs"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setFile(null);
+                    }}
+                  >
+                    {t("opml.dialog.chooseDifferentFile")}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
+                  <p className="text-sm font-medium">
+                    {t("opml.dialog.dropHint")}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("opml.dialog.supportHint")}
+                  </p>
+                </>
+              )}
+            </label>
+          )}
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t px-5 py-4">
-          <Button variant="outline" onClick={handleClose}>
-            {t("common.cancel")}
-          </Button>
-          <Button onClick={handleImport} disabled={!file || isImporting}>
-            <Upload className="mr-1.5 h-4 w-4" />
-            {isImporting ? t("common.importing") : t("common.import")}
-          </Button>
+          {importResult ? (
+            <Button onClick={handleClose}>{t("opml.result.done")}</Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                disabled={isImporting}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button onClick={handleImport} disabled={!file || isImporting}>
+                <Upload className="mr-1.5 h-4 w-4" />
+                {isImporting ? t("common.importing") : t("common.import")}
+              </Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

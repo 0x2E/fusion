@@ -12,7 +12,7 @@ import (
 func ValidateRequestURL(ctx context.Context, rawURL string, allowPrivate bool) error {
 	parsed, err := url.ParseRequestURI(strings.TrimSpace(rawURL))
 	if err != nil {
-		return fmt.Errorf("invalid url: %w", err)
+		return err
 	}
 	if parsed.Scheme != "http" && parsed.Scheme != "https" {
 		return fmt.Errorf("unsupported url scheme: %s", parsed.Scheme)
