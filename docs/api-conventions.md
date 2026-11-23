@@ -94,6 +94,10 @@ Three cases return the status with an empty body instead: unknown routes
   that item server-side (preferred), or a full `{link, title, content,
   feed_name, pub_date?}` snapshot when there is no item. Sending `item_id`
   makes the server ignore all other fields.
+- `POST /api/feeds/batch` is best-effort: each feed is validated
+  independently, invalid links are reported in `errors` with the link and
+  reason, and the remaining feeds are still created. A dead feed in an OPML
+  export must not block the rest of the import; only a malformed body is 400.
 - `PATCH /api/items/-/read` and `-/unread` accept 1–1000 ids
   (`maxBatchUpdateIDs`).
 - `refresh_interval_seconds` (create and update feed): on **create**, absent
