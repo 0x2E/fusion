@@ -270,6 +270,10 @@ func (h *Handler) deleteFeed(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// newFeedDiscoveryClient builds the HTTP client used for feed discovery. It
+// is a variable so tests can route a fake public address to a local server.
+var newFeedDiscoveryClient = httpc.NewClient
+
 func (h *Handler) validateFeed(c *gin.Context) {
 	var req validateFeedRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -285,31 +289,23 @@ func (h *Handler) validateFeed(c *gin.Context) {
 		return
 	}
 
+	client, err := newFeedDiscoveryClient(30*time.Second, proxy, allowPrivateFeeds)
+	if err != nil {
+		badRequestError(c, "invalid proxy")
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
-	var finderOptions *feedfinder.Options
-	if proxy != "" {
-		finderOptions = &feedfinder.Options{RequestProxy: &proxy}
-	}
-	found, err := feedfinder.Find(ctx, target, finderOptions)
+	found, err := feedfinder.Find(ctx, target, &feedfinder.Options{HTTPClient: client})
 	if err != nil {
 		slog.Warn("feed discovery failed", "url", target, "error", err)
 	}
 
 	feeds := normalizeDiscoveredFeeds(found)
-	if !allowPrivateFeeds {
-		filtered := make([]discoveredFeed, 0, len(feeds))
-		for _, feed := range feeds {
-			if err := httpc.ValidateRequestURL(ctx, feed.Link, false); err == nil {
-				filtered = append(filtered, feed)
-			}
-		}
-		feeds = filtered
-	}
-
 	if len(feeds) == 0 {
-		title, parseErr := h.parseFeedTitle(ctx, target, proxy)
+		title, parseErr := parseFeedTitle(ctx, client, target)
 		if parseErr == nil {
 			feeds = append(feeds, discoveredFeed{Title: title, Link: target})
 		}
@@ -346,14 +342,7 @@ func normalizeDiscoveredFeeds(found []feedfinder.Feed) []discoveredFeed {
 	return result
 }
 
-func (h *Handler) parseFeedTitle(ctx context.Context, target, proxy string) (string, error) {
-	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
-
-	client, err := httpc.NewClient(30*time.Second, proxy, allowPrivateFeeds)
-	if err != nil {
-		return "", err
-	}
-
+func parseFeedTitle(ctx context.Context, client *http.Client, target string) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	if err != nil {
 		return "", err

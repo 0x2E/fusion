@@ -56,12 +56,32 @@ func TestRedirectValidatorBlocksPrivateTargets(t *testing.T) {
 	})
 }
 
-func TestValidateDialTargetBlocksPrivateHost(t *testing.T) {
-	if err := validateDialTarget(context.Background(), "127.0.0.1:8080", false); err == nil {
-		t.Fatal("expected private dial target to be blocked")
+func TestValidateDialAddressBlocksPrivateHost(t *testing.T) {
+	tests := []struct {
+		name         string
+		address      string
+		allowPrivate bool
+		wantErr      bool
+	}{
+		{name: "ipv4 loopback", address: "127.0.0.1:8080", wantErr: true},
+		{name: "ipv6 loopback", address: "[::1]:8080", wantErr: true},
+		{name: "ipv4 private", address: "10.0.0.8:8080", wantErr: true},
+		{name: "ipv4 mapped loopback", address: "[::ffff:127.0.0.1]:8080", wantErr: true},
+		{name: "ipv4 mapped private", address: "[::ffff:10.0.0.8]:8080", wantErr: true},
+		{name: "public ipv4", address: "93.184.216.34:443", wantErr: false},
+		{name: "public ipv6", address: "[2606:4700::1]:443", wantErr: false},
+		{name: "allow private ipv4 loopback", address: "127.0.0.1:8080", allowPrivate: true, wantErr: false},
+		{name: "allow private ipv6 loopback", address: "[::1]:8080", allowPrivate: true, wantErr: false},
+		{name: "allow private ipv4", address: "10.0.0.8:8080", allowPrivate: true, wantErr: false},
+		{name: "allow private ipv4 mapped loopback", address: "[::ffff:127.0.0.1]:8080", allowPrivate: true, wantErr: false},
 	}
 
-	if err := validateDialTarget(context.Background(), "127.0.0.1:8080", true); err != nil {
-		t.Fatalf("expected private dial target when allowPrivate=true, got %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateDialAddress(tt.address, tt.allowPrivate)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("validateDialAddress() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }

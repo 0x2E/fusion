@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -37,13 +38,16 @@ func NewClient(timeout time.Duration, proxyURL string, allowPrivate bool) (*http
 		TLSHandshakeTimeout:   10 * time.Second,
 		ResponseHeaderTimeout: timeout,
 	}
-	dialer := &net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}
-	transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-		if err := validateDialTarget(ctx, addr, allowPrivate); err != nil {
-			return nil, err
-		}
-		return dialer.DialContext(ctx, network, addr)
+	dialer := &net.Dialer{
+		Timeout:   10 * time.Second,
+		KeepAlive: 30 * time.Second,
+		// ControlContext sees the resolved ip:port the dialer is about to
+		// connect to, so DNS cannot change between validation and connection.
+		ControlContext: func(_ context.Context, _, address string, _ syscall.RawConn) error {
+			return validateDialAddress(address, allowPrivate)
+		},
 	}
+	transport.DialContext = dialer.DialContext
 
 	if proxyURL != "" {
 		proxy, err := url.Parse(proxyURL)
@@ -79,19 +83,6 @@ func redirectValidator(allowPrivate bool) func(req *http.Request, via []*http.Re
 
 		return ValidateRequestURL(req.Context(), req.URL.String(), allowPrivate)
 	}
-}
-
-func validateDialTarget(ctx context.Context, addr string, allowPrivate bool) error {
-	if allowPrivate {
-		return nil
-	}
-
-	host := addr
-	if parsedHost, _, err := net.SplitHostPort(addr); err == nil {
-		host = parsedHost
-	}
-
-	return validatePublicHost(ctx, host)
 }
 
 // SetDefaultHeaders adds default headers required for feed fetching.
