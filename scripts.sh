@@ -56,14 +56,16 @@ build_backend() {
     exit 1
   fi
 
-  echo "building backend for OS: ${target_os}, Arch: ${target_arch}, Output: ${output_path}"
+  backend_version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)
+
+  echo "building backend for OS: ${target_os}, Arch: ${target_arch}, Output: ${output_path}, Version: ${backend_version}"
 
   mkdir -p "$(dirname "$output_path")"
   (
     cd backend
     CGO_ENABLED=0 GOOS=${target_os} GOARCH=${target_arch} go build \
       -trimpath \
-      -ldflags '-extldflags "-static"' \
+      -ldflags "-X main.version=${backend_version} -extldflags \"-static\"" \
       -o "$output_path" \
       ./cmd/fusion
   )
