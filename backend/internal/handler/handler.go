@@ -198,24 +198,32 @@ func (h *Handler) configureTrustedProxies(r *gin.Engine) error {
 }
 
 func (h *Handler) corsMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		origin := strings.TrimSpace(c.Request.Header.Get("Origin"))
-		if origin != "" {
-			if !h.isOriginAllowed(origin) {
-				c.AbortWithStatus(http.StatusForbidden)
-				return
-			}
-			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
-			c.Writer.Header().Set("Vary", "Origin")
-			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		} else {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		}
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, PATCH, DELETE")
+	allowedOrigins, crossOrigin := h.corsPolicy()
 
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
+	return func(c *gin.Context) {
+		// Cross-origin reads are only readable by a browser when the response
+		// names the calling origin, so the allowlist is enforced by withholding
+		// these headers rather than by rejecting the request.
+		if origin := normalizeOrigin(c.Request.Header.Get("Origin")); origin != "" && allowedOrigins[origin] {
+			header := c.Writer.Header()
+			header.Set("Access-Control-Allow-Origin", origin)
+			header.Set("Vary", "Origin")
+			header.Set("Access-Control-Allow-Credentials", "true")
+			header.Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+			header.Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, PATCH, DELETE")
+		}
+
+		// Withholding CORS headers stops browsers from reading responses, but a
+		// simple request (e.g. a text/plain POST, which needs no preflight) still
+		// reaches the handler, so state-changing cross-origin requests are
+		// rejected here.
+		if err := crossOrigin.Check(c.Request); err != nil {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
 
@@ -223,24 +231,30 @@ func (h *Handler) corsMiddleware() gin.HandlerFunc {
 	}
 }
 
-func (h *Handler) isOriginAllowed(origin string) bool {
+// corsPolicy builds both halves of the cross-origin policy from the configured
+// allowlist: the origins allowed to read responses, and the guard for
+// state-changing requests. Origins are normalized before use so configuration
+// matching follows browser Origin formatting (lowercase, no trailing slash).
+// Entries that are not valid origins (a leftover "*") are dropped with a
+// warning: they cannot be trusted for credentialed access, and failing startup
+// would leave deployments that copied the old advice unable to start at all.
+func (h *Handler) corsPolicy() (map[string]bool, *http.CrossOriginProtection) {
+	allowed := make(map[string]bool)
+	crossOrigin := http.NewCrossOriginProtection()
 	if h.config == nil {
-		return true
+		return allowed, crossOrigin
 	}
 
-	if len(h.config.CORSAllowedOrigins) == 0 {
-		return true
-	}
-
-	normalizedOrigin := normalizeOrigin(origin)
-	for _, allowed := range h.config.CORSAllowedOrigins {
-		normalizedAllowed := normalizeOrigin(allowed)
-		if normalizedAllowed == "*" || normalizedAllowed == normalizedOrigin {
-			return true
+	for _, origin := range h.config.CORSAllowedOrigins {
+		normalized := normalizeOrigin(origin)
+		if err := crossOrigin.AddTrustedOrigin(normalized); err != nil {
+			slog.Warn("ignoring invalid CORS allowed origin", "origin", origin, "error", err)
+			continue
 		}
+		allowed[normalized] = true
 	}
 
-	return false
+	return allowed, crossOrigin
 }
 
 func normalizeOrigin(origin string) string {

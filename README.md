@@ -98,7 +98,9 @@ Then configure based on your goal:
 - Run locally or on a home server
   - Optional: `FUSION_PORT`, `FUSION_DB_PATH`
 - Expose Fusion behind a reverse proxy
-  - Configure: `FUSION_CORS_ALLOWED_ORIGINS`, `FUSION_TRUSTED_PROXIES`
+  - Configure: `FUSION_TRUSTED_PROXIES`
+- Serve the frontend from a different origin than the API
+  - Configure: `FUSION_CORS_ALLOWED_ORIGINS`
 - Use mobile/desktop Fever clients (Reeder, Unread, FeedMe)
   - Configure: `FUSION_FEVER_USERNAME` (default: `fusion`)
   - Guide: [`docs/fever-api.md`](./docs/fever-api.md)
