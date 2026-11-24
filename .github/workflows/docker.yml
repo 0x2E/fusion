@@ -45,6 +45,10 @@ jobs:
             # on release: semver tags, e.g. v1.2.3 -> 1.2.3 (plus latest via the
             # action's default flavor on non-prerelease tags)
             type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+            # floating minor tag (e.g. 1.4) for unattended patch updates; safe
+            # because breaking changes always bump the minor version. No major
+            # tag: majors don't carry that guarantee across minors.
+            type=semver,pattern={{major}}.{{minor}},enable=${{ github.event_name == 'release' }}
             # on push to main: tag with main
             type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       - name: Set up toolchains
