@@ -211,3 +211,7 @@ The standard checklist is [CONTRIBUTING.md](../CONTRIBUTING.md) (or
   schema bootstraps.
 - API smoke pass: login, create feed, manual refresh, search, bookmark
   create/delete.
+- Version bump: any breaking change (config or default behavior, API,
+  irreversible migration) bumps the minor version, because users follow
+  the floating minor Docker tag for unattended patch updates (see the
+  Docker section of the [README](../README.md)).

@@ -45,6 +45,8 @@ Open `http://localhost:8080`.
 
 `main` is the latest development build.
 
+Each release is also tagged with its full version (e.g. `1.4.2`) and its minor version (e.g. `1.4`). Breaking changes always bump the minor version, so following a minor tag picks up patch releases without breaking changes, which suits automatic updaters. Read the release notes before moving to a new minor version.
+
 ```shell
 docker run -it -d -p 8080:8080 \
   -v $(pwd)/fusion:/data \
