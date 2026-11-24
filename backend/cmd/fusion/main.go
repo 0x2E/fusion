@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -20,11 +23,44 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// version is injected at build time with -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
+	showVersion, err := parseArgs(os.Args[1:], os.Stderr)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return
+		}
+		// The flag package already printed the error and usage text.
+		os.Exit(2)
+	}
+	if showVersion {
+		fmt.Println(version)
+		return
+	}
+
 	if err := run(); err != nil {
 		slog.Error("fatal", "error", err)
 		os.Exit(1)
 	}
+}
+
+// parseArgs reports whether the version should be printed instead of starting
+// the server. It uses ContinueOnError so tests can call it and main can keep
+// the flag package's default exit codes and usage output.
+func parseArgs(args []string, output io.Writer) (bool, error) {
+	fs := flag.NewFlagSet("fusion", flag.ContinueOnError)
+	fs.SetOutput(output)
+
+	showVersion := fs.Bool("v", false, "print version and exit")
+	fs.BoolVar(showVersion, "version", false, "print version and exit")
+
+	if err := fs.Parse(args); err != nil {
+		return false, err
+	}
+
+	return *showVersion, nil
 }
 
 func run() error {
@@ -64,7 +100,7 @@ func run() error {
 	g, ctx := errgroup.WithContext(sigCtx)
 
 	g.Go(func() error {
-		slog.Info("starting server", "address", addr)
+		slog.Info("starting server", "address", addr, "version", version)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return err
 		}
