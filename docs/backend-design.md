@@ -195,7 +195,10 @@ flowchart TD
 - Session cookie: `HttpOnly`, `SameSite=Lax`, `Secure` on HTTPS
 - Optional OIDC SSO (`FUSION_OIDC_*`)
 - URL validation + private-network blocking by default for feed fetches
-- CORS allowlist via `FUSION_CORS_ALLOWED_ORIGINS`
+- Cross-origin reads: allowlist via `FUSION_CORS_ALLOWED_ORIGINS`, enforced by
+  withholding CORS response headers from every other origin
+- Cross-origin writes: rejected by `http.CrossOriginProtection` unless
+  same-origin or allowlisted (`403`, empty body)
 - Trusted proxy list via `FUSION_TRUSTED_PROXIES`
 
 Logging is structured (`log/slog`) with level and format controlled by

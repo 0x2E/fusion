@@ -65,7 +65,7 @@ Handlers report failures as `{"error": "<message>"}`:
 - `500` — `"internal server error"` (details are logged server-side only)
 
 Three cases return the status with an empty body instead: unknown routes
-(404), CORS origin rejection (403), and panic recovery (500).
+(404), cross-origin write rejection (403), and panic recovery (500).
 
 ## Status codes
 

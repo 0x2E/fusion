@@ -14,7 +14,7 @@ type Config struct {
 	Port          int
 	FeverUsername string // Username used to derive Fever API key.
 
-	CORSAllowedOrigins []string // Allowed Origins for CORS. Empty means allow all.
+	CORSAllowedOrigins []string // Allowed origins for CORS. Empty means same-origin requests only.
 	TrustedProxies     []string // Trusted reverse proxies for client IP resolution. Empty disables proxy trust.
 	AllowPrivateFeeds  bool     // Allow pulling private/localhost feed URLs.
 
