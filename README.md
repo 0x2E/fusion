@@ -10,7 +10,7 @@
 
 - Fast reading workflow: unread tracking, bookmarks, search, and Google Reader-style keyboard shortcuts
 - Feed management: RSS/Atom parsing, feed auto-discovery, and group organization
-- Fever API compatibility for third-party clients (Reeder, Unread, FeedMe, etc.)
+- Fever and Google Reader (GReader) API compatibility for third-party clients (Reeder, Unread, FeedMe, ReadYou, NetNewsWire, etc.)
 - Responsive web UI with PWA support
 - Self-hosting friendly: single binary or Docker deployment
 - Built-in i18n: English, Chinese, German, French, Spanish, Russian, Portuguese, Swedish
@@ -104,6 +104,9 @@ Then configure based on your goal:
 - Use mobile/desktop Fever clients (Reeder, Unread, FeedMe)
   - Configure: `FUSION_FEVER_USERNAME` (default: `fusion`)
   - Guide: [`docs/fever-api.md`](./docs/fever-api.md)
+- Use clients that speak the Google Reader API (ReadYou, NetNewsWire, Reeder, FeedMe)
+  - Configure: `FUSION_GREADER_USERNAME` (default: `fusion`)
+  - Guide: [`docs/greader-api.md`](./docs/greader-api.md)
 - Use SSO for login (with or without a password)
   - Configure: `FUSION_OIDC_*`
   - Set `FUSION_OIDC_ALLOWED_USER` to your account's email (or `sub`) so only you can sign in, even if your identity provider already restricts access; a future version will require it
@@ -123,6 +126,7 @@ Legacy env names (`DB`, `PASSWORD`, `PORT`) are still accepted for backward comp
 
 - API conventions (the route inventory lives in `backend/internal/handler/handler.go`): [`docs/api-conventions.md`](./docs/api-conventions.md)
 - Fever API compatibility: [`docs/fever-api.md`](./docs/fever-api.md)
+- Google Reader API compatibility: [`docs/greader-api.md`](./docs/greader-api.md)
 - Backend design: [`docs/backend-design.md`](./docs/backend-design.md)
 - Frontend design: [`docs/frontend-design.md`](./docs/frontend-design.md)
 - Legacy schema reference (kept for migration work): [`docs/old-database-schema.md`](./docs/old-database-schema.md)

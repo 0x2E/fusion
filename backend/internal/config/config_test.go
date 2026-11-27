@@ -81,6 +81,36 @@ func TestLoadFeverUsername(t *testing.T) {
 	})
 }
 
+func TestLoadGReaderUsername(t *testing.T) {
+	t.Run("uses default username", func(t *testing.T) {
+		t.Setenv("FUSION_PASSWORD", "secret")
+		t.Setenv("FUSION_FEVER_USERNAME", "fever")
+
+		cfg, err := Load()
+		if err != nil {
+			t.Fatalf("Load() failed: %v", err)
+		}
+
+		if cfg.GReaderUsername != "fusion" {
+			t.Fatalf("expected default GReaderUsername to be %q, got %q", "fusion", cfg.GReaderUsername)
+		}
+	})
+
+	t.Run("uses explicit username", func(t *testing.T) {
+		t.Setenv("FUSION_PASSWORD", "secret")
+		t.Setenv("FUSION_GREADER_USERNAME", " reader ")
+
+		cfg, err := Load()
+		if err != nil {
+			t.Fatalf("Load() failed: %v", err)
+		}
+
+		if cfg.GReaderUsername != "reader" {
+			t.Fatalf("expected GReaderUsername to be %q, got %q", "reader", cfg.GReaderUsername)
+		}
+	})
+}
+
 func TestLoadParsesKubernetesStyleFusionPort(t *testing.T) {
 	t.Setenv("FUSION_PASSWORD", "secret")
 	t.Setenv("FUSION_PORT", "tcp://10.43.157.55:8080")

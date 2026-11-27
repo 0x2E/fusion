@@ -114,6 +114,23 @@ func (s *Store) GetFeed(id int64) (*model.Feed, error) {
 	return f, nil
 }
 
+func (s *Store) GetFeedByLink(link string) (*model.Feed, error) {
+	row := s.db.QueryRow(`
+		SELECT `+feedSelectColumns+`
+		FROM feeds f
+		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
+		WHERE f.link = :link
+	`, sql.Named("link", link))
+	f, err := scanFeed(row, false)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: feed", ErrNotFound)
+		}
+		return nil, fmt.Errorf("get feed by link: %w", err)
+	}
+	return f, nil
+}
+
 // ListDueFeeds returns non-suspended feeds whose next_check_at has passed.
 // It skips the item-count join used by ListFeeds; callers still apply
 // pullpolicy.ShouldSkip as the authoritative skip decision, which also covers

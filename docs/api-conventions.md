@@ -11,10 +11,11 @@ disagree, the code wins — fix the page.
 
 ## Base path and authentication
 
-- All endpoints are under `/api`. Two exceptions: the Fever compatibility
-  API (`/fever*`, see `docs/fever-api.md`) and a bare `GET /oidc/callback`
-  registered only when OIDC is configured, for deployments whose redirect
-  URI omits `/api`.
+- All endpoints are under `/api`. Three exceptions: the Fever compatibility
+  API (`/fever*`, see `docs/fever-api.md`), the Google Reader compatibility
+  API (`/accounts/ClientLogin` and `/reader/api/0/*`, see
+  `docs/greader-api.md`), and a bare `GET /oidc/callback` registered only
+  when OIDC is configured, for deployments whose redirect URI omits `/api`.
 - Authentication is a session cookie named `session`. `POST /api/sessions`
   with `{"password": ...}` sets it and is registered only when a password is
   configured; `DELETE /api/sessions` clears it, 204. `GET /api/sessions` is
@@ -24,8 +25,12 @@ disagree, the code wins — fix the page.
   request through.
 - Fever (`/fever*`) is disabled in OIDC-only mode (no password configured) and
   always answers `"auth": 0`; see `backend/internal/handler/handler.go` (`New`).
+- Google Reader (`/reader/api/0/*`) uses its own `Authorization: GoogleLogin
+  auth=<token>` credential instead of the session cookie, and is disabled in
+  OIDC-only mode; see `docs/greader-api.md`.
 - Login attempts are rate limited: excess attempts get `429` with a
-  `Retry-After` header (seconds).
+  `Retry-After` header (seconds). The Fever and GReader compatibility APIs use
+  the same limiter; GReader limits only `ClientLogin`, not token checks.
 - Auth discovery: `GET /api/auth/methods` is public and returns
   `{data: {password, oidc}}` so clients can choose the login controls. OIDC:
   `/api/oidc/login` and `/api/oidc/callback` are registered only when OIDC is
@@ -45,6 +50,9 @@ disagree, the code wins — fix the page.
   new codes can ship ahead of client releases.
 
 ## Response envelopes
+
+Compatibility APIs (`fever`, GReader) intentionally do not use these
+envelopes; they follow their own external contracts.
 
 - Single resource: `{"data": <object>}`
 - Group and feed lists (small, fully returned): `{"data": [...], "total": n}`

@@ -82,6 +82,9 @@ func newAuthModeTestHandler(t *testing.T, cfg *config.Config) *Handler {
 	if cfg.FeverUsername == "" {
 		cfg.FeverUsername = "fusion"
 	}
+	if cfg.GReaderUsername == "" {
+		cfg.GReaderUsername = "fusion"
+	}
 	if cfg.LoginRateLimit == 0 {
 		cfg.LoginRateLimit = 10
 	}

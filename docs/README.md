@@ -24,6 +24,8 @@
   cursors, errors, status codes)
 - `fever-api.md`: Fever protocol compatibility — an external contract
   with third-party clients
+- `greader-api.md`: Google Reader (GReader) protocol compatibility — the
+  other external client contract, including subscription management
 - `backend-design.md`: backend architecture, feed pull strategy, schema
   and cascade design
 - `frontend-design.md`: frontend interaction model, URL state, data-flow
