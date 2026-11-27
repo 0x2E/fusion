@@ -150,7 +150,7 @@ func (h *Handler) createFeed(c *gin.Context) {
 		badRequestError(c, "invalid request")
 		return
 	}
-	if err := httpc.ValidateRequestURL(c.Request.Context(), req.Link, h.config.AllowPrivateFeeds); err != nil {
+	if err := httpc.ValidateRequestURL(c.Request.Context(), req.Link, h.allowPrivateFeeds()); err != nil {
 		badRequestError(c, fmt.Sprintf("invalid URL: %v", err))
 		return
 	}
@@ -166,17 +166,22 @@ func (h *Handler) createFeed(c *gin.Context) {
 		return
 	}
 
-	// Trigger initial pull in background; it wakes the scheduler when done.
+	h.startInitialPull(feed.ID)
+
+	dataResponse(c, feed)
+}
+
+// startInitialPull warms a newly created feed without making the request wait
+// for it. The puller wakes the scheduler when the pull finishes.
+func (h *Handler) startInitialPull(feedID int64) {
 	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
-	go func(feedID int64) {
+	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), refreshTimeout)
 		defer cancel()
 		if err := h.puller.RefreshFeed(ctx, feedID); err != nil {
 			slog.Warn("initial feed pull failed", "feed_id", feedID, "error", err)
 		}
-	}(feed.ID)
-
-	dataResponse(c, feed)
+	}()
 }
 
 func (h *Handler) updateFeed(c *gin.Context) {
@@ -200,7 +205,7 @@ func (h *Handler) updateFeed(c *gin.Context) {
 		params.Name = req.Name
 	}
 	if req.Link != nil {
-		if err := httpc.ValidateRequestURL(c.Request.Context(), *req.Link, h.config.AllowPrivateFeeds); err != nil {
+		if err := httpc.ValidateRequestURL(c.Request.Context(), *req.Link, h.allowPrivateFeeds()); err != nil {
 			badRequestError(c, fmt.Sprintf("invalid URL: %v", err))
 			return
 		}
@@ -275,29 +280,18 @@ func (h *Handler) deleteFeed(c *gin.Context) {
 // is a variable so tests can route a fake public address to a local server.
 var newFeedDiscoveryClient = httpc.NewClient
 
-func (h *Handler) validateFeed(c *gin.Context) {
-	var req validateFeedRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequestError(c, "invalid request")
-		return
-	}
-
-	target := strings.TrimSpace(req.URL)
-	proxy := strings.TrimSpace(req.Proxy)
-	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
-	if err := httpc.ValidateRequestURL(c.Request.Context(), target, allowPrivateFeeds); err != nil {
-		badRequestError(c, fmt.Sprintf("invalid URL: %v", err))
-		return
+// discoverFeeds resolves a user-supplied URL to feeds. Invalid input (URL or
+// proxy) is returned as an error; a failed discovery is not, it just yields no
+// feeds. Shared by the add-feed dialog and the GReader quickadd endpoint.
+func discoverFeeds(ctx context.Context, target, proxy string, allowPrivateFeeds bool) ([]discoveredFeed, error) {
+	if err := httpc.ValidateRequestURL(ctx, target, allowPrivateFeeds); err != nil {
+		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 
 	client, err := newFeedDiscoveryClient(30*time.Second, proxy, allowPrivateFeeds)
 	if err != nil {
-		badRequestError(c, "invalid proxy")
-		return
+		return nil, errors.New("invalid proxy")
 	}
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
-	defer cancel()
 
 	found, err := feedfinder.Find(ctx, target, &feedfinder.Options{HTTPClient: client})
 	if err != nil {
@@ -310,6 +304,25 @@ func (h *Handler) validateFeed(c *gin.Context) {
 		if parseErr == nil {
 			feeds = append(feeds, discoveredFeed{Title: title, Link: target})
 		}
+	}
+
+	return feeds, nil
+}
+
+func (h *Handler) validateFeed(c *gin.Context) {
+	var req validateFeedRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequestError(c, "invalid request")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	feeds, err := discoverFeeds(ctx, strings.TrimSpace(req.URL), strings.TrimSpace(req.Proxy), h.allowPrivateFeeds())
+	if err != nil {
+		badRequestError(c, err.Error())
+		return
 	}
 
 	dataResponse(c, validateFeedResponse{Feeds: feeds})
@@ -470,7 +483,7 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 	g.SetLimit(batchCreateFeedsValidationConcurrency)
 	for i, f := range req.Feeds {
 		g.Go(func() error {
-			validationErrs[i] = httpc.ValidateRequestURL(validateCtx, f.Link, h.config.AllowPrivateFeeds)
+			validationErrs[i] = httpc.ValidateRequestURL(validateCtx, f.Link, h.allowPrivateFeeds())
 			return nil
 		})
 	}
@@ -498,16 +511,8 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 	}
 	feedErrors = append(feedErrors, result.Errors...)
 
-	// Trigger initial pull for each new feed in background.
-	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
 	for _, id := range result.CreatedIDs {
-		go func(feedID int64) {
-			ctx, cancel := context.WithTimeout(context.Background(), refreshTimeout)
-			defer cancel()
-			if err := h.puller.RefreshFeed(ctx, feedID); err != nil {
-				slog.Warn("initial feed pull failed", "feed_id", feedID, "error", err)
-			}
-		}(id)
+		h.startInitialPull(id)
 	}
 
 	dataResponse(c, gin.H{

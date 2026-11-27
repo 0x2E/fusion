@@ -10,20 +10,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) setupFrontendRoutes(r *gin.Engine) error {
+// setupFrontendRoutes mounts the static assets and returns the SPA handler for
+// unmatched routes. SetupRouter owns NoRoute because the Google Reader API
+// also needs a catch-all there.
+func (h *Handler) setupFrontendRoutes(r *gin.Engine) (gin.HandlerFunc, error) {
 	frontendFS, _, err := web.FrontendFS()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r.StaticFS("/assets", http.FS(frontendFS))
 
 	fileServer := http.FileServer(http.FS(frontendFS))
-	r.NoRoute(func(c *gin.Context) {
+	return func(c *gin.Context) {
 		serveFrontendRoute(c, frontendFS, fileServer)
-	})
-
-	return nil
+	}, nil
 }
 
 func serveFrontendRoute(c *gin.Context, frontendFS fs.FS, fileServer http.Handler) {
@@ -39,7 +40,7 @@ func serveFrontendRoute(c *gin.Context, frontendFS fs.FS, fileServer http.Handle
 		cleanedPath = "/"
 	}
 
-	if isAPIPath(cleanedPath) {
+	if isBackendPath(cleanedPath) {
 		c.Status(http.StatusNotFound)
 		return
 	}
@@ -94,13 +95,28 @@ func frontendFileExists(frontendFS fs.FS, filePath string) bool {
 	return !info.IsDir()
 }
 
-func isAPIPath(requestPath string) bool {
+// isBackendPath reports paths owned by the backend. A GET under one of them
+// must 404 instead of falling through to the SPA, including the compatibility
+// APIs registered outside /api.
+func isBackendPath(requestPath string) bool {
 	cleanedPath := path.Clean(requestPath)
 	if cleanedPath == "." {
 		cleanedPath = "/"
 	}
 
-	return cleanedPath == "/api" || strings.HasPrefix(cleanedPath, "/api/")
+	for _, prefix := range []string{"/api", "/reader", "/accounts"} {
+		if cleanedPath == prefix || strings.HasPrefix(cleanedPath, prefix+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// isGReaderAPIPath reports paths under the Google Reader API prefix, whose
+// unregistered endpoints get the empty-list fallback instead of a 404.
+func isGReaderAPIPath(requestPath string) bool {
+	cleanedPath := path.Clean(requestPath)
+	return cleanedPath == "/reader/api/0" || strings.HasPrefix(cleanedPath, "/reader/api/0/")
 }
 
 func looksLikeAssetPath(filePath string) bool {

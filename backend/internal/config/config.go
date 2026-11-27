@@ -13,6 +13,9 @@ type Config struct {
 	Password      string // Plaintext password from env
 	Port          int
 	FeverUsername string // Username used to derive Fever API key.
+	// GReaderUsername is the Google Reader ClientLogin username. It is separate
+	// from FeverUsername because the two APIs serve different clients.
+	GReaderUsername string
 
 	CORSAllowedOrigins []string // Allowed origins for CORS. Empty means same-origin requests only.
 	TrustedProxies     []string // Trusted reverse proxies for client IP resolution. Empty disables proxy trust.
@@ -135,6 +138,7 @@ func Load() (*Config, error) {
 		Password:           password,
 		Port:               parsedPort,
 		FeverUsername:      getEnvString("FUSION_FEVER_USERNAME", "fusion"),
+		GReaderUsername:    getEnvString("FUSION_GREADER_USERNAME", "fusion"),
 		CORSAllowedOrigins: corsAllowedOrigins,
 		TrustedProxies:     trustedProxies,
 		AllowPrivateFeeds:  allowPrivateFeeds,

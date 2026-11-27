@@ -21,6 +21,8 @@ type Handler struct {
 	passwordHash    string   // bcrypt hash computed at startup
 	passwordEnabled bool     // true when a non-blank password is configured
 	feverAPIKey     string   // md5(username:password) used by Fever API; empty disables Fever
+	greaderToken    string   // HMAC token used by the Google Reader API; empty disables it
+	greaderUsername string   // username reported to GReader clients and required by ClientLogin
 	allowAnonAPI    bool     // true when both password and OIDC auth are disabled
 	notices         []string // stable notice codes served by GET /api/app; copy lives in the frontend
 	puller          interface {
@@ -60,6 +62,7 @@ func New(store *store.Store, config *config.Config, puller interface {
 		config:          config,
 		passwordHash:    passwordHash,
 		passwordEnabled: passwordEnabled,
+		greaderUsername: strings.TrimSpace(config.GReaderUsername),
 		allowAnonAPI:    allowAnonAPI,
 		notices:         []string{},
 		puller:          puller,
@@ -70,14 +73,16 @@ func New(store *store.Store, config *config.Config, puller interface {
 	switch {
 	case passwordEnabled:
 		h.feverAPIKey = deriveFeverAPIKey(config.FeverUsername, config.Password)
+		h.greaderToken = deriveGReaderToken(config.GReaderUsername, config.Password)
 	case allowAnonAPI:
 		// The whole API is already open in anonymous mode, so Fever keeps
 		// accepting the key derived from an empty password, as it always has.
 		h.feverAPIKey = deriveFeverAPIKey(config.FeverUsername, "")
+		h.greaderToken = deriveGReaderToken(config.GReaderUsername, "")
 	default:
-		// Leave the key empty: verifyFeverAPIKey rejects every request when the
-		// expected key is empty, so no client can authenticate.
-		slog.Warn("Fever API is disabled because no password is set")
+		// Leave the keys empty: both verify functions reject every request when
+		// the expected value is empty, so no client can authenticate.
+		slog.Warn("Fever and Google Reader APIs are disabled because no password is set")
 	}
 
 	if h.allowAnonAPI {
@@ -124,6 +129,9 @@ func (h *Handler) SetupRouter() *gin.Engine {
 	r.POST("/fever", h.fever)
 	r.POST("/fever/", h.fever)
 	r.POST("/fever.php", h.fever)
+
+	r.POST("/accounts/ClientLogin", h.greaderClientLogin)
+	h.registerGReaderRoutes(r)
 
 	api := r.Group("/api")
 	{
@@ -182,9 +190,24 @@ func (h *Handler) SetupRouter() *gin.Engine {
 		}
 	}
 
-	if err := h.setupFrontendRoutes(r); err != nil {
+	frontendRoute, err := h.setupFrontendRoutes(r)
+	if err != nil {
 		slog.Warn("failed to configure frontend routes", "error", err)
 	}
+
+	// gin cannot register a catch-all next to the reader routes, so unmatched
+	// reader paths are dispatched here. A handler that writes nothing leaves
+	// gin's default 404 response in place.
+	r.NoRoute(func(c *gin.Context) {
+		method := c.Request.Method
+		if isGReaderAPIPath(c.Request.URL.Path) && (method == http.MethodGet || method == http.MethodPost) {
+			h.greaderUnimplemented(c)
+			return
+		}
+		if frontendRoute != nil {
+			frontendRoute(c)
+		}
+	})
 
 	return r
 }
